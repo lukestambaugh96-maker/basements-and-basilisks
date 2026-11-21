@@ -1,0 +1,502 @@
+{
+  "comps": [
+    {
+      "name": "Ward & Action Surge (Meta)",
+      "cat": "Synergy",
+      "heroes": [
+        "gilthrax",
+        "mother_laurel",
+        "faelan",
+        "zoe"
+      ],
+      "wrT2": 100,
+      "scoreT2": 1,
+      "timeT2": 32.6,
+      "wrT3": 100,
+      "scoreT3": 0.999,
+      "timeT3": 35.7,
+      "avgWR": 100,
+      "avgScore": 0.999,
+      "avgGold": 2.8
+    },
+    {
+      "name": "Root & Poison Control",
+      "cat": "Synergy",
+      "heroes": [
+        "mother_laurel",
+        "juniper",
+        "velith",
+        "kaska"
+      ],
+      "wrT2": 100,
+      "scoreT2": 1,
+      "timeT2": 20.6,
+      "wrT3": 100,
+      "scoreT3": 0.999,
+      "timeT3": 21.9,
+      "avgWR": 100,
+      "avgScore": 0.999,
+      "avgGold": 0
+    },
+    {
+      "name": "Pack 5: Market",
+      "cat": "Pack",
+      "heroes": [
+        "zoe",
+        "toot",
+        "gilthrax",
+        "gains"
+      ],
+      "wrT2": 100,
+      "scoreT2": 0.986,
+      "timeT2": 29.6,
+      "wrT3": 100,
+      "scoreT3": 0.995,
+      "timeT3": 30.7,
+      "avgWR": 100,
+      "avgScore": 0.991,
+      "avgGold": 19.6
+    },
+    {
+      "name": "Pack 4: Divine",
+      "cat": "Pack",
+      "heroes": [
+        "pillar",
+        "mother_laurel",
+        "lumen",
+        "jamison"
+      ],
+      "wrT2": 100,
+      "scoreT2": 0.979,
+      "timeT2": 23.6,
+      "wrT3": 100,
+      "scoreT3": 0.978,
+      "timeT3": 25.6,
+      "avgWR": 100,
+      "avgScore": 0.978,
+      "avgGold": 0
+    },
+    {
+      "name": "Holy Smite Cleric Bond",
+      "cat": "Synergy",
+      "heroes": [
+        "bram",
+        "mother_laurel",
+        "lumen",
+        "jamison"
+      ],
+      "wrT2": 100,
+      "scoreT2": 0.958,
+      "timeT2": 22.1,
+      "wrT3": 83.3,
+      "scoreT3": 0.885,
+      "timeT3": 31.9,
+      "avgWR": 91.7,
+      "avgScore": 0.922,
+      "avgGold": 0
+    },
+    {
+      "name": "Alert & Ambush",
+      "cat": "Synergy",
+      "heroes": [
+        "arthur",
+        "velith",
+        "saint",
+        "zoe"
+      ],
+      "wrT2": 100,
+      "scoreT2": 0.902,
+      "timeT2": 26.5,
+      "wrT3": 100,
+      "scoreT3": 0.921,
+      "timeT3": 27.8,
+      "avgWR": 100,
+      "avgScore": 0.912,
+      "avgGold": 0.8
+    },
+    {
+      "name": "Rage Frontline Sustain",
+      "cat": "Synergy",
+      "heroes": [
+        "zark",
+        "pillar",
+        "jamison",
+        "juniper"
+      ],
+      "wrT2": 100,
+      "scoreT2": 0.75,
+      "timeT2": 33.9,
+      "wrT3": 100,
+      "scoreT3": 0.846,
+      "timeT3": 29.9,
+      "avgWR": 100,
+      "avgScore": 0.798,
+      "avgGold": 0
+    },
+    {
+      "name": "Pack 6: Surprise",
+      "cat": "Pack",
+      "heroes": [
+        "velith",
+        "corvin",
+        "saint",
+        "kaska"
+      ],
+      "wrT2": 66.7,
+      "scoreT2": 0.688,
+      "timeT2": 30.1,
+      "wrT3": 83.3,
+      "scoreT3": 0.681,
+      "timeT3": 34.1,
+      "avgWR": 75,
+      "avgScore": 0.685,
+      "avgGold": 0
+    },
+    {
+      "name": "Hunter Mark Machine-Gun",
+      "cat": "Synergy",
+      "heroes": [
+        "dane",
+        "lorcan",
+        "corvin",
+        "kaska"
+      ],
+      "wrT2": 66.7,
+      "scoreT2": 0.592,
+      "timeT2": 34.1,
+      "wrT3": 66.7,
+      "scoreT3": 0.566,
+      "timeT3": 43.3,
+      "avgWR": 66.7,
+      "avgScore": 0.579,
+      "avgGold": 0
+    },
+    {
+      "name": "Pack 1: Tavern",
+      "cat": "Pack",
+      "heroes": [
+        "arthur",
+        "bram",
+        "faelan",
+        "wallaby"
+      ],
+      "wrT2": 66.7,
+      "scoreT2": 0.634,
+      "timeT2": 44.2,
+      "wrT3": 33.3,
+      "scoreT3": 0.47,
+      "timeT3": 37.7,
+      "avgWR": 50,
+      "avgScore": 0.552,
+      "avgGold": 0.6
+    },
+    {
+      "name": "Burn Detonation + Ward",
+      "cat": "Synergy",
+      "heroes": [
+        "pillar",
+        "cinder",
+        "lumen",
+        "faelan"
+      ],
+      "wrT2": 75,
+      "scoreT2": 0.615,
+      "timeT2": 37,
+      "wrT3": 41.7,
+      "scoreT3": 0.464,
+      "timeT3": 42.3,
+      "avgWR": 58.3,
+      "avgScore": 0.54,
+      "avgGold": 0
+    },
+    {
+      "name": "Hex & Multi-Hit",
+      "cat": "Synergy",
+      "heroes": [
+        "dane",
+        "nettle",
+        "lorcan",
+        "faelan"
+      ],
+      "wrT2": 41.7,
+      "scoreT2": 0.518,
+      "timeT2": 34.6,
+      "wrT3": 50,
+      "scoreT3": 0.478,
+      "timeT3": 30.3,
+      "avgWR": 45.8,
+      "avgScore": 0.498,
+      "avgGold": 0
+    },
+    {
+      "name": "Pack 2: Campfire",
+      "cat": "Pack",
+      "heroes": [
+        "dane",
+        "lorcan",
+        "juniper",
+        "rosalind"
+      ],
+      "wrT2": 33.3,
+      "scoreT2": 0.466,
+      "timeT2": 30.7,
+      "wrT3": 50,
+      "scoreT3": 0.489,
+      "timeT3": 27.8,
+      "avgWR": 41.7,
+      "avgScore": 0.477,
+      "avgGold": 0
+    },
+    {
+      "name": "Pack 3: Beaten Path",
+      "cat": "Pack",
+      "heroes": [
+        "cinder",
+        "zark",
+        "naill",
+        "nettle"
+      ],
+      "wrT2": 16.7,
+      "scoreT2": 0.374,
+      "timeT2": 21.2,
+      "wrT3": 0,
+      "scoreT3": 0.218,
+      "timeT3": 14.7,
+      "avgWR": 8.3,
+      "avgScore": 0.296,
+      "avgGold": 0
+    },
+    {
+      "name": "Burn + Rage + Ki (No Sustain)",
+      "cat": "NoSustain",
+      "heroes": [
+        "zark",
+        "cinder",
+        "naill",
+        "lorcan"
+      ],
+      "wrT2": 16.7,
+      "scoreT2": 0.351,
+      "timeT2": 20.4,
+      "wrT3": 0,
+      "scoreT3": 0.173,
+      "timeT3": 13.9,
+      "avgWR": 8.3,
+      "avgScore": 0.262,
+      "avgGold": 0
+    },
+    {
+      "name": "d20 Inspiration Engine",
+      "cat": "Synergy",
+      "heroes": [
+        "pillar",
+        "rosalind",
+        "toot",
+        "cinder"
+      ],
+      "wrT2": 16.7,
+      "scoreT2": 0.318,
+      "timeT2": 20.9,
+      "wrT3": 0,
+      "scoreT3": 0.199,
+      "timeT3": 14.3,
+      "avgWR": 8.3,
+      "avgScore": 0.259,
+      "avgGold": 12.8
+    }
+  ],
+  "threatMatrix": [
+    {
+      "stage": "Act 1 Early (d=1, T1)",
+      "threats": {
+        "ambush": {
+          "wr": 100,
+          "score": 1
+        },
+        "wolves": {
+          "wr": 100,
+          "score": 1
+        },
+        "reavers": {
+          "wr": 100,
+          "score": 0.99
+        },
+        "gate": {
+          "wr": 100,
+          "score": 0.99
+        },
+        "blights": {
+          "wr": 100,
+          "score": 1
+        }
+      }
+    },
+    {
+      "stage": "Act 1 Mid (d=5, T1.5)",
+      "threats": {
+        "wolves": {
+          "wr": 100,
+          "score": 0.89
+        },
+        "reavers": {
+          "wr": 100,
+          "score": 0.96
+        },
+        "gate": {
+          "wr": 100,
+          "score": 0.94
+        },
+        "owlwell": {
+          "wr": 100,
+          "score": 0.98
+        },
+        "blights": {
+          "wr": 100,
+          "score": 0.93
+        },
+        "glasstaff": {
+          "wr": 100,
+          "score": 0.91
+        },
+        "forge": {
+          "wr": 100,
+          "score": 0.88
+        }
+      }
+    },
+    {
+      "stage": "Act 1 Boss (d=7.5, T2)",
+      "threats": {
+        "orcs": {
+          "wr": 100,
+          "score": 0.92
+        },
+        "owlbear": {
+          "wr": 100,
+          "score": 0.88
+        },
+        "spider": {
+          "wr": 100,
+          "score": 0.85
+        }
+      }
+    },
+    {
+      "stage": "Act 2 Mid (d=9.9, T2)",
+      "threats": {
+        "wolves": {
+          "wr": 40,
+          "score": 0.45
+        },
+        "reavers": {
+          "wr": 60,
+          "score": 0.64
+        },
+        "gate": {
+          "wr": 70,
+          "score": 0.69
+        },
+        "owlwell": {
+          "wr": 40,
+          "score": 0.48
+        },
+        "blights": {
+          "wr": 50,
+          "score": 0.58
+        },
+        "glasstaff": {
+          "wr": 70,
+          "score": 0.69
+        },
+        "forge": {
+          "wr": 50,
+          "score": 0.54
+        }
+      }
+    },
+    {
+      "stage": "Act 2 Boss (d=12, T3)",
+      "threats": {
+        "orcs": {
+          "wr": 100,
+          "score": 0.89
+        },
+        "owlbear": {
+          "wr": 70,
+          "score": 0.74
+        },
+        "spider": {
+          "wr": 60,
+          "score": 0.7
+        }
+      }
+    },
+    {
+      "stage": "Act 3 Mid (d=13.7, T3)",
+      "threats": {
+        "wolves": {
+          "wr": 30,
+          "score": 0.38
+        },
+        "reavers": {
+          "wr": 60,
+          "score": 0.66
+        },
+        "gate": {
+          "wr": 40,
+          "score": 0.44
+        },
+        "owlwell": {
+          "wr": 10,
+          "score": 0.33
+        },
+        "blights": {
+          "wr": 30,
+          "score": 0.45
+        },
+        "glasstaff": {
+          "wr": 30,
+          "score": 0.41
+        },
+        "forge": {
+          "wr": 40,
+          "score": 0.48
+        }
+      }
+    },
+    {
+      "stage": "Act 3 Boss (d=15.8, T3+2items)",
+      "threats": {
+        "orcs": {
+          "wr": 70,
+          "score": 0.63
+        },
+        "owlbear": {
+          "wr": 70,
+          "score": 0.73
+        },
+        "spider": {
+          "wr": 20,
+          "score": 0.31
+        }
+      }
+    },
+    {
+      "stage": "Act 3 Boss (d=15.8, T4+2items)",
+      "threats": {
+        "orcs": {
+          "wr": 100,
+          "score": 0.83
+        },
+        "owlbear": {
+          "wr": 70,
+          "score": 0.8
+        },
+        "spider": {
+          "wr": 70,
+          "score": 0.7
+        }
+      }
+    }
+  ]
+}

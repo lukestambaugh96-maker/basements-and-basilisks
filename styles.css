@@ -395,7 +395,7 @@ body.dd-hero #slots,body.dd-hero #bench,body.dd-stash .htile,body.dd-equip .htil
 .iofav.kw{color:#5a2a7a}
 
 /* ================= 0.22 ADDITIONS: RECRUIT/UPGRADE BADGES, HERO QUEST CARD, ITEM TRAY ================= */
-.slotbadge{position:absolute;top:6px;left:6px;font:700 10px/1 'Alegreya Sans',sans-serif;letter-spacing:.08em;padding:3px 6px;border-radius:2px;text-transform:uppercase;color:#f7eed9;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.slotbadge{position:absolute;top:8px;right:8px;font:700 10px/1 'Alegreya Sans',sans-serif;letter-spacing:.08em;padding:3px 6px;border-radius:2px;text-transform:uppercase;color:#f7eed9;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .slotbadge.rec{background:#2d6a3a}
 .slotbadge.upg{background:#8f4a14}
 .qcard{margin:8px 0;padding:8px 10px;border-radius:3px;border:1px solid rgba(138,101,21,.38);background:rgba(214,165,49,.1)}

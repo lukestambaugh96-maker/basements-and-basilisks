@@ -12,9 +12,9 @@
 const ECON = {
   freeLosses: 1,
   piggyPerWin: 2,
-  winGold: d => 6 + Math.floor(d / 4),
+  winGold: d => 5 + Math.floor(d / 5),
   lossGold: () => 0,
-  heroPrice: t => [0, 3, 5, 8, 12][t] || 12,
+  heroPrice: t => [0, 3, 6, 9, 13][t] || 13,
   itemPrice: [2, 3, 5, 7, 12],
   reroll: n => 1 + n,
   sellBack: 1,
@@ -79,25 +79,25 @@ function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0) {
 }
 
 const THREATS = {
-  ambush:    { enc: 'ambush',    n: 'Raiders',      q: 'Blades in front, archers and a healer behind',        tag: 'baseline' },
-  wolves:    { enc: 'wolves',    n: 'Wolf pack',    q: 'A swarm, and a Dire Wolf that leaps at the back row', tag: 'swarm',    m: .9 },
-  reavers:   { enc: 'reavers',   n: 'Reavers',      q: 'Chargers that leap at the back row',                  tag: 'charger',  m: 1.0 },
-  gate:      { enc: 'gate',      n: 'Shield wall',  q: 'High AC in front, archers behind',                    tag: 'armor',    m: .95 },
-  owlwell:   { enc: 'owlwell',   n: 'Necromancer',  q: 'Necrosis, and a summoner raising archers',            tag: 'necrosis', m: .75 },
-  blights:   { enc: 'blights',   n: 'Blight swarm', q: 'Many weak foes, and a summoner growing more',         tag: 'swarm',    m: .92 },
-  glasstaff: { enc: 'glasstaff', n: 'Battle Mage',  q: 'A caster behind a shield wall; high SR',              tag: 'spell',    m: .9 },
-  forge:     { enc: 'forge',     n: 'Fire cult',    q: 'Casters that punish clumps',                          tag: 'fire',     m: .9 },
-  orcs:      { enc: 'orcs',      n: 'War band',     q: 'Chargers, an ogre and a warlord',                     tag: 'elite', boss: 1, m: .81 },
-  owlbear:   { enc: 'owlbear',   n: 'Owlbear',      q: 'One juggernaut that enrages',                         tag: 'elite', boss: 1, m: .8 },
-  spider:    { enc: 'spider',    n: 'Brood Mother', q: 'Boss: necrosis, webs and spiders',                    tag: 'boss',  boss: 1, m: .73 }
+  ambush:    { enc: 'ambush',    n: 'Raiders',      q: 'Blades in front, archers and a healer behind',        tag: 'baseline', m: 1.05 },
+  wolves:    { enc: 'wolves',    n: 'Wolf pack',    q: 'A swarm, and a Dire Wolf that leaps at the back row', tag: 'swarm',    m: .95 },
+  reavers:   { enc: 'reavers',   n: 'Reavers',      q: 'Chargers that leap at the back row',                  tag: 'charger',  m: 1.04 },
+  gate:      { enc: 'gate',      n: 'Shield wall',  q: 'High AC in front, archers behind',                    tag: 'armor',    m: 1.02 },
+  owlwell:   { enc: 'owlwell',   n: 'Necromancer',  q: 'Necrosis, and a summoner raising archers',            tag: 'necrosis', m: .80 },
+  blights:   { enc: 'blights',   n: 'Blight swarm', q: 'Many weak foes, and a summoner growing more',         tag: 'swarm',    m: .98 },
+  glasstaff: { enc: 'glasstaff', n: 'Battle Mage',  q: 'A caster behind a shield wall; high SR',              tag: 'spell',    m: .96 },
+  forge:     { enc: 'forge',     n: 'Fire cult',    q: 'Casters that punish clumps',                          tag: 'fire',     m: .96 },
+  orcs:      { enc: 'orcs',      n: 'War band',     q: 'Chargers, an ogre and a warlord',                     tag: 'elite', boss: 1, m: .96 },
+  owlbear:   { enc: 'owlbear',   n: 'Owlbear',      q: 'One juggernaut that enrages',                         tag: 'elite', boss: 1, m: .87 },
+  spider:    { enc: 'spider',    n: 'Brood Mother', q: 'Boss: necrosis, webs and spiders',                    tag: 'boss',  boss: 1, m: .78 }
 };
 const THREAT_ORDER = Object.keys(THREATS);
 
 const CURVE = {
-  share: [.32, .48, .64, .82, 1],
-  grow: 1.21,
-  dmgGrow: 1.22,
-  ease: [0.56, 0.78, 1.05, 1.22, 1.24],
+  share: [.45, .60, .76, .88, 1],
+  grow: 1.225,
+  dmgGrow: 1.28,
+  ease: [0.95, 1.14, 1.28, 1.40, 1.46],
   retry: .88
 };
 function curveAt(d) {
@@ -110,8 +110,8 @@ function curveAt(d) {
 const ADV = {
   acts: 3, rows: 7, bossRow: 6,
   depth: (act, r) => [1, 6.5, 10.5][act - 1] + r * [1, .85, .8][act - 1],
-  bossDepth: act => [7.5, 12, 15.8][act - 1],
-  eliteDepth: 1.1, eliteK: 1.18, eliteGold: 4,
+  bossDepth: act => [8.2, 13.0, 17.5][act - 1],
+  eliteDepth: 1.3, eliteK: 1.26, eliteGold: 3,
   startGold: 6
 };
 
@@ -462,7 +462,7 @@ function buildEncounter(run, rand = Math.random) {
   const enc = {
     n: T.n, place: base.place, theme: base.theme, q: T.q, note: base.note, map: base.map, u: keep,
     waves: d >= 5 ? (base.waves || []) : [],
-    sc: { hp: (sc.hp || 1) * cv.hp * (T.m || 1) * retry * (d === 1 ? .75 : 1), dmg: (sc.dmg || 1) * cv.dmg * (T.m || 1) * retry * (d === 1 ? .7 : 1) },
+    sc: { hp: (sc.hp || 1) * cv.hp * (T.m || 1) * retry * (d === 1 ? .96 : 1), dmg: (sc.dmg || 1) * cv.dmg * (T.m || 1) * retry * (d === 1 ? .95 : 1) },
     threat: tk, depth: d
   };
   ENC.run = enc;
@@ -769,8 +769,8 @@ function accelerateHeroQuest(run, uid) {
 
 function restAt(run, choice) {
   if (choice === 'piggy' && !run.piggyBroken) { run.piggy += 4; return 'Added +4 gold to your Piggy Bank'; }
-  run.gold += 6; run.stats.gold += 6;
-  return 'Foraged +6 gold';
+  run.gold += 4; run.stats.gold += 4;
+  return 'Foraged +4 gold';
 }
 
 function treasureOffer(run, rand = Math.random) {

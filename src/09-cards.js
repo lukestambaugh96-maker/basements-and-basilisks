@@ -310,24 +310,18 @@ function enemyCard(u, b, compact) {
 
 /* ---------- v0.22 Changelog ---------- */
 const CHANGELOG_HTML = `
-<div><h3>Six-Attribute Rework (new in 0.22)</h3><ul>
-<li><b>STR:</b> Melee weapon damage + flat Armor Penetration (+1 AC ignored per STR).</li>
-<li><b>DEX:</b> Linear Attack Speed (+6%/DEX for DEX weapons, +4%/DEX otherwise) + AC.</li>
-<li><b>CON:</b> +18 linear Max HP per point (scaled by tier) and faster regen.</li>
-<li><b>INT:</b> +10% Charge Speed per point (global 1-cast/second cap; excess converts via <i>Headband of Intellect</i>).</li>
-<li><b>WIS:</b> Spell Resistance + minimum natural d20 roll floor (1 + WIS) so combo engines don’t brick on Low rolls.</li>
-<li><b>CHA:</b> Commanding Presence (+8% potency & duration on buffs, debuffs, Inspiration, and Wards).</li>
-<li>High-roll d20 scaling is now driven by each hero’s <b>Key Attribute</b> rather than INT.</li>
+<div><h3>24-Hero Cast &amp; Unified 12-Class Keyword System</h3><ul>
+<li><b>6 Toggleable Hero Packs (24 Heroes + 6 Transformation Forms):</b> <i>You Meet at a Tavern</i> (Arthur, Bram, Faelan, Wallaby), <i>Around the Campfire</i> (Sir Dane, Lorcan, Juniper, Rosalind), <i>Off the Beaten Path</i> (Cinder, Zark, Naill, Nettle), <i>Divine Intervention</i> (Pillar, Mother Laurel, Lumen, Brother Jamison), <i>Cornering the Market</i> (Zoe, Toot, Gilthrax, Gains), and <i>Surprise Round</i> (Velith, Corvin, Saint, Kaska).</li>
+<li><b>17 Iconic Class Keywords across all 12 Classes:</b> Action Surge (Fighter), Channel Divinity (Cleric), Smite &amp; Aura (Paladin), Arcane Recovery (Wizard), Rage (Barbarian), Bardic Inspiration (Bard), Wild Shape (Druid), Hunter’s Mark (Ranger), Sneak Attack &amp; Cunning Action (Rogue), Ki &amp; Ki Ability (Monk), Sorcery Points &amp; Metamagic (Sorcerer), and Hex &amp; Pact Boon (Warlock).</li>
+<li><b>Built-In Hero Quests:</b> Every hero carries a personal Quest with a Signature Reward—including Large 2×2 mounted Sir Dane &amp; stone-colossus Pillar, Arthur’s Flame Gauntlet, and uncapped run scalers.</li>
 </ul></div>
-<div><h3>New 12-Hero Prototype Cast (3 Packs)</h3><ul>
-<li><b>You Meet at a Tavern:</b> Arthur, Bram, Faelan, Wallaby + <i>Potion of Healing</i>.</li>
-<li><b>Around the Campfire:</b> Sir Dane, Lorcan, Juniper, Rosalind + <i>Whetstone of the Hunt</i>.</li>
-<li><b>Off the Beaten Path:</b> Cinder, Zark, Naill, Nettle + <i>Ember-Iron Bracers</i>.</li>
-<li>Every hero features a built-in personal <b>Hero Quest</b> with a unique Signature Reward (including Large 2×2 mounted Sir Dane, Arthur’s Flame Gauntlet, and uncapped run scalers).</li>
+<div><h3>46 Canonical D&amp;D Items &amp; Encounter-Scaled Shop</h3><ul>
+<li><b>46 Canonical D&amp;D Items (All Always in Shop):</b> 8 Common staples, 24 Class-Keyword items (2 per class), and 14 Armor Ladder &amp; Archetype Riders with exact 6-attribute parity (7 items / +10 modifier per attribute).</li>
+<li><b>Smooth Encounter Progression:</b> Hero recruit tiers (I–III) and item rarities (Common → Very Rare) scale smoothly with each encounter won while keeping Tier I and Common gear findable late-run.</li>
+<li><b>No Duplicate Hunting:</b> 2 dedicated Recruit Slots (unowned heroes) + 1 exact Next-Tier Upgrade Slot (starting from Shop #2), plus <i>Bag of Holding</i> for +1 stash capacity.</li>
 </ul></div>
-<div><h3>Shop, Retraining &amp; Piggy Bank</h3><ul>
-<li><b>No Duplicate Hunting:</b> 2 dedicated Recruit Slots (unowned heroes) + 1 Upgrade Slot (Next-Tier Upgrade for owned heroes).</li>
-<li><b>Pre-Tiered Recruits:</b> Unowned heroes appear at Tier II in Act 2 and Tier II/III in Act 3, opening their Tier II Path choice immediately on purchase.</li>
-<li><b>Campfire Retraining &amp; Training Level-Ups:</b> Retrain any Tier II Path for free at Campfires, or promote a hero +1 Tier at Training nodes.</li>
-<li><b>Piggy Bank Loss Rule:</b> Wins fill the Piggy Bank; your first loss breaks it, pays out, and lets you shop and retry that fight; a second loss ends the run.</li>
+<div><h3>Six-Attribute Rework, Retraining &amp; Piggy Bank</h3><ul>
+<li><b>Six-Attribute Split:</b> STR (melee Armor Pen &amp; Intercept), DEX (linear Attack Speed &amp; AC), CON (linear HP &amp; Poison resist), INT (Charge Speed, capped at 1 cast/s), WIS (SR + minimum natural d20 floor), CHA (Commanding Presence buff/debuff potency). High-roll scaling uses each hero’s <b>Key Attribute</b>.</li>
+<li><b>Campfire Retraining &amp; Training Nodes:</b> Retrain any Tier II+ Path freely at Campfires, or promote a hero +1 Tier at Training nodes.</li>
+<li><b>Piggy Bank Loss Rule:</b> Wins fill the Piggy Bank; your first loss breaks it, pays out all saved gold, and lets you shop and retry that fight; a second loss ends the run.</li>
 </ul></div>`;

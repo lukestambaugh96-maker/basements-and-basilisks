@@ -15,7 +15,7 @@
 const TIERX = { hp: 1.45, dmg: 1.3 };
 const ROLL_SHIFT = 3;
 const COMBAT_TEMPO = 1.4; // ~1.4x slower baseline tempo so combat reads clearly and DEX/INT speed scaling shines
-const OT_START = 40, OT_STEP = 6, TIME_LIMIT = 110;
+const OT_START = 28, OT_STEP = 5, TIME_LIMIT = 110;
 const CHARGE_TAKEN = 60;
 const MIN_CAST_INTERVAL = 1.0; // Global 1-cast/second cap
 const LARGE_AREA = 1.25, LARGE_HP = 1.5;
@@ -224,7 +224,7 @@ function mkHero(cfg, side = 'P') {
     it: { ...((st.item && st.item.s) || {}) },
     cr: st.cr, pa: st.pa, charge: 0, t: Math.random() * .35, mt: 0,
     f: { ...st.f }, abM: st.abM, atM: st.atM, die: st.die, bands: st.bands,
-    dm: st.dm, pen: st.pen, spen: st.spen, d20Floor: st.d20Floor, chaPotency: st.chaPotency,
+    dm: d.role === 'Damage' ? st.dm * 1.12 : st.dm, pen: st.pen, spen: st.spen, d20Floor: st.d20Floor, chaPotency: st.chaPotency,
     poisonX: (st.item && st.item.s && st.item.s.poisonX) || 1,
     bigArea: st.item && st.item.s && st.item.s.bigArea,
     chgX: st.chgX || 1,
@@ -337,11 +337,12 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
     if (kwKey === 'action_surge') {
       // Arthur Path 2 Roll for Initiative: any ally Action Surge applies Exposed
       if (tgt && P.some(x => x.f.initSplash)) expose(b, tgt, 4 * chaK(actor));
-      // Zoe Path 2 Just the Thing: any ally Action Surge grants Ward + 12 Charge
+      // Zoe Path 2 Just the Thing: any ally Action Surge grants Ward + 10 Charge (1s CD)
       P.filter(x => x.f.justTheThing).forEach(zoe => {
-        if (actor.alive) {
-          addWard(b, actor, (16 + Math.max(0, zoe.m.int) * 2) * zoe.dm, actor.maxHp * .5, zoe);
-          giveCharge(b, actor, 12, 1);
+        if (actor.alive && b.time >= (zoe._jttT || 0)) {
+          zoe._jttT = b.time + 1.0;
+          addWard(b, actor, (10 + Math.max(0, zoe.m.int)) * zoe.dm, actor.maxHp * .35, zoe);
+          giveCharge(b, actor, 10, 1);
         }
       });
       // Flametongue (Favoured): Action Surge spreads Burn
@@ -376,7 +377,7 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
         foes(b, jm).filter(x => hd(x, jm) <= 2).forEach(x => hit(b, jm, x, roll(1, 8), { kind: 'holy', ty: 'radiant', noBonus: 1, area: 1 }));
         if (jm.tier >= 4) {
           const low = friends(b, jm).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
-          if (low) heal(b, jm, low, 12 * jm.dm, { raw: 1 });
+          if (low) heal(b, jm, low, 10 * jm.dm, { raw: 1 });
         }
       });
       // Saint Path 2 Smoke & Mirrors: any ally Channel Divinity spawns Saint a free Illusory Double
@@ -400,11 +401,13 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
           friends(b, dane).filter(a => !a.minion && hd(a, dane) <= rad).forEach(a => giveCharge(b, a, 8, 1));
         }
       });
-      // Mother Laurel Path 2 Bountiful Vines: any ally Smite pulses a heal to lowest-HP ally (T4 whole party)
+      // Mother Laurel Path 2 Bountiful Vines: any ally Smite pulses a heal to lowest-HP ally (1s CD; T4 2 allies)
       P.filter(x => x.f.bountifulVines).forEach(ml => {
-        const fr = friends(b, ml).filter(a => !a.minion);
-        const list = ml.tier >= 4 ? fr : [fr.slice().sort((a, c) => hpPct(a) - hpPct(c))[0]].filter(Boolean);
-        list.forEach(a => heal(b, ml, a, (8 + Math.max(0, ml.m.wis) * 2) * ml.dm, { raw: 1 }));
+        if (b.time < (ml._bvT || 0)) return;
+        ml._bvT = b.time + 1.0;
+        const fr = friends(b, ml).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c));
+        const list = fr.slice(0, ml.tier >= 4 ? 2 : 1);
+        list.forEach(a => heal(b, ml, a, (6 + Math.max(0, ml.m.wis) * 1.5) * ml.dm, { raw: 1 }));
       });
       // Flametongue (Favoured): Smite spreads Burn
       if (actor.it && actor.it.flameKwBurn && tgt) {
@@ -436,16 +439,18 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
       });
       // Pillar Tier IV Living Beacon: entering Rage heals nearby allies
       if (actor.f.livingBeacon && actor.tier >= 4) {
-        friends(b, actor).filter(a => a !== actor && !a.minion && hd(a, actor) <= 2).forEach(a => heal(b, actor, a, 24 * actor.dm));
+        friends(b, actor).filter(a => a !== actor && !a.minion && hd(a, actor) <= 2).forEach(a => heal(b, actor, a, 24 * actor.dm, { raw: 1 }));
       }
     } else if (kwKey === 'wild_shape') {
       // Juniper Path 2 Circle of the Land: any ally Wild Shape triggers Circle of the Land heal + Ward
       P.filter(x => x.f.circleLand).forEach(j => triggerCircleLand(b, j));
-      // Mother Laurel Path 2 Bountiful Vines: any ally Wild Shape pulses a heal
+      // Mother Laurel Path 2 Bountiful Vines: any ally Wild Shape pulses a heal (1s CD; T4 2 allies)
       P.filter(x => x.f.bountifulVines).forEach(ml => {
-        const fr = friends(b, ml).filter(a => !a.minion);
-        const list = ml.tier >= 4 ? fr : [fr.slice().sort((a, c) => hpPct(a) - hpPct(c))[0]].filter(Boolean);
-        list.forEach(a => heal(b, ml, a, (8 + Math.max(0, ml.m.wis) * 2) * ml.dm, { raw: 1 }));
+        if (b.time < (ml._bvT || 0)) return;
+        ml._bvT = b.time + 1.0;
+        const fr = friends(b, ml).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c));
+        const list = fr.slice(0, ml.tier >= 4 ? 2 : 1);
+        list.forEach(a => heal(b, ml, a, (6 + Math.max(0, ml.m.wis) * 1.5) * ml.dm, { raw: 1 }));
       });
       // Moon Sickle: entering Wild Shape grants +25% Attack Speed & +2 Damage for 4s
       if (actor.it && actor.it.moonSickle) {
@@ -609,7 +614,7 @@ function triggerJamisonCD(b, u) {
       a.bonded = u;
       a.bondDie = Math.max(a.bondDie || 0, die);
       if (u.questDone) a.d20Floor = Math.max(a.d20Floor || 1, u.d20Floor || 1);
-      heal(b, u, a, (18 + Math.max(0, u.m.cha) * 4) * u.dm * mult, { raw: 1 });
+      heal(b, u, a, (14 + Math.max(0, u.m.cha) * 3) * u.dm * mult, { raw: 1 });
     });
     u.stats.bondedCasts = (u.stats.bondedCasts || 0) + fr.length;
   });
@@ -712,8 +717,8 @@ function addSorcery(b, u, n, excludeCenter, hurlFn) {
         const hitFoes = fs.filter(x => hd(x, c) <= 1);
         b.events.push({ k: 'area', id: u.id, tid: c.id, shape: 'splash', r: 1, ty: 'fire', ids: hitFoes.map(x => x.id) });
         hitFoes.forEach(x => {
-          hit(b, u, x, roll(4, 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1 });
-          applyStatus(b, u, x, 'burn', 8 * chaK(u));
+          hit(b, u, x, roll(5, 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1 });
+          applyStatus(b, u, x, 'burn', 9 * chaK(u));
           if (u.f.wildfire && x.alive) { expose(b, x, 4 * chaK(u)); x.st.srShred = Math.min(6, (x.st.srShred || 0) + 2); }
         });
       }
@@ -767,7 +772,7 @@ function triggerSneakAttack(b, u, target, opts = {}) {
   if (!u || !u.alive || !target) return;
   u.stats.sneaks = (u.stats.sneaks || 0) + 1;
   if (!opts.ability && target.alive) {
-    const dice = (u.kw && u.kw.sneak_attack) || 1;
+    const dice = ((u.kw && u.kw.sneak_attack) || 1) + 1;
     hit(b, u, target, roll(dice, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
   }
   emitClassKw(b, u, 'sneak_attack', { target, ...opts });
@@ -783,7 +788,8 @@ function fireNaillKiStrike(b, u, t) {
   u.stats.kiStrikes = (u.stats.kiStrikes || 0) + 1;
   callout(b, u, 'KI · OPEN HAND!', '#8fd8d8');
   b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: u.f.flowingLeaves ? 1 : 0.6, ty: 'thunder', ids: [t.id] });
-  const got = hit(b, u, t, roll(1, 8) + Math.max(0, u.m.wis), { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1 });
+  const got = hit(b, u, t, roll(2, 10) + Math.max(0, u.m.wis) * 2, { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1 });
+  grantAlert(b, u, 1);
   stagger(b, t, 2);
   if (u.f.naillOpenHand) {
     if (t.alive) { onHit(b, u, t, got); onHit(b, u, t, got); }
@@ -808,10 +814,14 @@ function triggerPactBoon(b, nettle, victim, killer) {
   if (!nettle) return;
   nettle.stats.hexDeaths = (nettle.stats.hexDeaths || 0) + 1;
   nettle.stats.pactBoons = (nettle.stats.pactBoons || 0) + 1;
+  if (nettle.alive) giveCharge(b, nettle, 16, 1);
+  if (killer && killer.side === 'P' && killer.alive && killer !== nettle) giveCharge(b, killer, 16, 1);
+  const lowAlly = friends(b, nettle).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
+  if (lowAlly) heal(b, nettle, lowAlly, (7 + Math.max(0, nettle.m.cha) * 1.5) * nettle.dm, { raw: 1 });
   if (victim && victim.st.hexJump && nettle.alive) {
     const nx = foes(b, nettle)[0];
     if (nx) applyNettleHex(b, nettle, nx, true);
-    friends(b, nettle).filter(a => !a.minion).forEach(a => heal(b, nettle, a, (5 + Math.max(0, nettle.m.cha)) * nettle.dm, { raw: 1 }));
+    friends(b, nettle).filter(a => !a.minion).forEach(a => heal(b, nettle, a, (4 + Math.max(0, nettle.m.cha)) * nettle.dm, { raw: 1 }));
   }
   if (nettle.f.darkBargain && killer && killer.side === 'P' && killer.alive) {
     giveCharge(b, killer, 30);
@@ -846,12 +856,14 @@ function applyRoot(b, src, t, dur) {
 
 function triggerCircleLand(b, juniper) {
   if (!juniper || !juniper.alive || !juniper.f.circleLand) return;
-  const fr = friends(b, juniper).filter(a => !a.minion);
-  const targets = juniper.tier >= 4 ? fr : [fr.slice().sort((a, c) => hpPct(a) - hpPct(c))[0]].filter(Boolean);
-  const amt = (4 + Math.max(0, juniper.m.wis)) * juniper.dm;
+  if (b.time < (juniper._clT || 0)) return;
+  juniper._clT = b.time + 1.0;
+  const fr = friends(b, juniper).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c));
+  const targets = juniper.tier >= 4 ? fr.slice(0, 2) : fr.slice(0, 1);
+  const amt = (3 + Math.max(0, juniper.m.wis) * .8) * juniper.dm;
   targets.forEach(a => {
     heal(b, juniper, a, amt, { raw: 1 });
-    addWard(b, a, amt * .8, a.maxHp * .4, juniper);
+    addWard(b, a, amt * .45, a.maxHp * .3, juniper);
   });
 }
 
@@ -984,7 +996,9 @@ function hit(b, src, t, amt, o = {}) {
   if (src && !o.dot) {
     if (amt > 0) raw += bonusFor(src, o);
     let mul = src.dm * (1 + .15 * otLevel(b)) * (o.mul || 1) * (o.ab ? src.abM || 1 : o.strike ? src.atM || 1 : 1);
-    if (src.st.mockT > 0) mul *= .85;
+    if (src.st.mockT > 0) mul *= .78;
+    if (src.inspAmpT > 0) mul *= 1.25;
+    if (src.side === 'P' && t.side === 'E' && t.st.mark) mul *= 1.22;
     if (o.onhit && t.st.mark && alive(b, 'P').some(x => x.f.trophyVolley)) mul *= 1.35;
     if (src.key === 'lorcan' && src.questDone && src.questTrophies && src.questTrophies.length) {
       const arches = archOf(t.key);
@@ -1006,7 +1020,7 @@ function hit(b, src, t, amt, o = {}) {
 
   if (t.f.hellishRes && (o.el === 'fire' || o.ty === 'fire')) dmg = Math.round(dmg * .5);
   if (t.stealthShield && !o.dot && dmg > 0) { t.stealthShield = 0; dmg = Math.round(dmg * .5); status(b, t, 'GLANCING', '#c48fe6'); }
-  if (t.bearRage > 0 && !o.dot && dmg > 0) { dmg = Math.max(1, Math.round(dmg * (1 - Math.min(.60, t.bearRage * .04)))); }
+  if (t.bearRage > 0 && !o.dot && dmg > 0) { dmg = Math.max(1, Math.round(dmg * (1 - Math.min(.55, t.bearRage * .06)))); }
   // Pillar Stone's Endurance: reduces heavy hits by 4
   if (t.f.stoneEndure && !o.dot && dmg >= 12) dmg = Math.max(1, dmg - t.f.stoneEndure);
   // Brother Jamison Good Vibes: bonded allies take 15% less damage
@@ -1027,7 +1041,7 @@ function hit(b, src, t, amt, o = {}) {
       const giver = t._wardBy;
       t._wardBy = null;
       if (giver.alive && giver.f.abjurer) {
-        triggerArcaneRecovery(b, giver, 20, 'WARD BREAK');
+        triggerArcaneRecovery(b, giver, 12, 'WARD BREAK');
         giver._wardsBroken = (giver._wardsBroken || 0) + 1;
         if (giver.f.projWard && giver._wardsBroken % 3 === 0) {
           giver.advantage = 1;
@@ -1180,12 +1194,12 @@ function hit(b, src, t, amt, o = {}) {
   if (pre > 0 && o.kind === 'holy' && src && src.side === 'P' && t.side === 'E' && t.alive && !o.dot && alive(b, 'P').some(x => x.f.purifyingLight)) {
     applyStatus(b, src, t, 'burn', 4);
   }
-  // Kaska Path 2 Pack Hunt: allies hitting Exposed foes heal 10 HP + 10 Charge (1s CD)
+  // Kaska Path 2 Pack Hunt: allies hitting Exposed foes heal 7 HP + 8 Charge (1.2s CD)
   if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.st.exp > 0 && !o.dot && !o.onhit && alive(b, 'P').some(x => x.f.packHunt)) {
     if (b.time >= (src._phT || 0)) {
-      src._phT = b.time + 1.0;
-      heal(b, src, src, 10 * src.dm, { raw: 1 });
-      giveCharge(b, src, 10, 1);
+      src._phT = b.time + 1.2;
+      heal(b, src, src, 7 * src.dm, { raw: 1 });
+      giveCharge(b, src, 8, 1);
     }
   }
   // Corvin Tier IV First Strike: allies hitting any Hunter's Mark foe deal +1d4 piercing
@@ -1197,7 +1211,7 @@ function hit(b, src, t, amt, o = {}) {
   if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.alive && t.st.hex && !o.dot && !o.hexProc) {
     const hexer = t.st.hex;
     const stacks = t.st.hexStacks || 1;
-    const dieS = hexer.tier >= 2 ? 6 : 4;
+    const dieS = hexer.tier >= 2 ? 10 : 8;
     const bonus = roll(stacks, dieS) * chaK(hexer);
     later(b, 0, () => { if (t.alive) hit(b, hexer, t, bonus, { kind: 'magic', ty: 'necrotic', noBonus: 1, hexProc: 1 }); });
   }
@@ -1227,7 +1241,7 @@ function applyElement(b, src, t, el, dealt, o) {
   if (!el || !t.alive) return;
   const s = t.st;
   if (el === 'fire') {
-    s.burn += dealt * .45;
+    s.burn += dealt * .55;
     s.burnT = s.burnT || .5;
     if (src && src.key === 'cinder') src.stats.burnCredit = (src.stats.burnCredit || 0) + 1;
   } else if (el === 'cold') {
@@ -1312,7 +1326,8 @@ function kill(b, t, src, o) {
     // Arthur Path 1 Constant Vigilance: kills refresh Alert
     if (K && K.alive && K.f.vigilance) grantAlert(b, K, K.tier >= 4 ? 2 : 1);
 
-    // Wallaby Path 1 Slippery: kills refund 50% (100% T4) Charge and +2 next d20
+    // Wallaby shadow evade on kill + Path 1 Slippery: kills refund 50% (100% T4) Charge and +2 next d20
+    if (K && K.alive && K.key === 'wallaby') K.stealthShield = 1;
     if (K && K.alive && K.f.slippery) {
       giveCharge(b, K, K.tier >= 4 ? 100 : 50);
       K.nextBonus += 2;
@@ -1407,6 +1422,8 @@ function heal(b, src, t, amt, o = {}) {
     if (src.bon) v += src.bon.k;
     v *= src.dm;
   }
+  const ot = otLevel(b);
+  if (ot > 0) v *= Math.max(.4, 1 - .15 * ot);
   v = Math.round(v);
   const room = Math.max(0, t.maxHp - t.hp);
   const got = Math.min(room, v);
@@ -1436,6 +1453,8 @@ function heal(b, src, t, amt, o = {}) {
 
 function addWard(b, t, v, cap, giver) {
   if (!t || !t.alive) return;
+  const ot = otLevel(b);
+  if (ot > 0) v *= Math.max(.4, 1 - .15 * ot);
   v = Math.round(v);
   if (cap) v = Math.min(v, Math.max(0, cap - t.ward));
   if (v <= 0) return;
@@ -1592,6 +1611,12 @@ function castAbility(b, u) {
     gainGold(b, usedMote.giver, 1, 'MOTE SPENT');
   }
   if (spentInspiration) {
+    const giver = (usedInsp && usedInsp.giver) || (usedMote && usedMote.giver) || u;
+    const fDur = 4.5 * chaK(giver);
+    u.inspAmpT = Math.max(u.inspAmpT || 0, fDur);
+    u.tempHaste = Math.max(u.tempHaste || 0, 25);
+    u.tempHasteT = Math.max(u.tempHasteT || 0, fDur);
+    status(b, u, 'INSPIRED +25%!', '#ffd76a');
     emitClassKw(b, u, 'bardic_inspiration', { action: 'spend', band: P });
     if (P === 3) {
       alive(b, 'P').filter(x => x.f.passRound).forEach(r => giveCharge(b, r, 50));
@@ -1935,7 +1960,7 @@ function postStrikeHooks(b, u, t, got) {
   }
   // Lorcan / Corvin Hunter's Mark: bonus WIS-scaled damage vs Marked + Colossus Slayer
   if (K.hunters_mark && t.alive && t.st.mark) {
-    hit(b, u, t, roll(1, 6) + Math.max(0, u.m.wis), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
+    hit(b, u, t, roll(1, 10) + Math.max(0, u.m.wis), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
     if (u.f.colossusSlayer) {
       u._colCnt = (u._colCnt || 0) + 1;
       if (u._colCnt % (u.tier >= 4 ? 2 : 3) === 0) {
@@ -1953,8 +1978,11 @@ function postStrikeHooks(b, u, t, got) {
       triggerSneakAttack(b, u, t, {});
     }
   }
-  // Rosalind Vicious Mockery: slight enemy damage debuff
-  if (u.key === 'rosalind' && t.alive) { t.st.mockT = Math.max(t.st.mockT || 0, 2.2 * chaK(u)); }
+  // Rosalind Vicious Mockery: enemy damage debuff (-22%) + Stagger
+  if (u.key === 'rosalind' && t.alive) {
+    t.st.mockT = Math.max(t.st.mockT || 0, 2.5 * chaK(u));
+    stagger(b, t, 1.5 * chaK(u));
+  }
   // Ki bar (Naill & Dragonhide Belt): 4-pip bar -> Ki Ability!
   if (K.ki && t.alive) {
     u.ki = Math.min(KI_MAX, (u.ki || 0) + 1);
@@ -2070,7 +2098,7 @@ function newBattle(encKey, party, eTier) {
       u.illusoryDouble = Math.max(u.illusoryDouble || 0, 1);
     }
     if (u.f.pantherForm) {
-      const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .55 : .40) * (u.questDone ? 1.25 : 1));
+      const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .44 : .32) * (u.questDone ? 1.25 : 1));
       u.beast = { hp: bhp, max: bhp };
       triggerWildShape(b, u, { form: 'Panther Form', beastHp: bhp });
     }
@@ -2161,6 +2189,7 @@ function tick(b, dt) {
     s.mockT = Math.max(0, s.mockT - dt);
     s.hexSlow = Math.max(0, s.hexSlow - dt);
     u.tempHasteT = Math.max(0, (u.tempHasteT || 0) - dt);
+    u.inspAmpT = Math.max(0, (u.inspAmpT || 0) - dt);
     u.doubleRegenT = Math.max(0, (u.doubleRegenT || 0) - dt);
     u.moonDmgT = Math.max(0, (u.moonDmgT || 0) - dt);
     u.sacredShieldT = Math.max(0, (u.sacredShieldT || 0) - dt);

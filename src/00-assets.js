@@ -60,16 +60,19 @@ function preloadManifestAssets(onDone) {
 }
 
 function initAssets(onReady) {
-  // 1. Apply any localStorage overrides saved from Asset Studio
+  // 1. Apply any pre-inlined bundle manifest (used by single-file dist/Basements_&_Basilisks_0.22.html)
+  const bundled = (typeof window !== 'undefined' && window.__BUNDLED_MANIFEST__) || null;
+  if (bundled) _mergeManifest(ASSET_MANIFEST, bundled);
+  // 2. Apply any localStorage overrides saved from Asset Studio
   let local = null;
   try { local = JSON.parse(localStorage.getItem(ASSET_STORE_KEY) || 'null'); } catch (e) {}
-  // 2. Fetch assets/manifest.json (silently skipped if running from file:// without server)
+  // 3. Fetch assets/manifest.json in modular dev mode (skipped when bundled or running from file://)
   const applyAll = (disk) => {
     if (disk) _mergeManifest(ASSET_MANIFEST, disk);
     if (local) _mergeManifest(ASSET_MANIFEST, local);
     preloadManifestAssets(() => { if (onReady) onReady(); });
   };
-  if (typeof fetch === 'function' && typeof location !== 'undefined' && location.protocol !== 'file:') {
+  if (!bundled && typeof fetch === 'function' && typeof location !== 'undefined' && location.protocol !== 'file:') {
     fetch('assets/manifest.json', { cache: 'no-cache' })
       .then(r => (r.ok ? r.json() : null))
       .then(applyAll)

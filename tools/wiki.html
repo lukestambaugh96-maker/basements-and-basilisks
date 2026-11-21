@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field Guide &amp; Live Stat Tracker · Basements &amp; Basilisks 0.22</title>
+  <meta name="description" content="Interactive character wiki, live balance changelog, simulation stat tracker, best partner heroes, and best item pairings for Basements & Basilisks v0.22." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #efe3c6;
+      --bg-deep: #e4d3aa;
+      --panel: #f7eed9;
+      --panel2: #ece0c2;
+      --paper: #fcf7eb;
+      --ink: #2a1c12;
+      --ink-soft: #433122;
+      --mute: #65513c;
+      --red: #8f1d14;
+      --red-soft: rgba(143, 29, 20, .11);
+      --gold: #9a6c18;
+      --gold-bright: #c5912c;
+      --gold-soft: rgba(184, 134, 42, .15);
+      --green: #1f6835;
+      --green-soft: rgba(31, 104, 53, .12);
+      --blue: #234f7a;
+      --blue-soft: rgba(35, 79, 122, .12);
+      --line: #bfa97e;
+      --line-strong: #8d754e;
+      --shadow: 0 3px 10px rgba(42, 28, 18, .09);
+      --radius: 4px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 20% 0%, #f5ebd2 0%, var(--bg) 55%, #e6d6b1 100%);
+      color: var(--ink);
+      font: 15.5px/1.44 'EB Garamond', Georgia, serif;
+      min-height: 100vh;
+    }
+    h1, h2, h3, h4 { font-family: 'IM Fell English SC', Georgia, serif; font-weight: 400; margin: 0; letter-spacing: .01em; }
+    .sans { font-family: 'Alegreya Sans', system-ui, sans-serif; }
+    .num { font-family: 'Alegreya Sans', system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    .mute { color: var(--mute); }
+
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 18px 22px 56px; }
+
+    /* Header */
+    .topbar {
+      display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap;
+      border-bottom: 2px solid var(--ink); padding-bottom: 12px; margin-bottom: 16px;
+    }
+    .brand h1 { font-size: 2.15rem; line-height: 1.05; }
+    .brand .subline {
+      font: 700 .78rem/1.3 'Alegreya Sans', sans-serif; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--mute); margin-top: 4px;
+    }
+    .nav-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn {
+      font: 700 .86rem/1.15 'Alegreya Sans', sans-serif;
+      padding: 7px 13px; border: 1.5px solid var(--ink);
+      background: var(--panel); color: var(--ink);
+      border-radius: var(--radius); cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: background .14s, color .14s, border-color .14s;
+    }
+    .btn:hover { border-color: var(--red); color: var(--red); background: var(--paper); }
+    .btn.primary { background: var(--ink); color: var(--bg); }
+    .btn.primary:hover { background: var(--red); border-color: var(--red); color: #fff8eb; }
+    .btn.sm { font-size: .78rem; padding: 4px 9px; }
+
+    /* Main Tabs */
+    .main-tabs {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;
+      border-bottom: 1.5px solid var(--line); padding-bottom: 10px;
+    }
+    .mtab {
+      font: 700 .9rem/1 'Alegreya Sans', sans-serif;
+      padding: 9px 16px; border: 1.5px solid var(--line);
+      background: var(--panel2); color: var(--ink-soft);
+      border-radius: var(--radius); cursor: pointer;
+      transition: all .14s;
+    }
+    .mtab:hover { border-color: var(--ink); color: var(--ink); background: var(--panel); }
+    .mtab.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+    .mtab span.cnt { opacity: .72; font-size: .78rem; margin-left: 5px; }
+
+    /* Controls Bar */
+    .controls {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      background: var(--panel); border: 1.5px solid var(--line-strong);
+      border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .controls-left, .controls-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .controls input[type="text"], .controls select {
+      font: 600 .86rem/1.2 'Alegreya Sans', sans-serif;
+      padding: 6px 10px; border: 1.5px solid var(--line);
+      background: var(--paper); color: var(--ink); border-radius: 3px;
+    }
+    .controls input[type="text"] { min-width: 210px; }
+    .controls input[type="text"]:focus, .controls select:focus { outline: none; border-color: var(--ink); }
+    .seg { display: inline-flex; border: 1.5px solid var(--line-strong); border-radius: 3px; overflow: hidden; }
+    .seg button {
+      font: 700 .8rem/1 'Alegreya Sans', sans-serif; padding: 6px 11px; border: 0;
+      background: var(--panel2); color: var(--ink-soft); cursor: pointer;
+    }
+    .seg button.on { background: var(--ink); color: var(--bg); }
+
+    /* Pills & Badges */
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font: 700 .72rem/1.1 'Alegreya Sans', sans-serif;
+      padding: 3px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .tier-S { background: #7a1c14; color: #fff4dd; }
+    .tier-A { background: #8f6215; color: #fff8ea; }
+    .tier-B { background: #2d5c3a; color: #f2fbf4; }
+    .tier-C { background: #5a4c3d; color: #f5ede0; }
+    .role-Tank { background: #dce5ee; color: #1e4266; border: 1px solid #9ab4cc; }
+    .role-Damage { background: #f2dedb; color: #7e1c14; border: 1px solid #d19c96; }
+    .role-Support { background: #ddece0; color: #1f5c31; border: 1px solid #9cc2a6; }
+
+    .st-buff { background: var(--green-soft); color: var(--green); border: 1px solid rgba(31,104,53,.3); }
+    .st-nerf { background: var(--red-soft); color: var(--red); border: 1px solid rgba(143,29,20,.3); }
+    .st-rebal { background: var(--gold-soft); color: #7a520c; border: 1px solid rgba(154,108,24,.35); }
+    .st-global { background: rgba(101,81,60,.11); color: var(--mute); border: 1px solid rgba(101,81,60,.25); }
+
+    .delta-pos { color: var(--green); font-weight: 800; }
+    .delta-neg { color: var(--red); font-weight: 800; }
+    .delta-flat { color: var(--mute); font-weight: 700; }
+
+    /* Master-Detail Hero Explorer */
+    .explorer {
+      display: grid; grid-template-columns: minmax(340px, 430px) minmax(0, 1fr); gap: 16px; align-items: start;
+    }
+    @media (max-width: 1020px) { .explorer { grid-template-columns: 1fr; } }
+
+    .roster-list {
+      background: var(--panel); border: 1.5px solid var(--line-strong); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
+      max-height: calc(100vh - 210px); overflow-y: auto;
+    }
+    @media (max-width: 1020px) { .roster-list { max-height: 360px; } }
+
+    .hrow {
+      display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center;
+      padding: 9px 12px; border-bottom: 1px solid rgba(141,117,78,.3);
+      cursor: pointer; transition: background .12s;
+    }
+    .hrow:last-child { border-bottom: 0; }
+    .hrow:hover { background: var(--paper); }
+    .hrow.sel {
+      background: #fff8e7;
+      box-shadow: inset 4px 0 0 var(--red);
+    }
+    .hrow-thumb {
+      width: 52px; height: 52px; border-radius: 3px; border: 1.5px solid var(--ink);
+      background: var(--bg-deep); overflow: hidden; flex-shrink: 0;
+    }
+    .hrow-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hrow-main { min-width: 0; }
+    .hrow-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .hrow-name { font: 700 1.08rem/1.1 'IM Fell English SC', Georgia, serif; }
+    .hrow-sub { font: 600 .78rem/1.25 'Alegreya Sans', sans-serif; color: var(--mute); margin-top: 2px; }
+    .hrow-metrics { text-align: right; font-family: 'Alegreya Sans', sans-serif; font-variant-numeric: tabular-nums; }
+    .hrow-score { font-size: 1.05rem; font-weight: 800; line-height: 1.1; }
+    .hrow-wr { font-size: .76rem; color: var(--mute); }
+    .hrow-delta { font-size: .74rem; margin-top: 2px; }
+
+    /* Hero Dossier (Right Pane) */
+    .dossier {
+      background: var(--panel); border: 1.5px solid var(--ink); border-radius: var(--radius);
+      box-shadow: 0 6px 20px rgba(42, 28, 18, .12); padding: 20px 22px;
+    }
+    .dos-head {
+      display: grid; grid-template-columns: 112px 1fr; gap: 18px; align-items: start;
+      border-bottom: 1.5px solid var(--line); padding-bottom: 16px; margin-bottom: 16px;
+    }
+    @media (max-width: 640px) { .dos-head { grid-template-columns: 82px 1fr; gap: 12px; } }
+    .dos-portrait {
+      width: 112px; height: 112px; border-radius: 4px; border: 2px solid var(--ink);
+      background: var(--bg-deep); overflow: hidden; box-shadow: var(--shadow);
+    }
+    @media (max-width: 640px) { .dos-portrait { width: 82px; height: 82px; } }
+    .dos-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dos-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .dos-title-row h2 { font-size: 1.9rem; line-height: 1.05; }
+    .dos-bio { font-style: italic; color: var(--ink-soft); margin: 5px 0 9px; font-size: .98rem; }
+    .dos-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+
+    .attr-strip {
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;
+      margin-top: 8px;
+    }
+    .attr-box {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 3px;
+      padding: 4px 6px; text-align: center; font-family: 'Alegreya Sans', sans-serif;
+    }
+    .attr-box.key { border-color: var(--red); background: #fff5e8; }
+    .attr-box .al { font-size: .66rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--mute); }
+    .attr-box .av { font-size: .95rem; font-weight: 800; line-height: 1.15; }
+    .attr-box .am { font-size: .7rem; color: var(--mute); }
+
+    /* Telemetry Strip */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 720px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    .kpi {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 3px;
+      padding: 9px 10px; font-family: 'Alegreya Sans', sans-serif;
+    }
+    .kpi .kl { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--mute); }
+    .kpi .kv { font-size: 1.32rem; font-weight: 800; line-height: 1.15; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .kpi .ks { font-size: .75rem; color: var(--mute); margin-top: 2px; }
+
+    /* Dossier Sections */
+    .dsec { margin-bottom: 18px; }
+    .dsec:last-child { margin-bottom: 0; }
+    .dsec-h {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+      border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-bottom: 10px;
+    }
+    .dsec-h h3 { font-size: 1.22rem; }
+    .dsec-h .hint { font: 600 .78rem/1 'Alegreya Sans', sans-serif; color: var(--mute); }
+
+    .usecase-box {
+      background: var(--paper); border-left: 3.5px solid var(--gold-bright);
+      padding: 11px 14px; border-radius: 0 3px 3px 0;
+      font-size: 1.02rem; line-height: 1.48;
+    }
+    .usecase-role {
+      font: 800 .75rem/1.2 'Alegreya Sans', sans-serif; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--gold); margin-bottom: 4px;
+    }
+
+    .change-list { margin: 0; padding-left: 18px; }
+    .change-list li { margin-bottom: 5px; }
+    .change-list li:last-child { margin-bottom: 0; }
+    .chg-tag {
+      display: inline-block; font: 800 .68rem/1 'Alegreya Sans', sans-serif;
+      text-transform: uppercase; letter-spacing: .05em; padding: 2px 5px; border-radius: 2px;
+      margin-right: 6px; vertical-align: 1px;
+    }
+
+    /* Path Comparison */
+    .path-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 720px) { .path-grid { grid-template-columns: 1fr; } }
+    .pcard {
+      background: var(--paper); border: 1.5px solid var(--line); border-radius: 3px; padding: 10px 12px;
+    }
+    .pcard.win { border-color: var(--green); background: #f4faf3; }
+    .pcard-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .pcard-name { font: 700 1.04rem/1.15 'IM Fell English SC', Georgia, serif; }
+    .pcard-score { font: 800 .86rem/1 'Alegreya Sans', sans-serif; font-variant-numeric: tabular-nums; }
+    .pcard-desc { font-size: .92rem; color: var(--ink-soft); margin: 4px 0 6px; }
+    .pcard-t4 { font: 600 .78rem/1.3 'Alegreya Sans', sans-serif; color: var(--mute); }
+
+    /* Partners & Items Grids */
+    .pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 720px) { .pair-grid { grid-template-columns: 1fr; } }
+    .pair-card {
+      display: grid; grid-template-columns: 48px 1fr; gap: 10px; align-items: start;
+      background: var(--paper); border: 1.5px solid var(--line); border-radius: 3px; padding: 9px 11px;
+      cursor: pointer; transition: border-color .14s, background .14s;
+    }
+    .pair-card:hover { border-color: var(--ink); background: #fffbf0; }
+    .pair-thumb {
+      width: 48px; height: 48px; border-radius: 3px; border: 1.5px solid var(--ink);
+      background: var(--bg-deep); overflow: hidden; display: grid; place-items: center;
+    }
+    .pair-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pair-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+    .pair-name { font: 700 1.02rem/1.1 'IM Fell English SC', Georgia, serif; }
+    .pair-stat { font: 800 .82rem/1 'Alegreya Sans', sans-serif; font-variant-numeric: tabular-nums; }
+    .pair-meta { font: 600 .76rem/1.25 'Alegreya Sans', sans-serif; color: var(--mute); margin-top: 2px; }
+    .pair-why { font-size: .88rem; color: var(--ink-soft); margin-top: 4px; line-height: 1.32; }
+
+    .item-card-row {
+      display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: start;
+      background: var(--paper); border: 1.5px solid var(--line); border-radius: 3px; padding: 9px 11px;
+    }
+    .item-card-row.kw-hit { border-color: var(--gold-bright); background: #fffaf0; }
+
+    /* Kit Accordion */
+    details.kit-ref {
+      background: var(--panel2); border: 1px solid var(--line); border-radius: 3px; padding: 9px 12px;
+    }
+    details.kit-ref summary {
+      font: 700 .88rem/1.2 'Alegreya Sans', sans-serif; cursor: pointer; color: var(--ink);
+    }
+    .kit-body { margin-top: 10px; font-size: .94rem; }
+    .kit-bands { margin: 6px 0 8px; padding-left: 18px; }
+    .kit-bands li { margin-bottom: 3px; }
+
+    /* Full Table View */
+    .tbl-wrap {
+      background: var(--panel); border: 1.5px solid var(--line-strong); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow-x: auto;
+    }
+    table.stat-tbl {
+      width: 100%; border-collapse: collapse; font-family: 'Alegreya Sans', sans-serif;
+      font-size: .88rem; font-variant-numeric: tabular-nums;
+    }
+    table.stat-tbl th {
+      text-align: left; padding: 10px 10px; background: var(--panel2);
+      border-bottom: 1.5px solid var(--ink); font-size: .74rem; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--ink-soft); cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    table.stat-tbl th:hover { color: var(--red); }
+    table.stat-tbl td {
+      padding: 8px 10px; border-bottom: 1px solid rgba(141,117,78,.28); vertical-align: middle;
+    }
+    table.stat-tbl tbody tr { cursor: pointer; transition: background .1s; }
+    table.stat-tbl tbody tr:hover { background: var(--paper); }
+    .td-hero { display: flex; align-items: center; gap: 9px; }
+    .td-hero img { width: 34px; height: 34px; border-radius: 3px; border: 1px solid var(--ink); object-fit: cover; }
+    .bar-cell { display: flex; align-items: center; gap: 7px; }
+    .mini-bar { width: 58px; height: 7px; background: #dccaa0; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+    .mini-bar i { display: block; height: 100%; background: var(--green); }
+    .mini-bar.red i { background: var(--red); }
+    .mini-bar.gold i { background: var(--gold-bright); }
+
+    /* Patch Notes & Overview Sections */
+    .panel-box {
+      background: var(--panel); border: 1.5px solid var(--line-strong); border-radius: var(--radius);
+      padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px;
+    }
+    .panel-box h2 { font-size: 1.5rem; margin-bottom: 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+    .two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+    .patch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; }
+    .patch-card {
+      background: var(--paper); border: 1.5px solid var(--line); border-radius: 3px; padding: 12px 14px;
+    }
+    .patch-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .patch-card-id { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+    .patch-card-id img { width: 42px; height: 42px; border-radius: 3px; border: 1.5px solid var(--ink); object-fit: cover; }
+
+    /* Comps Grid */
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(390px, 1fr)); gap: 12px; }
+    .comp-card {
+      background: var(--paper); border: 1.5px solid var(--line); border-radius: 3px; padding: 12px 14px;
+    }
+    .comp-heroes { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+    .comp-chip {
+      display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px 3px 3px;
+      background: var(--panel2); border: 1px solid var(--line); border-radius: 3px;
+      font: 700 .78rem/1 'Alegreya Sans', sans-serif; cursor: pointer;
+    }
+    .comp-chip:hover { border-color: var(--ink); }
+    .comp-chip img { width: 22px; height: 22px; border-radius: 2px; object-fit: cover; }
+
+    /* Glossary keyword tooltip styling matching main game */
+    .kw { border-bottom: 1px dotted var(--red); color: var(--red); cursor: help; font-weight: 600; }
+    .kw-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font: 700 .74rem/1.1 'Alegreya Sans', sans-serif;
+      padding: 3px 8px; border-radius: 3px;
+      background: var(--gold-soft); color: #6c4608; border: 1px solid rgba(154,108,24,.35);
+    }
+    #etip {
+      position: fixed; z-index: 999; max-width: 310px; pointer-events: none;
+      background: var(--ink); color: #f8efd9; padding: 9px 12px; border-radius: 4px;
+      border: 1.5px solid var(--gold-bright); box-shadow: 0 8px 22px rgba(0,0,0,.35);
+      font: 14px/1.38 'EB Garamond', Georgia, serif;
+    }
+    #etip b { font-family: 'IM Fell English SC', Georgia, serif; color: #ffd98a; font-size: 1rem; display: block; margin-bottom: 3px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Field Guide &amp; Live Stat Tracker</h1>
+      <div class="subline" id="metaSubline">Basements &amp; Basilisks · v0.22 Live Balance Build · 24 Heroes · 46 Canonical D&amp;D Items</div>
+    </div>
+    <nav class="nav-actions" aria-label="Tool navigation">
+      <a class="btn primary" href="../index.html">← Play Game</a>
+      <a class="btn" href="asset-studio.html">Asset Studio</a>
+    </nav>
+  </header>
+
+  <div class="main-tabs" role="tablist" aria-label="Wiki sections">
+    <button class="mtab on" data-tab="heroes" role="tab" aria-selected="true">Heroes &amp; Stat Tracker <span class="cnt">24</span></button>
+    <button class="mtab" data-tab="patch" role="tab" aria-selected="false">Live Balance Changes <span class="cnt">v0.22 → Live</span></button>
+    <button class="mtab" data-tab="items" role="tab" aria-selected="false">Items &amp; Best Carriers <span class="cnt">46</span></button>
+    <button class="mtab" data-tab="meta" role="tab" aria-selected="false">Meta &amp; Difficulty Overview <span class="cnt">16 Comps</span></button>
+  </div>
+
+  <!-- TAB 1: HEROES & STAT TRACKER -->
+  <section id="tab-heroes">
+    <div class="controls">
+      <div class="controls-left">
+        <input type="text" id="heroSearch" placeholder="Search hero, class, keyword, use case..." aria-label="Search heroes" />
+        <select id="filterPack" aria-label="Filter by pack">
+          <option value="all">All 6 Packs</option>
+          <option value="1">Pack 1 · You Meet at a Tavern</option>
+          <option value="2">Pack 2 · Around the Campfire</option>
+          <option value="3">Pack 3 · Off the Beaten Path</option>
+          <option value="4">Pack 4 · Divine Intervention</option>
+          <option value="5">Pack 5 · Cornering the Market</option>
+          <option value="6">Pack 6 · Surprise Round</option>
+        </select>
+        <select id="filterRole" aria-label="Filter by role">
+          <option value="all">All Roles</option>
+          <option value="Tank">Tank</option>
+          <option value="Damage">Damage</option>
+          <option value="Support">Support</option>
+        </select>
+        <select id="filterChange" aria-label="Filter by balance status">
+          <option value="all">All Balance Changes</option>
+          <option value="buff">Buffed</option>
+          <option value="nerf">Nerfed</option>
+          <option value="rebal">Rebalanced / Bugfixed</option>
+          <option value="global">Global Scaling Only</option>
+        </select>
+      </div>
+      <div class="controls-right">
+        <select id="sortHeroes" aria-label="Sort heroes">
+          <option value="score">Sort: Live Power Score</option>
+          <option value="wr">Sort: Live Win Rate</option>
+          <option value="rankUp">Sort: Biggest Rank Climbers (↑)</option>
+          <option value="rankDown">Sort: Biggest Rank Drops (↓)</option>
+          <option value="dmg">Sort: Avg Damage</option>
+          <option value="sustain">Sort: Avg Heal + Ward</option>
+          <option value="pack">Sort: Pack Order</option>
+        </select>
+        <div class="seg" role="group" aria-label="View mode">
+          <button id="viewSplit" class="on">Dossier View</button>
+          <button id="viewTable">Full Table</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="heroSplitView" class="explorer">
+      <div class="roster-list" id="rosterList" aria-label="Hero roster"></div>
+      <article class="dossier" id="heroDossier" aria-live="polite"></article>
+    </div>
+
+    <div id="heroTableView" class="tbl-wrap" hidden>
+      <table class="stat-tbl" id="heroStatTable"></table>
+    </div>
+  </section>
+
+  <!-- TAB 2: LIVE BALANCE CHANGES -->
+  <section id="tab-patch" hidden>
+    <div class="panel-box">
+      <h2>Global Combat, Enemy &amp; Economy Overhaul (v0.22 → Live)</h2>
+      <div class="two-col" id="globalChangesBox"></div>
+    </div>
+    <div class="panel-box">
+      <h2>Individual Character Changes (All 24 Heroes)</h2>
+      <div class="controls" style="margin-bottom:14px;box-shadow:none">
+        <div class="controls-left">
+          <select id="patchFilter">
+            <option value="all">Show: All 24 Heroes</option>
+            <option value="direct">Direct Hero Kit Changes Only</option>
+            <option value="buff">Buffed Heroes</option>
+            <option value="nerf">Nerfed Heroes</option>
+            <option value="rebal">Rebalanced / Bugfixed</option>
+          </select>
+        </div>
+        <div class="controls-right sans mute" style="font-size:.84rem">Click any character header to open their full Live Dossier.</div>
+      </div>
+      <div class="patch-grid" id="patchHeroGrid"></div>
+    </div>
+  </section>
+
+  <!-- TAB 3: ITEMS & BEST CARRIERS -->
+  <section id="tab-items" hidden>
+    <div class="controls">
+      <div class="controls-left">
+        <input type="text" id="itemSearch" placeholder="Search item name, keyword, effect..." aria-label="Search items" />
+        <select id="itemRarity">
+          <option value="all">All Rarities</option>
+          <option value="0">Common (2g)</option>
+          <option value="1">Uncommon (3g)</option>
+          <option value="2">Rare (5g)</option>
+          <option value="3">Very Rare (7g)</option>
+        </select>
+        <select id="itemKwOnly">
+          <option value="all">All 46 Items</option>
+          <option value="kw">Class-Keyword Items Only (24)</option>
+          <option value="core">Universal / Core Items Only (22)</option>
+        </select>
+      </div>
+      <div class="controls-right">
+        <select id="itemSort">
+          <option value="bestDelta">Sort: Best Synergy Impact</option>
+          <option value="valPerGold">Sort: Best Value per Gold</option>
+          <option value="rarity">Sort: Rarity &amp; Cost</option>
+          <option value="name">Sort: Name</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="stat-tbl" id="itemStatTable"></table>
+    </div>
+  </section>
+
+  <!-- TAB 4: META & DIFFICULTY OVERVIEW -->
+  <section id="tab-meta" hidden>
+    <div class="two-col">
+      <div class="panel-box">
+        <h2>Full 3-Act Run Difficulty (Before vs. Live)</h2>
+        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">120 full 3-Act runs across 5 player profiles comparing pre-balance v0.22 against the live build.</p>
+        <div class="tbl-wrap" style="border:1px solid var(--line);box-shadow:none">
+          <table class="stat-tbl" id="runBotTable"></table>
+        </div>
+      </div>
+      <div class="panel-box">
+        <h2>Live Role Balance &amp; Pack Power</h2>
+        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">Average live performance across Midgame (Tier II) and Lategame (Tier III + ASI + 1 item) benchmarks.</p>
+        <div id="rolePackSummary"></div>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h2>Live Archetype Compositions (16 Tested Squads · Act 3 Depth 13.8)</h2>
+      <p class="mute sans" style="margin:0 0 12px;font-size:.86rem">Click any hero chip in a comp to inspect their individual dossier, partners, and items.</p>
+      <div class="comp-grid" id="compGrid"></div>
+    </div>
+  </section>
+</div>
+
+<div id="etip" hidden></div>
+
+<!-- Game data & renderers -->
+<script src="../src/00-assets.js"></script>
+<script src="../src/01-geo.js"></script>
+<script src="../src/02-enemies.js"></script>
+<script src="../src/03-heroes.js"></script>
+<script src="../src/04-items.js"></script>
+<script src="../src/05-engine.js"></script>
+<script src="../src/06-adventure.js"></script>
+<script src="../src/07-glossary.js"></script>
+<script src="../src/08-portraits.js"></script>
+<!-- Generated live meta stats, pairings, best items & changelogs -->
+<script src="../data/wiki-meta-stats.js"></script>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  const META = window.WIKI_META || { heroes: {}, globalChanges: {}, items: [], comps: [], bots: {} };
+  const ATTR_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+  const ATTR_LBL = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
+  const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'];
+
+  let state = {
+    tab: 'heroes',
+    selectedHero: 'arthur',
+    viewMode: 'split',
+    heroSearch: '',
+    filterPack: 'all',
+    filterRole: 'all',
+    filterChange: 'all',
+    sortHeroes: 'score',
+    patchFilter: 'all',
+    itemSearch: '',
+    itemRarity: 'all',
+    itemKwOnly: 'all',
+    itemSort: 'bestDelta'
+  };
+
+  function heroImgSrc(k) { return `../assets/heroes/${k}.png`; }
+
+  function tierOf(score) {
+    if (score >= 43.0) return 'S';
+    if (score >= 38.0) return 'A';
+    if (score >= 33.0) return 'B';
+    return 'C';
+  }
+
+  function statusLabel(st) {
+    if (st === 'buff') return ['Buffed', 'st-buff'];
+    if (st === 'nerf') return ['Nerfed', 'st-nerf'];
+    if (st === 'rebal') return ['Rebalanced', 'st-rebal'];
+    return ['Global Only', 'st-global'];
+  }
+
+  function fmtDelta(d, suffix = '') {
+    if (d === null || d === undefined || isNaN(d)) return '<span class="delta-flat">—</span>';
+    const v = Number(d);
+    if (Math.abs(v) < 0.05) return `<span class="delta-flat">0.0${suffix}</span>`;
+    const cls = v > 0 ? 'delta-pos' : 'delta-neg';
+    return `<span class="${cls}">${v > 0 ? '+' : ''}${v.toFixed(1)}${suffix}</span>`;
+  }
+
+  function fmtRankDelta(d) {
+    if (d === null || d === undefined || isNaN(d) || d === 0) return '<span class="delta-flat">—</span>';
+    if (d > 0) return `<span class="delta-pos">↑${d}</span>`;
+    return `<span class="delta-neg">↓${Math.abs(d)}</span>`;
+  }
+
+  function kwLabel(k) {
+    if (typeof CLASS_KW !== 'undefined' && CLASS_KW[k]) return CLASS_KW[k].n;
+    return k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function packInfo(k) {
+    const idx = PACK_ORDER.findIndex(pk => PACKS[pk].heroes.includes(k));
+    if (idx < 0) return { num: 0, key: '', name: 'Core' };
+    const pk = PACK_ORDER[idx];
+    return { num: idx + 1, key: pk, name: PACKS[pk].n };
+  }
+
+  function modStr(v) {
+    const m = Math.floor((v - 10) / 2);
+    return (m >= 0 ? '+' : '') + m;
+  }
+
+  function filteredHeroes() {
+    const q = state.heroSearch.trim().toLowerCase();
+    const list = HERO_ORDER.map(k => ({
+      key: k,
+      h: H[k],
+      m: META.heroes[k] || {},
+      pack: packInfo(k)
+    })).filter(({ key, h, m, pack }) => {
+      if (state.filterPack !== 'all' && String(pack.num) !== state.filterPack) return false;
+      if (state.filterRole !== 'all' && h.role !== state.filterRole) return false;
+      if (state.filterChange !== 'all' && (m.changeStatus || 'global') !== state.filterChange) return false;
+      if (q) {
+        const hay = [
+          key, h.name, h.cls, h.role, h.title, h.bio,
+          pack.name,
+          Object.keys(h.kw || {}).map(kwLabel).join(' '),
+          m.useCase || '',
+          m.archetype || '',
+          (m.bestItems || []).map(x => x.name).join(' '),
+          (m.bestPartners || []).map(x => x.name).join(' ')
+        ].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const sortFns = {
+      score: (a, b) => (b.m.avgScore || 0) - (a.m.avgScore || 0),
+      wr: (a, b) => (b.m.avgWR || 0) - (a.m.avgWR || 0),
+      rankUp: (a, b) => (b.m.rankDelta || 0) - (a.m.rankDelta || 0) || (b.m.avgScore || 0) - (a.m.avgScore || 0),
+      rankDown: (a, b) => (a.m.rankDelta || 0) - (b.m.rankDelta || 0) || (a.m.avgScore || 0) - (b.m.avgScore || 0),
+      dmg: (a, b) => (b.m.avgDmg || 0) - (a.m.avgDmg || 0),
+      sustain: (a, b) => ((b.m.avgHeal || 0) + (b.m.avgWard || 0)) - ((a.m.avgHeal || 0) + (a.m.avgWard || 0)),
+      pack: (a, b) => a.pack.num - b.pack.num || HERO_ORDER.indexOf(a.key) - HERO_ORDER.indexOf(b.key)
+    };
+    list.sort(sortFns[state.sortHeroes] || sortFns.score);
+    return list;
+  }
+
+  function selectHero(k, jumpToTab = false) {
+    if (!H[k]) return;
+    state.selectedHero = k;
+    if (jumpToTab && state.tab !== 'heroes') switchTab('heroes');
+    if (state.viewMode === 'table') {
+      state.viewMode = 'split';
+      syncViewButtons();
+    }
+    renderHeroExplorer();
+    const selEl = $('rosterList').querySelector(`.hrow[data-k="${k}"]`);
+    if (selEl) selEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function renderRoster(list) {
+    if (!list.length) {
+      $('rosterList').innerHTML = `<div style="padding:20px;text-align:center" class="mute sans">No heroes match the current filters.</div>`;
+      return;
+    }
+    if (!list.some(x => x.key === state.selectedHero)) {
+      state.selectedHero = list[0].key;
+    }
+    $('rosterList').innerHTML = list.map(({ key, h, m, pack }) => {
+      const t = tierOf(m.avgScore || 0);
+      const [stTxt, stCls] = statusLabel(m.changeStatus);
+      const sel = key === state.selectedHero ? ' sel' : '';
+      return `
+        <div class="hrow${sel}" data-k="${key}" role="button" tabindex="0">
+          <div class="hrow-thumb"><img src="${heroImgSrc(key)}" alt="${esc(h.name)}" loading="lazy" /></div>
+          <div class="hrow-main">
+            <div class="hrow-top">
+              <span class="hrow-name">${esc(h.name)}</span>
+              <span class="pill tier-${t}">${t}</span>
+              <span class="pill role-${h.role}">${esc(h.role)}</span>
+              <span class="pill ${stCls}">${stTxt}</span>
+            </div>
+            <div class="hrow-sub">${esc(h.cls)} · Pack ${pack.num} · ${esc(m.archetype || h.reach)}</div>
+          </div>
+          <div class="hrow-metrics">
+            <div class="hrow-score">${(m.avgScore ?? 0).toFixed(1)}</div>
+            <div class="hrow-wr">${(m.avgWR ?? 0).toFixed(1)}% WR</div>
+            <div class="hrow-delta">#${m.liveRank || '—'} ${fmtRankDelta(m.rankDelta)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderDossier(k) {
+    const h = H[k];
+    const m = META.heroes[k];
+    if (!h || !m) return;
+    const pack = packInfo(k);
+    const t = tierOf(m.avgScore || 0);
+    const [stTxt, stCls] = statusLabel(m.changeStatus);
+    const kws = Object.keys(h.kw || {});
+    const p0 = h.paths[0], p1 = h.paths[1];
+    const pm = m.paths || { p0: {}, p1: {}, winner: 'Even' };
+    const p0Win = pm.winner === p0.n;
+    const p1Win = pm.winner === p1.n;
+
+    const attrHtml = ATTR_KEYS.map(ak => {
+      const isKey = h.prim === ak || (h.pair && h.pair.includes(ak));
+      const tag = h.prim === ak ? 'Key' : (h.pair && h.pair[0] === ak ? 'Wpn' : '');
+      return `<div class="attr-box${isKey ? ' key' : ''}">
+        <div class="al">${ATTR_LBL[ak]}${tag ? ' · ' + tag : ''}</div>
+        <div class="av">${h.attr[ak]}</div>
+        <div class="am">${modStr(h.attr[ak])}</div>
+      </div>`;
+    }).join('');
+
+    const fmtNote = s => esc(s).replace(/`([^`]+)`/g, '<code style="font:600 .84em/1 ui-monospace,monospace;background:rgba(141,117,78,.16);padding:1px 4px;border-radius:2px">$1</code>');
+
+    const changesHtml = (m.changes || []).map(c => {
+      const cls = c.type === 'buff' ? 'st-buff' : (c.type === 'nerf' ? 'st-nerf' : (c.type === 'fix' ? 'st-rebal' : 'st-global'));
+      const lbl = c.type === 'buff' ? 'Buff' : (c.type === 'nerf' ? 'Nerf' : (c.type === 'fix' ? 'Fix' : 'Global'));
+      return `<li><span class="chg-tag ${cls}">${lbl}</span>${fmtNote(c.text)}</li>`;
+    }).join('');
+
+    const partnersHtml = (m.bestPartners || []).slice(0, 4).map(p => {
+      const ph = H[p.partner];
+      if (!ph) return '';
+      const shared = (p.sharedKw || []).map(kw => `<span class="kw-pill">${esc(kwLabel(kw))}</span>`).join(' ');
+      return `
+        <div class="pair-card" data-jump="${p.partner}" role="button" tabindex="0">
+          <div class="pair-thumb"><img src="${heroImgSrc(p.partner)}" alt="${esc(ph.name)}" /></div>
+          <div>
+            <div class="pair-top">
+              <span class="pair-name">${esc(ph.name)}</span>
+              <span class="pair-stat">${p.score.toFixed(1)} <span class="mute">(${p.winRate.toFixed(0)}% WR)</span></span>
+            </div>
+            <div class="pair-meta">${esc(ph.role)} · ${esc(ph.cls)} · Synergy ${fmtDelta(p.lift)} ${shared}</div>
+            <div class="pair-why">${esc(p.why || '')}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const itemsHtml = (m.bestItems || []).slice(0, 4).map(it => {
+      const itemObj = ITEMS[it.item];
+      if (!itemObj) return '';
+      const svg = typeof itemIcon === 'function' ? itemIcon(it.item, 40) : '';
+      const desc = itemObj.one || itemObj.x || '';
+      return `
+        <div class="item-card-row${it.kwMatch ? ' kw-hit' : ''}">
+          <div style="display:grid;place-items:center">${svg}</div>
+          <div>
+            <div class="pair-top">
+              <span class="pair-name">${esc(itemObj.n)}</span>
+              <span class="pair-stat">${fmtDelta(it.lift)} pts</span>
+            </div>
+            <div class="pair-meta">
+              ${RARITY_NAMES[itemObj.r] || ''} · ${it.cost}g · ${it.valPerGold >= 0 ? '+' : ''}${it.valPerGold.toFixed(2)}/g
+              ${it.kwMatch ? ' · <span class="kw-pill">Keyword Hook</span>' : ''}
+            </div>
+            <div class="pair-why">${typeof glossarize === 'function' ? glossarize(desc) : esc(desc)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const bestVal = (m.bestValueItems || []).slice(0, 3).map(v => `<b>${esc(v.name)}</b> (${v.cost}g, ${fmtDelta(v.lift)} / ${v.valPerGold.toFixed(2)} per g)`).join(' &nbsp;·&nbsp; ');
+
+    $('heroDossier').innerHTML = `
+      <div class="dos-head">
+        <div class="dos-portrait"><img src="${heroImgSrc(k)}" alt="${esc(h.name)}" /></div>
+        <div>
+          <div class="dos-title-row">
+            <h2>${esc(h.name)}</h2>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <span class="pill tier-${t}">Tier ${t}</span>
+              <span class="pill role-${h.role}">${esc(h.role)} · ${esc(h.reach)}</span>
+              <span class="pill ${stCls}">${stTxt}</span>
+            </div>
+          </div>
+          <div class="sans mute" style="font-size:.86rem;font-weight:700;margin-top:2px">
+            ${esc(h.title || h.cls)} &nbsp;·&nbsp; Pack ${pack.num}: ${esc(pack.name)} &nbsp;·&nbsp; HP ${h.hp} · AC ${h.ac} · SR ${h.sr}
+          </div>
+          <p class="dos-bio">“${esc(h.bio)}”</p>
+          <div class="dos-tags">
+            ${kws.map(kw => `<span class="kw-pill">${typeof glossarize === 'function' ? glossarize(kwLabel(kw)) : esc(kwLabel(kw))}</span>`).join('')}
+          </div>
+          <div class="attr-strip">${attrHtml}</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kl">Live Rank &amp; Score</div>
+          <div class="kv">#${m.liveRank} ${fmtRankDelta(m.rankDelta)} <span style="font-size:.95rem;color:var(--mute)">(${m.avgScore.toFixed(1)})</span></div>
+          <div class="ks">Was #${m.baseRank} (${m.baseScore != null ? m.baseScore.toFixed(1) : '—'}) pre-patch</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Live Win Rate</div>
+          <div class="kv">${m.avgWR.toFixed(1)}%</div>
+          <div class="ks">T2 ${m.midWR.toFixed(0)}% · T3 ${m.lateWR.toFixed(0)}%</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Avg Damage</div>
+          <div class="kv">${m.avgDmg}</div>
+          <div class="ks">Survival ${m.survPct.toFixed(0)}%</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Heal + Ward</div>
+          <div class="kv">${m.avgHeal + m.avgWard}</div>
+          <div class="ks">${m.avgHeal} Heal · ${m.avgWard} Ward</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Avg Gold / Fight</div>
+          <div class="kv">${m.avgGold.toFixed(2)}g</div>
+          <div class="ks">Avg fight ${m.avgTime.toFixed(1)}s</div>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <div class="dsec-h">
+          <h3>Live Use Case &amp; Draft Identity</h3>
+          <span class="hint">${esc(m.archetype || '')}</span>
+        </div>
+        <div class="usecase-box">
+          <div class="usecase-role">When &amp; Why to Draft ${esc(h.name)}</div>
+          <div>${esc(m.useCase || '')}</div>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <div class="dsec-h">
+          <h3>Individual Changes (v0.22 → Live)</h3>
+          <span class="hint">Meta rank shift: #${m.baseRank} → #${m.liveRank} (${fmtRankDelta(m.rankDelta)})</span>
+        </div>
+        <ul class="change-list">${changesHtml}</ul>
+      </div>
+
+      <div class="dsec">
+        <div class="dsec-h">
+          <h3>Best Partner Heroes</h3>
+          <span class="hint">Paired T3 benchmark (click a partner to jump)</span>
+        </div>
+        <div class="pair-grid">${partnersHtml}</div>
+      </div>
+
+      <div class="dsec">
+        <div class="dsec-h">
+          <h3>Best Items on ${esc(h.name)}</h3>
+          <span class="hint">Paired A/B lift over naked hero</span>
+        </div>
+        <div class="pair-grid">${itemsHtml}</div>
+        ${bestVal ? `<div class="sans mute" style="font-size:.8rem;margin-top:8px">Top Gold Efficiency: ${bestVal}</div>` : ''}
+      </div>
+
+      <div class="dsec">
+        <div class="dsec-h">
+          <h3>Tier II Path Comparison (Live Head-to-Head)</h3>
+          <span class="hint">Stronger live path: <b>${esc(pm.winner || 'Even')}</b></span>
+        </div>
+        <div class="path-grid">
+          <div class="pcard${p0Win ? ' win' : ''}">
+            <div class="pcard-top">
+              <span class="pcard-name">1. ${esc(p0.n)}</span>
+              <span class="pcard-score">${(pm.p0.score ?? 0).toFixed(1)} pts · ${(pm.p0.wr ?? 0).toFixed(0)}% WR</span>
+            </div>
+            <div class="pcard-desc">${typeof glossarize === 'function' ? glossarize(p0.full || p0.x) : esc(p0.full || p0.x)}</div>
+            <div class="pcard-t4"><b>Tier IV:</b> ${esc(p0.t4x || '')}</div>
+          </div>
+          <div class="pcard${p1Win ? ' win' : ''}">
+            <div class="pcard-top">
+              <span class="pcard-name">2. ${esc(p1.n)}</span>
+              <span class="pcard-score">${(pm.p1.score ?? 0).toFixed(1)} pts · ${(pm.p1.wr ?? 0).toFixed(0)}% WR</span>
+            </div>
+            <div class="pcard-desc">${typeof glossarize === 'function' ? glossarize(p1.full || p1.x) : esc(p1.full || p1.x)}</div>
+            <div class="pcard-t4"><b>Tier IV:</b> ${esc(p1.t4x || '')}</div>
+          </div>
+        </div>
+      </div>
+
+      <details class="kit-ref">
+        <summary>Full Live Kit Reference — Attack, Ability Bands, Passive &amp; Personal Hero Quest</summary>
+        <div class="kit-body">
+          <p style="margin:0 0 6px"><b>Basic Attack — ${esc(h.atk.n)}:</b> ${h.atk.d[0]}d${h.atk.d[1]}${h.atk.flat ? ' + ' + h.atk.flat : ''} ${esc(h.atk.ty)} (${h.atk.iv}s base interval).</p>
+          <p style="margin:0 0 6px"><b>Passive — ${esc(h.passive.n)}:</b> ${typeof glossarize === 'function' ? glossarize(h.passive.x) : esc(h.passive.x)}</p>
+          <p style="margin:0 0 4px"><b>Ability — ${esc(h.abil.n)}:</b> ${typeof glossarize === 'function' ? glossarize(h.abil.one) : esc(h.abil.one)}</p>
+          <ul class="kit-bands">
+            <li><b>Low:</b> ${esc(h.abil.b[0])}</li>
+            <li><b>Mid:</b> ${esc(h.abil.b[1])}</li>
+            <li><b>High:</b> ${esc(h.abil.b[2])}</li>
+            <li><b>Nat 20:</b> ${esc(h.abil.b[3])}</li>
+          </ul>
+          ${h.quest ? `<p style="margin:0"><b>Personal Quest — ${esc(h.quest.n)}:</b> ${esc(h.quest.goal)} → <i>${esc(h.quest.reward)}</i></p>` : ''}
+        </div>
+      </details>
+    `;
+  }
+
+  function renderFullHeroTable(list) {
+    $('heroStatTable').innerHTML = `
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Hero</th>
+          <th>Tier</th>
+          <th>Role / Pack</th>
+          <th>Status</th>
+          <th>Live Score</th>
+          <th>Rank Δ</th>
+          <th>Live WR</th>
+          <th>Avg Dmg</th>
+          <th>Heal + Ward</th>
+          <th>Best Path</th>
+          <th>Top Partner</th>
+          <th>Top Item</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map(({ key, h, m, pack }) => {
+          const t = tierOf(m.avgScore || 0);
+          const [stTxt, stCls] = statusLabel(m.changeStatus);
+          const topP = (m.bestPartners || [])[0];
+          const topI = (m.bestItems || [])[0];
+          return `
+            <tr data-k="${key}">
+              <td class="mute"><b>#${m.liveRank}</b></td>
+              <td>
+                <div class="td-hero">
+                  <img src="${heroImgSrc(key)}" alt="${esc(h.name)}" loading="lazy" />
+                  <div><b>${esc(h.name)}</b><div class="mute" style="font-size:.76rem">${esc(h.cls)}</div></div>
+                </div>
+              </td>
+              <td><span class="pill tier-${t}">${t}</span></td>
+              <td><span class="pill role-${h.role}">${esc(h.role)}</span> <span class="mute">P${pack.num}</span></td>
+              <td><span class="pill ${stCls}">${stTxt}</span></td>
+              <td>
+                <div class="bar-cell">
+                  <b>${m.avgScore.toFixed(1)}</b>
+                  <span class="mini-bar${m.avgScore < 33 ? ' red' : (m.avgScore < 38 ? ' gold' : '')}"><i style="width:${Math.min(100, m.avgScore * 1.65)}%"></i></span>
+                </div>
+              </td>
+              <td>${fmtRankDelta(m.rankDelta)}</td>
+              <td>${m.avgWR.toFixed(1)}%</td>
+              <td>${m.avgDmg}</td>
+              <td>${m.avgHeal + m.avgWard}</td>
+              <td>${esc((m.paths && m.paths.winner) || 'Even')}</td>
+              <td>${topP ? esc(topP.name) : '—'}</td>
+              <td>${topI ? esc(topI.name) : '—'}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    `;
+  }
+
+  function renderHeroExplorer() {
+    const list = filteredHeroes();
+    if (state.viewMode === 'split') {
+      $('heroSplitView').hidden = false;
+      $('heroTableView').hidden = true;
+      renderRoster(list);
+      if (list.length) renderDossier(state.selectedHero);
+    } else {
+      $('heroSplitView').hidden = true;
+      $('heroTableView').hidden = false;
+      renderFullHeroTable(list);
+    }
+  }
+
+  function renderPatchTab() {
+    const gc = META.globalChanges || { combat: [], enemy: [] };
+    const fmtNote = s => esc(s).replace(/`([^`]+)`/g, '<code style="font:600 .84em/1 ui-monospace,monospace;background:rgba(141,117,78,.16);padding:1px 4px;border-radius:2px">$1</code>');
+    $('globalChangesBox').innerHTML = `
+      <div>
+        <h3 style="margin-bottom:8px">Combat, Role &amp; Keyword Rebalance</h3>
+        <ul class="change-list">${(gc.combat || []).map(x => `<li><span class="chg-tag ${x.type === 'buff' ? 'st-buff' : (x.type === 'nerf' ? 'st-nerf' : 'st-rebal')}">${esc(x.tag)}</span>${fmtNote(x.text)}</li>`).join('')}</ul>
+      </div>
+      <div>
+        <h3 style="margin-bottom:8px">Enemy Scaling, Bosses &amp; Economy</h3>
+        <ul class="change-list">${(gc.enemy || []).map(x => `<li><span class="chg-tag ${x.type === 'buff' ? 'st-nerf' : 'st-rebal'}">${esc(x.tag)}</span>${fmtNote(x.text)}</li>`).join('')}</ul>
+      </div>
+    `;
+
+    const pf = state.patchFilter;
+    const heroes = HERO_ORDER.map(k => ({ key: k, h: H[k], m: META.heroes[k] || {} })).filter(({ m }) => {
+      if (pf === 'direct') return m.changeStatus !== 'global';
+      if (pf !== 'all') return m.changeStatus === pf;
+      return true;
+    });
+
+    $('patchHeroGrid').innerHTML = heroes.map(({ key, h, m }) => {
+      const [stTxt, stCls] = statusLabel(m.changeStatus);
+      return `
+        <div class="patch-card">
+          <div class="patch-card-h">
+            <div class="patch-card-id" data-jump="${key}">
+              <img src="${heroImgSrc(key)}" alt="${esc(h.name)}" loading="lazy" />
+              <div>
+                <div style="font:700 1.08rem/1.1 'IM Fell English SC',Georgia,serif">${esc(h.name)}</div>
+                <div class="sans mute" style="font-size:.76rem">${esc(h.cls)} · ${esc(h.role)} · Rank #${m.liveRank} (${fmtRankDelta(m.rankDelta)}) · Score ${(m.avgScore ?? 0).toFixed(1)}</div>
+              </div>
+            </div>
+            <span class="pill ${stCls}">${stTxt}</span>
+          </div>
+          <ul class="change-list" style="font-size:.92rem">
+            ${(m.changes || []).map(c => {
+              const cls = c.type === 'buff' ? 'st-buff' : (c.type === 'nerf' ? 'st-nerf' : (c.type === 'fix' ? 'st-rebal' : 'st-global'));
+              const lbl = c.type === 'buff' ? 'Buff' : (c.type === 'nerf' ? 'Nerf' : (c.type === 'fix' ? 'Fix' : 'Global'));
+              return `<li><span class="chg-tag ${cls}">${lbl}</span>${fmtNote(c.text)}</li>`;
+            }).join('')}
+          </ul>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderItemsTab() {
+    const q = state.itemSearch.trim().toLowerCase();
+    let list = (META.items || []).filter(it => {
+      const obj = ITEMS[it.key];
+      if (!obj) return false;
+      if (state.itemRarity !== 'all' && String(it.r) !== state.itemRarity) return false;
+      if (state.itemKwOnly === 'kw' && !(it.kwHooks && it.kwHooks.length)) return false;
+      if (state.itemKwOnly === 'core' && it.kwHooks && it.kwHooks.length) return false;
+      if (q) {
+        const hay = [it.key, it.name, (it.kwHooks || []).map(kwLabel).join(' '), obj.one || obj.x || '', (it.topCarriers || []).map(c => c.name).join(' ')].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const sorts = {
+      bestDelta: (a, b) => (b.bestDelta || 0) - (a.bestDelta || 0),
+      valPerGold: (a, b) => (b.valPerGold || 0) - (a.valPerGold || 0),
+      rarity: (a, b) => a.r - b.r || a.price - b.price || a.name.localeCompare(b.name),
+      name: (a, b) => a.name.localeCompare(b.name)
+    };
+    list.sort(sorts[state.itemSort] || sorts.bestDelta);
+
+    $('itemStatTable').innerHTML = `
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Rarity / Cost</th>
+          <th>Keyword Hooks</th>
+          <th>Effect</th>
+          <th>Best Lift</th>
+          <th>Val / Gold</th>
+          <th>Top Live Carriers</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map(it => {
+          const obj = ITEMS[it.key] || {};
+          const svg = typeof itemIcon === 'function' ? itemIcon(it.key, 32) : '';
+          const carriers = (it.topCarriers || []).slice(0, 3).map(c =>
+            `<span class="comp-chip" data-jump="${c.hero}"><img src="${heroImgSrc(c.hero)}" alt="" />${esc(c.name)}</span>`
+          ).join(' ');
+          return `
+            <tr>
+              <td><div class="td-hero">${svg}<b>${esc(it.name)}</b></div></td>
+              <td>${esc(RARITY_NAMES[it.r] || '')} · <b>${it.price}g</b></td>
+              <td>${(it.kwHooks || []).length ? it.kwHooks.map(kw => `<span class="kw-pill">${esc(kwLabel(kw))}</span>`).join(' ') : '<span class="mute">Universal</span>'}</td>
+              <td style="max-width:340px;font-family:'EB Garamond',Georgia,serif;font-size:.94rem">${typeof glossarize === 'function' ? glossarize(obj.one || obj.x || '') : esc(obj.one || obj.x || '')}</td>
+              <td>${fmtDelta((it.bestDelta || 0) * 100)}</td>
+              <td><b>${((it.valPerGold || 0) * 100).toFixed(1)}</b>/g</td>
+              <td><div style="display:flex;gap:4px;flex-wrap:wrap">${carriers || '<span class="mute">—</span>'}</div></td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    `;
+  }
+
+  function renderMetaTab() {
+    const bots = META.bots || [];
+    $('runBotTable').innerHTML = `
+      <thead>
+        <tr>
+          <th>Player Profile (25 Runs Each)</th>
+          <th>Pre-Patch WR</th>
+          <th>Live WR</th>
+          <th>Δ WR</th>
+          <th>Live Piggy Break</th>
+          <th>Avg Gold</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${bots.map(b => `
+          <tr>
+            <td><b>${esc(b.label)}</b></td>
+            <td class="mute">${b.beforeWR}%</td>
+            <td><b>${b.liveWR}%</b></td>
+            <td>${fmtDelta(b.liveWR - b.beforeWR, '%')}</td>
+            <td>${b.piggyBreak}%</td>
+            <td>${b.avgGold}g</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    `;
+
+    // Role & Pack live averages
+    const roles = ['Tank', 'Damage', 'Support'].map(r => {
+      const hs = HERO_ORDER.filter(k => H[k].role === r).map(k => META.heroes[k]);
+      const avgSc = hs.reduce((a, x) => a + x.avgScore, 0) / hs.length;
+      const avgWR = hs.reduce((a, x) => a + x.avgWR, 0) / hs.length;
+      const avgD = hs.reduce((a, x) => a + (x.scoreDelta || 0), 0) / hs.length;
+      return { r, n: hs.length, avgSc, avgWR, avgD };
+    });
+    const packs = PACK_ORDER.map((pk, idx) => {
+      const hs = PACKS[pk].heroes.map(k => META.heroes[k]);
+      const avgSc = hs.reduce((a, x) => a + x.avgScore, 0) / hs.length;
+      const avgWR = hs.reduce((a, x) => a + x.avgWR, 0) / hs.length;
+      return { num: idx + 1, name: PACKS[pk].n, avgSc, avgWR };
+    });
+
+    $('rolePackSummary').innerHTML = `
+      <div class="tbl-wrap" style="border:1px solid var(--line);box-shadow:none;margin-bottom:12px">
+        <table class="stat-tbl">
+          <thead><tr><th>Role</th><th>Heroes</th><th>Avg Live Score</th><th>Δ vs v0.22</th><th>Avg WR</th></tr></thead>
+          <tbody>
+            ${roles.map(x => `<tr><td><span class="pill role-${x.r}">${x.r}</span></td><td>${x.n}</td><td><b>${x.avgSc.toFixed(1)}</b></td><td>${fmtDelta(x.avgD)}</td><td>${x.avgWR.toFixed(1)}%</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="tbl-wrap" style="border:1px solid var(--line);box-shadow:none">
+        <table class="stat-tbl">
+          <thead><tr><th>Hero Pack</th><th>Avg Live Score</th><th>Avg Live WR</th></tr></thead>
+          <tbody>
+            ${packs.map(p => `<tr><td><b>Pack ${p.num} · ${esc(p.name)}</b></td><td><b>${p.avgSc.toFixed(1)}</b></td><td>${p.avgWR.toFixed(1)}%</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $('compGrid').innerHTML = (META.comps || []).map(c => `
+      <div class="comp-card">
+        <div class="pair-top">
+          <h3 style="font-size:1.15rem">${esc(c.name)}</h3>
+          <span class="num" style="font-weight:800;font-size:.95rem">${c.avgScore.toFixed(1)} pts · ${c.winRate.toFixed(0)}% WR</span>
+        </div>
+        <div class="comp-heroes">
+          ${c.heroes.map(hk => `<span class="comp-chip" data-jump="${hk}"><img src="${heroImgSrc(hk)}" alt="" />${esc(H[hk].name)}</span>`).join('')}
+        </div>
+        <div class="sans mute" style="font-size:.78rem">Avg fight ${c.avgTime.toFixed(1)}s · Avg combat gold +${c.avgGold.toFixed(1)}g</div>
+      </div>
+    `).join('');
+  }
+
+  function switchTab(tab) {
+    state.tab = tab;
+    document.querySelectorAll('.mtab').forEach(b => {
+      const on = b.dataset.tab === tab;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    ['heroes', 'patch', 'items', 'meta'].forEach(t => {
+      $('tab-' + t).hidden = t !== tab;
+    });
+    if (tab === 'heroes') renderHeroExplorer();
+    else if (tab === 'patch') renderPatchTab();
+    else if (tab === 'items') renderItemsTab();
+    else if (tab === 'meta') renderMetaTab();
+  }
+
+  function syncViewButtons() {
+    $('viewSplit').classList.toggle('on', state.viewMode === 'split');
+    $('viewTable').classList.toggle('on', state.viewMode === 'table');
+  }
+
+  // Event wiring
+  document.querySelectorAll('.mtab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  $('heroSearch').addEventListener('input', e => { state.heroSearch = e.target.value; renderHeroExplorer(); });
+  $('filterPack').addEventListener('change', e => { state.filterPack = e.target.value; renderHeroExplorer(); });
+  $('filterRole').addEventListener('change', e => { state.filterRole = e.target.value; renderHeroExplorer(); });
+  $('filterChange').addEventListener('change', e => { state.filterChange = e.target.value; renderHeroExplorer(); });
+  $('sortHeroes').addEventListener('change', e => { state.sortHeroes = e.target.value; renderHeroExplorer(); });
+  $('viewSplit').addEventListener('click', () => { state.viewMode = 'split'; syncViewButtons(); renderHeroExplorer(); });
+  $('viewTable').addEventListener('click', () => { state.viewMode = 'table'; syncViewButtons(); renderHeroExplorer(); });
+  $('patchFilter').addEventListener('change', e => { state.patchFilter = e.target.value; renderPatchTab(); });
+  $('itemSearch').addEventListener('input', e => { state.itemSearch = e.target.value; renderItemsTab(); });
+  $('itemRarity').addEventListener('change', e => { state.itemRarity = e.target.value; renderItemsTab(); });
+  $('itemKwOnly').addEventListener('change', e => { state.itemKwOnly = e.target.value; renderItemsTab(); });
+  $('itemSort').addEventListener('change', e => { state.itemSort = e.target.value; renderItemsTab(); });
+
+  document.addEventListener('click', e => {
+    const row = e.target.closest('.hrow[data-k], #heroStatTable tbody tr[data-k]');
+    if (row) { selectHero(row.dataset.k, false); return; }
+    const jump = e.target.closest('[data-jump]');
+    if (jump) { selectHero(jump.dataset.jump, true); return; }
+  });
+
+  // Init
+  if (typeof glossaryInit === 'function') glossaryInit();
+  if (META.generatedAt) {
+    $('metaSubline').textContent = `Basements & Basilisks · v0.22 Live Balance Build · 24 Heroes · 46 Items · Sim Verified ${META.generatedAt}`;
+  }
+  const initialList = filteredHeroes();
+  if (initialList.length) state.selectedHero = initialList[0].key;
+  renderHeroExplorer();
+})();
+</script>
+</body>
+</html>

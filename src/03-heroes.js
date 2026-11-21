@@ -211,7 +211,7 @@ hero('arthur', {
           const t = far[i % far.length];
           if (!t || !t.alive) continue;
           b.events.push({ k: 'beam', id: u.id, tid: t.id, ty: 'piercing' });
-          const got = hit(b, u, t, roll(2, P === 3 ? 8 : 6), { kind: 'phys', ty: 'piercing', ab: 1 });
+          const got = hit(b, u, t, roll(2, P === 3 ? 8 : 6) + 3, { kind: 'phys', ty: 'piercing', ab: 1 });
           if (t.alive) onHit(b, u, t, got);
           if (u.f.initSplash && !u._firstVolleyDone && t.alive) expose(b, t, 4 * chaK(u));
         }
@@ -256,7 +256,7 @@ hero('bram', {
   bio: 'Keeps a warhammer in one hand, a flagon in the other, and his friends upright.',
   attr: { str: 14, dex: 10, con: 16, int: 10, wis: 16, cha: 12 },
   prim: 'wis', pair: ['str', 'wis'],
-  hp: 132, ac: 16, sr: 13,
+  hp: 146, ac: 16, sr: 13,
   kw: { channel_divinity: 1 },
   ckw: [
     { k: 'channel_divinity', sub: 'Preserve Life', x: 'Once per fight, when Bram or a nearby ally drops below 45% HP, bursts heavy healing onto nearby allies.' }
@@ -352,24 +352,22 @@ hero('faelan', {
   atk: { n: 'Ray of Frost', d: [1, 8], flat: 1, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.45 },
   abil: {
     n: 'Arcane Ward', cr: 8.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Wards the most-threatened ally; High Wards top 2 and refunds 35% Charge, Nat 20 Wards the party and casts again.',
+    one: 'Wards the most-threatened ally; High Wards top 2 and refunds 18% Charge, Nat 20 Wards the party and casts again.',
     b: [
-      'Places a 14 + INT Ward on the most-threatened ally.',
-      'Places a 24 + INT Ward on the most-threatened ally.',
-      'Wards the top 2 threatened allies (30 + INT) and refunds 35% Charge.',
-      'Wards the entire party (36 + INT) and immediately casts again on the lowest-HP ally.'
+      'Places a 12 + INT Ward on the most-threatened ally.',
+      'Places an 18 + INT Ward on the most-threatened ally.',
+      'Wards the top 2 threatened allies (24 + INT) and refunds 18% Charge.',
+      'Wards the entire party (28 + INT) and immediately casts again on the lowest-HP ally.'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
       if (!fr.length) return;
       const threat = a => (a.stats.taken || 0) + (1 - hpPct(a)) * 120 + (a.role === 'Tank' ? 25 : 0);
       const sorted = fr.slice().sort((a, c) => threat(c) - threat(a));
-      const base = ([14, 24, 30, 36][P] + Math.max(0, u.m.int) * 3) * u.dm * (u.f.projWard ? 1.35 : 1);
+      const base = ([12, 18, 24, 28][P] + Math.max(0, u.m.int) * 2) * u.dm * (u.f.projWard ? 1.18 : 1);
       const applyFaelanWard = a => {
-        const before = a.ward;
-        addWard(b, a, base, a.maxHp * .75, u);
+        addWard(b, a, base, a.maxHp * .55, u);
         a._wardBy = u;
-        u.stats.ward += Math.max(0, a.ward - before);
       };
       if (P === 3) {
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 6, ty: 'force', ids: fr.map(x => x.id) });
@@ -381,7 +379,7 @@ hero('faelan', {
         const n = (P >= 2 || (u.f.projWard && u.tier >= 4)) ? 2 : 1;
         sorted.slice(0, n).forEach(applyFaelanWard);
         if (P === 2) {
-          later(b, .05, () => { if (u.alive) giveCharge(b, u, 35); });
+          later(b, .05, () => { if (u.alive) giveCharge(b, u, 18); });
         }
       }
     }
@@ -417,7 +415,7 @@ hero('wallaby', {
   bio: 'If your purse is lighter and your archer is on the floor, Wallaby was already here.',
   attr: { str: 10, dex: 16, con: 12, int: 12, wis: 10, cha: 14 },
   prim: 'dex', pair: ['dex', 'dex'],
-  hp: 94, ac: 14, sr: 11,
+  hp: 106, ac: 14, sr: 11,
   kw: { sneak_attack: 1, cunning_action: 1 },
   ckw: [
     { k: 'sneak_attack', sub: 'Backstab', x: 'Strikes deal +1d6 Sneak Attack (1/s) against flanked or impaired foes; Backstab is a burst Sneak Attack.' },
@@ -425,16 +423,16 @@ hero('wallaby', {
   ],
   passive: { n: 'Lucky', x: 'Rerolls natural 1s on ability rolls.' },
   f: { lucky: 1 },
-  gold: { cap: 12 },
-  atk: { n: 'Shortsword', d: [1, 6], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.05 },
+  gold: { cap: 8 },
+  atk: { n: 'Shortsword', d: [1, 6], flat: 3, kind: 'phys', ty: 'piercing', iv: 1.05 },
   abil: {
     n: 'Backstab', cr: 7, pa: 10, cut: [6, 13], self: 1,
-    one: 'Tumbles behind the farthest foe for a 2d6–8d6 Sneak Attack; High triggers Cunning Action Stealth, Nat 20 refunds 100% Charge + Gold.',
+    one: 'Tumbles behind the farthest foe for a 3d6–9d6 Sneak Attack; High triggers Cunning Action Stealth, Nat 20 refunds 100% Charge + Gold.',
     b: [
-      'Tumbles behind the farthest foe for a 2d6 Sneak Attack.',
-      'Tumbles behind the farthest foe for a 4d6 Sneak Attack.',
-      'Strikes for a 6d6 Sneak Attack and triggers Cunning Action (Stealth, halves next hit).',
-      'Strikes for an 8d6 Sneak Attack, refunds 100% Charge, and pops +2 Gold.'
+      'Tumbles behind the farthest foe for a 3d6 Sneak Attack.',
+      'Tumbles behind the farthest foe for a 5d6 Sneak Attack.',
+      'Strikes for a 7d6 Sneak Attack and triggers Cunning Action (Stealth, halves next hit).',
+      'Strikes for a 9d6 Sneak Attack, refunds 100% Charge, and pops +2 Gold.'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -443,7 +441,7 @@ hero('wallaby', {
       const spot = walkNbrs(far).filter(h => freeHex(b, h, u)).sort((a, c) => a.r - c.r)[0];
       if (spot) { u.c = spot.c; u.r = spot.r; u.target = far; b.events.push({ k: 'leap', id: u.id }); }
       b.events.push({ k: 'area', id: u.id, tid: far.id, shape: 'splash', r: 0.7, ty: 'psychic', ids: [far.id] });
-      const nDice = [2, 4, 6, 8][P];
+      const nDice = [3, 5, 7, 9][P];
       hit(b, u, far, roll(nDice, 6), { kind: 'phys', ty: 'piercing', melee: 1, ab: 1 });
       triggerSneakAttack(b, u, far, { ability: 1 });
       if (P >= 2) {
@@ -569,14 +567,14 @@ hero('lorcan', {
   bio: 'Marks one target at dusk and counts the arrows before they fly.',
   attr: { str: 10, dex: 16, con: 12, int: 10, wis: 16, cha: 10 },
   prim: 'wis', pair: ['dex', 'wis'],
-  hp: 94, ac: 14, sr: 13,
+  hp: 104, ac: 14, sr: 13,
   kw: { hunters_mark: 1 },
   ckw: [
-    { k: 'hunters_mark', sub: 'Hunter’s Quarry', x: 'Applies Hunter’s Mark; Ranger attacks against Marked foes deal +1d6 + WIS bonus damage.' }
+    { k: 'hunters_mark', sub: 'Hunter’s Quarry', x: 'Applies Hunter’s Mark (+15% team damage); Ranger attacks deal +1d8 + WIS bonus damage.' }
   ],
   passive: { n: 'Keen Sight', x: 'Extended range (+1 square) and ignores partial dodge or brush cover.' },
   f: { keenSight: 1, huntMark: 1 },
-  atk: { n: 'Longbow', d: [1, 8], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.2 },
+  atk: { n: 'Longbow', d: [1, 8], flat: 3, kind: 'phys', ty: 'piercing', iv: 1.2 },
   abil: {
     n: 'Hunter’s Mark', cr: 7.5, pa: 10, cut: [6, 13],
     one: 'Piercing shot + Hunter’s Mark; High fires a double-shot (2× on-hit), Nat 20 fires a 4-arrow volley that jumps and refunds 50% Charge on kill.',
@@ -732,21 +730,21 @@ hero('rosalind', {
   bio: 'Knows three verses for every hero and one devastating insult for every monster.',
   attr: { str: 8, dex: 12, con: 12, int: 14, wis: 12, cha: 16 },
   prim: 'cha', pair: ['cha', 'cha'],
-  hp: 90, ac: 13, sr: 13,
+  hp: 102, ac: 13, sr: 13,
   kw: { bardic_inspiration: 1 },
   ckw: [
-    { k: 'bardic_inspiration', sub: 'Lore Die', x: 'Grants a stackable d6/d8/d10 Bardic Inspiration die added directly to an ally’s next ability d20 roll.' }
+    { k: 'bardic_inspiration', sub: 'Lore Die', x: 'Grants a stackable d6/d8/d10 Bardic Inspiration die + Charge; spending Inspiration grants +25% damage & Haste for 4.5s.' }
   ],
   passive: { n: 'Socialite’s Poise', x: 'Starts combat with +30 Charge when positioned beside an ally.' },
   f: { socialite: 1, bardSelf: 1 },
-  atk: { n: 'Vicious Mockery', d: [1, 6], flat: 1, kind: 'magic', ty: 'psychic', iv: 1.4 },
+  atk: { n: 'Vicious Mockery', d: [1, 8], flat: 2, kind: 'magic', ty: 'psychic', iv: 1.35 },
   abil: {
     n: 'Bardic Inspiration', cr: 8.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Grants a d6/d8/d10 Bardic Inspiration die; High passes the die on, Nat 20 inspires the whole party with +30% Charge.',
+    one: 'Grants a d6/d8/d10 Bardic Inspiration die + Charge; High passes the die on, Nat 20 inspires the whole party with +30% Charge.',
     b: [
-      'Grants the closest ally a d6 Bardic Inspiration die for their next ability d20 roll.',
-      'Grants an ally a d6 Bardic Inspiration die (+CHA bonus) for their next ability d20 roll.',
-      'Grants a d8 Bardic Inspiration die that passes to another ally after being spent.',
+      'Grants the closest ally a d6 Bardic Inspiration die + 15 Charge.',
+      'Grants an ally a d6 Bardic Inspiration die (+CHA bonus) + 15 Charge.',
+      'Grants a d8 Bardic Inspiration die (+18 Charge) that passes to another ally after being spent.',
       'Inspires the entire party with d10 Bardic Inspiration dice and grants +30% Charge to everyone.'
     ],
     fx(b, u, P) {
@@ -763,9 +761,11 @@ hero('rosalind', {
       } else if (P === 2) {
         const passes = u.f.passRound ? Math.max(2, u.m.cha) : 1;
         grantInspDie(b, u, pick, 8, passes);
+        giveCharge(b, pick, 18);
       } else {
         const passes = u.f.passRound ? Math.max(1, u.m.cha - 1) : 0;
         grantInspDie(b, u, pick, 6, passes);
+        giveCharge(b, pick, 15);
       }
     }
   },
@@ -817,10 +817,10 @@ hero('cinder', {
     n: 'Fireball', cr: 8, pa: 8, cut: [6, 13], self: 1,
     one: 'Blasts the densest clump with Fire + Burn; High builds +2 Sorcery Points (fires Metamagic at 4), Nat 20 detonates all Burn.',
     b: [
-      'Hurls a Fireball (2d6 fire + light Burn) at the densest clump.',
-      'Hurls a Fireball (4d6 fire + Burn) at the densest clump.',
-      'Hurls a Fireball (5d6 fire + Burn) and gains +2 Sorcery Points (auto-fires Metamagic: Twinned Spell at 4).',
-      'Hurls a massive Fireball (7d6 fire) and detonates all Burn on the board immediately.'
+      'Hurls a Fireball (3d6 fire + light Burn) at the densest clump.',
+      'Hurls a Fireball (5d6 fire + Burn) at the densest clump.',
+      'Hurls a Fireball (6d6 fire + Burn) and gains +2 Sorcery Points (auto-fires Metamagic: Twinned Spell at 4).',
+      'Hurls a massive Fireball (8d6 fire) and detonates all Burn on the board immediately.'
     ],
     fx(b, u, P) {
       const hurlAt = (excludeCenter, isTwin) => {
@@ -833,11 +833,11 @@ hero('cinder', {
         const c = list.slice().sort((a, z) => nearCount(z) - nearCount(a))[0];
         const hitFoes = fs.filter(x => hd(x, c) <= R);
         b.events.push({ k: 'area', id: u.id, tid: c.id, shape: 'splash', r: R, ty: 'fire', ids: hitFoes.map(x => x.id) });
-        const diceN = [2, 4, 5, 7][P];
+        const diceN = [3, 5, 6, 8][P];
         hitFoes.forEach(x => {
           hit(b, u, x, roll(diceN, 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1 });
-          applyStatus(b, u, x, 'burn', [4, 7, 10, 14][P] * chaK(u));
-          if (isTwin && u.f.wildfire && x.alive) {
+          applyStatus(b, u, x, 'burn', [5, 8, 12, 16][P] * chaK(u));
+          if (u.f.wildfire && x.alive) {
             expose(b, x, 4 * chaK(u));
             x.st.srShred = Math.min(6, (x.st.srShred || 0) + 2);
           }
@@ -853,7 +853,7 @@ hero('cinder', {
         if (burning.length) {
           callout(b, u, 'BURN DETONATION!', '#ff6a2a');
           burning.forEach(x => {
-            const v = Math.max(8, Math.round(x.st.burn * 1.8));
+            const v = Math.max(12, Math.round(x.st.burn * 2.2));
             x.st.burn = 0;
             u.stats.burnCredit = (u.stats.burnCredit || 0) + 1;
             hit(b, u, x, v, { kind: 'magic', ty: 'fire', noBonus: 1, area: 1 });
@@ -896,19 +896,19 @@ hero('zark', {
   hp: 142, ac: 14, sr: 11,
   kw: { rage: 1 },
   ckw: [
-    { k: 'rage', sub: 'Bear Rage', x: 'High/Nat 20 Bear Cleave stacks uncapped Rage (+4% damage reduction & +10% attack speed per stack).' }
+    { k: 'rage', sub: 'Bear Rage', x: 'High/Nat 20 Bear Cleave stacks uncapped Rage (+6% damage reduction & +10% attack speed per stack) and restores 10% HP.' }
   ],
   passive: { n: 'Relentless Endurance', x: 'Once per fight, survives lethal damage at 1 HP.' },
   f: { relentlessEndurance: 1, bearTotem: 1 },
   atk: { n: 'Greataxe', d: [1, 12], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.5 },
   abil: {
     n: 'Bear Cleave', cr: 7.5, pa: 9, cut: [6, 13], self: 1,
-    one: 'Cleaves frontline foes; High stacks uncapped Rage (+DR & speed), Nat 20 adds 2 Rage stacks, Stun, and 50% Charge refund.',
+    one: 'Cleaves frontline foes; High stacks uncapped Rage (+DR, speed & 10% heal), Nat 20 adds 2 Rage stacks, Stun, and 50% Charge refund.',
     b: [
       'Sweeps his greataxe across adjacent foes for 2d8 slashing.',
       'Sweeps his greataxe across adjacent foes for 3d8 slashing.',
-      'Cleaves for 3d10 and gains +1 Bear Rage stack (flat DR + attack speed, uncapped).',
-      'Cleaves for 4d12, gains +2 Bear Rage stacks, stuns for 1.5s, and refunds 50% Charge.'
+      'Cleaves for 3d10, restores 10% HP, and gains +1 Bear Rage stack (+6% DR & +10% speed).',
+      'Cleaves for 4d12, restores 15% HP, gains +2 Bear Rage stacks, stuns for 1.5s, and refunds 50% Charge.'
     ],
     fx(b, u, P) {
       const adj = foes(b, u).filter(x => hd(x, u) <= 1);
@@ -922,6 +922,7 @@ hero('zark', {
       });
       if (P >= 2) {
         addBearRage(b, u, P === 3 ? 2 : 1);
+        heal(b, u, u, Math.round(u.maxHp * (P === 3 ? .15 : .10)), { raw: 1 });
       }
       if (P === 3) {
         later(b, .05, () => { if (u.alive) giveCharge(b, u, 50); });
@@ -1221,10 +1222,10 @@ hero('mother_laurel', {
       if (P >= 2) {
         const allies = friends(b, u).filter(a => !a.minion && (P === 3 || hd(a, u) <= 3));
         allies.forEach(a => {
-          heal(b, u, a, (18 + Math.max(0, u.m.wis) * 4) * u.dm);
+          heal(b, u, a, (14 + Math.max(0, u.m.wis) * 3) * u.dm, { raw: 1 });
           a.st.poison = Math.max(0, a.st.poison - 2);
           a.st.burn = Math.max(0, a.st.burn - 6);
-          if (P === 3 || u.questDone) addWard(b, a, (22 + Math.max(0, u.m.wis) * 3) * u.dm, a.maxHp * .5, u);
+          if (P === 3 || u.questDone) addWard(b, a, (16 + Math.max(0, u.m.wis) * 2) * u.dm, a.maxHp * .4, u);
           if (u.questDone) { a.tempHaste = Math.max(a.tempHaste || 0, 15); a.tempHasteT = Math.max(a.tempHasteT || 0, 4); }
         });
         u.stats.bloomHeals = (u.stats.bloomHeals || 0) + allies.length;
@@ -1242,9 +1243,9 @@ hero('mother_laurel', {
     },
     {
       k: 'bountiful_vines', n: 'Bountiful Vines', attr: 'str', tags: ['control', 'holy'],
-      x: 'Rooted foes take +1d6 Holy Smite on hit; any ally Smite or Wild Shape heals the most-hurt ally.',
-      full: 'Striking a Rooted foe adds +1d6 Holy Smite damage. Whenever any ally triggers Smite or Wild Shape, pulses a heal to the lowest-HP ally.',
-      t4x: 'Heals the whole party instead of one ally.',
+      x: 'Rooted foes take +1d6 Holy Smite on hit; any ally Smite or Wild Shape heals the most-hurt ally (1s CD).',
+      full: 'Striking a Rooted foe adds +1d6 Holy Smite damage. Whenever any ally triggers Smite or Wild Shape, pulses a heal to the lowest-HP ally (1s cooldown).',
+      t4x: 'Heals the 2 lowest-HP allies instead of one.',
       f: { bountifulVines: 1 }
     }
   ],
@@ -1299,7 +1300,7 @@ hero('lumen', {
             const det = Math.round(x.st.burn * 1.4);
             x.st.burn = 0;
             hit(b, u, x, det, { kind: 'holy', ty: 'radiant', noBonus: 1, area: 1 });
-            if (u.f.purifyingLight && u.tier >= 4) friends(b, u).filter(a => !a.minion).forEach(a => heal(b, u, a, 14 * u.dm));
+            if (u.f.purifyingLight && u.tier >= 4) friends(b, u).filter(a => !a.minion).forEach(a => heal(b, u, a, 14 * u.dm, { raw: 1 }));
           }
           if (u.questDone && x.alive && x.hp / x.maxHp < 0.16) {
             hit(b, u, x, x.hp + 10, { kind: 'holy', ty: 'radiant', noBonus: 1 });
@@ -1376,7 +1377,7 @@ hero('jamison', {
         a.bondDie = Math.max(a.bondDie || 0, die);
         if (P === 3) a.bondChargeShare = 1;
         if (u.questDone) a.d20Floor = Math.max(a.d20Floor || 1, u.d20Floor || 1);
-        if (P >= 1) heal(b, u, a, (roll(1, 8) + Math.max(0, u.m.cha) * 2) * u.dm);
+        if (P >= 1) heal(b, u, a, (roll(1, 8) + Math.max(0, u.m.cha) * 2) * u.dm, { raw: 1 });
         status(b, a, `BONDED +d${die}`, '#ffe9a0');
       });
       u.stats.bondedCasts = (u.stats.bondedCasts || 0) + picked.length;
@@ -1435,10 +1436,10 @@ hero('zoe', {
     n: 'Rummage', cr: 8.5, pa: 9, cut: [6, 13], self: 1,
     one: 'Tosses a battle buff to an ally; High triggers Action Surge + Runic Upgrade, Nat 20 triggers party Action Surge + refreshes items + Gold.',
     b: [
-      'Tosses a tonic to an ally (+18 HP + 15% Haste for 3s).',
-      'Tosses a tonic to an ally (+28 HP + 25% Haste + 15 Charge).',
-      'Triggers Action Surge (immediate free attack) + Runic Upgrade (+12% damage + Ward) on the most-equipped ally.',
-      'Triggers party-wide Action Surge, refreshes all once-per-fight items, and pops +2 Gold!'
+      'Tosses a tonic to an ally (+10 HP + 15% Haste for 3s).',
+      'Tosses a tonic to an ally (+16 HP + 22% Haste + 12 Charge).',
+      'Triggers Action Surge (immediate free attack) + Runic Upgrade (+8% dmg, max 2 stacks, + Ward) on the most-equipped ally.',
+      'Triggers party-wide Action Surge, refreshes all once-per-fight items, and pops +1 Gold!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
@@ -1446,13 +1447,16 @@ hero('zoe', {
       const targets = fr.slice().sort((a, c) => (c.items ? c.items.length : 0) - (a.items ? a.items.length : 0) || hpPct(a) - hpPct(c)).slice(0, P === 3 ? fr.length : count);
       b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 3, ty: 'force', ids: targets.map(x => x.id) });
       targets.forEach(a => {
-        heal(b, u, a, ([18, 28, 32, 36][P] + Math.max(0, u.m.int) * 3) * u.dm);
-        a.tempHaste = Math.max(a.tempHaste || 0, P >= 1 ? 25 : 15);
-        a.tempHasteT = Math.max(a.tempHasteT || 0, 3.5 * chaK(u));
-        if (P >= 1) giveCharge(b, a, 15);
+        heal(b, u, a, ([8, 12, 16, 20][P] + Math.max(0, u.m.int) * 2) * u.dm, { raw: 1 });
+        a.tempHaste = Math.max(a.tempHaste || 0, P >= 1 ? 22 : 15);
+        a.tempHasteT = Math.max(a.tempHasteT || 0, 3.0 * chaK(u));
+        if (P >= 1) giveCharge(b, a, 12);
         if (P >= 2) {
-          a.dm *= 1.12;
-          addWard(b, a, (25 + Math.max(0, u.m.int) * 4) * u.dm, a.maxHp * .5, u);
+          if ((a._runicStacks || 0) < 2) {
+            a._runicStacks = (a._runicStacks || 0) + 1;
+            a.dm *= 1.08;
+          }
+          addWard(b, a, (16 + Math.max(0, u.m.int) * 2) * u.dm, a.maxHp * .35, u);
           status(b, a, 'RUNIC UPGRADE', '#ffd76a');
           triggerActionSurge(b, a, { giver: u, label: 'RUNIC SURGE' });
         }
@@ -1462,7 +1466,7 @@ hero('zoe', {
       });
       u.stats.rummageBuffs = (u.stats.rummageBuffs || 0) + targets.length;
       if (P === 3) {
-        gainGold(b, u, 2, 'GRAND OPENING');
+        gainGold(b, u, 1, 'GRAND OPENING');
         callout(b, u, 'ITEMS REFRESHED!', '#ffd76a');
       }
     }
@@ -1505,7 +1509,7 @@ hero('toot', {
   ],
   passive: { n: 'Tip Jar', x: 'Every 3rd attack pops +1 Gold (up to fight cap).' },
   f: { tipJar: 1 },
-  gold: { cap: 14 },
+  gold: { cap: 6 },
   atk: { n: 'Brass Honk', d: [1, 8], flat: 1, kind: 'magic', ty: 'thunder', iv: 1.35 },
   abil: {
     n: 'Fanfare (Motes)', cr: 8.5, pa: 8, cut: [6, 13], self: 1,
@@ -1570,28 +1574,28 @@ hero('gilthrax', {
   ],
   passive: { n: 'Hoard Scales', x: 'Gains +10 bonus Ward on Arcane Shield for each item carried.' },
   f: { hoardScales: 1, gilthraxSurge: 1 },
-  gold: { cap: 10 },
+  gold: { cap: 6 },
   atk: { n: 'Gilded Greataxe', d: [1, 10], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.45 },
   abil: {
     n: 'Arcane Shield', cr: 7.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Raises item-scaling Ward (fueling Action Surge counters); High adds 100% reflect, Nat 20 blasts Arcane Nova + Gold.',
+    one: 'Raises item-scaling Ward (fueling Action Surge counters); High adds arcane reflect, Nat 20 blasts Arcane Nova + Gold.',
     b: [
-      'Raises a 28 Ward (+10 per equipped item).',
-      'Raises a 42 Ward (+12 per equipped item) and Taunts adjacent foes.',
-      'Raises a 56 Ward (+15 per item) and activates 100% arcane damage reflect for 4s.',
-      'Raises a 70 Ward, blasts an Arcane Nova (4d8 force AoE), and pops +2 Gold!'
+      'Raises a 22 Ward (+8 per equipped item).',
+      'Raises a 34 Ward (+10 per equipped item) and Taunts adjacent foes.',
+      'Raises a 46 Ward (+12 per item) and activates arcane damage reflect for 3s.',
+      'Raises a 58 Ward, blasts an Arcane Nova (4d8 force AoE), and pops +2 Gold!'
     ],
     fx(b, u, P) {
       const nItems = (u.items || []).length;
-      const wBase = [28, 42, 56, 70][P] + nItems * [10, 12, 15, 18][P] + Math.max(0, u.m.con) * 5;
+      const wBase = [22, 34, 46, 58][P] + nItems * [8, 10, 12, 14][P] + Math.max(0, u.m.con) * 4;
       const wAmt = wBase * u.dm * chaK(u);
-      addWard(b, u, wAmt, u.maxHp * .9, u);
+      addWard(b, u, wAmt, u.maxHp * .65, u);
       if (u.f.bodyguardFee && u.tier >= 4) {
-        friends(b, u).filter(a => a !== u && hd(a, u) <= 1).forEach(a => addWard(b, a, wAmt * .35, a.maxHp * .5, u));
+        friends(b, u).filter(a => a !== u && hd(a, u) <= 1).forEach(a => addWard(b, a, wAmt * .30, a.maxHp * .4, u));
       }
       if (P >= 1) taunt(b, u, 2, 2.5);
       if (P >= 2) {
-        u.arcaneReflectT = Math.max(u.arcaneReflectT || 0, 4 * chaK(u));
+        u.arcaneReflectT = Math.max(u.arcaneReflectT || 0, 3 * chaK(u));
         status(b, u, 'ARCANE REFLECT', '#8fb4e6');
       }
       if (P === 3) {
@@ -1643,7 +1647,7 @@ hero('gains', {
   ],
   passive: { n: 'Transmuter’s Eye', x: 'Gilded foes are Staggered and drop +1 Gold when slain.' },
   f: { transmuter: 1 },
-  gold: { cap: 12 },
+  gold: { cap: 6 },
   atk: { n: 'Alchemical Bolt', d: [1, 10], flat: 1, kind: 'magic', ty: 'force', iv: 1.4 },
   abil: {
     n: 'Gilded Beam', cr: 8.5, pa: 9, cut: [6, 13],
@@ -1871,22 +1875,22 @@ hero('saint', {
   bio: 'Smiles from two places at once while a funeral bell tolls for anyone already bleeding.',
   attr: { str: 8, dex: 12, con: 12, int: 10, wis: 16, cha: 16 },
   prim: 'cha', pair: ['wis', 'cha'],
-  hp: 96, ac: 14, sr: 15,
+  hp: 108, ac: 14, sr: 15,
   kw: { channel_divinity: 1 },
   ckw: [
     { k: 'channel_divinity', sub: 'Invoke Duplicity', x: 'Summons an Illusory Double (absorbs a hit & echoes Toll the Dead); resets on High/Nat 20 or Cleric resets.' }
   ],
   passive: { n: 'Fey Trickster', x: 'Toll the Dead upgrades from d8 to d12 against wounded foes.' },
   f: { trickeryCleric: 1 },
-  atk: { n: 'Bell of Passing', d: [1, 8], flat: 1, kind: 'magic', ty: 'necrotic', iv: 1.4 },
+  atk: { n: 'Bell of Passing', d: [1, 8], flat: 2, kind: 'magic', ty: 'necrotic', iv: 1.35 },
   abil: {
     n: 'Toll the Dead', cr: 8.5, pa: 9, cut: [6, 13],
     one: 'Necrotic bell (stronger vs wounded) + Channel Divinity Double; High adds Necrosis + Double echo, Nat 20 heals party & disrupts backline.',
     b: [
-      'Rings Toll the Dead (2d8 necrotic, or 2d12 vs wounded foe) and invokes Channel Divinity if ready.',
-      'Rings Toll the Dead (3d8 / 3d12 vs wounded) and invokes Channel Divinity if ready.',
-      'Deals 3d12 + 12 Necrosis, refreshes Channel Divinity Double, and echoes Toll the Dead!',
-      'Deals 4d12 + 16 Necrosis, confuses enemy backline, refreshes Double, and heals the entire party!'
+      'Rings Toll the Dead (2d8 necrotic, or 2d12 vs wounded foe) + 4 Necrosis and invokes Channel Divinity if ready.',
+      'Rings Toll the Dead (3d8 / 3d12 vs wounded) + 10 Necrosis and invokes Channel Divinity if ready.',
+      'Deals 3d12 + 16 Necrosis, refreshes Channel Divinity Double, and echoes Toll the Dead!',
+      'Deals 4d12 + 22 Necrosis, confuses enemy backline, refreshes Double, and heals the entire party!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -1904,7 +1908,7 @@ hero('saint', {
       if (P >= 2) u._cdUsed = 0; // High/Nat 20 refreshes Invoke Duplicity!
       if (!u._cdUsed) triggerSaintCD(b, u);
       u.stats.saintCasts = (u.stats.saintCasts || 0) + 1;
-      ringBell(t, [2, 3, 3, 4][P], [0, 6, 12, 16][P]);
+      ringBell(t, [2, 3, 3, 4][P], [4, 10, 16, 22][P]);
       if (P >= 2 && hadDouble) {
         later(b, .2, () => {
           const t2 = t.alive ? t : foes(b, u)[0];
@@ -1914,7 +1918,7 @@ hero('saint', {
       if (P === 3) {
         const far = fs.slice().sort((a, c) => hd(c, u) - hd(a, u))[0];
         if (far) { stagger(b, far, 3.5); expose(b, far, 4); }
-        friends(b, u).filter(a => !a.minion).forEach(a => heal(b, u, a, (24 + Math.max(0, u.m.cha) * 4) * u.dm));
+        friends(b, u).filter(a => !a.minion).forEach(a => heal(b, u, a, (24 + Math.max(0, u.m.cha) * 4) * u.dm, { raw: 1 }));
         callout(b, u, 'MIRROR TOLL!', '#c48fe6');
       }
     }
@@ -1980,17 +1984,17 @@ hero('kaska', {
         foes(b, u).filter(x => x !== t && hd(x, t) <= 1).forEach(x => expose(b, x, 3.5 * chaK(u)));
       }
       u.stats.pounces = (u.stats.pounces || 0) + 1;
-      if (P >= 1) heal(b, u, u, (22 + Math.max(0, u.m.wis) * 4) * u.dm);
+      if (P >= 1) heal(b, u, u, (18 + Math.max(0, u.m.wis) * 3) * u.dm, { raw: 1 });
       if (P >= 2) {
-        const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .55 : .4) * (u.questDone ? 1.25 : 1));
+        const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .44 : .32) * (u.questDone ? 1.25 : 1));
         u.beast = { hp: bhp, max: bhp };
-        if (u.f.lunarResilience && u.tier >= 4) { grantAlert(b, u, 1); addWard(b, u, 26 * u.dm, u.maxHp * .5, u); }
+        if (u.f.lunarResilience && u.tier >= 4) { grantAlert(b, u, 1); addWard(b, u, 20 * u.dm, u.maxHp * .4, u); }
         triggerWildShape(b, u, { form: 'Panther Form', beastHp: bhp });
       }
       if (P === 3) {
         if (t.alive) stun(b, t, 2);
         friends(b, u).filter(a => !a.minion).forEach(a => {
-          heal(b, u, a, (24 + Math.max(0, u.m.wis) * 4) * u.dm);
+          heal(b, u, a, (20 + Math.max(0, u.m.wis) * 3) * u.dm, { raw: 1 });
           a.tempHaste = Math.max(a.tempHaste || 0, 25);
           a.tempHasteT = Math.max(a.tempHasteT || 0, 4);
         });

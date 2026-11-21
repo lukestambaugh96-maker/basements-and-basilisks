@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Basements &amp; Basilisks 0.22 · Six-Attribute Rework &amp; 24-Hero Cast</title>
-  <meta name="description" content="Basements & Basilisks v0.22 roguelike auto-battler with the Six-Attribute Rework, 24 heroes across 6 toggleable Packs, d20 recursion, Piggy Bank loss system, and Campfire retraining." />
+  <title>Basements &amp; Basilisks 0.22 · 24 Heroes, 12-Class Keywords &amp; 46 D&amp;D Items</title>
+  <meta name="description" content="Basements & Basilisks v0.22 roguelike auto-battler with the Six-Attribute Rework, 24 heroes across 6 toggleable Packs, 12-Class Keyword System, 46 canonical D&D items, encounter-scaled shop progression, and Piggy Bank loss system." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
@@ -14,7 +14,7 @@
 <!-- title -->
 <section class="screen" id="start">
   <div class="title-wrap">
-    <div class="ver">Version 0.22 · Six-Attribute Rework &amp; 24-Hero Cast</div>
+    <div class="ver">Version 0.22 · 24 Heroes · 12-Class Keywords · 46 Canonical D&amp;D Items</div>
     <h1>Basements <span class="amp">&amp;</span> Basilisks</h1>
     <div class="parade" id="parade"></div>
     <div class="title-btns">
@@ -22,7 +22,8 @@
       <button class="btn big" data-a="continue" id="contBtn" hidden>Continue</button>
       <div class="row" style="justify-content:center">
         <button class="btn" data-a="changelog">What’s new in 0.22</button>
-        <a class="btn" href="tools/asset-studio.html" style="text-decoration:none">Asset Studio</a>
+        <a class="btn" id="wikiLink" href="tools/wiki.html" style="text-decoration:none">Field Guide &amp; Stat Tracker</a>
+        <a class="btn" id="assetStudioLink" href="tools/asset-studio.html" style="text-decoration:none">Asset Studio</a>
       </div>
     </div>
     <p class="mute" id="bestLine"></p>
@@ -35,11 +36,11 @@
     <h2>The Adventure (v0.22)</h2>
     <p class="goal">Three acts, three bosses, four heroes. Build a trigger machine.</p>
     <ul>
-      <li><b>Pre-Run Pack Selection (24 Heroes, 6 Packs).</b> Enable or disable any combination of the 6 Hero Packs before your run starts. All heroes and Pack Items from enabled Packs appear in your shops across all 3 Acts.</li>
-      <li><b>Reworked Shop (No Duplicate Hunting).</b> Two dedicated <b>Recruit Slots</b> always show unowned heroes, while the <b>Upgrade Slot</b> offers a direct Next-Tier Upgrade for an owned hero. In Acts 2 &amp; 3, new recruits arrive pre-tiered (Tier II/III) so you can pivot cleanly.</li>
+      <li><b>Pre-Run Pack Selection (24 Heroes, 6 Packs).</b> Enable or disable any combination of the 6 Hero Packs before your run starts. Enabled heroes populate shop Recruit Slots across all 3 Acts, while all 46 canonical D&amp;D items are always available.</li>
+      <li><b>12-Class Keyword System (17 Keywords).</b> Every class shares iconic mechanical hooks—Action Surge, Channel Divinity, Smite &amp; Aura, Arcane Recovery, Rage, Bardic Inspiration, Wild Shape, Hunter’s Mark, Sneak Attack &amp; Cunning Action, Ki, Sorcery Points &amp; Metamagic, and Hex &amp; Pact Boon—bridged by 24 class-keyword items.</li>
+      <li><b>Encounter-Scaled Shop (No Duplicate Hunting).</b> Two <b>Recruit Slots</b> offer unowned heroes with smoothly climbing Tier I–III odds per win, while the <b>Upgrade Slot</b> (from Shop #2 onward) offers an exact Next-Tier Upgrade for an owned hero. Item rarities scale smoothly from Common to Very Rare.</li>
       <li><b>Six-Attribute Rework &amp; d20 Floors.</b> STR adds melee Armor Pen, DEX drives Attack Speed, CON scales HP, INT speeds Charge (capped at 1 cast/sec), WIS raises your minimum natural d20 roll floor, and CHA scales buff/debuff potency.</li>
-      <li><b>Campfire Retraining &amp; Hero Quests.</b> Retrain any Tier II+ Path freely at Campfires, promote heroes at Training nodes, and complete each hero’s built-in <b>Hero Quest</b> for Signature Rewards (like Large 2×2 Sir Dane &amp; Pillar).</li>
-      <li><b>Piggy Bank Loss Rule.</b> Wins fill your Piggy Bank. Your first loss breaks it, pays out all saved gold, and lets you shop and retry that fight. A second loss ends the run.</li>
+      <li><b>Campfire Retraining, Hero Quests &amp; Piggy Bank.</b> Retrain Tier II+ Paths freely at Campfires, promote heroes at Training nodes, complete personal <b>Hero Quests</b> (like Large 2×2 Sir Dane &amp; Pillar), and rely on your Piggy Bank for one free retry on your first loss.</li>
     </ul>
     <div class="row" style="justify-content:center">
       <button class="btn primary big" data-a="begin">Choose hero packs</button>
@@ -53,7 +54,7 @@
   <div class="pickhead">
     <div class="lbl" id="packLbl">Before your adventure</div>
     <h2>Enable Hero Packs</h2>
-    <p class="mute">Toggle any combination of the 6 Packs on or off. Heroes and Pack Items from enabled Packs appear in shops throughout the entire run.</p>
+    <p class="mute">Toggle any combination of the 6 Packs on or off. Enabled heroes populate shop Recruit Slots; all 46 canonical D&amp;D items are always available in shops.</p>
   </div>
   <div class="packbar" id="packControls"></div>
   <div class="packs" id="packList"></div>

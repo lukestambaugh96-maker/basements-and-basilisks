@@ -1,0 +1,1568 @@
+{
+  "elapsedMs": 76745,
+  "heroes": [
+    {
+      "key": "zoe",
+      "name": "Zoe",
+      "cls": "Fighter",
+      "role": "Support",
+      "reach": "Melee",
+      "pack": 5,
+      "packKey": "market",
+      "nMid": 48,
+      "nLate": 44,
+      "midWR": 58.3,
+      "lateWR": 40.9,
+      "avgWR": 49.6,
+      "midScore": 54.9,
+      "lateScore": 48.6,
+      "avgScore": 51.8,
+      "avgTime": 23.6,
+      "avgDmg": 271,
+      "avgHeal": 362,
+      "avgWard": 387,
+      "avgTaken": 711,
+      "avgGold": 0.49,
+      "survPct": 37
+    },
+    {
+      "key": "velith",
+      "name": "Velith",
+      "cls": "Rogue",
+      "role": "Damage",
+      "reach": "Melee",
+      "pack": 6,
+      "packKey": "surprise",
+      "nMid": 50,
+      "nLate": 44,
+      "midWR": 56,
+      "lateWR": 31.8,
+      "avgWR": 43.9,
+      "midScore": 54.1,
+      "lateScore": 40.9,
+      "avgScore": 47.5,
+      "avgTime": 22.4,
+      "avgDmg": 541,
+      "avgHeal": 2,
+      "avgWard": 0,
+      "avgTaken": 190,
+      "avgGold": 0,
+      "survPct": 37.2
+    },
+    {
+      "key": "juniper",
+      "name": "Juniper",
+      "cls": "Druid",
+      "role": "Support",
+      "reach": "Ranged",
+      "pack": 2,
+      "packKey": "campfire",
+      "nMid": 45,
+      "nLate": 52,
+      "midWR": 28.9,
+      "lateWR": 51.9,
+      "avgWR": 40.4,
+      "midScore": 44.7,
+      "lateScore": 49,
+      "avgScore": 46.9,
+      "avgTime": 22.5,
+      "avgDmg": 554,
+      "avgHeal": 37,
+      "avgWard": 16,
+      "avgTaken": 245,
+      "avgGold": 0,
+      "survPct": 34
+    },
+    {
+      "key": "kaska",
+      "name": "Kaska",
+      "cls": "Druid",
+      "role": "Support",
+      "reach": "Melee",
+      "pack": 6,
+      "packKey": "surprise",
+      "nMid": 49,
+      "nLate": 55,
+      "midWR": 53.1,
+      "lateWR": 21.8,
+      "avgWR": 37.5,
+      "midScore": 53.6,
+      "lateScore": 33.6,
+      "avgScore": 43.6,
+      "avgTime": 25.4,
+      "avgDmg": 395,
+      "avgHeal": 291,
+      "avgWard": 0,
+      "avgTaken": 1148,
+      "avgGold": 0,
+      "survPct": 27.9
+    },
+    {
+      "key": "gilthrax",
+      "name": "Gilthrax",
+      "cls": "Fighter",
+      "role": "Tank",
+      "reach": "Melee",
+      "pack": 5,
+      "packKey": "market",
+      "nMid": 53,
+      "nLate": 66,
+      "midWR": 45.3,
+      "lateWR": 27.3,
+      "avgWR": 36.3,
+      "midScore": 47,
+      "lateScore": 39.9,
+      "avgScore": 43.5,
+      "avgTime": 22,
+      "avgDmg": 532,
+      "avgHeal": 4,
+      "avgWard": 244,
+      "avgTaken": 861,
+      "avgGold": 0.62,
+      "survPct": 21
+    },
+    {
+      "key": "dane",
+      "name": "Sir Dane",
+      "cls": "Paladin",
+      "role": "Tank",
+      "reach": "Melee",
+      "pack": 2,
+      "packKey": "campfire",
+      "nMid": 72,
+      "nLate": 71,
+      "midWR": 50,
+      "lateWR": 16.9,
+      "avgWR": 33.5,
+      "midScore": 50.7,
+      "lateScore": 34.7,
+      "avgScore": 42.7,
+      "avgTime": 21.9,
+      "avgDmg": 351,
+      "avgHeal": 2,
+      "avgWard": 156,
+      "avgTaken": 671,
+      "avgGold": 0,
+      "survPct": 16.1
+    },
+    {
+      "key": "mother_laurel",
+      "name": "Mother Laurel",
+      "cls": "Paladin",
+      "role": "Tank",
+      "reach": "Melee",
+      "pack": 4,
+      "packKey": "divine",
+      "nMid": 71,
+      "nLate": 68,
+      "midWR": 28.2,
+      "lateWR": 32.4,
+      "avgWR": 30.3,
+      "midScore": 42.6,
+      "lateScore": 40.6,
+      "avgScore": 41.6,
+      "avgTime": 22.8,
+      "avgDmg": 266,
+      "avgHeal": 160,
+      "avgWard": 11,
+      "avgTaken": 478,
+      "avgGold": 0,
+      "survPct": 28.8
+    },
+    {
+      "key": "cinder",
+      "name": "Cinder",
+      "cls": "Sorcerer",
+      "role": "Damage",
+      "reach": "Ranged",
+      "pack": 3,
+      "packKey": "beaten",
+      "nMid": 45,
+      "nLate": 59,
+      "midWR": 48.9,
+      "lateWR": 18.6,
+      "avgWR": 33.8,
+      "midScore": 48.6,
+      "lateScore": 32.9,
+      "avgScore": 40.8,
+      "avgTime": 20.2,
+      "avgDmg": 482,
+      "avgHeal": 1,
+      "avgWard": 0,
+      "avgTaken": 224,
+      "avgGold": 0,
+      "survPct": 26
+    },
+    {
+      "key": "naill",
+      "name": "Naill",
+      "cls": "Monk",
+      "role": "Damage",
+      "reach": "Melee",
+      "pack": 3,
+      "packKey": "beaten",
+      "nMid": 48,
+      "nLate": 54,
+      "midWR": 41.7,
+      "lateWR": 14.8,
+      "avgWR": 28.3,
+      "midScore": 49.9,
+      "lateScore": 31.4,
+      "avgScore": 40.6,
+      "avgTime": 23.8,
+      "avgDmg": 470,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgTaken": 312,
+      "avgGold": 0,
+      "survPct": 18.6
+    },
+    {
+      "key": "jamison",
+      "name": "Brother Jamison",
+      "cls": "Cleric",
+      "role": "Support",
+      "reach": "Melee",
+      "pack": 4,
+      "packKey": "divine",
+      "nMid": 57,
+      "nLate": 48,
+      "midWR": 38.6,
+      "lateWR": 20.8,
+      "avgWR": 29.7,
+      "midScore": 46.2,
+      "lateScore": 33.1,
+      "avgScore": 39.7,
+      "avgTime": 22.3,
+      "avgDmg": 233,
+      "avgHeal": 216,
+      "avgWard": 0,
+      "avgTaken": 419,
+      "avgGold": 0,
+      "survPct": 12.4
+    },
+    {
+      "key": "faelan",
+      "name": "Faelan",
+      "cls": "Wizard",
+      "role": "Support",
+      "reach": "Ranged",
+      "pack": 1,
+      "packKey": "tavern",
+      "nMid": 59,
+      "nLate": 56,
+      "midWR": 39,
+      "lateWR": 19.6,
+      "avgWR": 29.3,
+      "midScore": 43.6,
+      "lateScore": 34.2,
+      "avgScore": 38.9,
+      "avgTime": 26.1,
+      "avgDmg": 199,
+      "avgHeal": 0,
+      "avgWard": 909,
+      "avgTaken": 417,
+      "avgGold": 0,
+      "survPct": 20.9
+    },
+    {
+      "key": "arthur",
+      "name": "Arthur",
+      "cls": "Fighter",
+      "role": "Damage",
+      "reach": "Melee",
+      "pack": 1,
+      "packKey": "tavern",
+      "nMid": 55,
+      "nLate": 47,
+      "midWR": 27.3,
+      "lateWR": 23.4,
+      "avgWR": 25.4,
+      "midScore": 41.1,
+      "lateScore": 35,
+      "avgScore": 38,
+      "avgTime": 21.7,
+      "avgDmg": 351,
+      "avgHeal": 4,
+      "avgWard": 0,
+      "avgTaken": 362,
+      "avgGold": 0,
+      "survPct": 11.8
+    },
+    {
+      "key": "nettle",
+      "name": "Nettle",
+      "cls": "Warlock",
+      "role": "Support",
+      "reach": "Ranged",
+      "pack": 3,
+      "packKey": "beaten",
+      "nMid": 55,
+      "nLate": 58,
+      "midWR": 40,
+      "lateWR": 17.2,
+      "avgWR": 28.6,
+      "midScore": 45.4,
+      "lateScore": 29.8,
+      "avgScore": 37.6,
+      "avgTime": 17.8,
+      "avgDmg": 624,
+      "avgHeal": 93,
+      "avgWard": 0,
+      "avgTaken": 216,
+      "avgGold": 0,
+      "survPct": 20.4
+    },
+    {
+      "key": "zark",
+      "name": "Zark",
+      "cls": "Barbarian",
+      "role": "Tank",
+      "reach": "Melee",
+      "pack": 3,
+      "packKey": "beaten",
+      "nMid": 67,
+      "nLate": 79,
+      "midWR": 25.4,
+      "lateWR": 19,
+      "avgWR": 22.2,
+      "midScore": 39.4,
+      "lateScore": 32.3,
+      "avgScore": 35.8,
+      "avgTime": 22.3,
+      "avgDmg": 279,
+      "avgHeal": 102,
+      "avgWard": 0,
+      "avgTaken": 775,
+      "avgGold": 0,
+      "survPct": 11.6
+    },
+    {
+      "key": "bram",
+      "name": "Bram",
+      "cls": "Cleric",
+      "role": "Tank",
+      "reach": "Melee",
+      "pack": 1,
+      "packKey": "tavern",
+      "nMid": 61,
+      "nLate": 74,
+      "midWR": 27.9,
+      "lateWR": 14.9,
+      "avgWR": 21.4,
+      "midScore": 39.3,
+      "lateScore": 27.8,
+      "avgScore": 33.5,
+      "avgTime": 23,
+      "avgDmg": 159,
+      "avgHeal": 237,
+      "avgWard": 4,
+      "avgTaken": 693,
+      "avgGold": 0,
+      "survPct": 7.4
+    },
+    {
+      "key": "corvin",
+      "name": "Corvin",
+      "cls": "Ranger",
+      "role": "Damage",
+      "reach": "Melee",
+      "pack": 6,
+      "packKey": "surprise",
+      "nMid": 50,
+      "nLate": 45,
+      "midWR": 28,
+      "lateWR": 13.3,
+      "avgWR": 20.6,
+      "midScore": 39.9,
+      "lateScore": 27,
+      "avgScore": 33.5,
+      "avgTime": 19.2,
+      "avgDmg": 355,
+      "avgHeal": 1,
+      "avgWard": 0,
+      "avgTaken": 296,
+      "avgGold": 0,
+      "survPct": 11.6
+    },
+    {
+      "key": "pillar",
+      "name": "Pillar",
+      "cls": "Barbarian",
+      "role": "Tank",
+      "reach": "Melee",
+      "pack": 4,
+      "packKey": "divine",
+      "nMid": 79,
+      "nLate": 69,
+      "midWR": 30.4,
+      "lateWR": 10.1,
+      "avgWR": 20.3,
+      "midScore": 40.1,
+      "lateScore": 25.8,
+      "avgScore": 33,
+      "avgTime": 21.1,
+      "avgDmg": 185,
+      "avgHeal": 2,
+      "avgWard": 0,
+      "avgTaken": 651,
+      "avgGold": 0,
+      "survPct": 10.8
+    },
+    {
+      "key": "lorcan",
+      "name": "Lorcan",
+      "cls": "Ranger",
+      "role": "Damage",
+      "reach": "Ranged",
+      "pack": 2,
+      "packKey": "campfire",
+      "nMid": 56,
+      "nLate": 52,
+      "midWR": 21.4,
+      "lateWR": 17.3,
+      "avgWR": 19.4,
+      "midScore": 34.6,
+      "lateScore": 31.2,
+      "avgScore": 32.9,
+      "avgTime": 19.6,
+      "avgDmg": 433,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgTaken": 254,
+      "avgGold": 0,
+      "survPct": 13
+    },
+    {
+      "key": "rosalind",
+      "name": "Rosalind",
+      "cls": "Bard",
+      "role": "Support",
+      "reach": "Ranged",
+      "pack": 2,
+      "packKey": "campfire",
+      "nMid": 46,
+      "nLate": 59,
+      "midWR": 17.4,
+      "lateWR": 11.9,
+      "avgWR": 14.6,
+      "midScore": 37.1,
+      "lateScore": 28.4,
+      "avgScore": 32.8,
+      "avgTime": 19.8,
+      "avgDmg": 150,
+      "avgHeal": 1,
+      "avgWard": 0,
+      "avgTaken": 262,
+      "avgGold": 0,
+      "survPct": 9.5
+    },
+    {
+      "key": "gains",
+      "name": "Gains",
+      "cls": "Wizard",
+      "role": "Damage",
+      "reach": "Ranged",
+      "pack": 5,
+      "packKey": "market",
+      "nMid": 49,
+      "nLate": 53,
+      "midWR": 22.4,
+      "lateWR": 15.1,
+      "avgWR": 18.8,
+      "midScore": 36.5,
+      "lateScore": 28.9,
+      "avgScore": 32.7,
+      "avgTime": 22,
+      "avgDmg": 444,
+      "avgHeal": 1,
+      "avgWard": 0,
+      "avgTaken": 279,
+      "avgGold": 1.42,
+      "survPct": 12.7
+    },
+    {
+      "key": "lumen",
+      "name": "Lumen",
+      "cls": "Cleric",
+      "role": "Damage",
+      "reach": "Ranged",
+      "pack": 4,
+      "packKey": "divine",
+      "nMid": 55,
+      "nLate": 51,
+      "midWR": 23.6,
+      "lateWR": 17.6,
+      "avgWR": 20.6,
+      "midScore": 35.3,
+      "lateScore": 29.5,
+      "avgScore": 32.4,
+      "avgTime": 19.3,
+      "avgDmg": 311,
+      "avgHeal": 2,
+      "avgWard": 0,
+      "avgTaken": 236,
+      "avgGold": 0,
+      "survPct": 15.1
+    },
+    {
+      "key": "wallaby",
+      "name": "Wallaby",
+      "cls": "Rogue",
+      "role": "Damage",
+      "reach": "Melee",
+      "pack": 1,
+      "packKey": "tavern",
+      "nMid": 54,
+      "nLate": 46,
+      "midWR": 25.9,
+      "lateWR": 4.3,
+      "avgWR": 15.1,
+      "midScore": 39.2,
+      "lateScore": 23.6,
+      "avgScore": 31.4,
+      "avgTime": 20.3,
+      "avgDmg": 320,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgTaken": 313,
+      "avgGold": 0.59,
+      "survPct": 10
+    },
+    {
+      "key": "saint",
+      "name": "Saint",
+      "cls": "Cleric",
+      "role": "Support",
+      "reach": "Ranged",
+      "pack": 6,
+      "packKey": "surprise",
+      "nMid": 68,
+      "nLate": 40,
+      "midWR": 19.1,
+      "lateWR": 5,
+      "avgWR": 12.1,
+      "midScore": 35,
+      "lateScore": 24.8,
+      "avgScore": 29.9,
+      "avgTime": 19.6,
+      "avgDmg": 294,
+      "avgHeal": 62,
+      "avgWard": 0,
+      "avgTaken": 290,
+      "avgGold": 0,
+      "survPct": 13
+    },
+    {
+      "key": "toot",
+      "name": "Toot",
+      "cls": "Bard",
+      "role": "Support",
+      "reach": "Ranged",
+      "pack": 5,
+      "packKey": "market",
+      "nMid": 52,
+      "nLate": 54,
+      "midWR": 19.2,
+      "lateWR": 7.4,
+      "avgWR": 13.3,
+      "midScore": 34,
+      "lateScore": 24.4,
+      "avgScore": 29.2,
+      "avgTime": 18,
+      "avgDmg": 155,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgTaken": 294,
+      "avgGold": 5.94,
+      "survPct": 7.5
+    }
+  ],
+  "paths": [
+    {
+      "key": "arthur",
+      "name": "Arthur",
+      "p0": {
+        "k": "vigilance",
+        "n": "Constant Vigilance",
+        "wr": 60,
+        "score": 56
+      },
+      "p1": {
+        "k": "initiative",
+        "n": "Roll for Initiative",
+        "wr": 50,
+        "score": 54.1
+      },
+      "diff": 1.9,
+      "winner": "Constant Vigilance"
+    },
+    {
+      "key": "bram",
+      "name": "Bram",
+      "p0": {
+        "k": "disciple",
+        "n": "Disciple of Life",
+        "wr": 50,
+        "score": 52.6
+      },
+      "p1": {
+        "k": "divine",
+        "n": "Divine Strike",
+        "wr": 50,
+        "score": 51.9
+      },
+      "diff": 0.7,
+      "winner": "Even"
+    },
+    {
+      "key": "faelan",
+      "name": "Faelan",
+      "p0": {
+        "k": "projected",
+        "n": "Projected Ward",
+        "wr": 60,
+        "score": 55.4
+      },
+      "p1": {
+        "k": "battery",
+        "n": "Spell Battery",
+        "wr": 80,
+        "score": 71.6
+      },
+      "diff": -16.2,
+      "winner": "Spell Battery"
+    },
+    {
+      "key": "wallaby",
+      "name": "Wallaby",
+      "p0": {
+        "k": "slippery",
+        "n": "Slippery",
+        "wr": 20,
+        "score": 31.8
+      },
+      "p1": {
+        "k": "fasthands",
+        "n": "Fast Hands",
+        "wr": 20,
+        "score": 33.3
+      },
+      "diff": -1.5,
+      "winner": "Even"
+    },
+    {
+      "key": "dane",
+      "name": "Sir Dane",
+      "p0": {
+        "k": "devotion",
+        "n": "Oath of Devotion",
+        "wr": 70,
+        "score": 59
+      },
+      "p1": {
+        "k": "calltoarms",
+        "n": "Call to Arms",
+        "wr": 50,
+        "score": 53.3
+      },
+      "diff": 5.7,
+      "winner": "Oath of Devotion"
+    },
+    {
+      "key": "lorcan",
+      "name": "Lorcan",
+      "p0": {
+        "k": "colossus",
+        "n": "Colossus Slayer",
+        "wr": 40,
+        "score": 49.7
+      },
+      "p1": {
+        "k": "trophies",
+        "n": "Volley of Trophies",
+        "wr": 30,
+        "score": 46.2
+      },
+      "diff": 3.5,
+      "winner": "Colossus Slayer"
+    },
+    {
+      "key": "juniper",
+      "name": "Juniper",
+      "p0": {
+        "k": "overgrowth",
+        "n": "Overgrowth",
+        "wr": 50,
+        "score": 51.8
+      },
+      "p1": {
+        "k": "land",
+        "n": "Circle of the Land",
+        "wr": 20,
+        "score": 45.3
+      },
+      "diff": 6.5,
+      "winner": "Overgrowth"
+    },
+    {
+      "key": "rosalind",
+      "name": "Rosalind",
+      "p0": {
+        "k": "passround",
+        "n": "Pass the Round",
+        "wr": 50,
+        "score": 47.1
+      },
+      "p1": {
+        "k": "encore",
+        "n": "Encore",
+        "wr": 30,
+        "score": 40.6
+      },
+      "diff": 6.5,
+      "winner": "Pass the Round"
+    },
+    {
+      "key": "cinder",
+      "name": "Cinder",
+      "p0": {
+        "k": "draconic",
+        "n": "Draconic Surge",
+        "wr": 60,
+        "score": 56.8
+      },
+      "p1": {
+        "k": "wildfire",
+        "n": "Wildfire",
+        "wr": 40,
+        "score": 50.5
+      },
+      "diff": 6.3,
+      "winner": "Draconic Surge"
+    },
+    {
+      "key": "zark",
+      "name": "Zark",
+      "p0": {
+        "k": "relentless",
+        "n": "Relentless Bear",
+        "wr": 70,
+        "score": 54.7
+      },
+      "p1": {
+        "k": "totemroar",
+        "n": "Totem Roar",
+        "wr": 50,
+        "score": 50
+      },
+      "diff": 4.7,
+      "winner": "Relentless Bear"
+    },
+    {
+      "key": "naill",
+      "name": "Naill",
+      "p0": {
+        "k": "openhand",
+        "n": "Open Hand",
+        "wr": 40,
+        "score": 45
+      },
+      "p1": {
+        "k": "flowing",
+        "n": "Flowing Leaves",
+        "wr": 40,
+        "score": 46.2
+      },
+      "diff": -1.2,
+      "winner": "Even"
+    },
+    {
+      "key": "nettle",
+      "name": "Nettle",
+      "p0": {
+        "k": "fineprint",
+        "n": "Fine Print",
+        "wr": 10,
+        "score": 30.5
+      },
+      "p1": {
+        "k": "bargain",
+        "n": "Dark One’s Bargain",
+        "wr": 0,
+        "score": 26.3
+      },
+      "diff": 4.2,
+      "winner": "Fine Print"
+    },
+    {
+      "key": "pillar",
+      "name": "Pillar",
+      "p0": {
+        "k": "unstoppable",
+        "n": "Unstoppable Faith",
+        "wr": 10,
+        "score": 31.4
+      },
+      "p1": {
+        "k": "beacon",
+        "n": "Living Beacon",
+        "wr": 20,
+        "score": 37.9
+      },
+      "diff": -6.5,
+      "winner": "Living Beacon"
+    },
+    {
+      "key": "mother_laurel",
+      "name": "Mother Laurel",
+      "p0": {
+        "k": "ancients_ward",
+        "n": "Ancients’ Ward",
+        "wr": 40,
+        "score": 42.8
+      },
+      "p1": {
+        "k": "bountiful_vines",
+        "n": "Bountiful Vines",
+        "wr": 60,
+        "score": 60.4
+      },
+      "diff": -17.6,
+      "winner": "Bountiful Vines"
+    },
+    {
+      "key": "lumen",
+      "name": "Lumen",
+      "p0": {
+        "k": "judgement",
+        "n": "Judgement",
+        "wr": 30,
+        "score": 51.6
+      },
+      "p1": {
+        "k": "purifying",
+        "n": "Purifying Light",
+        "wr": 60,
+        "score": 62.3
+      },
+      "diff": -10.7,
+      "winner": "Purifying Light"
+    },
+    {
+      "key": "jamison",
+      "name": "Brother Jamison",
+      "p0": {
+        "k": "good_vibes",
+        "n": "Good Vibes",
+        "wr": 30,
+        "score": 44.7
+      },
+      "p1": {
+        "k": "peace_radiance",
+        "n": "Peace & Radiance",
+        "wr": 20,
+        "score": 38
+      },
+      "diff": 6.7,
+      "winner": "Good Vibes"
+    },
+    {
+      "key": "zoe",
+      "name": "Zoe",
+      "p0": {
+        "k": "rune_carver",
+        "n": "Rune Carver",
+        "wr": 90,
+        "score": 79.8
+      },
+      "p1": {
+        "k": "just_the_thing",
+        "n": "Just the Thing",
+        "wr": 90,
+        "score": 85.6
+      },
+      "diff": -5.8,
+      "winner": "Just the Thing"
+    },
+    {
+      "key": "toot",
+      "name": "Toot",
+      "p0": {
+        "k": "busker",
+        "n": "Busker’s Rhythm",
+        "wr": 30,
+        "score": 43.4
+      },
+      "p1": {
+        "k": "street_performer",
+        "n": "Street Performer",
+        "wr": 20,
+        "score": 38.1
+      },
+      "diff": 5.3,
+      "winner": "Busker’s Rhythm"
+    },
+    {
+      "key": "gilthrax",
+      "name": "Gilthrax",
+      "p0": {
+        "k": "gilded_hoard",
+        "n": "Gilded Hoard",
+        "wr": 60,
+        "score": 54.7
+      },
+      "p1": {
+        "k": "bodyguard_fee",
+        "n": "Bodyguard’s Fee",
+        "wr": 50,
+        "score": 50.8
+      },
+      "diff": 3.9,
+      "winner": "Gilded Hoard"
+    },
+    {
+      "key": "gains",
+      "name": "Gains",
+      "p0": {
+        "k": "compound_interest",
+        "n": "Compound Interest",
+        "wr": 40,
+        "score": 50.2
+      },
+      "p1": {
+        "k": "liquid_assets",
+        "n": "Liquid Assets",
+        "wr": 30,
+        "score": 48.1
+      },
+      "diff": 2.1,
+      "winner": "Compound Interest"
+    },
+    {
+      "key": "velith",
+      "name": "Velith",
+      "p0": {
+        "k": "deaths_ledger",
+        "n": "Death’s Ledger",
+        "wr": 70,
+        "score": 56.7
+      },
+      "p1": {
+        "k": "nightshade",
+        "n": "Nightshade Vials",
+        "wr": 80,
+        "score": 59.7
+      },
+      "diff": -3,
+      "winner": "Nightshade Vials"
+    },
+    {
+      "key": "corvin",
+      "name": "Corvin",
+      "p0": {
+        "k": "stalker_flurry",
+        "n": "Stalker’s Flurry",
+        "wr": 10,
+        "score": 28.1
+      },
+      "p1": {
+        "k": "first_strike",
+        "n": "First Strike",
+        "wr": 20,
+        "score": 30.7
+      },
+      "diff": -2.6,
+      "winner": "First Strike"
+    },
+    {
+      "key": "saint",
+      "name": "Saint",
+      "p0": {
+        "k": "two_faced",
+        "n": "Two-Faced",
+        "wr": 10,
+        "score": 30
+      },
+      "p1": {
+        "k": "smoke_mirrors",
+        "n": "Smoke & Mirrors",
+        "wr": 10,
+        "score": 28.2
+      },
+      "diff": 1.8,
+      "winner": "Two-Faced"
+    },
+    {
+      "key": "kaska",
+      "name": "Kaska",
+      "p0": {
+        "k": "lunar_resilience",
+        "n": "Lunar Resilience",
+        "wr": 60,
+        "score": 60.4
+      },
+      "p1": {
+        "k": "pack_hunt",
+        "n": "Pack Hunt",
+        "wr": 90,
+        "score": 73.9
+      },
+      "diff": -13.5,
+      "winner": "Pack Hunt"
+    }
+  ],
+  "comps": [
+    {
+      "id": "wild_shape_pack",
+      "name": "Wild Shape Moon & Land",
+      "heroes": [
+        "mother_laurel",
+        "kaska",
+        "juniper",
+        "corvin"
+      ],
+      "paths": {
+        "mother_laurel": "bountiful_vines",
+        "kaska": "pack_hunt",
+        "juniper": "land",
+        "corvin": "stalker_flurry"
+      },
+      "items": {
+        "mother_laurel": [
+          "sunblade"
+        ],
+        "kaska": [
+          "moon_sickle"
+        ],
+        "juniper": [
+          "staff_woodlands"
+        ],
+        "corvin": [
+          "bracers_archery"
+        ]
+      },
+      "winRate": 100,
+      "avgScore": 93.9,
+      "avgTime": 21.2,
+      "avgGold": 0
+    },
+    {
+      "id": "arcane_battery",
+      "name": "Arcane Recovery Battery",
+      "heroes": [
+        "gilthrax",
+        "gains",
+        "faelan",
+        "zoe"
+      ],
+      "paths": {
+        "gilthrax": "gilded_hoard",
+        "gains": "liquid_assets",
+        "faelan": "battery",
+        "zoe": "rune_carver"
+      },
+      "items": {
+        "gilthrax": [
+          "plate_armor"
+        ],
+        "gains": [
+          "staff_power"
+        ],
+        "faelan": [
+          "pearl_power"
+        ],
+        "zoe": [
+          "headband"
+        ]
+      },
+      "winRate": 91.7,
+      "avgScore": 88,
+      "avgTime": 32.4,
+      "avgGold": 6.6
+    },
+    {
+      "id": "action_surge_blitz",
+      "name": "Action Surge Blitz",
+      "heroes": [
+        "gilthrax",
+        "arthur",
+        "zoe",
+        "faelan"
+      ],
+      "paths": {
+        "gilthrax": "bodyguard_fee",
+        "arthur": "initiative",
+        "zoe": "just_the_thing",
+        "faelan": "battery"
+      },
+      "items": {
+        "gilthrax": [
+          "weapon_warning"
+        ],
+        "arthur": [
+          "flametongue",
+          "boots_speed"
+        ],
+        "zoe": [
+          "ring_spell_storing"
+        ],
+        "faelan": [
+          "pearl_power"
+        ]
+      },
+      "winRate": 66.7,
+      "avgScore": 64.1,
+      "avgTime": 28,
+      "avgGold": 2.3
+    },
+    {
+      "id": "campfire_bonds",
+      "name": "Pack 2 Campfire Bonds",
+      "heroes": [
+        "dane",
+        "lorcan",
+        "juniper",
+        "rosalind"
+      ],
+      "paths": {
+        "dane": "devotion",
+        "lorcan": "colossus",
+        "juniper": "overgrowth",
+        "rosalind": "passround"
+      },
+      "items": {
+        "dane": [
+          "sentinel_shield"
+        ],
+        "lorcan": [
+          "oathbow"
+        ],
+        "juniper": [
+          "staff_woodlands"
+        ],
+        "rosalind": [
+          "horn_valhalla"
+        ]
+      },
+      "winRate": 33.3,
+      "avgScore": 42.7,
+      "avgTime": 22.1,
+      "avgGold": 0
+    },
+    {
+      "id": "shadow_ambush",
+      "name": "Surprise Round Ambush",
+      "heroes": [
+        "kaska",
+        "velith",
+        "wallaby",
+        "saint"
+      ],
+      "paths": {
+        "kaska": "pack_hunt",
+        "velith": "deaths_ledger",
+        "wallaby": "slippery",
+        "saint": "smoke_mirrors"
+      },
+      "items": {
+        "kaska": [
+          "moon_sickle"
+        ],
+        "velith": [
+          "dagger_venom",
+          "cloak_elvenkind"
+        ],
+        "wallaby": [
+          "boots_speed"
+        ],
+        "saint": [
+          "amulet_devout"
+        ]
+      },
+      "winRate": 25,
+      "avgScore": 42.5,
+      "avgTime": 21.8,
+      "avgGold": 0
+    },
+    {
+      "id": "poison_root_control",
+      "name": "Poison & Root Control",
+      "heroes": [
+        "mother_laurel",
+        "velith",
+        "juniper",
+        "nettle"
+      ],
+      "paths": {
+        "mother_laurel": "bountiful_vines",
+        "velith": "nightshade",
+        "juniper": "overgrowth",
+        "nettle": "fineprint"
+      },
+      "items": {
+        "mother_laurel": [
+          "sentinel_shield"
+        ],
+        "velith": [
+          "dagger_venom"
+        ],
+        "juniper": [
+          "staff_woodlands"
+        ],
+        "nettle": [
+          "staff_withering"
+        ]
+      },
+      "winRate": 33.3,
+      "avgScore": 42.1,
+      "avgTime": 12.9,
+      "avgGold": 0
+    },
+    {
+      "id": "gold_greed",
+      "name": "Pack 5 Market Cartel",
+      "heroes": [
+        "gilthrax",
+        "gains",
+        "zoe",
+        "toot"
+      ],
+      "paths": {
+        "gilthrax": "gilded_hoard",
+        "gains": "compound_interest",
+        "zoe": "rune_carver",
+        "toot": "busker"
+      },
+      "items": {
+        "gilthrax": [
+          "plate_armor"
+        ],
+        "gains": [
+          "staff_power"
+        ],
+        "zoe": [
+          "bag_holding"
+        ],
+        "toot": [
+          "horn_valhalla"
+        ]
+      },
+      "winRate": 16.7,
+      "avgScore": 34.6,
+      "avgTime": 20.2,
+      "avgGold": 9.1
+    },
+    {
+      "id": "cinder_wildfire",
+      "name": "Wildfire Burn Engine",
+      "heroes": [
+        "zark",
+        "cinder",
+        "lumen",
+        "rosalind"
+      ],
+      "paths": {
+        "zark": "totemroar",
+        "cinder": "wildfire",
+        "lumen": "purifying",
+        "rosalind": "encore"
+      },
+      "items": {
+        "zark": [
+          "periapt_wound_closure"
+        ],
+        "cinder": [
+          "bloodwell_vial",
+          "wand_fireballs"
+        ],
+        "lumen": [
+          "amulet_devout"
+        ],
+        "rosalind": [
+          "pipes_haunting"
+        ]
+      },
+      "winRate": 16.7,
+      "avgScore": 34.2,
+      "avgTime": 12.9,
+      "avgGold": 0
+    },
+    {
+      "id": "hex_necrosis",
+      "name": "Hex & Necrosis Rot",
+      "heroes": [
+        "pillar",
+        "velith",
+        "saint",
+        "nettle"
+      ],
+      "paths": {
+        "pillar": "beacon",
+        "velith": "nightshade",
+        "saint": "two_faced",
+        "nettle": "bargain"
+      },
+      "items": {
+        "pillar": [
+          "dwarven_plate"
+        ],
+        "velith": [
+          "dagger_venom"
+        ],
+        "saint": [
+          "amulet_devout"
+        ],
+        "nettle": [
+          "rod_pact_keeper",
+          "staff_withering"
+        ]
+      },
+      "winRate": 16.7,
+      "avgScore": 31.7,
+      "avgTime": 16.9,
+      "avgGold": 0
+    },
+    {
+      "id": "hunters_volley",
+      "name": "Hunter’s Mark Volley",
+      "heroes": [
+        "dane",
+        "lorcan",
+        "corvin",
+        "rosalind"
+      ],
+      "paths": {
+        "dane": "calltoarms",
+        "lorcan": "trophies",
+        "corvin": "first_strike",
+        "rosalind": "passround"
+      },
+      "items": {
+        "dane": [
+          "sentinel_shield"
+        ],
+        "lorcan": [
+          "oathbow",
+          "bracers_archery"
+        ],
+        "corvin": [
+          "cloak_elvenkind"
+        ],
+        "rosalind": [
+          "horn_valhalla"
+        ]
+      },
+      "winRate": 16.7,
+      "avgScore": 30.5,
+      "avgTime": 13,
+      "avgGold": 0
+    },
+    {
+      "id": "bardic_inspire",
+      "name": "Double Bard Inspiration",
+      "heroes": [
+        "dane",
+        "cinder",
+        "rosalind",
+        "toot"
+      ],
+      "paths": {
+        "dane": "devotion",
+        "cinder": "wildfire",
+        "rosalind": "passround",
+        "toot": "street_performer"
+      },
+      "items": {
+        "dane": [
+          "sunblade"
+        ],
+        "cinder": [
+          "wand_fireballs"
+        ],
+        "rosalind": [
+          "pipes_haunting"
+        ],
+        "toot": [
+          "horn_valhalla"
+        ]
+      },
+      "winRate": 8.3,
+      "avgScore": 23.2,
+      "avgTime": 11.9,
+      "avgGold": 6
+    },
+    {
+      "id": "beaten_path",
+      "name": "Pack 3 Off the Beaten Path",
+      "heroes": [
+        "zark",
+        "cinder",
+        "naill",
+        "nettle"
+      ],
+      "paths": {
+        "zark": "relentless",
+        "cinder": "draconic",
+        "naill": "openhand",
+        "nettle": "fineprint"
+      },
+      "items": {
+        "zark": [
+          "berserker_axe"
+        ],
+        "cinder": [
+          "bloodwell_vial"
+        ],
+        "naill": [
+          "dragonhide_belt"
+        ],
+        "nettle": [
+          "rod_pact_keeper"
+        ]
+      },
+      "winRate": 0,
+      "avgScore": 20.7,
+      "avgTime": 10.9,
+      "avgGold": 0
+    },
+    {
+      "id": "tavern_starters",
+      "name": "Pack 1 Tavern Classics",
+      "heroes": [
+        "bram",
+        "arthur",
+        "wallaby",
+        "faelan"
+      ],
+      "paths": {
+        "bram": "disciple",
+        "arthur": "vigilance",
+        "wallaby": "slippery",
+        "faelan": "projected"
+      },
+      "items": {
+        "bram": [
+          "plate_armor"
+        ],
+        "arthur": [
+          "flametongue"
+        ],
+        "wallaby": [
+          "cloak_elvenkind"
+        ],
+        "faelan": [
+          "pearl_power"
+        ]
+      },
+      "winRate": 0,
+      "avgScore": 19.2,
+      "avgTime": 23,
+      "avgGold": 0.2
+    },
+    {
+      "id": "ki_flurry",
+      "name": "Ki On-Hit Flurry",
+      "heroes": [
+        "dane",
+        "naill",
+        "lorcan",
+        "rosalind"
+      ],
+      "paths": {
+        "dane": "calltoarms",
+        "naill": "openhand",
+        "lorcan": "colossus",
+        "rosalind": "encore"
+      },
+      "items": {
+        "dane": [
+          "sentinel_shield"
+        ],
+        "naill": [
+          "dragonhide_belt",
+          "staff_striking"
+        ],
+        "lorcan": [
+          "oathbow"
+        ],
+        "rosalind": [
+          "pipes_haunting"
+        ]
+      },
+      "winRate": 0,
+      "avgScore": 17.2,
+      "avgTime": 10.9,
+      "avgGold": 0
+    },
+    {
+      "id": "rage_bruisers",
+      "name": "Double Rage Bruisers",
+      "heroes": [
+        "zark",
+        "pillar",
+        "arthur",
+        "jamison"
+      ],
+      "paths": {
+        "zark": "relentless",
+        "pillar": "unstoppable",
+        "arthur": "vigilance",
+        "jamison": "good_vibes"
+      },
+      "items": {
+        "zark": [
+          "berserker_axe",
+          "periapt_wound_closure"
+        ],
+        "pillar": [
+          "amulet_health"
+        ],
+        "arthur": [
+          "flametongue"
+        ],
+        "jamison": [
+          "staff_healing"
+        ]
+      },
+      "winRate": 0,
+      "avgScore": 16.8,
+      "avgTime": 17,
+      "avgGold": 0
+    },
+    {
+      "id": "divine_radiance",
+      "name": "Divine Channel Radiance",
+      "heroes": [
+        "bram",
+        "mother_laurel",
+        "lumen",
+        "jamison"
+      ],
+      "paths": {
+        "bram": "disciple",
+        "mother_laurel": "ancients_ward",
+        "lumen": "judgement",
+        "jamison": "peace_radiance"
+      },
+      "items": {
+        "bram": [
+          "plate_armor"
+        ],
+        "mother_laurel": [
+          "sentinel_shield"
+        ],
+        "lumen": [
+          "amulet_devout"
+        ],
+        "jamison": [
+          "staff_healing"
+        ]
+      },
+      "winRate": 0,
+      "avgScore": 14.5,
+      "avgTime": 15.1,
+      "avgGold": 0
+    }
+  ]
+}
