@@ -1000,28 +1000,28 @@ const PACKS = {
     n: 'Around the Campfire',
     x: 'Wilderness trackers and party bonds built on Marked, On-hit, Root/Poison, and d20 dice.',
     heroes: ['dane', 'lorcan', 'juniper', 'rosalind'],
-    item: 'whetstone',
-    ic: 'stone'
+    item: 'bracers_archery',
+    ic: 'bracers'
   },
   beaten: {
     n: 'Off the Beaten Path',
     x: 'Wild outsiders and snowballers fueling Burn, uncapped Bear Rage, Ki flurries, and Hex.',
     heroes: ['cinder', 'zark', 'naill', 'nettle'],
-    item: 'ember_bracers',
-    ic: 'bracers'
+    item: 'periapt_wound_closure',
+    ic: 'amulet_heart'
   },
   divine: {
     n: 'Divine Intervention',
     x: 'Four registers of holiness: Zealot immortality, Ancients Roots, Sunbeam Sear, and Peace Bonds.',
     heroes: ['pillar', 'mother_laurel', 'lumen', 'jamison'],
-    item: 'sunlit_censer',
+    item: 'amulet_devout',
     ic: 'holy'
   },
   market: {
     n: 'Cornering the Market',
     x: 'Economy, hoarding, and item amplifiers powered by Gold drops, Motes, and Arcane Shields.',
     heroes: ['zoe', 'toot', 'gilthrax', 'gains'],
-    item: 'merchants_scales',
+    item: 'bag_holding',
     ic: 'brooch'
   },
   surprise: {
@@ -2916,13 +2916,15 @@ function glanceHTML(k, pathKey, G) {
 
 
 /* === src/04-items.js === */
-/* ================= 0.22 ITEMS: 3 PACK ITEMS + 10 CORE SHOP ITEMS =================
-   Organized into the 4 v0.22 buckets from the Systems Handoff:
-     1. Pack Items (unlocked when drafting their Pack): Potion of Healing, Whetstone of the Hunt, Ember-Iron Bracers
-     2. Classic D&D Weapons (Melee/Ranged locked + Favoured Class bonus): Flametongue, Oathbow, Staff of Power, Sunblade
-     3. Multiclass Energy Items: Amulet of the Devout, Metamagic Rod (Quicken), Dragonhide Belt
-     4. d20 / INT / WIS Lever Items: Stone of Good Luck, Clockwork Amulet, Headband of Intellect
-   Attribute bonuses use score deltas (+2 score = +1 modifier, matching 0.21 attrRow display).
+/* ================= 0.22 ITEMS: 46 CANONICAL D&D ITEMS =================
+   Structured across 4 rarity tiers (Common -> Uncommon -> Rare -> Very Rare):
+     - 8 Common staples (obvious generic D&D gear & +1 weapons, Shield, Leather Armor, Potion, Clockwork Amulet)
+     - 24 Class-Keyword items (exactly 2 per class across all 12 classes; implicit keyword interaction, no explicit class labels)
+     - 14 Armor Ladder & Archetype Rider items (Breastplate, Plate Armor, Dwarven Plate, plus iconic Rare & Very Rare riders)
+   Exact 6-attribute parity: 7 items / +10 modifier (+20 score) each for STR, DEX, CON, INT, WIS, CHA.
+   Direct combat stats (Damage, Attack Speed, AC, HP, SR) offered both independently and in disparate pairings.
+   All items are always available in the shop & treasure pool regardless of enabled/disabled Hero Packs.
+   Attribute bonuses use score deltas (+2 score = +1 modifier).
 */
 
 const RARITY = [
@@ -2940,149 +2942,323 @@ const SOLVE = {
 };
 
 const ITEMS = {
-  /* ---------- 1. PACK ITEMS (unlocked by drafting their Pack) ---------- */
+  /* ---------- 1. COMMON STAPLES (2g — Obvious D&D Gear) ---------- */
+  longsword_p1: {
+    n: '+1 Longsword', r: 0, ic: 'sword', t: 'melee',
+    a: { str: 2 },
+    s: { dmg: 2 }
+  },
+  rapier_p1: {
+    n: '+1 Rapier', r: 0, ic: 'dagger_fork', t: 'melee',
+    a: { dex: 2 },
+    s: { haste: 12 }
+  },
+  longbow_p1: {
+    n: '+1 Longbow', r: 0, ic: 'bow', t: 'ranged',
+    s: { dmg: 3, haste: 8 }
+  },
+  wand_war_mage: {
+    n: 'Wand of the War Mage', r: 0, ic: 'wand', t: 'ranged',
+    a: { int: 2 },
+    s: { dmg: 2 }
+  },
+  shield: {
+    n: 'Shield', r: 0, ic: 'shield',
+    s: { ac: 1 }
+  },
+  leather_armor: {
+    n: 'Leather Armor', r: 0, ic: 'armor_studs',
+    s: { ac: 1, hp: 20 }
+  },
   potion_healing: {
-    n: 'Potion of Healing', r: 0, ic: 'vial', packOnly: 'tavern',
+    n: 'Potion of Healing', r: 0, ic: 'vial',
     s: { potionHeal: 1 },
     x: 'Automatically drunk the first time holder drops below 50% HP each fight (refills next fight; scales by Act: 2d4+2 / 4d4+4 / 8d4+8 / 10d4+20)'
   },
-  whetstone: {
-    n: 'Whetstone of the Hunt', r: 1, ic: 'stone', packOnly: 'campfire',
-    kwHooks: ['hunters_mark'],
-    a: { dex: 2 },
-    s: { markPoison: 1 },
-    x: 'Attacks against Hunter’s Mark targets apply 1 stack of Poison'
+  clockwork_amulet: {
+    n: 'Clockwork Amulet', r: 0, ic: 'amulet',
+    s: { clockworkFloor: 1 },
+    x: 'Once per fight, first ability roll cannot roll below 10 (never Fizzles or rolls Low)'
   },
-  ember_bracers: {
-    n: 'Ember-Iron Bracers', r: 1, ic: 'bracers', packOnly: 'beaten',
+
+  /* ---------- 2. UNCOMMON (3g — 12 Class-Keyword Items + Armor & Utility) ---------- */
+  weapon_warning: {
+    n: 'Weapon of Warning', r: 1, ic: 'defender', t: 'melee',
+    kwHooks: ['action_surge'],
+    a: { str: 2 },
+    s: { haste: 10, openingSurge: 1 },
+    x: 'Opens each fight with an immediate strike that triggers Action Surge'
+  },
+  periapt_wound_closure: {
+    n: 'Periapt of Wound Closure', r: 1, ic: 'amulet_heart',
+    kwHooks: ['rage'],
     a: { con: 2 },
-    s: { highBurnBurst: 1 },
-    x: 'Whenever the holder lands a High or Nat 20 ability roll, deal a burst of Burn to adjacent enemies'
+    s: { hp: 25, woundRage: 1 },
+    x: 'First time holder drops below 50% HP, gains +2 Rage and double Regeneration for 4s'
   },
-  sunlit_censer: {
-    n: 'Sunlit Censer', r: 1, ic: 'holy', packOnly: 'divine',
-    kwHooks: ['channel_divinity', 'smite'],
-    a: { wis: 2 },
-    s: { healHolyPulse: 1 },
-    x: 'Whenever the holder heals or Wards an ally, pulse 1d6 Holy damage to the nearest enemy'
+  sentinel_shield: {
+    n: 'Sentinel Shield', r: 1, ic: 'shield_eye',
+    kwHooks: ['aura', 'smite'],
+    s: { ac: 2, hp: 15, sentinelAura: 1 },
+    x: 'Radiates an Aura granting adjacent allies +1 AC and +1 SR (widens existing Auras by +1 square)'
   },
-  merchants_scales: {
-    n: 'Merchant’s Scales', r: 1, ic: 'brooch', packOnly: 'market',
-    a: { cha: 2 },
-    s: { winBonusGold: 1, sellBonus: 1 },
-    x: 'Winning a fight grants +1 bonus Gold; while carried, sold stash items refund 150% value'
-  },
-  cloak_elvenkind: {
-    n: 'Cloak of Elvenkind', r: 1, ic: 'cloak', packOnly: 'surprise',
-    kwHooks: ['cunning_action', 'sneak_attack'],
-    a: { dex: 2 },
-    s: { startStealth: 3, stealthExpose: 1, cloakSneak: 1 },
-    x: 'Triggers Cunning Action (Stealth 3s) at fight start; opening attack Exposes and triggers a 1d6 Sneak Attack'
-  },
-
-  /* ---------- 2. CLASSIC D&D WEAPONS (Favoured Class bonuses & Class Keyword hooks) ---------- */
-  flametongue: {
-    n: 'Flametongue', r: 2, ic: 'sword_flame', t: 'melee',
-    kwHooks: ['action_surge', 'smite'],
-    a: { str: 4 },
-    s: { flameEvery2: 1 },
-    x: 'Every 2nd strike applies Burn',
-    fav: { cls: ['Fighter', 'Paladin'], s: { flameEvery2: 1, flameSpread: 1, flameKwBurn: 1 }, x: 'Triggering Action Surge or Smite spreads Burn to an adjacent foe' }
-  },
-  oathbow: {
-    n: 'Oathbow', r: 2, ic: 'bow', t: 'ranged',
-    kwHooks: ['hunters_mark', 'action_surge'],
-    a: { dex: 4 },
-    s: { markPenPct: 0.30, markCharge: 8 },
-    x: 'Attacks vs. Hunter’s Mark foes ignore 30% AC and build +8 Charge',
-    fav: { cls: ['Ranger', 'Fighter'], s: { markPenPct: 0.30, markCharge: 8, highMarks: 1, surgeArrow: 1 }, x: 'High rolls apply Hunter’s Mark; Action Surge looses a bonus piercing arrow' }
-  },
-  staff_power: {
-    n: 'Staff of Power', r: 2, ic: 'staff', t: 'ranged',
-    kwHooks: ['arcane_recovery', 'sorcery_points', 'pact_boon'],
-    a: { int: 4 },
-    s: { wardOnCast: 12 },
-    x: 'Casting grants a small Ward',
-    fav: { cls: ['Wizard', 'Sorcerer', 'Warlock'], s: { wardOnCast: 12, nat20Refund: 30, doubleArcaneRec: 1, highSorcery: 1, pactHeal: 1 }, x: 'Doubles Arcane Recovery Charge, grants +1 Sorcery Point on High/Nat 20, and heals on Pact Boon' }
-  },
-  sunblade: {
-    n: 'Sunblade', r: 2, ic: 'greatsword', t: 'melee',
-    kwHooks: ['smite', 'channel_divinity'],
-    a: { str: 2, wis: 2 },
-    s: { holyAttacks: 1 },
-    x: 'Attacks deal Holy damage (ignoring AC and SR)',
-    fav: { cls: ['Cleric', 'Paladin'], s: { holyAttacks: 1, highPulseHeal: 1, kwHolyHeal: 1 }, x: 'Triggering Smite or Channel Divinity pulses a heal to nearby allies' }
-  },
-
-  /* ---------- 3. MULTICLASS ENERGY ITEMS (Grant or Amplify Class Keywords!) ---------- */
   amulet_devout: {
     n: 'Amulet of the Devout', r: 1, ic: 'holy',
-    kwHooks: ['smite', 'channel_divinity'],
-    a: { cha: 2 },
-    s: { devoutSmite: 5, cdBoost: 0.35 },
-    x: 'Every 5s, next attack triggers a Smite (2d6 Holy); boosts Channel Divinity potency by +35%'
+    kwHooks: ['channel_divinity'],
+    a: { wis: 2 },
+    s: { hp: 15, cdBoost: 0.35, healHolyPulse: 1 },
+    x: 'Boosts Channel Divinity potency by +35%; heals and Wards pulse 1d6 Holy damage to the nearest foe'
   },
-  metarod_quicken: {
-    n: 'Metamagic Rod (Quicken)', r: 1, ic: 'rod',
-    kwHooks: ['metamagic', 'sorcery_points'],
-    a: { int: 4 },
-    s: { quickenFirst: 1, startSorcery: 2 },
-    x: 'Triggers Metamagic (first ability cast charges at 2× speed) and grants +2 starting Sorcery Points'
+  bracers_archery: {
+    n: 'Bracers of Archery', r: 1, ic: 'bracers',
+    kwHooks: ['hunters_mark'],
+    a: { dex: 2 },
+    s: { haste: 10, markPoison: 1 },
+    x: 'Attacks against Hunter’s Mark targets apply 1 stack of Poison'
+  },
+  cloak_elvenkind: {
+    n: 'Cloak of Elvenkind', r: 1, ic: 'cloak',
+    kwHooks: ['cunning_action', 'sneak_attack'],
+    a: { dex: 2 },
+    s: { ac: 1, startStealth: 3, stealthExpose: 1, cloakSneak: 1 },
+    x: 'Triggers Cunning Action (Stealth 3s) at fight start; opening attack Exposes and triggers a 1d6 Sneak Attack'
   },
   dragonhide_belt: {
     n: 'Dragonhide Belt', r: 1, ic: 'belt',
     kwHooks: ['ki', 'ki_ability'],
-    a: { dex: 2, wis: 2 },
-    s: { kw_ki: 1, kw_ki_ability: 1, highKi: 1 },
-    x: 'Grants a 4-pip Ki bar + Ki Ability (Stagger strike); Monks also gain +1 Ki on High rolls'
+    a: { wis: 2 },
+    s: { haste: 12, kw_ki: 1, kw_ki_ability: 1, highKi: 1 },
+    x: 'Grants a 4-pip Ki bar firing a Staggering Ki Ability when full (+1 Ki on High rolls)'
   },
-
-  /* ---------- 4. d20 / INT / WIS LEVER ITEMS ---------- */
+  pipes_haunting: {
+    n: 'Pipes of Haunting', r: 1, ic: 'lute',
+    kwHooks: ['bardic_inspiration'],
+    a: { cha: 2 },
+    s: { haste: 12, startInsp: 1, inspCharge: 15 },
+    x: 'Grants the nearest ally Bardic Inspiration (d6) at fight start; spending Inspiration grants +15% Charge'
+  },
+  moon_sickle: {
+    n: 'Moon Sickle', r: 1, ic: 'scythe', t: 'melee',
+    kwHooks: ['wild_shape'],
+    a: { wis: 2 },
+    s: { hp: 20, moonSickle: 1 },
+    x: 'Healing an ally or entering Wild Shape grants +25% Attack Speed and +2 Damage for 4s'
+  },
+  pearl_power: {
+    n: 'Pearl of Power', r: 1, ic: 'orb',
+    kwHooks: ['arcane_recovery'],
+    a: { int: 2 },
+    s: { haste: 12, firstCastRec: 25, arcRecBoost: 0.40 },
+    x: 'Triggers Arcane Recovery (+25 Charge) after first cast and boosts Arcane Recovery by +40%'
+  },
+  bloodwell_vial: {
+    n: 'Bloodwell Vial', r: 1, ic: 'vial',
+    kwHooks: ['sorcery_points', 'metamagic'],
+    a: { cha: 2, int: 2 },
+    s: { quickenFirst: 1, startSorcery: 2 },
+    x: 'Starts each fight with +2 Sorcery Points and triggers Metamagic (first cast charges at 2× speed)'
+  },
+  rod_pact_keeper: {
+    n: 'Rod of the Pact Keeper', r: 1, ic: 'rod',
+    kwHooks: ['hex', 'pact_boon'],
+    a: { cha: 2 },
+    s: { hp: 20, startHex: 1, pactRestore: 1 },
+    x: 'Applies Hex to the farthest foe at fight start; Pact Boon restores 15% HP and +15 Charge'
+  },
+  breastplate: {
+    n: 'Breastplate', r: 1, ic: 'armor_shine',
+    s: { ac: 2, hp: 40 }
+  },
+  bag_holding: {
+    n: 'Bag of Holding', r: 1, ic: 'brooch',
+    s: { winBonusGold: 1, sellBonus: 1 },
+    x: 'Winning a fight grants +1 bonus Gold; while carried, sold stash items refund 150% value'
+  },
   luckstone: {
     n: 'Stone of Good Luck', r: 1, ic: 'stone',
     a: { wis: 2 },
     s: { rerollLowOnce: 1 },
     x: 'Rerolls the holder’s first Low ability roll each fight'
   },
-  clockwork_amulet: {
-    n: 'Clockwork Amulet', r: 2, ic: 'amulet',
+
+  /* ---------- 3. RARE (5g — 8 Class-Keyword Items + Plate & Archetype Riders) ---------- */
+  flametongue: {
+    n: 'Flame Tongue', r: 2, ic: 'sword_flame', t: 'melee',
+    kwHooks: ['action_surge'],
+    a: { str: 4 },
+    s: { dmg: 3, flameEvery2: 1, flameKwBurn: 1 },
+    x: 'Every 2nd strike applies Burn; triggering Action Surge spreads Burn to an adjacent foe'
+  },
+  berserker_axe: {
+    n: 'Berserker Axe', r: 2, ic: 'axe', t: 'melee',
+    kwHooks: ['rage'],
+    a: { str: 4 },
+    s: { dmg: 4, rageDmg: 2, killRage: 1 },
+    x: 'Each Rage stack adds +2 flat Damage; killing a foe grants +1 Rage'
+  },
+  staff_healing: {
+    n: 'Staff of Healing', r: 2, ic: 'staff2',
+    kwHooks: ['channel_divinity'],
+    a: { wis: 4 },
+    s: { hp: 25, staffCdHeal: 1 },
+    x: 'First time an ally drops below 40% HP each fight, triggers a Channel Divinity heal pulse (2d8 + WIS)'
+  },
+  oathbow: {
+    n: 'Oathbow', r: 2, ic: 'bow', t: 'ranged',
+    kwHooks: ['hunters_mark'],
+    a: { dex: 4 },
+    s: { dmg: 3, markPenPct: 0.30, markCharge: 8, highMarks: 1 },
+    x: 'Attacks vs. Hunter’s Mark foes ignore 30% AC and build +8 Charge; High rolls apply Hunter’s Mark'
+  },
+  dagger_venom: {
+    n: 'Dagger of Venom', r: 2, ic: 'dagger_drip', t: 'melee',
+    kwHooks: ['sneak_attack'],
+    a: { dex: 2 },
+    s: { haste: 20, sneakVenom: 1 },
+    x: 'Sneak Attack hits apply 2 stacks of Poison and shred −2 AC for 3s'
+  },
+  horn_valhalla: {
+    n: 'Horn of Valhalla', r: 2, ic: 'crown',
+    kwHooks: ['bardic_inspiration'],
+    a: { cha: 4, con: 2 },
+    s: { hp: 30, inspWardHaste: 1 },
+    x: 'Whenever an ally spends Bardic Inspiration, they gain an 18 HP Ward and +20% Attack Speed for 3s'
+  },
+  wand_fireballs: {
+    n: 'Wand of Fireballs', r: 2, ic: 'ring_flame', t: 'ranged',
+    kwHooks: ['metamagic', 'sorcery_points'],
+    a: { cha: 4 },
+    s: { dmg: 3, metaFireball: 1 },
+    x: 'Every Metamagic trigger (or every 2nd cast) detonates a 1-square Fireball applying Burn'
+  },
+  staff_withering: {
+    n: 'Staff of Withering', r: 2, ic: 'staff_skull',
+    kwHooks: ['hex', 'pact_boon'],
     a: { int: 4 },
-    s: { clockworkHigh: 1 },
-    x: 'Once per fight, guarantees a High roll instead of rolling the d20'
+    s: { hp: 30, hexNecrosis: 6, pactSpreadHex: 1 },
+    x: 'Attacks against Hex targets apply 6 Necrosis; Pact Boon spreads Hex to two enemies'
+  },
+  plate_armor: {
+    n: 'Plate Armor', r: 2, ic: 'armor_plate',
+    s: { ac: 3, hp: 75 }
+  },
+  cloak_displacement: {
+    n: 'Cloak of Displacement', r: 2, ic: 'cloak_double',
+    a: { dex: 4 },
+    s: { ac: 2, displaceAlert: 6 },
+    x: 'Starts each fight with Alert and refreshes Alert every 6s'
+  },
+  amulet_health: {
+    n: 'Amulet of Health', r: 2, ic: 'gem',
+    a: { con: 4 },
+    s: { hp: 45, heavyHitRecover: 0.30 },
+    x: 'Taking a hit of 15% or more Max HP heals back 30% of that damage over 2s'
   },
   headband: {
     n: 'Headband of Intellect', r: 2, ic: 'circlet',
-    a: { int: 6 },
-    s: { capToRoll: 1 },
+    a: { int: 4 },
+    s: { haste: 15, capToRoll: 1 },
     x: 'When hitting the 1-cast/second cap, excess Charge speed converts into +1 to ability d20 rolls'
+  },
+  boots_speed: {
+    n: 'Boots of Speed', r: 2, ic: 'boots_wing',
+    a: { str: 2 },
+    s: { haste: 25, ft: 15, openingDouble: 1 },
+    x: 'First attack each fight strikes twice'
+  },
+  ring_spell_storing: {
+    n: 'Ring of Spell Storing', r: 2, ic: 'ring',
+    a: { int: 2 },
+    s: { sr: 2, startCharge: 45 },
+    x: 'Starts each fight with 45% ability Charge'
+  },
+
+  /* ---------- 4. VERY RARE (7g — 4 Class-Keyword Centerpieces + Iconic Archetype Riders) ---------- */
+  sunblade: {
+    n: 'Sun Blade', r: 3, ic: 'greatsword', t: 'melee',
+    kwHooks: ['smite', 'aura'],
+    a: { str: 2, cha: 2 },
+    s: { dmg: 3, holyAttacks: 1, kwHolyHeal: 1 },
+    x: 'Attacks deal Holy damage (ignoring AC and SR); triggering Smite pulses a heal to allies in your Aura'
+  },
+  staff_striking: {
+    n: 'Staff of Striking', r: 3, ic: 'spear', t: 'melee',
+    kwHooks: ['ki', 'ki_ability'],
+    a: { wis: 4 },
+    s: { haste: 20, kiDoubleStrike: 1 },
+    x: 'Every Ki Ability strikes twice and refunds 1 Ki pip'
+  },
+  staff_woodlands: {
+    n: 'Staff of the Woodlands', r: 3, ic: 'ring_leaf',
+    kwHooks: ['wild_shape'],
+    a: { wis: 4, con: 4 },
+    s: { woodlandPulse: 4 },
+    x: 'While in Wild Shape (or after first cast), Roots a nearby foe every 4s and heals adjacent allies +15 HP'
+  },
+  staff_power: {
+    n: 'Staff of Power', r: 3, ic: 'staff', t: 'ranged',
+    kwHooks: ['arcane_recovery'],
+    a: { int: 4 },
+    s: { ac: 2, wardOnCast: 16, doubleArcaneRec: 1, nat20Refund: 30 },
+    x: 'Casting grants a 16 HP Ward; doubles Arcane Recovery Charge and Nat 20s refund 30% Charge'
+  },
+  dwarven_plate: {
+    n: 'Dwarven Plate', r: 3, ic: 'armor_spikes',
+    a: { con: 2 },
+    s: { ac: 4, hp: 110, pushRes: 1, meleeReflect: 0.15 },
+    x: 'Immune to push and knockback; reflects 15% of melee damage taken back at the attacker'
+  },
+  scimitar_speed: {
+    n: 'Scimitar of Speed', r: 3, ic: 'scimitar', t: 'melee',
+    a: { dex: 4 },
+    s: { haste: 30, every3Strike: 1 },
+    x: 'Every 3rd attack triggers an immediate bonus strike'
+  },
+  frost_brand: {
+    n: 'Frost Brand', r: 3, ic: 'sword_frost', t: 'melee',
+    a: { str: 4, con: 2 },
+    s: { dmg: 4, sr: 2, chillOnHit: 1 },
+    x: 'Attacks Chill targets (−15% Attack Speed for 2s)'
+  },
+  robe_stars: {
+    n: 'Robe of Stars', r: 3, ic: 'cloak_star',
+    a: { cha: 4 },
+    s: { hp: 40, sr: 2, starBolt: 1 },
+    x: 'High and Nat 20 ability rolls fire a 2d6 Holy star bolt at the lowest-HP foe'
+  },
+  ring_regeneration: {
+    n: 'Ring of Regeneration', r: 3, ic: 'bands',
+    a: { con: 4 },
+    s: { hp: 40, pctRegen: 0.04, cleanseEvery: 2 },
+    x: 'Regenerates 4% Max HP per second and cleanses 1 Burn or Poison stack every 2s'
   }
 };
 
-const CORE_ITEM_KEYS = Object.keys(ITEMS).filter(k => !ITEMS[k].packOnly);
+/* All items are always in the global shop & treasure pool regardless of enabled Hero Packs */
+const CORE_ITEM_KEYS = Object.keys(ITEMS);
 const ITEM_ORDER = Object.keys(ITEMS).sort((a, b) => ITEMS[a].r - ITEMS[b].r);
 const itemKwHooks = k => (ITEMS[k] && ITEMS[k].kwHooks) || [];
+const favFor = () => false; // Replaced by implicit Class Keyword hooks (no explicit Favoured Class tags)
 
-/* Favoured Class clones (`key@fav`) read transparently by heroStats() */
-const favFor = (k, heroKey) => {
-  const it = ITEMS[k];
-  return !!(it && it.fav && H[heroKey] && it.fav.cls.includes(H[heroKey].cls));
-};
-Object.keys(ITEMS).forEach(k => {
-  const it = ITEMS[k];
-  if (!it.fav) return;
-  ITEMS[k + '@fav'] = { ...it, s: { ...it.s, ...it.fav.s }, favOf: k };
-});
-
-/* Item text with attribute summary, melee/ranged tag, and Favoured Class note */
+/* Item text with attributes, direct combat stats (Damage, Attack Speed, AC, HP, SR, Speed), and rider */
 function itemText(k) {
   const it = ITEMS[k];
   if (!it) return '';
-  const parts = Object.entries(it.a || {}).map(([s, v]) => `+${v / 2} ${ATTR_N[s]}`);
+  const stats = [];
+  Object.entries(it.a || {}).forEach(([s, v]) => stats.push(`+${v / 2} ${ATTR_N[s]}`));
+  const st = it.s || {};
+  if (st.dmg) stats.push(`+${st.dmg} Damage`);
+  if (st.haste) stats.push(`+${st.haste}% Attack Speed`);
+  if (st.ac) stats.push(`+${st.ac} AC`);
+  if (st.hp) stats.push(`+${st.hp} HP`);
+  if (st.sr) stats.push(`+${st.sr} SR`);
+  if (st.ft) stats.push(`+${st.ft} ft Speed`);
+  const parts = [];
+  if (stats.length) parts.push(stats.join(', '));
   if (it.x) parts.push(it.x);
   const pre = it.t === 'melee' ? 'Melee weapon. ' : it.t === 'ranged' ? 'Ranged weapon. ' : '';
   const body = parts.join('; ');
-  const fv = it.fav ? ` Favoured (${it.fav.cls.join(', ')}): ${it.fav.x}.` : '';
-  return pre + body + (body && !/[.]$/.test(body) ? '.' : '') + fv;
+  return pre + body + (body && !/[.]$/.test(body) ? '.' : '');
 }
 
 /* Carrying items: 1 slot per tier up to 4 (+1 slot for Wallaby's quest or Zoe's Tier IV Just the Thing!) */
@@ -3111,11 +3287,16 @@ function canCarry(heroOrKey, k) {
 
 const ITEM_MAX = new Set([
   'pushRes', 'freeAct', 'burnImm', 'deathWard', 'displace', 'bigArea',
-  'holyAttacks', 'quickenFirst', 'rerollLowOnce', 'clockworkHigh', 'capToRoll',
+  'holyAttacks', 'quickenFirst', 'rerollLowOnce', 'clockworkFloor', 'clockworkHigh', 'capToRoll',
   'flameEvery2', 'flameSpread', 'flameKwBurn', 'highMarks', 'surgeArrow',
   'doubleArcaneRec', 'highSorcery', 'pactHeal', 'highPulseHeal', 'kwHolyHeal',
   'potionHeal', 'highBurnBurst', 'healHolyPulse', 'sellBonus',
-  'stealthExpose', 'startStealth', 'cloakSneak', 'highKi'
+  'stealthExpose', 'startStealth', 'cloakSneak', 'highKi',
+  'openingSurge', 'woundRage', 'sentinelAura', 'startInsp', 'moonSickle',
+  'startHex', 'pactRestore', 'killRage', 'staffCdHeal', 'sneakVenom',
+  'inspWardHaste', 'metaFireball', 'pactSpreadHex', 'displaceAlert',
+  'openingDouble', 'kiDoubleStrike', 'woodlandPulse', 'every3Strike',
+  'chillOnHit', 'starBolt', 'cleanseEvery'
 ]);
 const ITEM_MUL = new Set(['poisonX']);
 
@@ -3187,8 +3368,7 @@ const atkOf = (d, f) => ({ ...d.atk, ...((f && f.atk) || {}) });
 function heroStats(cfg) {
   const d = H[cfg.key];
   const rawItems = cfg.items && cfg.items.length ? cfg.items : (cfg.item ? [cfg.item] : []);
-  const resolvedItems = rawItems.map(k => (favFor(k, cfg.key) || (cfg.key === 'wallaby' && cfg.questDone && ITEMS[k + '@fav'])) ? k + '@fav' : k);
-  const it = resolvedItems.length ? combineItems(resolvedItems) : null;
+  const it = rawItems.length ? combineItems(rawItems) : null;
   const tier = cfg.tier || 1;
   const path = cfg.path && tier >= 2 ? d.paths.find(p => p.k === cfg.path) : null;
   const AB = (path && path.abil) || d.abil;
@@ -3264,6 +3444,7 @@ function heroStats(cfg) {
     sr: d.sr + m.wis + (s.sr || 0),
     ft: d.ft + (s.ft || 0),
     rng: d.rng + (s.rng || 0),
+    dmgBonus: s.dmg || 0,
     regen: +((0.5 + 0.5 * Math.max(0, m.con) + (s.regen || 0)) * hpx).toFixed(2),
     haste: dexHaste + (f.haste || 0) + (s.haste || 0),
     intChargePct,
@@ -3326,11 +3507,12 @@ function bandOdds(d, st) {
 function atkBonus(st, d) {
   const a = d.atk;
   if (a.heals) return st.mk;
-  if (a.kind === 'holy') return 0;
+  const itemDmg = st.dmgBonus || 0;
+  if (a.kind === 'holy') return itemDmg;
   const melee = d.rng <= 2 || a.thrown;
   let v = st.mw;
   if (a.kind === 'phys' && !melee && st.w === 'str') v = 0; // Ranged physical never gets STR unless thrown
-  return v;
+  return v + itemDmg;
 }
 
 function onHitList(d, st) {
@@ -3347,7 +3529,7 @@ function onHitText(e) {
 /* ---------- Units & Statuses ---------- */
 const freshSt = () => ({
   necImm: 0, stun: 0, root: 0, taunt: 0, tauntBy: null,
-  burn: 0, burnT: 0, frz: 0, poison: 0, poisonAcc: 0, chg: 0,
+  burn: 0, burnT: 0, frz: 0, chillT: 0, poison: 0, poisonAcc: 0, chg: 0,
   acid: 0, acidT: 0, acB: 0, acBT: 0, acS: 0, acST: 0,
   stag: 0, exp: 0, fear: 0, charm: 0,
   mark: null, hex: null, hexStacks: 0, hexJump: 0, hexSlow: 0,
@@ -3364,7 +3546,7 @@ function mkHero(cfg, side = 'P') {
     hidCr: st.hidCr, vet: 0, streak: 0, bounce: 0, verse: 0, reach: d.reach,
     c: cfg.c, r: cfg.r, sz: st.sz,
     maxHp: st.maxHp, hp: st.maxHp, ac: st.ac, sr: st.sr, regen: st.regen, ward: 0, nec: 0,
-    rng: st.rng, ft: st.ft, atk, abil: st.abil, iv: st.iv,
+    rng: st.rng, ft: st.ft, atk, abil: st.abil, iv: st.iv, dmgBonus: st.dmgBonus || 0,
     it: { ...((st.item && st.item.s) || {}) },
     cr: st.cr, pa: st.pa, charge: 0, t: Math.random() * .35, mt: 0,
     f: { ...st.f }, abM: st.abM, atM: st.atM, die: st.die, bands: st.bands,
@@ -3556,9 +3738,10 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
         const adj = foes(b, actor).find(x => x !== tgt && hd(x, tgt) <= 1);
         if (adj) applyStatus(b, actor, adj, 'burn', 4);
       }
-      // Sunblade (Favoured): Smite pulses a heal to nearby allies
+      // Sun Blade: Smite pulses a heal to nearby allies in Aura radius
       if (actor.it && actor.it.kwHolyHeal) {
-        friends(b, actor).filter(a => !a.minion && hd(a, actor) <= 2).forEach(a => heal(b, actor, a, 10 * actor.dm, { raw: 1 }));
+        const rad = ((actor.key === 'dane' && actor.questDone) || actor.it.sentinelAura) ? 3 : 2;
+        friends(b, actor).filter(a => !a.minion && hd(a, actor) <= rad).forEach(a => heal(b, actor, a, 12 * actor.dm, { raw: 1 }));
       }
     } else if (kwKey === 'arcane_recovery') {
       // Gains Path 2 Liquid Assets: shares 50% of Arcane Recovery Charge with all allies
@@ -3590,10 +3773,22 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
         const list = ml.tier >= 4 ? fr : [fr.slice().sort((a, c) => hpPct(a) - hpPct(c))[0]].filter(Boolean);
         list.forEach(a => heal(b, ml, a, (8 + Math.max(0, ml.m.wis) * 2) * ml.dm, { raw: 1 }));
       });
+      // Moon Sickle: entering Wild Shape grants +25% Attack Speed & +2 Damage for 4s
+      if (actor.it && actor.it.moonSickle) {
+        actor.tempHaste = Math.max(actor.tempHaste || 0, 25);
+        actor.tempHasteT = Math.max(actor.tempHasteT || 0, 4);
+        actor.moonDmgT = Math.max(actor.moonDmgT || 0, 4);
+      }
     } else if (kwKey === 'sneak_attack') {
       // Velith Path 2 Nightshade Vials: any ally Sneak Attack splashes 2 Poison
       if (tgt && P.some(x => x.f.nightshade)) {
         applyStatus(b, actor, tgt, 'poison', 2);
+      }
+      // Dagger of Venom: Sneak Attack applies 2 Poison & shreds -2 AC for 3s
+      if (tgt && actor.it && actor.it.sneakVenom) {
+        applyStatus(b, actor, tgt, 'poison', 2);
+        tgt.st.acid = Math.max(tgt.st.acid || 0, 2);
+        tgt.st.acidT = Math.max(tgt.st.acidT || 0, 3);
       }
     } else if (kwKey === 'ki_ability') {
       // Naill Path 2 Flowing Leaves: any ally Ki Ability Staggers & Exposes adjacent foes (+15 Charge at T4)
@@ -3606,16 +3801,62 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
           if (lowC) giveCharge(b, lowC, 15);
         }
       });
+      // Staff of Striking: Ki Ability strikes twice and refunds 1 Ki pip
+      if (actor.it && actor.it.kiDoubleStrike) {
+        actor.ki = Math.min(KI_MAX, (actor.ki || 0) + 1);
+        if (tgt && tgt.alive) {
+          later(b, .08, () => {
+            if (actor.alive && tgt.alive) hit(b, actor, tgt, roll(1, 8) + Math.max(0, actor.m.wis), { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1, onhit: 1 });
+          });
+        }
+      }
+    } else if (kwKey === 'bardic_inspiration' && ctx.action === 'spend') {
+      // Pipes of Haunting: spending Inspiration grants +15% Charge
+      P.filter(x => x.it && x.it.inspCharge).forEach(p => {
+        if (actor.alive) giveCharge(b, actor, p.it.inspCharge, 1);
+      });
+      // Horn of Valhalla: spending Inspiration grants 18 HP Ward & +20% Attack Speed for 3s
+      P.filter(x => x.it && x.it.inspWardHaste).forEach(h => {
+        if (actor.alive) {
+          addWard(b, actor, 18 * h.dm, actor.maxHp * .5, h);
+          actor.tempHaste = Math.max(actor.tempHaste || 0, 20);
+          actor.tempHasteT = Math.max(actor.tempHasteT || 0, 3);
+        }
+      });
+    } else if (kwKey === 'metamagic') {
+      // Wand of Fireballs: every Metamagic trigger detonates a 1-square Fireball applying Burn
+      if (actor.it && actor.it.metaFireball) {
+        fireWandFireball(b, actor);
+      }
     } else if (kwKey === 'pact_boon') {
-      // Staff of Power (Favoured): Pact Boon heals the lowest-HP ally
-      if (actor.it && actor.it.pactHeal) {
-        const low = friends(b, actor).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
-        if (low) heal(b, actor, low, 16 * actor.dm, { raw: 1 });
+      // Rod of the Pact Keeper: Pact Boon restores 15% HP & +15 Charge
+      if (actor.it && actor.it.pactRestore && actor.alive) {
+        heal(b, actor, actor, Math.round(actor.maxHp * .15), { raw: 1 });
+        giveCharge(b, actor, 15, 1);
+      }
+      // Staff of Withering: Pact Boon spreads Hex to two enemies
+      if (actor.it && actor.it.pactSpreadHex && actor.alive) {
+        const cands = foes(b, actor).filter(x => !x.st.hex);
+        const list = cands.length ? cands.slice(0, 2) : foes(b, actor).slice(0, 2);
+        list.forEach(x => applyNettleHex(b, actor, x, false));
       }
     }
   } finally {
     b._kwDepth = depth;
   }
+}
+
+function fireWandFireball(b, u) {
+  if (!u || !u.alive) return;
+  const fs = foes(b, u).filter(x => !x.hidden);
+  const c = (u.target && u.target.alive) ? u.target : fs[0];
+  if (!c) return;
+  const hitFoes = fs.filter(x => hd(x, c) <= 1);
+  b.events.push({ k: 'area', id: u.id, tid: c.id, shape: 'splash', r: 1, ty: 'fire', ids: hitFoes.map(x => x.id) });
+  hitFoes.forEach(x => {
+    hit(b, u, x, roll(2, 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, noBonus: 1 });
+    if (x.alive) applyStatus(b, u, x, 'burn', 6 * chaK(u));
+  });
 }
 
 function triggerActionSurge(b, u, opts = {}) {
@@ -3719,7 +3960,7 @@ function triggerSmite(b, u, t, dmg, opts = {}) {
 
 function triggerArcaneRecovery(b, u, baseCharge, why) {
   if (!u || !u.alive) return 0;
-  const mult = (u.it && u.it.doubleArcaneRec) ? 2 : 1;
+  const mult = (1 + ((u.it && u.it.arcRecBoost) || 0)) * ((u.it && u.it.doubleArcaneRec) ? 2 : 1);
   const amt = Math.round(baseCharge * mult);
   giveCharge(b, u, amt, 1);
   u.stats.arcaneRecoveries = (u.stats.arcaneRecoveries || 0) + 1;
@@ -3991,11 +4232,13 @@ function gainGold(b, u, v, why) {
 /* ---------- Damage & Mitigation ---------- */
 function bonusFor(src, o) {
   const B = src.bon;
-  if (!B || o.noBonus || o.kind === 'holy') return 0;
+  if (!B || o.noBonus) return 0;
+  const itemFlat = !o.ab ? ((src.dmgBonus || 0) + ((src.it && src.it.rageDmg) ? (src.bearRage || 0) * src.it.rageDmg : 0) + ((src.moonDmgT || 0) > 0 ? 2 : 0)) : 0;
+  if (o.kind === 'holy') return itemFlat;
   const melee = o.melee || src.rng <= 2 || (src.thrown && !o.ab);
   let v = o.ab ? B.k : B.w;
   if (o.kind === 'phys' && !melee && !o.ab && src.cls && H[src.key] && pairOf(H[src.key])[0] === 'str') v = 0;
-  return v;
+  return v + itemFlat;
 }
 
 function mitigate(b, src, t, amt, o) {
@@ -4196,6 +4439,18 @@ function hit(b, src, t, amt, o = {}) {
     heal(b, t, t, amtH, { raw: 1 });
     status(b, t, `POTION +${amtH}`, '#8fe0a0');
   }
+  // Periapt of Wound Closure: first time below 50% HP grants +2 Rage and double Regen for 4s
+  if (t.it && t.it.woundRage && !t._woundRageUsed && t.alive && t.hp < t.maxHp * .5) {
+    t._woundRageUsed = 1;
+    t.doubleRegenT = Math.max(t.doubleRegenT || 0, 4);
+    addBearRage(b, t, 2);
+  }
+  // Amulet of Health: heavy hit (>= 15% Max HP) heals back 30% over 2s
+  if (t.it && t.it.heavyHitRecover && !o.dot && pre >= t.maxHp * .15 && t.alive) {
+    const halfRec = Math.max(1, Math.round(pre * t.it.heavyHitRecover * .5));
+    later(b, 1.0, () => { if (t.alive) heal(b, t, t, halfRec, { raw: 1 }); });
+    later(b, 2.0, () => { if (t.alive) heal(b, t, t, halfRec, { raw: 1 }); });
+  }
   if (t.side === 'P' && t.alive && t.hp < t.maxHp * .6 && (b.goodberries || 0) > 0 && !t._berryUsed) {
     t._berryUsed = 1;
     b.goodberries--;
@@ -4207,8 +4462,12 @@ function hit(b, src, t, amt, o = {}) {
     t.ki = Math.min(KI_MAX, (t.ki || 0) + 1);
   }
 
-  // Thorns & Reflection (Sir Dane, Juniper, Gilthrax Arcane Reflect)
+  // Thorns & Reflection (Sir Dane, Juniper, Gilthrax Arcane Reflect, Dwarven Plate)
   if (src && src.alive && t.alive && src.side !== t.side && !o.dot && !o.thorn && pre > 0) {
+    if (t.it && t.it.meleeReflect && hd(src, t) <= 2) {
+      const refD = Math.max(1, Math.round(pre * t.it.meleeReflect));
+      later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, refD, { kind: 'phys', ty: 'bludgeoning', noBonus: 1, thorn: 1 }); });
+    }
     if (t.sacredShieldT > 0) {
       later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, (4 + Math.max(0, t.m.cha)) * t.dm, { kind: 'holy', ty: 'radiant', noBonus: 1, thorn: 1 }); });
     }
@@ -4439,6 +4698,11 @@ function kill(b, t, src, o) {
       if (n && hd(n, t) <= 3) { n.st.burn += t.st.burn * .8; n.st.burnT = n.st.burnT || .5; status(b, n, 'WILDFIRE SPREADS', '#ff9c4a'); }
     }
 
+    // Berserker Axe: killing a foe grants +1 Rage
+    if (K && K.alive && K.side === 'P' && K.it && K.it.killRage) {
+      addBearRage(b, K, 1);
+    }
+
     // Damage hero takedown charge
     if (K && K.alive && K.side === 'P' && K.role === 'Damage') {
       giveCharge(b, K, 25, 1);
@@ -4486,6 +4750,12 @@ function heal(b, src, t, amt, o = {}) {
   if (got > 0) {
     b.events.push({ k: 'heal', id: t.id, v: got, sid: src ? src.id : undefined });
     triggerSunlitCenser(b, src);
+    // Moon Sickle: healing an ally grants +25% Attack Speed & +2 Damage for 4s
+    if (src && src.alive && src.it && src.it.moonSickle) {
+      src.tempHaste = Math.max(src.tempHaste || 0, 25);
+      src.tempHasteT = Math.max(src.tempHasteT || 0, 4);
+      src.moonDmgT = Math.max(src.moonDmgT || 0, 4);
+    }
   }
   return got;
 }
@@ -4527,6 +4797,7 @@ function pushPath(b, t, dir, n) {
 }
 function push(b, src, t, n, o = {}) {
   if (!t || !t.alive) return;
+  if (t.it && t.it.pushRes) { status(b, t, 'STANDS FIRM', '#c8b48a'); return; }
   if (t.f.pushResist && Math.random() < t.f.pushResist) { status(b, t, 'STANDS FIRM', '#c8b48a'); return; }
   if (t.boss) n = Math.max(1, n - 1);
   if (szOf(t) > 1) { n--; if (n <= 0) return; }
@@ -4596,6 +4867,10 @@ function castAbility(b, u) {
     status(b, u, 'CLOCKWORK HIGH', '#ffd76a');
   } else {
     nat = rollNaturalD20(b, u);
+    if (u.it && u.it.clockworkFloor && !u._clockworkUsed) {
+      u._clockworkUsed = 1;
+      if (nat < 10) { nat = 10; status(b, u, 'CLOCKWORK 10', '#ffd76a'); }
+    }
     // Brother Jamison Emboldening Bond bonus die (d4 or d6)
     if (u.bondDie > 0) {
       const bRoll = roll(1, u.bondDie);
@@ -4679,9 +4954,22 @@ function castAbility(b, u) {
     u.stats.metamagics = (u.stats.metamagics || 0) + 1;
     emitClassKw(b, u, 'metamagic', { kind: 'quicken' });
   }
+  if (I.firstCastRec && u._casts === 1) {
+    later(b, .04, () => { if (u.alive) triggerArcaneRecovery(b, u, I.firstCastRec, 'PEARL'); });
+  }
+  if (I.metaFireball && u._casts % 2 === 0) {
+    later(b, .08, () => fireWandFireball(b, u));
+  }
   if (I.wardOnCast) addWard(b, u, I.wardOnCast * u.dm, u.maxHp * .5, u);
   if (P === 3 && I.nat20Refund) later(b, .05, () => { if (u.alive) giveCharge(b, u, I.nat20Refund); });
   if (P >= 2 && I.highMarks && tgt && tgt.alive && tgt.side !== u.side) markFoe(b, u, tgt);
+  if (P >= 2 && I.starBolt) {
+    const lowFoe = foes(b, u).filter(x => !x.hidden).sort((a, c) => a.hp - c.hp)[0];
+    if (lowFoe) {
+      b.events.push({ k: 'beam', id: u.id, tid: lowFoe.id, ty: 'radiant' });
+      hit(b, u, lowFoe, roll(2, 6), { kind: 'holy', ty: 'radiant', noBonus: 1 });
+    }
+  }
   if (P >= 2 && I.highPulseHeal) {
     friends(b, u).filter(a => hd(a, u) <= 2).forEach(a => heal(b, u, a, 8 * u.dm, { raw: 1 }));
   }
@@ -4818,7 +5106,7 @@ function charge(b, u) {
 function attackIv(b, u) {
   const rageHaste = (u.bearRage || 0) * 10;
   const h = u.haste + (u.auraHaste || 0) + (u.tempHasteT > 0 ? u.tempHaste : 0) + rageHaste;
-  const slow = (u.st.stag > 0 ? 1.3 : 1) * (u.st.hexSlow > 0 ? 1.25 : 1);
+  const slow = (u.st.stag > 0 ? 1.3 : 1) * (u.st.hexSlow > 0 ? 1.25 : 1) * (u.st.chillT > 0 ? 1.15 : 1);
   return u.iv / Math.max(.4, 1 + h / 100) * (1 + Math.min(50, u.st.frz / 2) / 100) * slow / (1 + .2 * otLevel(b));
 }
 const moveTime = (b, u) => .42 * COMBAT_TEMPO * 30 / u.ft * (u.st.stag > 0 ? 1.3 : 1) / (1 + .2 * otLevel(b));
@@ -4830,6 +5118,18 @@ function doAttack(b, u) {
   strike(b, u, t);
   for (let i = 1; i < (u.atk.hits || 1); i++) {
     later(b, .1 * i, () => { if (u.alive && u.st.stun <= 0 && t.alive && canHit(u, u, t)) strike(b, u, t); });
+  }
+  // Boots of Speed: first attack each fight strikes twice
+  if (u.it && u.it.openingDouble && !u._bootDoubleUsed) {
+    u._bootDoubleUsed = 1;
+    later(b, .08, () => { if (u.alive && u.st.stun <= 0 && t.alive && canHit(u, u, t)) strike(b, u, t); });
+  }
+  // Scimitar of Speed: every 3rd attack triggers an immediate bonus strike
+  if (u.it && u.it.every3Strike) {
+    u._scimCnt = (u._scimCnt || 0) + 1;
+    if (u._scimCnt % 3 === 0) {
+      later(b, .08, () => { if (u.alive && u.st.stun <= 0 && t.alive && canHit(u, u, t)) strike(b, u, t); });
+    }
   }
   if (u.abil && (u.side === 'E' || u.trig === 'striking')) giveCharge(b, u, u.pa * (u.chgX || 1), 1);
   return true;
@@ -4866,9 +5166,13 @@ function onHit(b, u, t, got) {
     else if (e.t === 'echo') later(b, e.delay || .25, () => { if (t.alive) hit(b, u, t, amt(), o); });
     else if (e.t === 'status') applyStatus(b, u, t, e.el, e.v || 1, e.max);
   }
-  // Pack 2 Item: Whetstone of the Hunt (attacks vs Hunter's Mark apply Poison)
+  // Bracers of Archery: attacks vs Hunter's Mark apply Poison
   if (u.it && u.it.markPoison && t.alive && t.st.mark) applyStatus(b, u, t, 'poison', 1.5);
-  // Flametongue: every 2nd strike applies Burn (Favoured spreads to adjacent)
+  // Staff of Withering: attacks vs Hex apply Necrosis
+  if (u.it && u.it.hexNecrosis && t.alive && t.st.hex) addNec(b, u, t, u.it.hexNecrosis);
+  // Frost Brand: attacks Chill targets (-15% Attack Speed for 2s)
+  if (u.it && u.it.chillOnHit && t.alive) t.st.chillT = Math.max(t.st.chillT || 0, 2);
+  // Flame Tongue: every 2nd strike applies Burn
   if (u.it && u.it.flameEvery2 && t.alive) {
     u._ftCnt = (u._ftCnt || 0) + 1;
     if (u._ftCnt % 2 === 0) {
@@ -5041,12 +5345,34 @@ function newBattle(encKey, party, eTier) {
       }
     }
     // Item & Pack 4-6 Start-of-combat Class Keyword hooks
-    if (u.it && u.it.startSorcery && u.kw && u.kw.sorcery_points) {
+    if (u.it && u.it.startSorcery) {
       u.sorcery = Math.min(4, (u.sorcery || 0) + u.it.startSorcery);
+    }
+    if (u.it && u.it.startCharge) {
+      u.charge = Math.min(100, Math.max(u.charge || 0, u.it.startCharge));
     }
     if (u.it && u.it.startStealth) {
       triggerCunningAction(b, u, null, { stealth: u.it.startStealth, label: 'CLOAK' });
       if (u.it.stealthExpose) u._stealthExposeReady = 1;
+    }
+    if (u.it && u.it.displaceAlert) {
+      grantAlert(b, u, 1);
+      u._dispT = u.it.displaceAlert;
+    }
+    if (u.it && u.it.openingSurge) {
+      later(b, .15, () => {
+        if (!u.alive) return;
+        const near = foes(b, u).filter(x => !x.hidden).sort((a, c) => hd(a, u) - hd(c, u))[0];
+        triggerActionSurge(b, u, { target: near, label: 'WARNING SURGE!', force: 1 });
+      });
+    }
+    if (u.it && u.it.startInsp) {
+      const ally = P.filter(a => a !== u && !a.minion && a.abil).sort((a, c) => hd(a, u) - hd(c, u))[0] || u;
+      grantInspDie(b, u, ally, 6, 0);
+    }
+    if (u.it && u.it.startHex) {
+      const far = alive(b, 'E').sort((a, c) => hd(c, u) - hd(a, u))[0];
+      if (far) applyNettleHex(b, u, far, false);
     }
     if (u.f.unstoppableFaith && u.tier >= 4) enterZealotRage(b, u, 1.5);
     if (u.f.streetPerformer && u.tier >= 4) {
@@ -5083,9 +5409,16 @@ function newBattle(encKey, party, eTier) {
 
 function applyAuras(b) {
   b.units.forEach(u => { u.auraHaste = 0; u.auraSR = 0; u.auraDmg = 0; u.auraAC = 0; u.auraCr = 0; u.auraFloor = 0; u.auraDane = null; });
-  // Paladin Aura: Sir Dane Aura of Devotion (+1 AC, +1 SR, Charm/Frighten immunity within 2 squares; 3 mounted)
+  // Sentinel Shield: radiates an Aura (+1 AC, +1 SR) to adjacent allies (and widens existing Paladin Auras by +1 square!)
+  alive(b, 'P').filter(x => x.it && x.it.sentinelAura).forEach(s => {
+    friends(b, s).filter(a => !a.minion && hd(a, s) <= 1).forEach(a => {
+      a.auraAC = Math.max(a.auraAC, 1);
+      a.auraSR = Math.max(a.auraSR, 1);
+    });
+  });
+  // Paladin Aura: Sir Dane Aura of Devotion (+1 AC, +1 SR, Charm/Frighten immunity within 2 squares; +1 mounted / +1 Sentinel Shield)
   alive(b, 'P').filter(x => x.f.auraDevotion).forEach(dane => {
-    const rad = dane.questDone ? 3 : 2;
+    const rad = (dane.questDone ? 3 : 2) + (dane.it && dane.it.sentinelAura ? 1 : 0);
     friends(b, dane).filter(a => !a.minion && hd(a, dane) <= rad).forEach(a => {
       a.auraAC = Math.max(a.auraAC, 1);
       a.auraSR = Math.max(a.auraSR, 1);
@@ -5094,8 +5427,9 @@ function applyAuras(b) {
   });
   // Paladin Aura: Mother Laurel Aura of Warding (+2 SR baseline, +5 SR with Ancients' Ward, +1 d20 floor at T4)
   alive(b, 'P').filter(x => x.f.auraWarding || x.f.ancientsWard).forEach(ml => {
+    const rad = 2 + (ml.it && ml.it.sentinelAura ? 1 : 0);
     const srBonus = (ml.f.auraWarding ? 2 : 0) + (ml.f.ancientsWard ? 3 : 0);
-    friends(b, ml).filter(a => !a.minion && hd(a, ml) <= 2).forEach(a => {
+    friends(b, ml).filter(a => !a.minion && hd(a, ml) <= rad).forEach(a => {
       a.auraSR = Math.max(a.auraSR, srBonus);
       if (ml.f.ancientsWard && ml.tier >= 4) a.auraFloor = Math.max(a.auraFloor, 1);
     });
@@ -5144,6 +5478,7 @@ function tick(b, dt) {
     s.acBT = Math.max(0, s.acBT - dt);
     s.acidT = Math.max(0, s.acidT - dt); if (s.acidT <= 0) s.acid = 0;
     s.frz = Math.max(0, s.frz - 8 * dt);
+    s.chillT = Math.max(0, (s.chillT || 0) - dt);
     s.stag = Math.max(0, s.stag - dt);
     s.exp = Math.max(0, s.exp - dt); if (s.exp > 0) u.hidden = 0;
     s.fear = Math.max(0, s.fear - dt);
@@ -5152,6 +5487,8 @@ function tick(b, dt) {
     s.mockT = Math.max(0, s.mockT - dt);
     s.hexSlow = Math.max(0, s.hexSlow - dt);
     u.tempHasteT = Math.max(0, (u.tempHasteT || 0) - dt);
+    u.doubleRegenT = Math.max(0, (u.doubleRegenT || 0) - dt);
+    u.moonDmgT = Math.max(0, (u.moonDmgT || 0) - dt);
     u.sacredShieldT = Math.max(0, (u.sacredShieldT || 0) - dt);
     u.vineThornsT = Math.max(0, (u.vineThornsT || 0) - dt);
     u.zealotT = Math.max(0, (u.zealotT || 0) - dt);
@@ -5163,6 +5500,24 @@ function tick(b, dt) {
     if (u.key === 'kaska' && u.questDone && u.beast && u.beast.hp > 0 && b.time >= (u._moonT || 2.5)) {
       u._moonT = b.time + 2.5;
       friends(b, u).filter(a => !a.minion && hd(a, u) <= 2).forEach(a => heal(b, u, a, 8 * u.dm, { raw: 1 }));
+    }
+    // Cloak of Displacement: refreshes Alert every 6s
+    if (u.it && u.it.displaceAlert && b.time >= (u._dispT || u.it.displaceAlert)) {
+      u._dispT = b.time + u.it.displaceAlert;
+      grantAlert(b, u, 1);
+    }
+    // Staff of the Woodlands: while in Wild Shape (or after 1st cast), Roots nearby foe & heals adjacent allies +15 HP every 4s
+    if (u.it && u.it.woodlandPulse && (u.wildShapeT > 0 || (u.beast && u.beast.hp > 0) || (u._casts || 0) >= 1) && b.time >= (u._woodT || u.it.woodlandPulse)) {
+      u._woodT = b.time + u.it.woodlandPulse;
+      const fs = foes(b, u).filter(x => !x.hidden).sort((a, c) => (a.st.root > 0 ? 1 : 0) - (c.st.root > 0 ? 1 : 0) || hd(a, u) - hd(c, u));
+      if (fs[0]) applyRoot(b, u, fs[0], 2.5 * chaK(u));
+      friends(b, u).filter(a => !a.minion && hd(a, u) <= 1).forEach(a => heal(b, u, a, 15 * u.dm, { raw: 1 }));
+    }
+    // Ring of Regeneration: cleanses 1 Burn or Poison stack every 2s
+    if (u.it && u.it.cleanseEvery && b.time >= (u._clnT || u.it.cleanseEvery)) {
+      u._clnT = b.time + u.it.cleanseEvery;
+      if (s.poison > 0) s.poison = Math.max(0, s.poison - 1);
+      else if (s.burn > 0) s.burn = Math.max(0, s.burn - 2);
     }
 
     if (tile(u) === '^' && !u.f.fireproof) { s.burn = Math.max(s.burn, 8); s.burnT = s.burnT || .5; }
@@ -5214,6 +5569,19 @@ function tick(b, dt) {
         if (hurt) triggerJamisonCD(b, u);
       }
     }
+    // Staff of Healing: first time an ally drops below 40% HP triggers a Channel Divinity heal pulse (2d8 + WIS)
+    if (u.side === 'P' && u.it && u.it.staffCdHeal && !u._staffCdUsed && u.st.stun <= 0) {
+      const low = friends(b, u).find(a => !a.minion && hpPct(a) < .40);
+      if (low) {
+        u._staffCdUsed = 1;
+        triggerChannelDivinity(b, u, 'CD · STAFF OF HEALING', mult => {
+          const ts = friends(b, u).filter(a => !a.minion && hd(a, u) <= 3);
+          const list = ts.length ? ts : [low];
+          b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 3, ty: 'radiant', ids: list.map(x => x.id) });
+          list.forEach(a => heal(b, u, a, (roll(2, 8) + Math.max(0, u.m.wis)) * u.dm * mult, { raw: 1 }));
+        });
+      }
+    }
 
     // Enemy chargers & summoners
     if (u.side === 'E') {
@@ -5233,8 +5601,9 @@ function tick(b, dt) {
       }
     }
 
-    if (u.regen && u.hp < u.maxHp) {
-      const r = Math.min(u.maxHp - u.hp, u.regen * dt);
+    const totalRegen = (u.regen || 0) * ((u.doubleRegenT || 0) > 0 ? 2 : 1) + (u.it && u.it.pctRegen ? u.maxHp * u.it.pctRegen : 0);
+    if (totalRegen > 0 && u.hp < u.maxHp) {
+      const r = Math.min(u.maxHp - u.hp, totalRegen * dt);
       u.hp += r; u.stats.regenIn = (u.stats.regenIn || 0) + r;
     }
     u.stats.alive = (u.stats.alive || 0) + dt;
@@ -5337,13 +5706,51 @@ const TIERCOL = { 1: '#a8743c', 2: '#8c9aa8', 3: '#d0a02a', 4: '#8a4fb8' };
 const heroValue = t => { let v = 0; for (let i = 1; i <= t; i++) v += ECON.heroPrice(i); return v; };
 const actOf = run => (run && run.adv ? run.adv.act : 1);
 
-/* Pre-tiered unowned recruit odds by Act (Act 1: Tier I; Act 2: Tier II; Act 3: 65% Tier II / 35% Tier III) */
-const OFFER_ODDS = { 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, .65, .35] };
-function rollOfferTier(run, rand) {
-  const o = OFFER_ODDS[actOf(run)] || OFFER_ODDS[3];
+/* Smooth per-encounter progression (e = encounters won): higher tiers slowly climb each fight while Tier I / Common remain findable in Act 3 */
+const encounterCount = run => Math.max(0, (run && run.stats && run.stats.won) || 0);
+
+function heroTierOdds(e) {
+  const n = Math.max(0, e || 0);
+  const t3 = n < 6 ? 0 : Math.min(30, (n - 5) * 3);
+  const t2Raw = n < 1 ? 0 : Math.min(55, n * 5);
+  const t1 = Math.max(25, 100 - t2Raw - t3);
+  const t2 = Math.max(0, 100 - t1 - t3);
+  return [t1 / 100, t2 / 100, t3 / 100];
+}
+function rollOfferTier(run, rand = Math.random) {
+  const o = heroTierOdds(encounterCount(run));
   let x = rand();
   for (let t = 0; t < 3; t++) { x -= o[t]; if (x <= 0) return t + 1; }
   return 1;
+}
+
+function itemRarityOdds(e) {
+  const n = Math.max(0, e || 0);
+  const vr = n < 5 ? 0 : Math.min(28, Math.round((n - 4) * 2.4));
+  const rare = n < 1 ? 0 : Math.min(38, Math.round(n * 2.8));
+  const common = Math.max(12, Math.round(70 - n * 4.2));
+  const uncommon = Math.max(15, 100 - common - rare - vr);
+  const sum = common + uncommon + rare + vr;
+  return [common / sum, uncommon / sum, rare / sum, vr / sum];
+}
+function rollItemRarity(run, rand = Math.random, bonusEnc = 0) {
+  const o = itemRarityOdds(encounterCount(run) + bonusEnc);
+  let x = rand();
+  for (let r = 0; r < 4; r++) { x -= o[r]; if (x <= 0) return r; }
+  return 0;
+}
+function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0) {
+  if (!avail || !avail.length) return null;
+  const targetR = rollItemRarity(run, rand, bonusEnc);
+  let bucket = avail.filter(k => ITEMS[k] && ITEMS[k].r === targetR);
+  if (!bucket.length) {
+    // Fallback to nearest available rarity
+    for (let d = 1; d <= 3 && !bucket.length; d++) {
+      bucket = avail.filter(k => ITEMS[k] && (ITEMS[k].r === targetR - d || ITEMS[k].r === targetR + d));
+    }
+  }
+  const pickFrom = bucket.length ? bucket : avail;
+  return pickFrom[Math.floor(rand() * pickFrom.length)];
 }
 
 const THREATS = {
@@ -5436,8 +5843,8 @@ const heroRefund = h => heroValue(h.tier);
 function itemRefund(run, k) {
   const f = (run.shop.fresh || []).find(x => x[0] === k);
   const base = f ? f[1] : Math.max(1, Math.floor(ECON.itemPrice[ITEMS[k].r] * .5));
-  const hasScales = run && run.team && run.team.some(h => (h.items || []).includes('merchants_scales'));
-  return hasScales && !f ? Math.ceil(base * 1.5) : base;
+  const hasSellBonus = run && run.team && run.team.some(h => (h.items || []).some(ik => ITEMS[ik] && ITEMS[ik].s && ITEMS[ik].s.sellBonus));
+  return hasSellBonus && !f ? Math.ceil(base * 1.5) : base;
 }
 
 function mkRosterHero(k, tier = 1, spent = 0) {
@@ -5453,21 +5860,17 @@ function freeHero(run, k) {
   return h;
 }
 
-/* ---------- Pre-Run Pack Toggles (replaces between-Act pack drafting) ---------- */
+/* ---------- Pre-Run Pack Toggles (Hero pool selection; all items always in shop) ---------- */
 function packOffer(run, rand = Math.random) {
   const open = PACK_ORDER.filter(k => !run.adv.packs.includes(k));
   return open;
 }
 
-function openPack(run, k, giveStarterItem = true) {
+function openPack(run, k) {
   const P = PACKS[k];
   if (!P || run.adv.packs.includes(k)) return;
   run.adv.packs.push(k);
   P.heroes.forEach(h => { if (!run.adv.pool.includes(h)) run.adv.pool.push(h); });
-  if (P.item) {
-    if (!run.adv.itemPool.includes(P.item)) run.adv.itemPool.push(P.item);
-    if (giveStarterItem && run.stash.length < ECON.stash) run.stash.push(P.item);
-  }
   run.adv.offer = null;
 }
 
@@ -5495,15 +5898,16 @@ function startRunWithPacks(run, packKeys, rand = Math.random) {
   const chosen = valid.length ? valid : [...PACK_ORDER];
   run.adv.packs = [];
   run.adv.pool = [];
+  // All items (including all pack items) are always available in the shop regardless of enabled/disabled packs.
   run.adv.itemPool = [...CORE_ITEM_KEYS];
-  // First enabled pack drops 1 starter copy of its Pack Item into stash; all enabled Pack Items unlock in shops/treasure!
-  chosen.forEach((k, idx) => openPack(run, k, idx === 0));
+  // No free starting item in stash.
+  chosen.forEach(k => openPack(run, k));
   run.firstPick = firstPickFromPacks(chosen, rand);
   run.adv.stage = 'pick';
   return chosen;
 }
 
-/* ---------- Reworked v0.22 Shop: No Duplicate Hunting + 2 Recruit Slots + 1 Upgrade Slot ---------- */
+/* ---------- Shop: Encounter-Scaled Tiers/Rarities, Exact-Tier Upgrades, No Lower-Tier Duplicates ---------- */
 function heroOffer(run, k, slot) {
   const o = ownedHero(run, k);
   const off = slot != null && onSale(run, 'h', slot) ? ECON.sale : 0;
@@ -5512,9 +5916,11 @@ function heroOffer(run, k, slot) {
     return { tier: ot, price: Math.max(1, heroValue(ot) - off), isNew: true, sale: off, offerTier: ot, slotKind: 'recruit' };
   }
   if (o.tier >= 4) return { tier: 4, price: null, maxed: true, offerTier: 4, slotKind: 'upgrade' };
-  // Owned heroes NEVER appear as Tier I duplicates — always strictly Next-Tier Upgrade!
+  // Upgrading requires finding a matching-tier copy (Tier I -> II via T1 copy, Tier II -> III via T2 copy, Tier III -> IV via T3 copy)
+  const copyTier = (run.shop && run.shop.tiers && slot != null && run.shop.tiers[slot]) || o.tier;
+  if (copyTier < o.tier) return { tier: o.tier, price: null, maxed: true, offerTier: copyTier, slotKind: 'upgrade' };
   const nt = o.tier + 1;
-  return { tier: nt, price: Math.max(1, ECON.heroPrice(nt) - off), upgrade: o, sale: off, offerTier: nt, slotKind: 'upgrade' };
+  return { tier: nt, price: Math.max(1, ECON.heroPrice(nt) - off), upgrade: o, sale: off, offerTier: o.tier, slotKind: 'upgrade' };
 }
 
 function toggleLock(run, kind, i) {
@@ -5527,58 +5933,67 @@ function toggleFreeze(run) { run.shop.frozen = !run.shop.frozen; return run.shop
 function rollShop(run, rand = Math.random, keepCount) {
   const old = run.shop || {};
   const lockH = old.lockH || [], lockI = old.lockI || [], oldT = old.tiers || [];
-  const keptH = (old.heroes || []).map((k, i) => lockH[i] && k ? k : null);
+  // Release any locked hero duplicate that has fallen below the owned hero's current tier (or maxed)
+  const keptH = (old.heroes || []).map((k, i) => {
+    if (!lockH[i] || !k) return null;
+    const o = ownedHero(run, k);
+    if (o && (o.tier >= 4 || (oldT[i] || 1) < o.tier)) return null;
+    return k;
+  });
   const keptI = (old.items || []).map((k, i) => lockI[i] && k ? k : null);
 
   const fullPool = (run.adv && run.adv.pool.length) ? run.adv.pool : HERO_ORDER;
   const unownedPool = fullPool.filter(k => !ownedHero(run, k) && !keptH.includes(k));
-  const upgradePool = run.team.filter(h => h.tier < 4 && !keptH.includes(h.key)).map(h => h.key);
+  // First shop never offers a hero upgrade
+  const allowUpgrades = (run.shopNo || 0) > 1 || encounterCount(run) > 0;
 
   const heroes = [];
   const slotKind = [];
   const tiers = [];
   const recBag = [...unownedPool];
-  const upgBag = [...upgradePool];
 
   for (let i = 0; i < ECON.shopHeroes; i++) {
     if (keptH[i]) {
       heroes.push(keptH[i]);
       const o = ownedHero(run, keptH[i]);
       slotKind.push(o ? 'upgrade' : 'recruit');
-      tiers.push(o ? Math.min(4, o.tier + 1) : (oldT[i] || 1));
+      tiers.push(o ? o.tier : (oldT[i] || 1));
       continue;
     }
-    const wantUpgrade = (i === 2 && upgBag.length > 0);
+    const ot = rollOfferTier(run, rand);
+    // Owned heroes can only appear at their exact current tier (never at a lower tier until sold!)
+    const upgAtTier = allowUpgrades
+      ? run.team.filter(h => h.tier === ot && h.tier < 4 && !heroes.includes(h.key) && !keptH.includes(h.key)).map(h => h.key)
+      : [];
+    const wantUpgrade = (i === 2 && upgAtTier.length > 0);
     if (wantUpgrade) {
-      const k = upgBag.splice(Math.floor(rand() * upgBag.length), 1)[0];
-      const o = ownedHero(run, k);
+      const k = upgAtTier[Math.floor(rand() * upgAtTier.length)];
       heroes.push(k);
       slotKind.push('upgrade');
-      tiers.push(Math.min(4, o.tier + 1));
+      tiers.push(ot);
     } else if (recBag.length > 0) {
       const k = recBag.splice(Math.floor(rand() * recBag.length), 1)[0];
       heroes.push(k);
       slotKind.push('recruit');
-      tiers.push(rollOfferTier(run, rand));
-    } else if (upgBag.length > 0) {
-      const k = upgBag.splice(Math.floor(rand() * upgBag.length), 1)[0];
-      const o = ownedHero(run, k);
+      tiers.push(ot);
+    } else if (upgAtTier.length > 0) {
+      const k = upgAtTier[Math.floor(rand() * upgAtTier.length)];
       heroes.push(k);
       slotKind.push('upgrade');
-      tiers.push(Math.min(4, o.tier + 1));
+      tiers.push(ot);
     } else {
       heroes.push(null);
       slotKind.push('recruit');
-      tiers.push(1);
+      tiers.push(ot);
     }
   }
 
-  const availItems = (run.adv && run.adv.itemPool) ? run.adv.itemPool : CORE_ITEM_KEYS;
+  const availItems = (run.adv && run.adv.itemPool && run.adv.itemPool.length) ? run.adv.itemPool : CORE_ITEM_KEYS;
   const items = [];
   for (let i = 0; i < ECON.shopItems; i++) {
     if (keptI[i]) { items.push(keptI[i]); continue; }
     const c = availItems.filter(k => ITEMS[k] && !items.includes(k) && !keptI.includes(k));
-    items.push(c.length ? c[Math.floor(rand() * c.length)] : null);
+    items.push(rollItemFromPool(c, run, rand, 0));
   }
 
   const free = [
@@ -5909,8 +6324,8 @@ function resolveFight(run, won, b) {
   let gold = 0, piggy = 0, bonusGold = 0;
   if (won) {
     gold = ECON.winGold(d);
-    // Merchant's Scales: +1 bonus Gold per copy carried on win
-    const scaleCount = (run.team || []).reduce((acc, h) => acc + (h.items || []).filter(k => k === 'merchants_scales').length, 0);
+    // Bag of Holding (winBonusGold): +1 bonus Gold per copy carried on win
+    const scaleCount = (run.team || []).reduce((acc, h) => acc + (h.items || []).filter(k => ITEMS[k] && ITEMS[k].s && ITEMS[k].s.winBonusGold).length, 0);
     if (scaleCount > 0) bonusGold += scaleCount;
     // Gains Quest Compound Interest: +10% held Gold interest (up to +5g) on win
     if ((run.team || []).some(h => h.key === 'gains' && h.questDone)) {
@@ -6034,9 +6449,15 @@ function restAt(run, choice) {
 }
 
 function treasureOffer(run, rand = Math.random) {
-  const avail = (run.adv && run.adv.itemPool) ? run.adv.itemPool.slice() : CORE_ITEM_KEYS.slice();
+  const avail = (run.adv && run.adv.itemPool && run.adv.itemPool.length) ? run.adv.itemPool.slice() : CORE_ITEM_KEYS.slice();
   const out = [];
-  while (out.length < 3 && avail.length) out.push(avail.splice(Math.floor(rand() * avail.length), 1)[0]);
+  while (out.length < 3 && avail.length) {
+    const pick = rollItemFromPool(avail, run, rand, 3);
+    if (!pick) break;
+    out.push(pick);
+    const idx = avail.indexOf(pick);
+    if (idx >= 0) avail.splice(idx, 1);
+  }
   return out;
 }
 function takeTreasure(run, k) { if (run.stash.length < ECON.stash) run.stash.push(k); }
@@ -7885,7 +8306,11 @@ function loadRun() {
         // Sanitize stale prior-act trail from pre-fix saves where pos was reset without clearing path
         if (!r.adv.pos && r.adv.path.length) r.adv.path = [];
         if (r.adv.pos && r.adv.pos.r >= ADV.bossRow) { r.adv.pos = null; r.adv.path = []; }
+        r.adv.itemPool = [...CORE_ITEM_KEYS];
       }
+      if (Array.isArray(r.stash)) r.stash = r.stash.filter(k => ITEMS[k]);
+      if (Array.isArray(r.team)) r.team.forEach(h => { if (Array.isArray(h.items)) h.items = h.items.filter(k => ITEMS[k]); });
+      if (r.shop && Array.isArray(r.shop.items)) r.shop.items = r.shop.items.map(k => (k && ITEMS[k]) ? k : null);
       return r;
     }
   } catch (e) {}
@@ -7997,10 +8422,9 @@ function saveEnabledPacks() {
 function renderPacks() {
   const chosen = PACK_ORDER.filter(k => ENABLED_PACKS.has(k));
   const heroCount = chosen.reduce((sum, k) => sum + PACKS[k].heroes.length, 0);
-  const itemCount = chosen.filter(k => PACKS[k].item).length;
   $('packLbl').textContent = 'Pre-run pack setup · 6 Packs · 24 Heroes';
 
-  const ctrlHtml = `<div class="packsummary"><b>${chosen.length}</b> of ${PACK_ORDER.length} Packs enabled · <b>${heroCount}</b> Heroes · <b>${itemCount}</b> Pack Items</div>
+  const ctrlHtml = `<div class="packsummary"><b>${chosen.length}</b> of ${PACK_ORDER.length} Packs enabled · <b>${heroCount}</b> Heroes · All <b>${CORE_ITEM_KEYS.length}</b> Items in Shop</div>
     <div class="row">
       <button class="btn sm" data-a="packsAll">Enable all 6</button>
       <button class="btn sm" data-a="packsCore3">Starter 3</button>
@@ -8023,7 +8447,7 @@ function renderPacks() {
       <h3>${esc(P.n)}</h3>
       <p class="mute">${esc(P.x)}</p>
       <div class="packheroes">${P.heroes.map(h => `<button class="packhero" data-a="packHero" data-k="${h}" style="${roleStyle(h, 1)}" title="Inspect ${esc(H[h].name)}">${iconSlot(h, 64)}<b>${esc(H[h].name)}</b><span>${esc(H[h].role)} · ${esc(H[h].cls)}</span></button>`).join('')}</div>
-      ${P.item ? `<div class="packitem" title="${esc(itemText(P.item))}">${itemIcon(P.item, 36)}<span><b>${esc(ITEMS[P.item].n)}</b> <small class="mute">(Pack Item)</small><br><span class="small mute">${esc(itemText(P.item))}</span></span></div>` : ''}
+      ${P.item && ITEMS[P.item] ? `<div class="packitem" title="${esc(itemText(P.item))}">${itemIcon(P.item, 36)}<span><b>${esc(ITEMS[P.item].n)}</b> <small class="mute">(Featured · Always in Shop)</small><br><span class="small mute">${esc(itemText(P.item))}</span></span></div>` : ''}
       <button class="btn ${on ? '' : 'primary'}" data-a="togglePack" data-k="${k}">${on ? 'Disable this pack' : 'Enable this pack'}</button>
     </div>`;
   }).join('');
@@ -8187,9 +8611,15 @@ function eventModal(k, arg) {
   }
 }
 
-/* ---------- Reworked Shop (2 Recruit + 1 Upgrade, Direct Equip/Drag, Favoured & Synergy Highlights) ---------- */
+/* ---------- Reworked Shop (Encounter-Scaled Odds, Direct Equip/Drag, Class Keyword Synergy Highlights) ---------- */
 let SHOP_SEL_ITEM = null;
-const isFavMatch = (k, h) => !!(k && h && (favFor(k, h.key) || (h.key === 'wallaby' && h.questDone && ITEMS[k + '@fav'])));
+const isFavMatch = (k, h) => {
+  if (!k || !h) return false;
+  const hooks = itemKwHooks(k);
+  if (!hooks.length) return false;
+  const hkw = classKwOf(h.key);
+  return hooks.some(x => hkw.includes(x));
+};
 
 function enterShop() {
   SHOP_SEL_ITEM = null;
@@ -8250,7 +8680,9 @@ function renderShop() {
   const rp = rerollPrice(R);
   $('rerollBtn').innerHTML = `Reroll · ${gold(rp)}`; $('rerollBtn').disabled = R.gold < rp;
   $('freezeBtn').textContent = R.shop.frozen ? 'Frozen' : 'Freeze'; $('freezeBtn').classList.toggle('primary', !!R.shop.frozen);
-  $('shopNote').innerHTML = `2 Recruit slots + 1 Upgrade slot · Act ${actOf(R)} recruits start at Tier ${actOf(R) === 1 ? 'I' : actOf(R) === 2 ? 'II' : 'II–III'} · Full sell refund`;
+  const ho = heroTierOdds(encounterCount(R)).map(x => Math.round(x * 100));
+  const io = itemRarityOdds(encounterCount(R)).map(x => Math.round(x * 100));
+  $('shopNote').innerHTML = `Hero odds: T1 ${ho[0]}% · T2 ${ho[1]}% · T3 ${ho[2]}% &nbsp;|&nbsp; Item odds: C ${io[0]}% · U ${io[1]}% · R ${io[2]}% · VR ${io[3]}% &nbsp;|&nbsp; Matching-tier copy upgrades hero`;
   paintCanvases($('shop')); paintTokens($('shop'));
   document.querySelectorAll('#offers canvas[data-osplash]').forEach(c => drawSplash(c, c.dataset.osplash, 240, 200));
   checkPendingPath();
@@ -8262,7 +8694,7 @@ function heroOfferCard(k, i, partyTagSet, partyKwSet) {
   const d = H[k], o = heroOffer(RUN, k, i), ot = o.offerTier || 1, lk = RUN.shop.lockH[i];
   const can = !o.maxed && RUN.gold >= o.price;
   const slotBadge = o.upgrade ? `<span class="slotbadge upg">UPGRADE</span>` : `<span class="slotbadge rec">RECRUIT</span>`;
-  const own = o.upgrade ? `<div class="ownline">Tier ${rom[o.upgrade.tier]} → <b>Tier ${rom[o.tier]}</b></div>` : (ot >= 2 ? `<div class="ownline">Pre-tiered <b>Tier ${rom[ot]}</b> recruit (pick Path on buy)</div>` : '');
+  const own = o.upgrade ? `<div class="ownline">Tier ${rom[o.offerTier]} copy · Upgrades Tier ${rom[o.upgrade.tier]} → <b>Tier ${rom[o.tier]}</b></div>` : (ot >= 2 ? `<div class="ownline">Pre-tiered <b>Tier ${rom[ot]}</b> recruit (pick Path on buy)</div>` : '');
   const ckwHtml = (d.ckw || []).map(e => classKwPill(e.k, !!(partyKwSet && partyKwSet.has(e.k)), e.sub)).join('');
   const ckwLine = (d.ckw && d.ckw[0]) ? `<div class="hoab kwline"><b>${esc(CLASS_KW[d.ckw[0].k].n)}</b> ${esc(d.ckw[0].x)}</div>` : '';
   const tagHtml = tagsOf(k).map(t => {
@@ -8286,10 +8718,10 @@ function partyChip(h, selItemKey) {
     const canEq = h.items.length < maxS && canCarry(h, selItemKey);
     const fav = canEq && isFavMatch(selItemKey, h);
     eqCls = fav ? ' can-equip fav-match' : canEq ? ' can-equip' : ' no-equip';
-    if (fav) favBadge = `<span class="favpill">★ Favoured</span>`;
+    if (fav) favBadge = `<span class="favpill">★ Synergy</span>`;
   }
   const itemsRow = `<div class="pitems">${Array.from({ length: maxS }, (_, j) => h.items[j]
-    ? `<span class="pit" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}${isFavMatch(h.items[j], h) ? ' (★ Favoured!)' : ''}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
+    ? `<span class="pit" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}${isFavMatch(h.items[j], h) ? ' (★ Synergy)' : ''}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
     : `<span class="pit empty" title="Empty item slot"></span>`).join('')}</div>`;
   const questRow = q ? `<div class="chipq${h.questDone ? ' done' : ''}" title="${esc(q.rewardName)}: ${esc(q.rewardDesc)}"><div class="cqbar"><i style="width:${qPct}%"></i></div><span>${h.questDone ? '★ Quest Done' : `${Math.round(h.questProg || 0)}/${q.goal}`}</span></div>` : '';
   return `<div class="pchip${eqCls}" style="--tc:${TIERCOL[h.tier]}" data-drop-hero="${h.uid}" ${selItemKey ? `data-a="shopEquip" data-u="${h.uid}"` : ''}>
@@ -8304,12 +8736,9 @@ function partyChip(h, selItemKey) {
 function itemOfferCard(k, i, partyKwSet) {
   if (!k) return `<div class="io18 sold"><span class="small mute">Sold</span></div>`;
   const it = ITEMS[k], R = RARITY[it.r], p = itemPrice(RUN, i), lk = RUN.shop.lockI[i];
-  const favNames = RUN.team.filter(h => isFavMatch(k, h)).map(h => short(H[h.key].name));
   const kwMatches = itemKwHooks(k).filter(kwk => partyKwSet && partyKwSet.has(kwk)).map(kwk => CLASS_KW[kwk].n);
-  const favLine = favNames.length
-    ? `<div class="iofav">★ Favoured: ${esc(favNames.join(', '))}</div>`
-    : (kwMatches.length ? `<div class="iofav kw">★ Synergy: ${esc(kwMatches.slice(0, 2).join(', '))}</div>` : '');
-  return `<div class="io18${lk ? ' locked' : ''}${(favNames.length || kwMatches.length) ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div>${favLine}</div><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockI" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button></div>`;
+  const favLine = kwMatches.length ? `<div class="iofav kw">★ Synergy: ${esc(kwMatches.slice(0, 2).join(', '))}</div>` : '';
+  return `<div class="io18${lk ? ' locked' : ''}${kwMatches.length ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div>${favLine}</div><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockI" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button></div>`;
 }
 
 function heroCardModal(h, extra) {
@@ -8672,7 +9101,7 @@ document.addEventListener('click', e => {
       const fav = isFavMatch(k, h);
       if (equip(RUN, uid, SHOP_SEL_ITEM)) {
         SHOP_SEL_ITEM = null;
-        toast(fav ? `★ Favoured! ${H[h.key].name} equips ${ITEMS[k].n}` : `${H[h.key].name} equips ${ITEMS[k].n}`);
+        toast(fav ? `★ Synergy! ${H[h.key].name} equips ${ITEMS[k].n}` : `${H[h.key].name} equips ${ITEMS[k].n}`);
         renderShop(); saveRun();
       }
       break;
@@ -8746,7 +9175,7 @@ document.addEventListener('drop', e => {
   const fav = isFavMatch(k, hh);
   if (equip(RUN, uid, idx)) {
     SHOP_SEL_ITEM = null;
-    toast(fav ? `★ Favoured! ${H[hh.key].name} equips ${ITEMS[k].n}` : `${H[hh.key].name} equips ${ITEMS[k].n}`);
+    toast(fav ? `★ Synergy! ${H[hh.key].name} equips ${ITEMS[k].n}` : `${H[hh.key].name} equips ${ITEMS[k].n}`);
     renderShop(); saveRun();
   }
 });

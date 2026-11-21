@@ -127,28 +127,28 @@ const PACKS = {
     n: 'Around the Campfire',
     x: 'Wilderness trackers and party bonds built on Marked, On-hit, Root/Poison, and d20 dice.',
     heroes: ['dane', 'lorcan', 'juniper', 'rosalind'],
-    item: 'whetstone',
-    ic: 'stone'
+    item: 'bracers_archery',
+    ic: 'bracers'
   },
   beaten: {
     n: 'Off the Beaten Path',
     x: 'Wild outsiders and snowballers fueling Burn, uncapped Bear Rage, Ki flurries, and Hex.',
     heroes: ['cinder', 'zark', 'naill', 'nettle'],
-    item: 'ember_bracers',
-    ic: 'bracers'
+    item: 'periapt_wound_closure',
+    ic: 'amulet_heart'
   },
   divine: {
     n: 'Divine Intervention',
     x: 'Four registers of holiness: Zealot immortality, Ancients Roots, Sunbeam Sear, and Peace Bonds.',
     heroes: ['pillar', 'mother_laurel', 'lumen', 'jamison'],
-    item: 'sunlit_censer',
+    item: 'amulet_devout',
     ic: 'holy'
   },
   market: {
     n: 'Cornering the Market',
     x: 'Economy, hoarding, and item amplifiers powered by Gold drops, Motes, and Arcane Shields.',
     heroes: ['zoe', 'toot', 'gilthrax', 'gains'],
-    item: 'merchants_scales',
+    item: 'bag_holding',
     ic: 'brooch'
   },
   surprise: {

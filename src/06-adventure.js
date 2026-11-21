@@ -31,13 +31,51 @@ const TIERCOL = { 1: '#a8743c', 2: '#8c9aa8', 3: '#d0a02a', 4: '#8a4fb8' };
 const heroValue = t => { let v = 0; for (let i = 1; i <= t; i++) v += ECON.heroPrice(i); return v; };
 const actOf = run => (run && run.adv ? run.adv.act : 1);
 
-/* Pre-tiered unowned recruit odds by Act (Act 1: Tier I; Act 2: Tier II; Act 3: 65% Tier II / 35% Tier III) */
-const OFFER_ODDS = { 1: [1, 0, 0], 2: [0, 1, 0], 3: [0, .65, .35] };
-function rollOfferTier(run, rand) {
-  const o = OFFER_ODDS[actOf(run)] || OFFER_ODDS[3];
+/* Smooth per-encounter progression (e = encounters won): higher tiers slowly climb each fight while Tier I / Common remain findable in Act 3 */
+const encounterCount = run => Math.max(0, (run && run.stats && run.stats.won) || 0);
+
+function heroTierOdds(e) {
+  const n = Math.max(0, e || 0);
+  const t3 = n < 6 ? 0 : Math.min(30, (n - 5) * 3);
+  const t2Raw = n < 1 ? 0 : Math.min(55, n * 5);
+  const t1 = Math.max(25, 100 - t2Raw - t3);
+  const t2 = Math.max(0, 100 - t1 - t3);
+  return [t1 / 100, t2 / 100, t3 / 100];
+}
+function rollOfferTier(run, rand = Math.random) {
+  const o = heroTierOdds(encounterCount(run));
   let x = rand();
   for (let t = 0; t < 3; t++) { x -= o[t]; if (x <= 0) return t + 1; }
   return 1;
+}
+
+function itemRarityOdds(e) {
+  const n = Math.max(0, e || 0);
+  const vr = n < 5 ? 0 : Math.min(28, Math.round((n - 4) * 2.4));
+  const rare = n < 1 ? 0 : Math.min(38, Math.round(n * 2.8));
+  const common = Math.max(12, Math.round(70 - n * 4.2));
+  const uncommon = Math.max(15, 100 - common - rare - vr);
+  const sum = common + uncommon + rare + vr;
+  return [common / sum, uncommon / sum, rare / sum, vr / sum];
+}
+function rollItemRarity(run, rand = Math.random, bonusEnc = 0) {
+  const o = itemRarityOdds(encounterCount(run) + bonusEnc);
+  let x = rand();
+  for (let r = 0; r < 4; r++) { x -= o[r]; if (x <= 0) return r; }
+  return 0;
+}
+function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0) {
+  if (!avail || !avail.length) return null;
+  const targetR = rollItemRarity(run, rand, bonusEnc);
+  let bucket = avail.filter(k => ITEMS[k] && ITEMS[k].r === targetR);
+  if (!bucket.length) {
+    // Fallback to nearest available rarity
+    for (let d = 1; d <= 3 && !bucket.length; d++) {
+      bucket = avail.filter(k => ITEMS[k] && (ITEMS[k].r === targetR - d || ITEMS[k].r === targetR + d));
+    }
+  }
+  const pickFrom = bucket.length ? bucket : avail;
+  return pickFrom[Math.floor(rand() * pickFrom.length)];
 }
 
 const THREATS = {
@@ -130,8 +168,8 @@ const heroRefund = h => heroValue(h.tier);
 function itemRefund(run, k) {
   const f = (run.shop.fresh || []).find(x => x[0] === k);
   const base = f ? f[1] : Math.max(1, Math.floor(ECON.itemPrice[ITEMS[k].r] * .5));
-  const hasScales = run && run.team && run.team.some(h => (h.items || []).includes('merchants_scales'));
-  return hasScales && !f ? Math.ceil(base * 1.5) : base;
+  const hasSellBonus = run && run.team && run.team.some(h => (h.items || []).some(ik => ITEMS[ik] && ITEMS[ik].s && ITEMS[ik].s.sellBonus));
+  return hasSellBonus && !f ? Math.ceil(base * 1.5) : base;
 }
 
 function mkRosterHero(k, tier = 1, spent = 0) {
@@ -147,21 +185,17 @@ function freeHero(run, k) {
   return h;
 }
 
-/* ---------- Pre-Run Pack Toggles (replaces between-Act pack drafting) ---------- */
+/* ---------- Pre-Run Pack Toggles (Hero pool selection; all items always in shop) ---------- */
 function packOffer(run, rand = Math.random) {
   const open = PACK_ORDER.filter(k => !run.adv.packs.includes(k));
   return open;
 }
 
-function openPack(run, k, giveStarterItem = true) {
+function openPack(run, k) {
   const P = PACKS[k];
   if (!P || run.adv.packs.includes(k)) return;
   run.adv.packs.push(k);
   P.heroes.forEach(h => { if (!run.adv.pool.includes(h)) run.adv.pool.push(h); });
-  if (P.item) {
-    if (!run.adv.itemPool.includes(P.item)) run.adv.itemPool.push(P.item);
-    if (giveStarterItem && run.stash.length < ECON.stash) run.stash.push(P.item);
-  }
   run.adv.offer = null;
 }
 
@@ -189,15 +223,16 @@ function startRunWithPacks(run, packKeys, rand = Math.random) {
   const chosen = valid.length ? valid : [...PACK_ORDER];
   run.adv.packs = [];
   run.adv.pool = [];
+  // All items (including all pack items) are always available in the shop regardless of enabled/disabled packs.
   run.adv.itemPool = [...CORE_ITEM_KEYS];
-  // First enabled pack drops 1 starter copy of its Pack Item into stash; all enabled Pack Items unlock in shops/treasure!
-  chosen.forEach((k, idx) => openPack(run, k, idx === 0));
+  // No free starting item in stash.
+  chosen.forEach(k => openPack(run, k));
   run.firstPick = firstPickFromPacks(chosen, rand);
   run.adv.stage = 'pick';
   return chosen;
 }
 
-/* ---------- Reworked v0.22 Shop: No Duplicate Hunting + 2 Recruit Slots + 1 Upgrade Slot ---------- */
+/* ---------- Shop: Encounter-Scaled Tiers/Rarities, Exact-Tier Upgrades, No Lower-Tier Duplicates ---------- */
 function heroOffer(run, k, slot) {
   const o = ownedHero(run, k);
   const off = slot != null && onSale(run, 'h', slot) ? ECON.sale : 0;
@@ -206,9 +241,11 @@ function heroOffer(run, k, slot) {
     return { tier: ot, price: Math.max(1, heroValue(ot) - off), isNew: true, sale: off, offerTier: ot, slotKind: 'recruit' };
   }
   if (o.tier >= 4) return { tier: 4, price: null, maxed: true, offerTier: 4, slotKind: 'upgrade' };
-  // Owned heroes NEVER appear as Tier I duplicates — always strictly Next-Tier Upgrade!
+  // Upgrading requires finding a matching-tier copy (Tier I -> II via T1 copy, Tier II -> III via T2 copy, Tier III -> IV via T3 copy)
+  const copyTier = (run.shop && run.shop.tiers && slot != null && run.shop.tiers[slot]) || o.tier;
+  if (copyTier < o.tier) return { tier: o.tier, price: null, maxed: true, offerTier: copyTier, slotKind: 'upgrade' };
   const nt = o.tier + 1;
-  return { tier: nt, price: Math.max(1, ECON.heroPrice(nt) - off), upgrade: o, sale: off, offerTier: nt, slotKind: 'upgrade' };
+  return { tier: nt, price: Math.max(1, ECON.heroPrice(nt) - off), upgrade: o, sale: off, offerTier: o.tier, slotKind: 'upgrade' };
 }
 
 function toggleLock(run, kind, i) {
@@ -221,58 +258,67 @@ function toggleFreeze(run) { run.shop.frozen = !run.shop.frozen; return run.shop
 function rollShop(run, rand = Math.random, keepCount) {
   const old = run.shop || {};
   const lockH = old.lockH || [], lockI = old.lockI || [], oldT = old.tiers || [];
-  const keptH = (old.heroes || []).map((k, i) => lockH[i] && k ? k : null);
+  // Release any locked hero duplicate that has fallen below the owned hero's current tier (or maxed)
+  const keptH = (old.heroes || []).map((k, i) => {
+    if (!lockH[i] || !k) return null;
+    const o = ownedHero(run, k);
+    if (o && (o.tier >= 4 || (oldT[i] || 1) < o.tier)) return null;
+    return k;
+  });
   const keptI = (old.items || []).map((k, i) => lockI[i] && k ? k : null);
 
   const fullPool = (run.adv && run.adv.pool.length) ? run.adv.pool : HERO_ORDER;
   const unownedPool = fullPool.filter(k => !ownedHero(run, k) && !keptH.includes(k));
-  const upgradePool = run.team.filter(h => h.tier < 4 && !keptH.includes(h.key)).map(h => h.key);
+  // First shop never offers a hero upgrade
+  const allowUpgrades = (run.shopNo || 0) > 1 || encounterCount(run) > 0;
 
   const heroes = [];
   const slotKind = [];
   const tiers = [];
   const recBag = [...unownedPool];
-  const upgBag = [...upgradePool];
 
   for (let i = 0; i < ECON.shopHeroes; i++) {
     if (keptH[i]) {
       heroes.push(keptH[i]);
       const o = ownedHero(run, keptH[i]);
       slotKind.push(o ? 'upgrade' : 'recruit');
-      tiers.push(o ? Math.min(4, o.tier + 1) : (oldT[i] || 1));
+      tiers.push(o ? o.tier : (oldT[i] || 1));
       continue;
     }
-    const wantUpgrade = (i === 2 && upgBag.length > 0);
+    const ot = rollOfferTier(run, rand);
+    // Owned heroes can only appear at their exact current tier (never at a lower tier until sold!)
+    const upgAtTier = allowUpgrades
+      ? run.team.filter(h => h.tier === ot && h.tier < 4 && !heroes.includes(h.key) && !keptH.includes(h.key)).map(h => h.key)
+      : [];
+    const wantUpgrade = (i === 2 && upgAtTier.length > 0);
     if (wantUpgrade) {
-      const k = upgBag.splice(Math.floor(rand() * upgBag.length), 1)[0];
-      const o = ownedHero(run, k);
+      const k = upgAtTier[Math.floor(rand() * upgAtTier.length)];
       heroes.push(k);
       slotKind.push('upgrade');
-      tiers.push(Math.min(4, o.tier + 1));
+      tiers.push(ot);
     } else if (recBag.length > 0) {
       const k = recBag.splice(Math.floor(rand() * recBag.length), 1)[0];
       heroes.push(k);
       slotKind.push('recruit');
-      tiers.push(rollOfferTier(run, rand));
-    } else if (upgBag.length > 0) {
-      const k = upgBag.splice(Math.floor(rand() * upgBag.length), 1)[0];
-      const o = ownedHero(run, k);
+      tiers.push(ot);
+    } else if (upgAtTier.length > 0) {
+      const k = upgAtTier[Math.floor(rand() * upgAtTier.length)];
       heroes.push(k);
       slotKind.push('upgrade');
-      tiers.push(Math.min(4, o.tier + 1));
+      tiers.push(ot);
     } else {
       heroes.push(null);
       slotKind.push('recruit');
-      tiers.push(1);
+      tiers.push(ot);
     }
   }
 
-  const availItems = (run.adv && run.adv.itemPool) ? run.adv.itemPool : CORE_ITEM_KEYS;
+  const availItems = (run.adv && run.adv.itemPool && run.adv.itemPool.length) ? run.adv.itemPool : CORE_ITEM_KEYS;
   const items = [];
   for (let i = 0; i < ECON.shopItems; i++) {
     if (keptI[i]) { items.push(keptI[i]); continue; }
     const c = availItems.filter(k => ITEMS[k] && !items.includes(k) && !keptI.includes(k));
-    items.push(c.length ? c[Math.floor(rand() * c.length)] : null);
+    items.push(rollItemFromPool(c, run, rand, 0));
   }
 
   const free = [
@@ -603,8 +649,8 @@ function resolveFight(run, won, b) {
   let gold = 0, piggy = 0, bonusGold = 0;
   if (won) {
     gold = ECON.winGold(d);
-    // Merchant's Scales: +1 bonus Gold per copy carried on win
-    const scaleCount = (run.team || []).reduce((acc, h) => acc + (h.items || []).filter(k => k === 'merchants_scales').length, 0);
+    // Bag of Holding (winBonusGold): +1 bonus Gold per copy carried on win
+    const scaleCount = (run.team || []).reduce((acc, h) => acc + (h.items || []).filter(k => ITEMS[k] && ITEMS[k].s && ITEMS[k].s.winBonusGold).length, 0);
     if (scaleCount > 0) bonusGold += scaleCount;
     // Gains Quest Compound Interest: +10% held Gold interest (up to +5g) on win
     if ((run.team || []).some(h => h.key === 'gains' && h.questDone)) {
@@ -728,9 +774,15 @@ function restAt(run, choice) {
 }
 
 function treasureOffer(run, rand = Math.random) {
-  const avail = (run.adv && run.adv.itemPool) ? run.adv.itemPool.slice() : CORE_ITEM_KEYS.slice();
+  const avail = (run.adv && run.adv.itemPool && run.adv.itemPool.length) ? run.adv.itemPool.slice() : CORE_ITEM_KEYS.slice();
   const out = [];
-  while (out.length < 3 && avail.length) out.push(avail.splice(Math.floor(rand() * avail.length), 1)[0]);
+  while (out.length < 3 && avail.length) {
+    const pick = rollItemFromPool(avail, run, rand, 3);
+    if (!pick) break;
+    out.push(pick);
+    const idx = avail.indexOf(pick);
+    if (idx >= 0) avail.splice(idx, 1);
+  }
   return out;
 }
 function takeTreasure(run, k) { if (run.stash.length < ECON.stash) run.stash.push(k); }

@@ -34,12 +34,45 @@ function assert(cond, msg) {
 
 // Execute tests inside VM context
 vm.runInContext(`
-  // 1. Cast & Item Counts (24 Heroes, 6 Packs, 16 Items)
+  // 1. Cast & Item Counts (24 Heroes, 6 Packs, 46 Canonical D&D Items)
   if (HERO_ORDER.length !== 24) throw new Error('Expected 24 heroes, got ' + HERO_ORDER.length);
   if (PACK_ORDER.length !== 6) throw new Error('Expected 6 packs, got ' + PACK_ORDER.length);
-  if (CORE_ITEM_KEYS.length !== 10) throw new Error('Expected 10 core shop items, got ' + CORE_ITEM_KEYS.length);
-  if (Object.keys(ITEMS).filter(k => !k.endsWith('@fav')).length !== 16) throw new Error('Expected 16 total items');
-  console.log('[PASS] Cast & Items: 24 heroes across 6 packs, 6 Pack Items + 10 Core Shop Items.');
+  const allItemKeys = Object.keys(ITEMS);
+  if (allItemKeys.length !== 46) throw new Error('Expected 46 total items, got ' + allItemKeys.length);
+  if (CORE_ITEM_KEYS.length !== 46) throw new Error('Expected all 46 items in CORE_ITEM_KEYS, got ' + CORE_ITEM_KEYS.length);
+  if (allItemKeys.some(k => ITEMS[k].fav || k.endsWith('@fav'))) throw new Error('Items must not have explicit Favoured Class tags');
+  // Exact 6-attribute parity check (7 items & +20 score / +10 mod per attribute)
+  const attrTotals = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
+  const attrCounts = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
+  allItemKeys.forEach(k => {
+    Object.entries(ITEMS[k].a || {}).forEach(([a, v]) => { attrTotals[a] += v; attrCounts[a]++; });
+  });
+  Object.keys(attrTotals).forEach(a => {
+    if (attrTotals[a] !== 20 || attrCounts[a] !== 7) {
+      throw new Error('Attribute parity failed for ' + a + ': score=' + attrTotals[a] + ', items=' + attrCounts[a]);
+    }
+  });
+  // Exactly 2 items interacting with each of the 12 classes' keywords
+  const clsItemCount = {};
+  allItemKeys.forEach(k => {
+    const classes = new Set((ITEMS[k].kwHooks || []).map(kwk => CLASS_KW[kwk] && CLASS_KW[kwk].cls).filter(Boolean));
+    classes.forEach(c => { clsItemCount[c] = (clsItemCount[c] || 0) + 1; });
+  });
+  const all12Classes = ['Fighter','Barbarian','Paladin','Cleric','Ranger','Rogue','Monk','Bard','Druid','Wizard','Sorcerer','Warlock'];
+  all12Classes.forEach(c => {
+    if (clsItemCount[c] !== 2) throw new Error('Expected 2 keyword items for ' + c + ', got ' + (clsItemCount[c] || 0));
+  });
+  // Direct combat stats check (independent of attributes)
+  const stSword = heroStats({ key: 'arthur', tier: 1, items: ['longsword_p1'] });
+  const stBase = heroStats({ key: 'arthur', tier: 1 });
+  if (stSword.dmgBonus !== 2 || atkBonus(stSword, H.arthur) !== atkBonus(stBase, H.arthur) + 3) {
+    throw new Error('Direct item Damage (+1 Longsword: +1 STR + +2 dmg) failed');
+  }
+  const stShield = heroStats({ key: 'arthur', tier: 1, items: ['shield'] });
+  if (stShield.ac !== stBase.ac + 1) throw new Error('Shield +1 AC failed');
+  const stPlate = heroStats({ key: 'arthur', tier: 1, items: ['plate_armor'] });
+  if (stPlate.ac !== stBase.ac + 3 || stPlate.maxHp !== stBase.maxHp + 75) throw new Error('Plate Armor +3 AC / +75 HP failed');
+  console.log('[PASS] Cast & Items: 24 heroes, 46 canonical D&D items (exact 7 items/+10 mod per attribute, 2 items/class, direct combat stats).');
 
   // 2. Six-Attribute Rework checks
   const stFaelan = heroStats({ key: 'faelan', tier: 1 });
@@ -60,44 +93,90 @@ vm.runInContext(`
   if (!(stRosalind.chaPotency > 1.2)) throw new Error('CHA +3 must grant >20% Commanding Presence');
   console.log('[PASS] Six-Attribute Rework verified.');
 
-  // 3. Pre-Run Pack Toggles, Shop Rules & Direct Act 1 -> Act 2 Transition (NO mid-run Pack Draft!)
+  // 3. Pre-Run Pack Toggles, All Items in Shop, No Free Item, No Shop #1 Upgrade, Smooth Encounter Odds & Matching-Tier Upgrades
   const run = newAdventure();
   startRunWithPacks(run, ['divine', 'market']);
   if (run.adv.packs.length !== 2 || run.adv.pool.length !== 8) throw new Error('Pre-run pack toggle failed: expected 2 packs / 8 heroes');
-  if (!run.adv.itemPool.includes('sunlit_censer') || !run.adv.itemPool.includes('merchants_scales')) throw new Error('Enabled Pack Items missing from itemPool');
-  if (run.adv.itemPool.includes('cloak_elvenkind')) throw new Error('Disabled Pack Item leaked into itemPool');
+  if (run.stash.length !== 0) throw new Error('Expected empty opening stash (no free first item), got ' + run.stash.length);
+  if (run.adv.itemPool.length !== 46 || !run.adv.itemPool.includes('cloak_elvenkind') || !run.adv.itemPool.includes('bag_holding')) {
+    throw new Error('All 46 items (including disabled pack items) must always be in shop itemPool');
+  }
   freeHero(run, 'pillar');
+  // First shop: MUST NOT contain an upgrade for owned starter hero
   openShop(run);
-  const s0 = run.shop.heroes[0], s1 = run.shop.heroes[1], s2 = run.shop.heroes[2];
-  if (s0 === 'pillar' || s1 === 'pillar') throw new Error('Owned hero appeared in Recruit Slot!');
-  if (!run.adv.pool.includes(s0) || !run.adv.pool.includes(s1)) throw new Error('Recruit outside enabled packs appeared in shop!');
-  if (s2 !== 'pillar' || heroOffer(run, s2, 2).tier !== 2) throw new Error('Upgrade Slot did not offer owned hero Next-Tier Upgrade!');
-  // Simulate beating Act 1 Boss -> must go directly to Act 2 'map' (NO 'packs' screen!)
+  if (run.shop.heroes.includes('pillar')) throw new Error('First shop must NOT offer a hero upgrade!');
+  run.shop.heroes.forEach(k => { if (!run.adv.pool.includes(k)) throw new Error('Recruit outside enabled packs appeared in shop!'); });
+
+  // Second shop (e=0 -> Tier 1): Tier 1 owned hero CAN now appear as a Tier 1 copy upgrade in slot 2
+  openShop(run);
+  if (run.shop.heroes[2] !== 'pillar' || heroOffer(run, 'pillar', 2).tier !== 2 || heroOffer(run, 'pillar', 2).offerTier !== 1) {
+    throw new Error('Shop #2 should offer Tier I copy upgrade for Tier I owned hero');
+  }
+  // Upgrade pillar to Tier II -> Tier I copies must NEVER appear for pillar until sold!
+  run.team[0].tier = 2;
+  for (let trial = 0; trial < 40; trial++) {
+    rollShop(run); // e=0 -> 100% Tier 1 slots
+    if (run.shop.heroes.includes('pillar')) throw new Error('Lower-tier (Tier I) duplicate appeared for owned Tier II hero!');
+  }
+  // Encounter-scaled odds check: T1 still appears at e=12..15, while T2/T3 & Rare/Very Rare smoothly rise
+  const ho0 = heroTierOdds(0), ho6 = heroTierOdds(6), ho15 = heroTierOdds(15);
+  if (ho0[0] !== 1 || !(ho6[1] > ho0[1]) || !(ho15[2] > ho6[2]) || !(ho15[0] >= 0.25)) {
+    throw new Error('Smooth encounter hero tier odds check failed: ' + JSON.stringify({ ho0, ho6, ho15 }));
+  }
+  const io0 = itemRarityOdds(0), io6 = itemRarityOdds(6), io15 = itemRarityOdds(15);
+  if (io0[3] !== 0 || !(io6[2] > io0[2]) || !(io15[3] > io6[3]) || !(io15[0] >= 0.10)) {
+    throw new Error('Smooth encounter item rarity odds check failed: ' + JSON.stringify({ io0, io6, io15 }));
+  }
+  // At e=8 (mid Act 2), Tier II copies appear and upgrade Tier II -> Tier III; lower-tier (Tier I) never appears for Tier II hero!
+  run.stats.won = 8;
+  let sawT2Upgrade = false;
+  for (let trial = 0; trial < 120; trial++) {
+    rollShop(run);
+    for (let si = 0; si < 3; si++) {
+      if (run.shop.heroes[si] === 'pillar') {
+        const off = heroOffer(run, 'pillar', si);
+        if (off.offerTier < 2) throw new Error('Lower-tier duplicate rolled for Tier II hero!');
+        if (off.offerTier === 2 && off.tier === 3) sawT2Upgrade = true;
+      }
+    }
+  }
+  if (!sawT2Upgrade) throw new Error('Expected to see a Tier II copy upgrading Tier II -> Tier III at e=8');
+
+  // Selling pillar lets Tier I duplicates of pillar appear again
+  freeHero(run, 'lumen');
+  sellHero(run, run.team[0].uid);
+  run.stats.won = 0;
+  let sawSoldBack = false;
+  for (let trial = 0; trial < 80; trial++) {
+    rollShop(run);
+    if (run.shop.heroes.includes('pillar')) { sawSoldBack = true; break; }
+  }
+  if (!sawSoldBack) throw new Error('Sold hero should be able to reappear at Tier I in shop');
+
+  // Direct Act 1 -> Act 2 map refresh + Camp Retraining + Map-Node Promotion + Bag of Holding 150% sell bonus
   startAct(run);
   enterNode(run, run.adv.map[ADV.bossRow][0]);
   const bossRes = resolveNodeFight(run, true, { time: 18, gold: 2, units: [] });
   if (!bossRes.actDone || bossRes.actBonus !== 8) throw new Error('Act 1 Boss should grant Act Clear Bonus');
   const nextAfterBoss = afterNodeFight(run, bossRes);
   if (nextAfterBoss !== 'map' || run.adv.act !== 2 || run.adv.pos !== null || run.adv.path.length !== 0) {
-    throw new Error('Beating Act 1 Boss must advance directly to fresh Act 2 map without mid-run pack screen! Got: ' + nextAfterBoss);
+    throw new Error('Beating Act 1 Boss must advance directly to fresh Act 2 map! Got: ' + nextAfterBoss);
   }
-  // Act 2 Pre-tiered Recruits + Camp Retraining + Map-Node Promotion
-  rollShop(run);
-  const recOffer = heroOffer(run, run.shop.heroes[0], 0);
-  if (!recOffer.isNew || recOffer.tier !== 2) throw new Error('Act 2 unowned recruit must start at Tier II, got ' + recOffer.tier);
   run.gold = 100;
+  run.stats.won = 8;
+  rollShop(run);
   const bought = buyHero(run, 0);
-  if (!bought.ok || !bought.needsPath || bought.hero.tier !== 2) throw new Error('Buying Act 2 Tier II recruit must trigger Path choice!');
+  if (!bought.ok) throw new Error('Buying recruit failed');
+  if (bought.hero.tier < 2) promoteHero(run, bought.hero.uid);
   bought.hero.path = H[bought.hero.key].paths[0].k;
   const altPath = H[bought.hero.key].paths[1].k;
   if (!retrainHeroPath(run, bought.hero.uid, altPath) || bought.hero.path !== altPath) throw new Error('Camp Retraining failed');
   const prom = promoteHero(run, bought.hero.uid);
   if (!prom.ok || bought.hero.tier !== 3 || !prom.needsAsi) throw new Error('Map-node Training Promotion failed');
-  // Merchant's Scales 150% sell bonus
-  bought.hero.items.push('merchants_scales');
+  bought.hero.items.push('bag_holding');
   const baseRef = Math.max(1, Math.floor(ECON.itemPrice[ITEMS.flametongue.r] * .5));
-  if (itemRefund(run, 'flametongue') !== Math.ceil(baseRef * 1.5)) throw new Error('Merchant Scales 150% sell refund failed');
-  console.log('[PASS] Pre-Run Pack Toggles, Direct Act 1->2 Map Refresh, Shop Rules, Retraining, Promotion & Merchant Scales.');
+  if (itemRefund(run, 'flametongue') !== Math.ceil(baseRef * 1.5)) throw new Error('Bag of Holding 150% sell refund failed');
+  console.log('[PASS] Pre-Run Pack Toggles, All Items in Shop, No Free Item, No Shop #1 Upgrade, Smooth Encounter Odds, Exact-Tier Upgrades & Bag of Holding.');
 
   // 4. Piggy Bank Single Free-Loss Rule
   const pRun = newAdventure();
@@ -123,67 +202,68 @@ vm.runInContext(`
   if (slotsOf({ key: 'zoe', tier: 4, path: 'just_the_thing' }) !== 5) throw new Error('Zoe T4 Just the Thing must grant +1 slot');
   console.log('[PASS] Hero Quests (Packs 1-6: Sir Dane 2x2, Pillar 2x2, Arthur, Wallaby, Zoe T4).');
 
-  // 6. Combat Benchmark Squads covering ALL 24 HEROES & ALL 16 ITEMS
+  // 6. Combat Benchmark Squads covering ALL 24 HEROES & ALL 46 ITEMS
   const benchComps = [
     {
       name: '1. Rage Snowball (Packs 1-3)',
       party: [
-        { key: 'zark',     tier: 2, path: 'relentless', items: ['ember_bracers'], c: 4, r: 6 },
-        { key: 'rosalind', tier: 2, path: 'passround',  items: ['amulet_devout'], c: 5, r: 7, questDone: true },
-        { key: 'faelan',   tier: 2, path: 'battery',    items: ['headband'],      c: 3, r: 8 },
-        { key: 'cinder',   tier: 2, path: 'draconic',   items: ['staff_power'],   c: 6, r: 8 }
+        { key: 'zark',     tier: 2, path: 'relentless', items: ['periapt_wound_closure', 'berserker_axe'], c: 4, r: 6 },
+        { key: 'rosalind', tier: 2, path: 'passround',  items: ['pipes_haunting', 'horn_valhalla'], c: 5, r: 7, questDone: true },
+        { key: 'faelan',   tier: 2, path: 'battery',    items: ['pearl_power', 'headband'], c: 3, r: 8 },
+        { key: 'cinder',   tier: 2, path: 'draconic',   items: ['bloodwell_vial', 'wand_fireballs'], c: 6, r: 8 }
       ]
     },
     {
       name: '2. Machine-Gun Marks (Packs 2-3)',
       party: [
-        { key: 'dane',   tier: 2, path: 'calltoarms', items: ['sunblade'],         c: 4, r: 6, questDone: true },
-        { key: 'lorcan', tier: 2, path: 'colossus',   items: ['oathbow'],          c: 2, r: 8 },
-        { key: 'naill',  tier: 2, path: 'openhand',   items: ['whetstone'],        c: 6, r: 6 },
-        { key: 'nettle', tier: 2, path: 'bargain',    items: ['clockwork_amulet'], c: 7, r: 8 }
+        { key: 'dane',   tier: 2, path: 'calltoarms', items: ['sentinel_shield', 'sunblade'], c: 4, r: 6, questDone: true },
+        { key: 'lorcan', tier: 2, path: 'colossus',   items: ['bracers_archery', 'oathbow'], c: 2, r: 8 },
+        { key: 'naill',  tier: 2, path: 'openhand',   items: ['dragonhide_belt', 'staff_striking'], c: 6, r: 6 },
+        { key: 'nettle', tier: 2, path: 'bargain',    items: ['rod_pact_keeper', 'staff_withering'], c: 7, r: 8 }
       ]
     },
     {
       name: '3. Frontline & Forest (Packs 1-2)',
       party: [
-        { key: 'arthur',  tier: 2, path: 'vigilance', items: ['flametongue'],      c: 4, r: 6, questDone: true },
-        { key: 'bram',    tier: 2, path: 'divine',    items: ['potion_healing'],   c: 5, r: 6 },
-        { key: 'wallaby', tier: 2, path: 'fasthands', items: ['dragonhide_belt'],  c: 6, r: 6 },
-        { key: 'juniper', tier: 2, path: 'overgrowth',items: ['luckstone'],        c: 3, r: 8, questDone: true }
+        { key: 'arthur',  tier: 2, path: 'vigilance', items: ['weapon_warning', 'flametongue'], c: 4, r: 6, questDone: true },
+        { key: 'bram',    tier: 2, path: 'divine',    items: ['potion_healing', 'staff_healing'], c: 5, r: 6 },
+        { key: 'wallaby', tier: 2, path: 'fasthands', items: ['dagger_venom', 'scimitar_speed'], c: 6, r: 6 },
+        { key: 'juniper', tier: 2, path: 'overgrowth',items: ['moon_sickle', 'staff_woodlands'], c: 3, r: 8, questDone: true }
       ]
     },
     {
       name: '4. Pack 4: Divine Intervention (Pillar, Mother Laurel, Lumen, Jamison)',
       party: [
-        { key: 'pillar',        tier: 2, path: 'unstoppable',    items: ['sunblade'],      c: 4, r: 6, questDone: true },
-        { key: 'mother_laurel', tier: 2, path: 'bountiful_vines',items: ['sunlit_censer'], c: 6, r: 6, questDone: true },
-        { key: 'lumen',         tier: 2, path: 'purifying',      items: ['staff_power'],   c: 3, r: 8, questDone: true },
-        { key: 'jamison',       tier: 2, path: 'good_vibes',     items: ['amulet_devout'], c: 5, r: 7, questDone: true }
+        { key: 'pillar',        tier: 2, path: 'unstoppable',     items: ['dwarven_plate', 'frost_brand'], c: 4, r: 6, questDone: true },
+        { key: 'mother_laurel', tier: 2, path: 'bountiful_vines', items: ['plate_armor', 'ring_regeneration'], c: 6, r: 6, questDone: true },
+        { key: 'lumen',         tier: 2, path: 'purifying',       items: ['staff_power', 'robe_stars'], c: 3, r: 8, questDone: true },
+        { key: 'jamison',       tier: 2, path: 'good_vibes',      items: ['amulet_devout', 'ring_spell_storing'], c: 5, r: 7, questDone: true }
       ]
     },
     {
       name: '5. Pack 5: Cornering the Market (Zoe, Toot, Gilthrax, Gains)',
       party: [
-        { key: 'gilthrax', tier: 2, path: 'gilded_hoard',      items: ['ember_bracers', 'sunblade'], c: 4, r: 6, questDone: true },
-        { key: 'zoe',      tier: 2, path: 'just_the_thing',    items: ['potion_healing', 'luckstone'], c: 5, r: 6, questDone: true },
-        { key: 'toot',     tier: 2, path: 'street_performer',  items: ['merchants_scales'], c: 3, r: 8, questDone: true, goldHeld: 20 },
-        { key: 'gains',    tier: 2, path: 'compound_interest', items: ['metarod_quicken'],  c: 6, r: 8, questDone: true, goldHeld: 30 }
+        { key: 'gilthrax', tier: 2, path: 'gilded_hoard',      items: ['amulet_health', 'boots_speed'], c: 4, r: 6, questDone: true },
+        { key: 'zoe',      tier: 2, path: 'just_the_thing',    items: ['longsword_p1', 'breastplate'], c: 5, r: 6, questDone: true },
+        { key: 'toot',     tier: 2, path: 'street_performer',  items: ['bag_holding', 'leather_armor'], c: 3, r: 8, questDone: true, goldHeld: 20 },
+        { key: 'gains',    tier: 2, path: 'compound_interest', items: ['wand_war_mage', 'luckstone'], c: 6, r: 8, questDone: true, goldHeld: 30 }
       ]
     },
     {
       name: '6. Pack 6: Surprise Round (Velith, Corvin, Saint, Kaska)',
       party: [
-        { key: 'kaska',  tier: 2, path: 'lunar_resilience', items: ['cloak_elvenkind'], c: 4, r: 6, questDone: true },
-        { key: 'corvin', tier: 2, path: 'stalker_flurry',   items: ['whetstone'],       c: 5, r: 6, questDone: true },
-        { key: 'velith', tier: 2, path: 'nightshade',       items: ['dragonhide_belt'], c: 6, r: 6, questDone: true },
-        { key: 'saint',  tier: 2, path: 'two_faced',        items: ['clockwork_amulet'],c: 3, r: 8, questDone: true }
+        { key: 'kaska',  tier: 2, path: 'lunar_resilience', items: ['cloak_elvenkind', 'cloak_displacement'], c: 4, r: 6, questDone: true },
+        { key: 'corvin', tier: 2, path: 'stalker_flurry',   items: ['rapier_p1', 'shield'], c: 5, r: 6, questDone: true },
+        { key: 'velith', tier: 2, path: 'nightshade',       items: ['longbow_p1', 'clockwork_amulet'], c: 6, r: 6, questDone: true },
+        { key: 'saint',  tier: 2, path: 'two_faced',        items: ['clockwork_amulet', 'amulet_devout'], c: 3, r: 8, questDone: true }
       ]
     }
   ];
 
   const testedHeroes = new Set();
+  const testedItems = new Set();
   for (const comp of benchComps) {
-    comp.party.forEach(p => testedHeroes.add(p.key));
+    comp.party.forEach(p => { testedHeroes.add(p.key); (p.items || []).forEach(ik => testedItems.add(ik)); });
     let wins = 0, totalTime = 0, totalGold = 0;
     const trials = 8;
     for (let i = 0; i < trials; i++) {
@@ -195,11 +275,15 @@ vm.runInContext(`
     console.log('[BENCH] ' + comp.name + ': ' + wins + '/' + trials + ' wins vs War Band (avg ' + (totalTime / trials).toFixed(1) + 's' + (totalGold ? ', Gold=' + totalGold : '') + ')');
   }
   if (testedHeroes.size !== 24) throw new Error('Expected all 24 heroes simulated, got ' + testedHeroes.size);
-  console.log('[PASS] All 24/24 heroes simulated cleanly with 0 exceptions!');
+  if (testedItems.size !== 46) {
+    const missing = allItemKeys.filter(k => !testedItems.has(k));
+    throw new Error('Expected all 46 items simulated, missing: ' + missing.join(', '));
+  }
+  console.log('[PASS] All 24/24 heroes and all 46/46 items simulated cleanly with 0 exceptions!');
 
   // 7. Global 1-cast/second Cap check
   const fastParty = [
-    { key: 'faelan', tier: 3, path: 'battery', items: ['headband', 'metarod_quicken'], c: 4, r: 7 },
+    { key: 'faelan', tier: 3, path: 'battery', items: ['headband', 'bloodwell_vial'], c: 4, r: 7 },
     { key: 'zark',   tier: 3, path: 'totemroar', items: ['potion_healing'], c: 5, r: 6 },
     { key: 'rosalind', tier: 3, path: 'encore', items: ['clockwork_amulet'], c: 3, r: 7 },
     { key: 'bram',   tier: 3, path: 'divine', items: ['sunblade'], c: 6, r: 6 }
@@ -278,7 +362,7 @@ vm.runInContext(`
   const bKw1 = simulate('orcs', [
     { key: 'arthur', tier: 2, path: 'initiative', items: ['flametongue'], c: 4, r: 6 },
     { key: 'zoe', tier: 2, path: 'just_the_thing', items: ['clockwork_amulet'], c: 5, r: 6 },
-    { key: 'gilthrax', tier: 2, path: 'gilded_hoard', items: ['ember_bracers'], c: 3, r: 6, questDone: true },
+    { key: 'gilthrax', tier: 2, path: 'gilded_hoard', items: ['weapon_warning'], c: 3, r: 6, questDone: true },
     { key: 'lumen', tier: 2, path: 'purifying', items: ['amulet_devout'], c: 6, r: 8 }
   ], 1);
   if (!(bKw1.kwCounts.action_surge > 0)) throw new Error('Fighter squad must trigger Action Surge');

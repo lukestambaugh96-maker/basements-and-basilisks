@@ -1,8 +1,10 @@
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import http from 'node:http';
 
 const PORT = 9226;
-const chrome = spawn('/usr/bin/chromium', [
+const CHROME_BIN = ['/usr/bin/chromium', '/usr/bin/google-chrome', '/usr/bin/chromium-browser'].find(p => fs.existsSync(p)) || 'google-chrome';
+const chrome = spawn(CHROME_BIN, [
   '--headless=new', '--disable-gpu', '--no-sandbox',
   '--window-size=1440,1000',
   `--remote-debugging-port=${PORT}`, 'about:blank'

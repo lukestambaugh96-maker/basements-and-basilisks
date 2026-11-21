@@ -27,7 +27,11 @@ function loadRun() {
         // Sanitize stale prior-act trail from pre-fix saves where pos was reset without clearing path
         if (!r.adv.pos && r.adv.path.length) r.adv.path = [];
         if (r.adv.pos && r.adv.pos.r >= ADV.bossRow) { r.adv.pos = null; r.adv.path = []; }
+        r.adv.itemPool = [...CORE_ITEM_KEYS];
       }
+      if (Array.isArray(r.stash)) r.stash = r.stash.filter(k => ITEMS[k]);
+      if (Array.isArray(r.team)) r.team.forEach(h => { if (Array.isArray(h.items)) h.items = h.items.filter(k => ITEMS[k]); });
+      if (r.shop && Array.isArray(r.shop.items)) r.shop.items = r.shop.items.map(k => (k && ITEMS[k]) ? k : null);
       return r;
     }
   } catch (e) {}
@@ -139,10 +143,9 @@ function saveEnabledPacks() {
 function renderPacks() {
   const chosen = PACK_ORDER.filter(k => ENABLED_PACKS.has(k));
   const heroCount = chosen.reduce((sum, k) => sum + PACKS[k].heroes.length, 0);
-  const itemCount = chosen.filter(k => PACKS[k].item).length;
   $('packLbl').textContent = 'Pre-run pack setup · 6 Packs · 24 Heroes';
 
-  const ctrlHtml = `<div class="packsummary"><b>${chosen.length}</b> of ${PACK_ORDER.length} Packs enabled · <b>${heroCount}</b> Heroes · <b>${itemCount}</b> Pack Items</div>
+  const ctrlHtml = `<div class="packsummary"><b>${chosen.length}</b> of ${PACK_ORDER.length} Packs enabled · <b>${heroCount}</b> Heroes · All <b>${CORE_ITEM_KEYS.length}</b> Items in Shop</div>
     <div class="row">
       <button class="btn sm" data-a="packsAll">Enable all 6</button>
       <button class="btn sm" data-a="packsCore3">Starter 3</button>
@@ -165,7 +168,7 @@ function renderPacks() {
       <h3>${esc(P.n)}</h3>
       <p class="mute">${esc(P.x)}</p>
       <div class="packheroes">${P.heroes.map(h => `<button class="packhero" data-a="packHero" data-k="${h}" style="${roleStyle(h, 1)}" title="Inspect ${esc(H[h].name)}">${iconSlot(h, 64)}<b>${esc(H[h].name)}</b><span>${esc(H[h].role)} · ${esc(H[h].cls)}</span></button>`).join('')}</div>
-      ${P.item ? `<div class="packitem" title="${esc(itemText(P.item))}">${itemIcon(P.item, 36)}<span><b>${esc(ITEMS[P.item].n)}</b> <small class="mute">(Pack Item)</small><br><span class="small mute">${esc(itemText(P.item))}</span></span></div>` : ''}
+      ${P.item && ITEMS[P.item] ? `<div class="packitem" title="${esc(itemText(P.item))}">${itemIcon(P.item, 36)}<span><b>${esc(ITEMS[P.item].n)}</b> <small class="mute">(Featured · Always in Shop)</small><br><span class="small mute">${esc(itemText(P.item))}</span></span></div>` : ''}
       <button class="btn ${on ? '' : 'primary'}" data-a="togglePack" data-k="${k}">${on ? 'Disable this pack' : 'Enable this pack'}</button>
     </div>`;
   }).join('');
@@ -329,9 +332,15 @@ function eventModal(k, arg) {
   }
 }
 
-/* ---------- Reworked Shop (2 Recruit + 1 Upgrade, Direct Equip/Drag, Favoured & Synergy Highlights) ---------- */
+/* ---------- Reworked Shop (Encounter-Scaled Odds, Direct Equip/Drag, Class Keyword Synergy Highlights) ---------- */
 let SHOP_SEL_ITEM = null;
-const isFavMatch = (k, h) => !!(k && h && (favFor(k, h.key) || (h.key === 'wallaby' && h.questDone && ITEMS[k + '@fav'])));
+const isFavMatch = (k, h) => {
+  if (!k || !h) return false;
+  const hooks = itemKwHooks(k);
+  if (!hooks.length) return false;
+  const hkw = classKwOf(h.key);
+  return hooks.some(x => hkw.includes(x));
+};
 
 function enterShop() {
   SHOP_SEL_ITEM = null;
@@ -392,7 +401,9 @@ function renderShop() {
   const rp = rerollPrice(R);
   $('rerollBtn').innerHTML = `Reroll · ${gold(rp)}`; $('rerollBtn').disabled = R.gold < rp;
   $('freezeBtn').textContent = R.shop.frozen ? 'Frozen' : 'Freeze'; $('freezeBtn').classList.toggle('primary', !!R.shop.frozen);
-  $('shopNote').innerHTML = `2 Recruit slots + 1 Upgrade slot · Act ${actOf(R)} recruits start at Tier ${actOf(R) === 1 ? 'I' : actOf(R) === 2 ? 'II' : 'II–III'} · Full sell refund`;
+  const ho = heroTierOdds(encounterCount(R)).map(x => Math.round(x * 100));
+  const io = itemRarityOdds(encounterCount(R)).map(x => Math.round(x * 100));
+  $('shopNote').innerHTML = `Hero odds: T1 ${ho[0]}% · T2 ${ho[1]}% · T3 ${ho[2]}% &nbsp;|&nbsp; Item odds: C ${io[0]}% · U ${io[1]}% · R ${io[2]}% · VR ${io[3]}% &nbsp;|&nbsp; Matching-tier copy upgrades hero`;
   paintCanvases($('shop')); paintTokens($('shop'));
   document.querySelectorAll('#offers canvas[data-osplash]').forEach(c => drawSplash(c, c.dataset.osplash, 240, 200));
   checkPendingPath();
@@ -404,7 +415,7 @@ function heroOfferCard(k, i, partyTagSet, partyKwSet) {
   const d = H[k], o = heroOffer(RUN, k, i), ot = o.offerTier || 1, lk = RUN.shop.lockH[i];
   const can = !o.maxed && RUN.gold >= o.price;
   const slotBadge = o.upgrade ? `<span class="slotbadge upg">UPGRADE</span>` : `<span class="slotbadge rec">RECRUIT</span>`;
-  const own = o.upgrade ? `<div class="ownline">Tier ${rom[o.upgrade.tier]} → <b>Tier ${rom[o.tier]}</b></div>` : (ot >= 2 ? `<div class="ownline">Pre-tiered <b>Tier ${rom[ot]}</b> recruit (pick Path on buy)</div>` : '');
+  const own = o.upgrade ? `<div class="ownline">Tier ${rom[o.offerTier]} copy · Upgrades Tier ${rom[o.upgrade.tier]} → <b>Tier ${rom[o.tier]}</b></div>` : (ot >= 2 ? `<div class="ownline">Pre-tiered <b>Tier ${rom[ot]}</b> recruit (pick Path on buy)</div>` : '');
   const ckwHtml = (d.ckw || []).map(e => classKwPill(e.k, !!(partyKwSet && partyKwSet.has(e.k)), e.sub)).join('');
   const ckwLine = (d.ckw && d.ckw[0]) ? `<div class="hoab kwline"><b>${esc(CLASS_KW[d.ckw[0].k].n)}</b> ${esc(d.ckw[0].x)}</div>` : '';
   const tagHtml = tagsOf(k).map(t => {
@@ -428,10 +439,10 @@ function partyChip(h, selItemKey) {
     const canEq = h.items.length < maxS && canCarry(h, selItemKey);
     const fav = canEq && isFavMatch(selItemKey, h);
     eqCls = fav ? ' can-equip fav-match' : canEq ? ' can-equip' : ' no-equip';
-    if (fav) favBadge = `<span class="favpill">★ Favoured</span>`;
+    if (fav) favBadge = `<span class="favpill">★ Synergy</span>`;
   }
   const itemsRow = `<div class="pitems">${Array.from({ length: maxS }, (_, j) => h.items[j]
-    ? `<span class="pit" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}${isFavMatch(h.items[j], h) ? ' (★ Favoured!)' : ''}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
+    ? `<span class="pit" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}${isFavMatch(h.items[j], h) ? ' (★ Synergy)' : ''}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
     : `<span class="pit empty" title="Empty item slot"></span>`).join('')}</div>`;
   const questRow = q ? `<div class="chipq${h.questDone ? ' done' : ''}" title="${esc(q.rewardName)}: ${esc(q.rewardDesc)}"><div class="cqbar"><i style="width:${qPct}%"></i></div><span>${h.questDone ? '★ Quest Done' : `${Math.round(h.questProg || 0)}/${q.goal}`}</span></div>` : '';
   return `<div class="pchip${eqCls}" style="--tc:${TIERCOL[h.tier]}" data-drop-hero="${h.uid}" ${selItemKey ? `data-a="shopEquip" data-u="${h.uid}"` : ''}>
@@ -446,12 +457,9 @@ function partyChip(h, selItemKey) {
 function itemOfferCard(k, i, partyKwSet) {
   if (!k) return `<div class="io18 sold"><span class="small mute">Sold</span></div>`;
   const it = ITEMS[k], R = RARITY[it.r], p = itemPrice(RUN, i), lk = RUN.shop.lockI[i];
-  const favNames = RUN.team.filter(h => isFavMatch(k, h)).map(h => short(H[h.key].name));
   const kwMatches = itemKwHooks(k).filter(kwk => partyKwSet && partyKwSet.has(kwk)).map(kwk => CLASS_KW[kwk].n);
-  const favLine = favNames.length
-    ? `<div class="iofav">★ Favoured: ${esc(favNames.join(', '))}</div>`
-    : (kwMatches.length ? `<div class="iofav kw">★ Synergy: ${esc(kwMatches.slice(0, 2).join(', '))}</div>` : '');
-  return `<div class="io18${lk ? ' locked' : ''}${(favNames.length || kwMatches.length) ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div>${favLine}</div><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockI" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button></div>`;
+  const favLine = kwMatches.length ? `<div class="iofav kw">★ Synergy: ${esc(kwMatches.slice(0, 2).join(', '))}</div>` : '';
+  return `<div class="io18${lk ? ' locked' : ''}${kwMatches.length ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div>${favLine}</div><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockI" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button></div>`;
 }
 
 function heroCardModal(h, extra) {
@@ -814,7 +822,7 @@ document.addEventListener('click', e => {
       const fav = isFavMatch(k, h);
       if (equip(RUN, uid, SHOP_SEL_ITEM)) {
         SHOP_SEL_ITEM = null;
-        toast(fav ? `★ Favoured! ${H[h.key].name} equips ${ITEMS[k].n}` : `${H[h.key].name} equips ${ITEMS[k].n}`);
+        toast(fav ? `★ Synergy! ${H[h.key].name} equips ${ITEMS[k].n}` : `${H[h.key].name} equips ${ITEMS[k].n}`);
         renderShop(); saveRun();
       }
       break;
@@ -888,7 +896,7 @@ document.addEventListener('drop', e => {
   const fav = isFavMatch(k, hh);
   if (equip(RUN, uid, idx)) {
     SHOP_SEL_ITEM = null;
-    toast(fav ? `★ Favoured! ${H[hh.key].name} equips ${ITEMS[k].n}` : `${H[hh.key].name} equips ${ITEMS[k].n}`);
+    toast(fav ? `★ Synergy! ${H[hh.key].name} equips ${ITEMS[k].n}` : `${H[hh.key].name} equips ${ITEMS[k].n}`);
     renderShop(); saveRun();
   }
 });
