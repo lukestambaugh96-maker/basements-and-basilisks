@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basements &amp; Basilisks 0.22 · Six-Attribute Rework &amp; 24-Hero Cast</title>
+  <meta name="description" content="Basements & Basilisks v0.22 roguelike auto-battler with the Six-Attribute Rework, 24 heroes across 6 toggleable Packs, d20 recursion, Piggy Bank loss system, and Campfire retraining." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<!-- title -->
+<section class="screen" id="start">
+  <div class="title-wrap">
+    <div class="ver">Version 0.22 · Six-Attribute Rework &amp; 24-Hero Cast</div>
+    <h1>Basements <span class="amp">&amp;</span> Basilisks</h1>
+    <div class="parade" id="parade"></div>
+    <div class="title-btns">
+      <button class="btn primary big" data-a="newrun">New run</button>
+      <button class="btn big" data-a="continue" id="contBtn" hidden>Continue</button>
+      <div class="row" style="justify-content:center">
+        <button class="btn" data-a="changelog">What’s new in 0.22</button>
+        <a class="btn" href="tools/asset-studio.html" style="text-decoration:none">Asset Studio</a>
+      </div>
+    </div>
+    <p class="mute" id="bestLine"></p>
+  </div>
+</section>
+
+<!-- intro -->
+<section class="screen" id="intro" hidden>
+  <div class="intro frame">
+    <h2>The Adventure (v0.22)</h2>
+    <p class="goal">Three acts, three bosses, four heroes. Build a trigger machine.</p>
+    <ul>
+      <li><b>Pre-Run Pack Selection (24 Heroes, 6 Packs).</b> Enable or disable any combination of the 6 Hero Packs before your run starts. All heroes and Pack Items from enabled Packs appear in your shops across all 3 Acts.</li>
+      <li><b>Reworked Shop (No Duplicate Hunting).</b> Two dedicated <b>Recruit Slots</b> always show unowned heroes, while the <b>Upgrade Slot</b> offers a direct Next-Tier Upgrade for an owned hero. In Acts 2 &amp; 3, new recruits arrive pre-tiered (Tier II/III) so you can pivot cleanly.</li>
+      <li><b>Six-Attribute Rework &amp; d20 Floors.</b> STR adds melee Armor Pen, DEX drives Attack Speed, CON scales HP, INT speeds Charge (capped at 1 cast/sec), WIS raises your minimum natural d20 roll floor, and CHA scales buff/debuff potency.</li>
+      <li><b>Campfire Retraining &amp; Hero Quests.</b> Retrain any Tier II+ Path freely at Campfires, promote heroes at Training nodes, and complete each hero’s built-in <b>Hero Quest</b> for Signature Rewards (like Large 2×2 Sir Dane &amp; Pillar).</li>
+      <li><b>Piggy Bank Loss Rule.</b> Wins fill your Piggy Bank. Your first loss breaks it, pays out all saved gold, and lets you shop and retry that fight. A second loss ends the run.</li>
+    </ul>
+    <div class="row" style="justify-content:center">
+      <button class="btn primary big" data-a="begin">Choose hero packs</button>
+      <button class="btn" data-a="title">Back</button>
+    </div>
+  </div>
+</section>
+
+<!-- pre-run pack toggles -->
+<section class="screen" id="packs" hidden>
+  <div class="pickhead">
+    <div class="lbl" id="packLbl">Before your adventure</div>
+    <h2>Enable Hero Packs</h2>
+    <p class="mute">Toggle any combination of the 6 Packs on or off. Heroes and Pack Items from enabled Packs appear in shops throughout the entire run.</p>
+  </div>
+  <div class="packbar" id="packControls"></div>
+  <div class="packs" id="packList"></div>
+  <div class="packbar packbar-foot" id="packControlsFoot"></div>
+</section>
+
+<!-- adventure map -->
+<section class="screen" id="advmap" hidden>
+  <div class="maphead" id="mapHead"></div>
+  <div class="mapwrap"><div class="mapside" id="mapSide"></div><div class="mapboard" id="mapBoard"></div></div>
+</section>
+
+<!-- first pick -->
+<section class="screen" id="pick" hidden>
+  <div class="pickhead">
+    <div class="lbl">From your enabled packs</div>
+    <h2>Choose your first hero</h2>
+    <p class="mute">One hero joins free. All other heroes from your enabled Packs appear in shop Recruit Slots.</p>
+  </div>
+  <div class="picks" id="picks"></div>
+</section>
+
+<!-- shop -->
+<section class="screen" id="shop" hidden>
+  <div class="vellum">
+    <div class="topbar">
+      <h1>Basements &amp; Basilisks<small>0.22 · Six-Attribute Rework</small></h1>
+      <div class="stats" id="shopStats"></div>
+      <button class="btn sm" data-a="title">Save and quit</button>
+    </div>
+    <div class="next" id="nextFight"></div>
+    <div class="shop18">
+      <section class="sh-main">
+        <div class="sh-offers" id="offers"></div>
+        <div class="sh-bar">
+          <span class="small mute" id="shopNote"></span>
+          <span class="row">
+            <button class="btn" data-a="freeze" id="freezeBtn"></button>
+            <button class="btn gold" data-a="reroll" id="rerollBtn"></button>
+          </span>
+        </div>
+      </section>
+      <aside class="sh-side">
+        <div class="lbl">Shop Items</div>
+        <div class="sh-items" id="itemOffers"></div>
+        <div class="lbl">Stash <span id="stashCount"></span></div>
+        <div class="sh-stash" id="stash"></div>
+        <div id="shopStashAct"></div>
+        <p class="small mute">Click or drag a stash item onto a hero below to equip it. Click an equipped item to unequip.</p>
+      </aside>
+    </div>
+    <section class="sh-party">
+      <div class="sh-pl"><span class="lbl">Your party</span> <span class="lbl" id="boardCount"></span></div>
+      <div class="sh-slots" id="slots"></div>
+      <div class="sh-ptags" id="partyTags"></div>
+    </section>
+  </div>
+</section>
+
+<!-- combat -->
+<section id="combat" hidden>
+  <div class="cbar">
+    <div><h2 id="cTitle"></h2><div class="q" id="cSub"></div></div>
+    <div class="cstats" id="cStats"></div>
+    <div class="row" id="cCtl"></div>
+  </div>
+  <div id="boardWrap">
+    <canvas id="board"></canvas>
+    <div class="hint" id="hint" hidden></div>
+    <div class="result" id="result" hidden></div>
+  </div>
+  <div class="strip" id="strip"></div>
+  <div class="pbench" id="pbench" data-drop="pbench" hidden></div>
+</section>
+
+<!-- game over -->
+<section class="screen" id="over" hidden><div class="over frame" id="overBox"></div></section>
+
+<div id="modal" hidden role="dialog" aria-modal="true"><div class="mwrap"><button class="btn close" aria-label="Close" data-a="closeModal">×</button><div class="mbody"></div></div></div>
+<div id="toast" hidden></div>
+<div id="etip" class="etip" hidden></div>
+
+<script src="src/00-assets.js"></script>
+<script src="src/01-geo.js"></script>
+<script src="src/02-enemies.js"></script>
+<script src="src/03-heroes.js"></script>
+<script src="src/04-items.js"></script>
+<script src="src/05-engine.js"></script>
+<script src="src/06-adventure.js"></script>
+<script src="src/07-glossary.js"></script>
+<script src="src/08-portraits.js"></script>
+<script src="src/09-cards.js"></script>
+<script src="src/10-board.js"></script>
+<script src="src/11-shell.js"></script>
+</body>
+</html>

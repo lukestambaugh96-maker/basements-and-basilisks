@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Studio · Basements &amp; Basilisks 0.22</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;600;700;800&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#efe3c6; --panel:#f7eed9; --panel2:#e9dbb6; --ink:#2a1c12; --mute:#5e4c38; --red:#8f1d14; --gold:#b8862a; --green:#236b38; --line:#b49d73; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.38 'EB Garamond',Georgia,serif; }
+    h1,h2,h3 { font-family:'IM Fell English SC',Georgia,serif; font-weight:400; margin:0; }
+    .wrap { max-width:1320px; margin:0 auto; padding:18px 20px 44px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; border-bottom:2px solid var(--ink); padding-bottom:12px; margin-bottom:14px; }
+    .top h1 { font-size:2rem; }
+    .top h1 small { font:700 .78rem/1 'Alegreya Sans',sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); margin-left:10px; }
+    .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .btn { font:600 .9rem/1.2 'Alegreya Sans',sans-serif; padding:6px 12px; border:1.5px solid var(--ink); background:var(--panel); color:var(--ink); border-radius:3px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+    .btn:hover { border-color:var(--red); color:var(--red); }
+    .btn.primary { background:var(--ink); color:var(--bg); }
+    .btn.primary:hover { background:var(--red); border-color:var(--red); color:var(--bg); }
+    .btn.sm { font-size:.78rem; padding:3px 8px; }
+    .toolbar { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; background:var(--panel); border:1.5px solid var(--ink); padding:12px 14px; margin-bottom:14px; }
+    @media(max-width:860px){ .toolbar { grid-template-columns:1fr; } }
+    .tabs { display:flex; gap:6px; flex-wrap:wrap; }
+    .tab { font:700 .85rem/1 'Alegreya Sans',sans-serif; padding:7px 12px; border:1.5px solid var(--line); background:var(--panel2); color:var(--ink); cursor:pointer; border-radius:3px; }
+    .tab.on { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+    .tab b { opacity:.75; margin-left:4px; }
+    .cov { font:700 .86rem/1.2 'Alegreya Sans',sans-serif; color:var(--mute); }
+    .covbar { width:180px; height:8px; background:#d8c7a0; border:1px solid var(--line); border-radius:4px; overflow:hidden; display:inline-block; vertical-align:middle; margin-left:8px; }
+    .covbar i { display:block; height:100%; background:var(--green); }
+    .config { display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:var(--panel2); border:1px solid var(--line); padding:10px 12px; margin-bottom:14px; font-family:'Alegreya Sans',sans-serif; font-size:.84rem; }
+    .config input[type="text"] { flex:1; min-width:220px; padding:5px 8px; border:1px solid var(--line); background:#fffaf0; font:inherit; border-radius:2px; }
+    .config select { padding:5px 8px; border:1px solid var(--line); background:#fffaf0; font:inherit; border-radius:2px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+    .card { background:var(--panel); border:1.5px solid var(--line); border-radius:3px; padding:10px; display:grid; grid-template-columns:96px 1fr; gap:10px; align-items:start; transition:border-color .12s; }
+    .card.assigned { border-color:var(--green); background:#f5faf0; }
+    .card.dragover { border-color:var(--red); outline:2px dashed var(--red); background:#fff4dd; }
+    .thumb { width:96px; height:96px; border:1.5px solid var(--ink); background:#e4d3aa; border-radius:3px; overflow:hidden; display:grid; place-items:center; position:relative; }
+    .thumb img, .thumb canvas, .thumb svg { max-width:100%; max-height:100%; width:100%; height:100%; object-fit:cover; display:block; }
+    .badge { position:absolute; left:3px; bottom:3px; font:800 9px/1 'Alegreya Sans',sans-serif; text-transform:uppercase; letter-spacing:.06em; padding:2px 5px; border-radius:2px; color:#fff; background:rgba(42,28,18,.82); }
+    .card.assigned .badge { background:var(--green); }
+    .meta { display:grid; gap:4px; min-width:0; }
+    .name { font:700 1.08rem/1.1 'IM Fell English SC',Georgia,serif; }
+    .sub { font:600 .76rem/1.2 'Alegreya Sans',sans-serif; color:var(--mute); }
+    .keyline { font:700 .72rem/1.1 monospace; color:#7a4a1a; background:rgba(184,134,42,.15); padding:2px 5px; border-radius:2px; display:inline-block; width:fit-content; }
+    .pathin { width:100%; padding:4px 6px; font:12px/1.2 monospace; border:1px solid var(--line); background:#fffaf0; border-radius:2px; }
+    .hint { font:600 .72rem/1.2 'Alegreya Sans',sans-serif; color:var(--mute); }
+    .toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:8px 16px; border-radius:3px; font:700 .88rem/1 'Alegreya Sans',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,.35); opacity:0; pointer-events:none; transition:opacity .2s; }
+    .toast.on { opacity:1; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Asset Studio<small>Basements &amp; Basilisks 0.22</small></h1>
+      <div class="cov" id="covLine">Loading registry...</div>
+    </div>
+    <div class="row">
+      <a class="btn" href="../index.html">← Back to Game</a>
+      <button class="btn" id="importBtn">Import manifest.json</button>
+      <input type="file" id="importFile" accept=".json" hidden />
+      <button class="btn" id="copyBtn">Copy JSON</button>
+      <button class="btn primary" id="exportBtn">Download manifest.json</button>
+      <button class="btn" id="resetBtn" title="Clear localStorage preview overrides and reload disk manifest">Reset Local Previews</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs"></div>
+    <div class="row">
+      <select id="statusFilter">
+        <option value="all">Show: All</option>
+        <option value="missing">Show: Procedural Fallback</option>
+        <option value="assigned">Show: Assigned Art</option>
+      </select>
+      <input type="text" id="searchBox" placeholder="Filter by name or key..." style="padding:5px 8px;border:1px solid var(--line);background:#fffaf0;font:14px 'Alegreya Sans',sans-serif;border-radius:2px" />
+    </div>
+  </div>
+
+  <div class="config">
+    <b>Asset Base URL (optional, for GitHub Raw / Pages):</b>
+    <input type="text" id="baseUrlInput" placeholder="Leave blank for relative repo paths (assets/heroes/arthur.png), or enter https://raw.githubusercontent.com/<user>/<repo>/main" />
+    <span class="hint">Drag &amp; drop any PNG/JPG/WebP onto a card for instant live preview in-game!</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Load game data & procedural art renderers so every fallback renders live -->
+<script src="../src/00-assets.js"></script>
+<script src="../src/01-geo.js"></script>
+<script src="../src/02-enemies.js"></script>
+<script src="../src/03-heroes.js"></script>
+<script src="../src/04-items.js"></script>
+<script src="../src/05-engine.js"></script>
+<script src="../src/07-glossary.js"></script>
+<script src="../src/08-portraits.js"></script>
+<script src="../src/09-cards.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+let toastT = 0;
+function showToast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2200);
+}
+
+const THEMES_META = {
+  forest:  { name: 'Forest Theme',  sub: 'Default background for woodland encounters', color: '#4b5a33' },
+  cave:    { name: 'Cave Theme',    sub: 'Default background for cavern & spider encounters', color: '#4a443d' },
+  tavern:  { name: 'Tavern Theme',  sub: 'Default background for indoor/tavern encounters', color: '#6a4a2c' },
+  dungeon: { name: 'Dungeon Theme', sub: 'Default background for stone keep & boss encounters', color: '#4e4b47' }
+};
+
+const QUEST_FORMS = [
+  { key: 'arthur_form',   name: 'Arthur · Flame Gauntlet',         sub: 'Quest Transformation (Pack 1)' },
+  { key: 'dane_form',     name: 'Sir Dane · Mounted (Find Steed)', sub: 'Large 2×2 Quest Transformation (Pack 2)' },
+  { key: 'pillar_form',   name: 'Pillar · Living Colossus',        sub: 'Large 2×2 Quest Transformation (Pack 4)' },
+  { key: 'jamison_quest', name: 'Brother Jamison · Holy Symbol',   sub: 'Quest Transformation (Pack 4)' },
+  { key: 'saint_quest',   name: 'Saint · Mirror Image',            sub: 'Quest Transformation (Pack 6)' },
+  { key: 'kaska_form',    name: 'Kaska · Panther Form',            sub: 'Shapechange Form (Pack 6)' }
+];
+
+function buildCatalog() {
+  const packOf = hk => {
+    for (const pk of PACK_ORDER) if (PACKS[pk].heroes.includes(hk)) return PACKS[pk].n;
+    return 'Core';
+  };
+  return {
+    heroes: HERO_ORDER.map(k => ({
+      cat: 'heroes', key: k, name: H[k].name,
+      sub: `${H[k].cls} · ${H[k].role} · ${packOf(k)}`,
+      suggested: `assets/heroes/${k}.png`
+    })),
+    forms: QUEST_FORMS.map(f => ({
+      cat: 'forms', key: f.key, name: f.name, sub: f.sub, suggested: `assets/heroes/${f.key}.png`
+    })),
+    enemies: Object.keys(E).map(k => ({
+      cat: 'enemies', key: k, name: E[k].name,
+      sub: `${E[k].boss ? 'Boss' : E[k].elite ? 'Elite' : 'Regular'} · ${E[k].role || 'Foe'}`,
+      suggested: `assets/enemies/${k}.png`
+    })),
+    items: ITEM_ORDER.map(k => ({
+      cat: 'items', key: k, name: ITEMS[k].n,
+      sub: `${RARITY[ITEMS[k].r].n}${ITEMS[k].packOnly ? ' · Pack Item' : ' · Core Shop'}`,
+      suggested: `assets/items/${k}.png`
+    })),
+    maps: [
+      ...Object.entries(THEMES_META).map(([k, v]) => ({
+        cat: 'maps', key: k, name: v.name, sub: v.sub, suggested: `assets/maps/${k}.png`, color: v.color
+      })),
+      ...Object.keys(ENC).map(k => ({
+        cat: 'maps', key: k, name: `${ENC[k].n || k} (Encounter)`,
+        sub: `Overrides ${ENC[k].theme} theme · ${ENC[k].place || ''}`,
+        suggested: `assets/maps/${k}.png`, color: (THEMES_META[ENC[k].theme] || {}).color || '#3e3a35'
+      }))
+    ]
+  };
+}
+
+const CATALOG = buildCatalog();
+let ACTIVE_TAB = 'heroes';
+
+function resolvePreviewUrl(cat, key) {
+  const raw = ASSET_MANIFEST[cat] && ASSET_MANIFEST[cat][key];
+  if (!raw) return '';
+  if (/^(data:|blob:|https?:\/\/|\/)/i.test(raw)) return raw;
+  const base = (ASSET_MANIFEST.baseUrl || '').replace(/\/+$/, '');
+  return base ? `${base}/${raw.replace(/^\/+/, '')}` : `../${raw.replace(/^\/+/, '')}`;
+}
+
+function saveLocalManifest() {
+  try {
+    localStorage.setItem(ASSET_STORE_KEY, JSON.stringify(ASSET_MANIFEST));
+  } catch (e) {
+    showToast('Local preview storage full — use repo path instead of huge data URI!');
+  }
+}
+
+function exportableManifest() {
+  const out = { version: '0.22', baseUrl: ASSET_MANIFEST.baseUrl || '', heroes: {}, forms: {}, enemies: {}, items: {}, maps: {} };
+  ['heroes', 'forms', 'enemies', 'items', 'maps'].forEach(cat => {
+    CATALOG[cat].forEach(it => {
+      const v = (ASSET_MANIFEST[cat] && ASSET_MANIFEST[cat][it.key]) || '';
+      out[cat][it.key] = v.startsWith('data:') ? it.suggested : v;
+    });
+  });
+  return out;
+}
+
+function renderCoverage() {
+  let total = 0, assigned = 0;
+  ['heroes', 'forms', 'enemies', 'items', 'maps'].forEach(cat => {
+    CATALOG[cat].forEach(it => {
+      total++;
+      if (ASSET_MANIFEST[cat] && ASSET_MANIFEST[cat][it.key]) assigned++;
+    });
+  });
+  const pct = Math.round((assigned / Math.max(1, total)) * 100);
+  $('covLine').innerHTML = `Assigned Art: <b>${assigned} / ${total}</b> (${pct}%)<span class="covbar"><i style="width:${pct}%"></i></span>`;
+
+  const labels = { heroes: 'Heroes', forms: 'Quest Forms', enemies: 'Enemies', items: 'Items', maps: 'Maps & Themes' };
+  $('tabs').innerHTML = Object.keys(labels).map(cat => {
+    const cnt = CATALOG[cat].filter(it => ASSET_MANIFEST[cat] && ASSET_MANIFEST[cat][it.key]).length;
+    return `<button class="tab${ACTIVE_TAB === cat ? ' on' : ''}" data-tab="${cat}">${labels[cat]}<b>${cnt}/${CATALOG[cat].length}</b></button>`;
+  }).join('');
+}
+
+function renderFallbackThumb(slot, item) {
+  if (item.cat === 'heroes' && !item.upcoming && H[item.key]) {
+    const c = document.createElement('canvas');
+    drawSplash(c, item.key, 120, 120);
+    c.style.width = '100%'; c.style.height = '100%';
+    slot.appendChild(c);
+  } else if (item.cat === 'enemies') {
+    const img = document.createElement('img');
+    img.src = portraitURL(item.key);
+    slot.appendChild(img);
+  } else if (item.cat === 'items') {
+    slot.innerHTML = itemIcon(item.key, 80);
+  } else {
+    slot.style.background = item.color || '#4a443d';
+    slot.innerHTML = `<span style="font:700 11px/1.2 'Alegreya Sans',sans-serif;color:#f4ead0;text-align:center;padding:6px;text-transform:uppercase">${esc(item.key)}</span>`;
+  }
+}
+
+function renderGrid() {
+  renderCoverage();
+  $('baseUrlInput').value = ASSET_MANIFEST.baseUrl || '';
+  const q = $('searchBox').value.trim().toLowerCase();
+  const filt = $('statusFilter').value;
+  const list = CATALOG[ACTIVE_TAB].filter(it => {
+    const val = (ASSET_MANIFEST[it.cat] && ASSET_MANIFEST[it.cat][it.key]) || '';
+    if (filt === 'assigned' && !val) return false;
+    if (filt === 'missing' && val) return false;
+    if (q && !it.name.toLowerCase().includes(q) && !it.key.toLowerCase().includes(q) && !it.sub.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const grid = $('grid');
+  grid.innerHTML = '';
+  list.forEach(item => {
+    const val = (ASSET_MANIFEST[item.cat] && ASSET_MANIFEST[item.cat][item.key]) || '';
+    const isData = val.startsWith('data:');
+    const card = document.createElement('div');
+    card.className = 'card' + (val ? ' assigned' : '');
+    card.dataset.cat = item.cat;
+    card.dataset.key = item.key;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    if (val) {
+      const img = document.createElement('img');
+      img.src = resolvePreviewUrl(item.cat, item.key);
+      img.onerror = () => { img.remove(); renderFallbackThumb(thumb, item); };
+      thumb.appendChild(img);
+    } else {
+      renderFallbackThumb(thumb, item);
+    }
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = isData ? 'Local Preview' : val ? 'Assigned' : 'Procedural';
+    thumb.appendChild(badge);
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `
+      <div class="name">${esc(item.name)}</div>
+      <div class="sub">${esc(item.sub)}</div>
+      <span class="keyline">${esc(item.key)}</span>
+      <input class="pathin" type="text" value="${esc(isData ? item.suggested : val)}" placeholder="${esc(item.suggested)}" data-path-input="1" />
+      <div class="row" style="gap:5px;margin-top:2px">
+        <label class="btn sm" style="margin:0">Drop / Pick Image<input type="file" accept="image/*" hidden data-pick-img="1" /></label>
+        <button class="btn sm" data-use-suggested="1" title="Assign repo path ${esc(item.suggested)}">Use Repo Path</button>
+        ${val ? `<button class="btn sm" data-clear="1">Clear</button>` : ''}
+      </div>
+      ${isData ? `<div class="hint">Commit image to <code>${esc(item.suggested)}</code> in GitHub</div>` : ''}
+    `;
+
+    card.appendChild(thumb);
+    card.appendChild(meta);
+    grid.appendChild(card);
+
+    // Wire per-card controls
+    const inp = meta.querySelector('[data-path-input]');
+    inp.addEventListener('change', () => {
+      ASSET_MANIFEST[item.cat][item.key] = inp.value.trim();
+      saveLocalManifest();
+      renderGrid();
+      showToast(`Updated ${item.name}`);
+    });
+    meta.querySelector('[data-use-suggested]').addEventListener('click', () => {
+      ASSET_MANIFEST[item.cat][item.key] = item.suggested;
+      saveLocalManifest();
+      renderGrid();
+      showToast(`Assigned ${item.suggested}`);
+    });
+    const clr = meta.querySelector('[data-clear]');
+    if (clr) clr.addEventListener('click', () => {
+      ASSET_MANIFEST[item.cat][item.key] = '';
+      saveLocalManifest();
+      renderGrid();
+      showToast(`Reverted ${item.name} to procedural art`);
+    });
+    const pick = meta.querySelector('[data-pick-img]');
+    const handleFile = file => {
+      if (!file || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        ASSET_MANIFEST[item.cat][item.key] = reader.result;
+        saveLocalManifest();
+        renderGrid();
+        showToast(`Preview loaded for ${item.name} — commit to ${item.suggested}`);
+      };
+      reader.readAsDataURL(file);
+    };
+    pick.addEventListener('change', () => handleFile(pick.files[0]));
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('dragover'); });
+    card.addEventListener('dragleave', () => card.classList.remove('dragover'));
+    card.addEventListener('drop', e => { e.preventDefault(); card.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+  });
+}
+
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]');
+  if (!b) return;
+  ACTIVE_TAB = b.dataset.tab;
+  renderGrid();
+});
+$('statusFilter').addEventListener('change', renderGrid);
+$('searchBox').addEventListener('input', renderGrid);
+$('baseUrlInput').addEventListener('change', () => {
+  ASSET_MANIFEST.baseUrl = $('baseUrlInput').value.trim();
+  saveLocalManifest();
+  renderGrid();
+  showToast('Saved Asset Base URL');
+});
+$('copyBtn').addEventListener('click', async () => {
+  const txt = JSON.stringify(exportableManifest(), null, 2);
+  try { await navigator.clipboard.writeText(txt); showToast('Copied manifest.json to clipboard!'); }
+  catch { showToast('Clipboard unavailable — use Download manifest.json'); }
+});
+$('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(exportableManifest(), null, 2) + '\n'], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'manifest.json';
+  a.click();
+  showToast('Downloaded manifest.json');
+});
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const parsed = JSON.parse(r.result);
+      _mergeManifest(ASSET_MANIFEST, parsed);
+      saveLocalManifest();
+      renderGrid();
+      showToast('Imported manifest.json');
+    } catch { showToast('Invalid JSON file'); }
+  };
+  r.readAsText(f);
+});
+$('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(ASSET_STORE_KEY);
+  location.reload();
+});
+
+// Boot: load ../assets/manifest.json + localStorage overrides
+(async () => {
+  try {
+    const res = await fetch('../assets/manifest.json', { cache: 'no-cache' });
+    if (res.ok) _mergeManifest(ASSET_MANIFEST, await res.json());
+  } catch {}
+  try {
+    const loc = JSON.parse(localStorage.getItem(ASSET_STORE_KEY) || 'null');
+    if (loc) _mergeManifest(ASSET_MANIFEST, loc);
+  } catch {}
+  renderGrid();
+})();
+</script>
+</body>
+</html>
