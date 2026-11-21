@@ -220,4 +220,90 @@ vm.runInContext(`
     bCap.events.length = 0;
   }
   console.log('[PASS] Global 1-cast/second cap strictly enforced.');
+
+  // 8. 12-Class Keyword System & Sir Dane Non-Mark Rework verification
+  const expectedKws = [
+    'action_surge', 'channel_divinity', 'smite', 'aura', 'arcane_recovery', 'rage',
+    'bardic_inspiration', 'wild_shape', 'hunters_mark', 'sneak_attack', 'cunning_action',
+    'ki', 'ki_ability', 'sorcery_points', 'metamagic', 'hex', 'pact_boon'
+  ];
+  if (Object.keys(CLASS_KW).length !== 17) throw new Error('Expected 17 Class Keywords, got ' + Object.keys(CLASS_KW).length);
+  expectedKws.forEach(k => { if (!CLASS_KW[k] || !KW[k]) throw new Error('Missing Class Keyword: ' + k); });
+  if (CLASS_KW.natural_recovery || CLASS_KW.natrec) throw new Error('Natural Recovery must NOT be a Class Keyword');
+  HERO_ORDER.forEach(hk => {
+    const h = H[hk];
+    if (!h.ckw || !h.ckw.length) throw new Error('Hero missing ckw expression: ' + hk);
+    h.ckw.forEach(e => {
+      if (!CLASS_KW[e.k]) throw new Error('Unknown ckw key ' + e.k + ' on ' + hk);
+      if (CLASS_KW[e.k].cls !== h.cls) throw new Error('Class Keyword class mismatch on ' + hk + ': ' + e.k);
+    });
+  });
+
+  // Ranger-exclusive Hunter's Mark check: Sir Dane & Naill must NEVER apply Hunter's Mark
+  const markHolders = HERO_ORDER.filter(hk => classKwOf(hk).includes('hunters_mark'));
+  if (markHolders.sort().join(',') !== 'corvin,lorcan') throw new Error('Hunter’s Mark must belong only to Rangers (corvin,lorcan), got ' + markHolders);
+  if (H.dane.quest.statKey !== 'smites') throw new Error('Sir Dane quest must track smites, got ' + H.dane.quest.statKey);
+  const bDane = simulate('orcs', [
+    { key: 'dane', tier: 2, path: 'calltoarms', items: ['sunblade'], c: 4, r: 6, questDone: true },
+    { key: 'naill', tier: 2, path: 'flowing', items: ['dragonhide_belt'], c: 5, r: 6 }
+  ], 1);
+  if (bDane.kwCounts.hunters_mark) throw new Error('Sir Dane + Naill must NOT trigger Hunter’s Mark!');
+  if (!(bDane.kwCounts.smite > 0)) throw new Error('Sir Dane must trigger Smite!');
+  if (!(bDane.kwCounts.ki_ability > 0)) throw new Error('Naill must trigger Ki Ability!');
+
+  // Sir Dane Aura of Devotion check (+1 AC/+1 SR)
+  const bAura = newBattle('orcs', [
+    { key: 'dane', tier: 2, path: 'devotion', c: 4, r: 6 },
+    { key: 'bram', tier: 2, path: 'divine', c: 5, r: 6 }
+  ], 1);
+  applyAuras(bAura);
+  const bramUnit = bAura.units.find(x => x.key === 'bram');
+  if (!(bramUnit.auraAC >= 1 && bramUnit.auraSR >= 1 && bramUnit.auraDane)) throw new Error('Sir Dane Aura of Devotion did not buff adjacent ally');
+
+  // Staff of Power doubles Arcane Recovery Charge
+  const bRec = newBattle('orcs', [
+    { key: 'faelan', tier: 2, path: 'battery', items: ['staff_power'], c: 3, r: 8 },
+    { key: 'gains',  tier: 2, path: 'liquid_assets', items: ['staff_power'], c: 5, r: 8 }
+  ], 1);
+  const faeU = bRec.units.find(x => x.key === 'faelan');
+  const gainU = bRec.units.find(x => x.key === 'gains');
+  faeU.charge = 0;
+  const gotFae = triggerArcaneRecovery(bRec, faeU, 20, 'TEST');
+  if (gotFae !== 40) throw new Error('Staff of Power must double Faelan Arcane Recovery (expected 40, got ' + gotFae + ')');
+  gainU.charge = 0; faeU.charge = 0;
+  const gotGain = triggerArcaneRecovery(bRec, gainU, 16, 'TEST');
+  if (gotGain !== 32 || !(faeU.charge >= 16)) throw new Error('Gains Liquid Assets + Staff of Power Arcane Recovery share failed');
+
+  // Cross-class triggers across all remaining Class Keywords
+  const bKw1 = simulate('orcs', [
+    { key: 'arthur', tier: 2, path: 'initiative', items: ['flametongue'], c: 4, r: 6 },
+    { key: 'zoe', tier: 2, path: 'just_the_thing', items: ['clockwork_amulet'], c: 5, r: 6 },
+    { key: 'gilthrax', tier: 2, path: 'gilded_hoard', items: ['ember_bracers'], c: 3, r: 6, questDone: true },
+    { key: 'lumen', tier: 2, path: 'purifying', items: ['amulet_devout'], c: 6, r: 8 }
+  ], 1);
+  if (!(bKw1.kwCounts.action_surge > 0)) throw new Error('Fighter squad must trigger Action Surge');
+
+  const bKw2 = simulate('orcs', [
+    { key: 'bram', tier: 2, path: 'divine', items: ['sunblade'], c: 4, r: 6 },
+    { key: 'jamison', tier: 2, path: 'peace_radiance', items: ['amulet_devout'], c: 5, r: 6 },
+    { key: 'saint', tier: 2, path: 'smoke_mirrors', items: ['clockwork_amulet'], c: 3, r: 8 },
+    { key: 'kaska', tier: 2, path: 'pack_hunt', items: ['cloak_elvenkind'], c: 6, r: 6 }
+  ], 1);
+  if (!(bKw2.kwCounts.channel_divinity > 0)) throw new Error('Cleric squad must trigger Channel Divinity');
+  if (!(bKw2.kwCounts.wild_shape > 0)) throw new Error('Kaska must trigger Wild Shape');
+  if (!(bKw2.kwCounts.cunning_action > 0)) throw new Error('Cloak of Elvenkind must trigger Cunning Action');
+
+  // Unified Bardic Inspiration (Toot Mote activates Rosalind Encore!)
+  const bBard = newBattle('orcs', [
+    { key: 'rosalind', tier: 2, path: 'encore', c: 4, r: 8 },
+    { key: 'toot', tier: 2, path: 'street_performer', c: 6, r: 8 },
+    { key: 'arthur', tier: 2, path: 'vigilance', c: 5, r: 8 }
+  ], 1);
+  const tootU = bBard.units.find(x => x.key === 'toot');
+  const arthU = bBard.units.find(x => x.key === 'arthur');
+  grantInspMote(bBard, tootU, arthU, 10);
+  applyAuras(bBard);
+  if (!(arthU.auraCr >= 40)) throw new Error('Rosalind Encore must recognize Toot Bardic Inspiration Mote!');
+
+  console.log('[PASS] All 12-Class / 17-Keyword rules, Sir Dane non-Mark rework, and cross-class synergies verified!');
 `, ctx);

@@ -233,9 +233,9 @@ function mkHero(cfg, side = 'P') {
     haste: 0, tempHaste: 0, tempHasteT: 0,
     rollBonus: st.rb, nextBonus: 0, advantage: 0,
     alert: 0, afterimage: 0, bearRage: 0, sorcery: 0, ki: 0, clauses: 0,
-    zealotT: 0, radiantSoulT: 0, arcaneReflectT: 0, illusoryDouble: 0, beast: null,
+    zealotT: 0, radiantSoulT: 0, arcaneReflectT: 0, illusoryDouble: 0, beast: null, wildShapeT: 0,
     bonded: null, bondDie: 0, bondChargeShare: 0,
-    inspDie: null, _lastCastT: -99,
+    inspDie: null, inspMote: null, _cdUsed: 0, _shieldHits: 0, _lastCastT: -99,
     questDone: !!cfg.questDone, questStacks: cfg.questStacks || 0, questTrophies: cfg.questTrophies || [],
     act: cfg.act || 1,
     alive: true, st: freshSt(),
@@ -245,7 +245,9 @@ function mkHero(cfg, side = 'P') {
       alertDodges: 0, wardAbsorbed: 0, markedAllyHits: 0, markedKills: 0,
       rootsApplied: 0, inspPassed: 0, burnCredit: 0, bearRagePeak: 0, kiStrikes: 0, hexDeaths: 0,
       zealotProcs: 0, bloomHeals: 0, searApplied: 0, bondedCasts: 0, rummageBuffs: 0,
-      gildedKills: 0, kills: 0, ambushStrikes: 0, saintCasts: 0, pounces: 0
+      gildedKills: 0, kills: 0, ambushStrikes: 0, saintCasts: 0, pounces: 0,
+      smites: 0, actionSurges: 0, channelDivinities: 0, arcaneRecoveries: 0,
+      wildShapes: 0, cunningActions: 0, pactBoons: 0, metamagics: 0, sneaks: 0, rages: 0
     },
     tier: cfg.tier || 1, path: st.path && st.path.k, items: cfg.items || [], goldHeld: cfg.goldHeld || 0
   };
@@ -318,7 +320,269 @@ function threatOf(x) {
 const curAC = (b, t) => (t.st.exp > 0 ? -2 : 0) + t.ac + (t.st.acBT > 0 ? t.st.acB : 0) + t.st.acS - t.st.acid + (t.auraAC || 0);
 const curSR = (b, t) => t.sr + (t.auraSR || 0) - (t.st.exp > 0 ? 2 : 0) - (t.st.srShred || 0);
 
-/* ---------- New v0.22 Signature Mechanics Helpers ---------- */
+/* ---------- Unified 12-Class Keyword Event Bus & Helpers ---------- */
+function emitClassKw(b, actor, kwKey, ctx = {}) {
+  if (!b || !actor) return;
+  b.kwCounts = b.kwCounts || {};
+  b.kwCounts[kwKey] = (b.kwCounts[kwKey] || 0) + 1;
+  if (actor.side !== 'P') return;
+  const depth = (b._kwDepth || 0);
+  if (depth >= 3) return; // Guard against infinite event recursion
+  b._kwDepth = depth + 1;
+  try {
+    const P = alive(b, 'P');
+    const tgt = ctx.target && ctx.target.alive ? ctx.target : (actor.target && actor.target.alive ? actor.target : foes(b, actor)[0]);
+
+    if (kwKey === 'action_surge') {
+      // Arthur Path 2 Roll for Initiative: any ally Action Surge applies Exposed
+      if (tgt && P.some(x => x.f.initSplash)) expose(b, tgt, 4 * chaK(actor));
+      // Zoe Path 2 Just the Thing: any ally Action Surge grants Ward + 12 Charge
+      P.filter(x => x.f.justTheThing).forEach(zoe => {
+        if (actor.alive) {
+          addWard(b, actor, (16 + Math.max(0, zoe.m.int) * 2) * zoe.dm, actor.maxHp * .5, zoe);
+          giveCharge(b, actor, 12, 1);
+        }
+      });
+      // Flametongue (Favoured): Action Surge spreads Burn
+      if (actor.it && actor.it.flameKwBurn && tgt) {
+        applyStatus(b, actor, tgt, 'burn', 5);
+        const adj = foes(b, actor).find(x => x !== tgt && hd(x, tgt) <= 1);
+        if (adj) applyStatus(b, actor, adj, 'burn', 4);
+      }
+      // Oathbow (Favoured): Action Surge looses a bonus piercing arrow
+      if (actor.it && actor.it.surgeArrow && tgt) {
+        later(b, .06, () => {
+          if (actor.alive && tgt.alive) {
+            b.events.push({ k: 'beam', id: actor.id, tid: tgt.id, ty: 'piercing' });
+            hit(b, actor, tgt, roll(2, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
+          }
+        });
+      }
+    } else if (kwKey === 'channel_divinity') {
+      // Bram Path 2 Divine Strike: any ally Channel Divinity triggers adjacent Holy strikes
+      P.filter(x => x.f.divineStrike).forEach(bram => triggerAdjHolyStrikes(b, bram));
+      // Lumen Path 2 Purifying Light: any ally Channel Divinity fires a free Sear bolt
+      P.filter(x => x.f.purifyingLight).forEach(lumen => {
+        const hi = foes(b, lumen).sort((a, c) => c.hp - a.hp)[0];
+        if (hi) {
+          b.events.push({ k: 'beam', id: lumen.id, tid: hi.id, ty: 'radiant' });
+          hit(b, lumen, hi, roll(2, 8), { kind: 'holy', ty: 'radiant', noBonus: 1 });
+          if (hi.alive) applyStatus(b, lumen, hi, 'burn', 6 * chaK(lumen));
+        }
+      });
+      // Jamison Path 2 Peace & Radiance: any ally Channel Divinity radiates a 1d8 Holy burst
+      P.filter(x => x.f.peaceRadiance).forEach(jm => {
+        foes(b, jm).filter(x => hd(x, jm) <= 2).forEach(x => hit(b, jm, x, roll(1, 8), { kind: 'holy', ty: 'radiant', noBonus: 1, area: 1 }));
+        if (jm.tier >= 4) {
+          const low = friends(b, jm).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
+          if (low) heal(b, jm, low, 12 * jm.dm, { raw: 1 });
+        }
+      });
+      // Saint Path 2 Smoke & Mirrors: any ally Channel Divinity spawns Saint a free Illusory Double
+      P.filter(x => x.f.smokeMirrors && x !== actor).forEach(st => {
+        const maxD = (st.f.twoFaced && st.tier >= 4) ? 2 : 1;
+        st.illusoryDouble = Math.min(maxD, (st.illusoryDouble || 0) + 1);
+        status(b, st, 'MIRROR DOUBLE', '#c48fe6');
+      });
+      // Sunblade (Favoured): Channel Divinity pulses a heal to nearby allies
+      if (actor.it && actor.it.kwHolyHeal) {
+        friends(b, actor).filter(a => !a.minion && hd(a, actor) <= 2).forEach(a => heal(b, actor, a, 12 * actor.dm, { raw: 1 }));
+      }
+    } else if (kwKey === 'smite') {
+      // Sir Dane: credit Smite quest if Dane or ally inside Dane's Aura Smites, and Call to Arms grants Aura allies +8 Charge
+      P.filter(x => x.key === 'dane').forEach(dane => {
+        const rad = dane.questDone ? 3 : 2;
+        if (actor === dane || hd(actor, dane) <= rad) {
+          if (actor !== dane) dane.stats.smites = (dane.stats.smites || 0) + 1;
+        }
+        if (dane.f.callToArms) {
+          friends(b, dane).filter(a => !a.minion && hd(a, dane) <= rad).forEach(a => giveCharge(b, a, 8, 1));
+        }
+      });
+      // Mother Laurel Path 2 Bountiful Vines: any ally Smite pulses a heal to lowest-HP ally (T4 whole party)
+      P.filter(x => x.f.bountifulVines).forEach(ml => {
+        const fr = friends(b, ml).filter(a => !a.minion);
+        const list = ml.tier >= 4 ? fr : [fr.slice().sort((a, c) => hpPct(a) - hpPct(c))[0]].filter(Boolean);
+        list.forEach(a => heal(b, ml, a, (8 + Math.max(0, ml.m.wis) * 2) * ml.dm, { raw: 1 }));
+      });
+      // Flametongue (Favoured): Smite spreads Burn
+      if (actor.it && actor.it.flameKwBurn && tgt) {
+        applyStatus(b, actor, tgt, 'burn', 5);
+        const adj = foes(b, actor).find(x => x !== tgt && hd(x, tgt) <= 1);
+        if (adj) applyStatus(b, actor, adj, 'burn', 4);
+      }
+      // Sunblade (Favoured): Smite pulses a heal to nearby allies
+      if (actor.it && actor.it.kwHolyHeal) {
+        friends(b, actor).filter(a => !a.minion && hd(a, actor) <= 2).forEach(a => heal(b, actor, a, 10 * actor.dm, { raw: 1 }));
+      }
+    } else if (kwKey === 'arcane_recovery') {
+      // Gains Path 2 Liquid Assets: shares 50% of Arcane Recovery Charge with all allies
+      if (actor.f.liquidAssets && ctx.charge > 0) {
+        const share = Math.max(6, Math.round(ctx.charge * .5));
+        friends(b, actor).filter(a => a !== actor && !a.minion).forEach(a => giveCharge(b, a, share, 1));
+      }
+    } else if (kwKey === 'rage') {
+      // Zark Path 2 Totem Roar: whenever ANY ally enters or stacks Rage, adjacent allies (T4 party) gain Haste + Charge
+      P.filter(x => x.f.totemRoar).forEach(zark => {
+        const allies = friends(b, zark).filter(a => a !== zark && !a.minion && (zark.tier >= 4 || hd(a, zark) <= 1));
+        allies.forEach(a => {
+          a.tempHaste = Math.max(a.tempHaste || 0, 25);
+          a.tempHasteT = Math.max(a.tempHasteT || 0, 3);
+          giveCharge(b, a, 18);
+        });
+        if (allies.length) status(b, zark, 'TOTEM ROAR', '#ffd27a');
+      });
+      // Pillar Tier IV Living Beacon: entering Rage heals nearby allies
+      if (actor.f.livingBeacon && actor.tier >= 4) {
+        friends(b, actor).filter(a => a !== actor && !a.minion && hd(a, actor) <= 2).forEach(a => heal(b, actor, a, 24 * actor.dm));
+      }
+    } else if (kwKey === 'wild_shape') {
+      // Juniper Path 2 Circle of the Land: any ally Wild Shape triggers Circle of the Land heal + Ward
+      P.filter(x => x.f.circleLand).forEach(j => triggerCircleLand(b, j));
+      // Mother Laurel Path 2 Bountiful Vines: any ally Wild Shape pulses a heal
+      P.filter(x => x.f.bountifulVines).forEach(ml => {
+        const fr = friends(b, ml).filter(a => !a.minion);
+        const list = ml.tier >= 4 ? fr : [fr.slice().sort((a, c) => hpPct(a) - hpPct(c))[0]].filter(Boolean);
+        list.forEach(a => heal(b, ml, a, (8 + Math.max(0, ml.m.wis) * 2) * ml.dm, { raw: 1 }));
+      });
+    } else if (kwKey === 'sneak_attack') {
+      // Velith Path 2 Nightshade Vials: any ally Sneak Attack splashes 2 Poison
+      if (tgt && P.some(x => x.f.nightshade)) {
+        applyStatus(b, actor, tgt, 'poison', 2);
+      }
+    } else if (kwKey === 'ki_ability') {
+      // Naill Path 2 Flowing Leaves: any ally Ki Ability Staggers & Exposes adjacent foes (+15 Charge at T4)
+      P.filter(x => x.f.flowingLeaves).forEach(naill => {
+        if (tgt) {
+          foes(b, actor).filter(x => x !== tgt && hd(x, tgt) <= 1).forEach(x => { stagger(b, x, 2); expose(b, x, 3.5); });
+        }
+        if (naill.tier >= 4) {
+          const lowC = friends(b, naill).filter(a => a !== actor && !a.minion && a.abil).sort((a, c) => a.charge - c.charge)[0];
+          if (lowC) giveCharge(b, lowC, 15);
+        }
+      });
+    } else if (kwKey === 'pact_boon') {
+      // Staff of Power (Favoured): Pact Boon heals the lowest-HP ally
+      if (actor.it && actor.it.pactHeal) {
+        const low = friends(b, actor).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
+        if (low) heal(b, actor, low, 16 * actor.dm, { raw: 1 });
+      }
+    }
+  } finally {
+    b._kwDepth = depth;
+  }
+}
+
+function triggerActionSurge(b, u, opts = {}) {
+  if (!u || !u.alive) return;
+  if (b.time < (u._surgeCd || 0) && !opts.force) return;
+  u._surgeCd = b.time + .25;
+  u.stats.actionSurges = (u.stats.actionSurges || 0) + 1;
+  const fs = foes(b, u).filter(x => !x.hidden);
+  const tgt = (opts.target && opts.target.alive) ? opts.target : (u.target && u.target.alive ? u.target : fs.sort((a, c) => hd(a, u) - hd(c, u))[0]);
+  status(b, u, opts.label || 'ACTION SURGE!', '#ff9c4a');
+  if (opts.charge) giveCharge(b, u, opts.charge, 1);
+  if (tgt && tgt.alive) {
+    if (opts.cleave) {
+      const list = (u.f.gildedHoard && u.tier >= 4) ? foes(b, u).filter(x => hd(x, u) <= 1) : [tgt];
+      b.events.push({ k: 'area', id: u.id, tid: tgt.id, shape: 'nova', r: 1, ty: 'force', ids: list.map(x => x.id) });
+      list.forEach(x => {
+        if (x.alive) {
+          strike(b, u, x, 1);
+          if (x.alive) hit(b, u, x, roll(2, 6), { kind: 'magic', ty: 'force', noBonus: 1, area: 1 });
+        }
+      });
+    } else {
+      const mult = (u.key === 'arthur' && u.f.vigilance) ? 1.5 : 1;
+      later(b, .04, () => {
+        if (!u.alive) return;
+        const x = tgt.alive ? tgt : foes(b, u).sort((a, c) => hd(a, u) - hd(c, u))[0];
+        if (x && (hd(x, u) <= Math.max(2, u.rng) || u.rng >= 3)) strike(b, u, x, mult);
+      });
+    }
+  }
+  emitClassKw(b, u, 'action_surge', { target: tgt, giver: opts.giver });
+}
+
+function triggerChannelDivinity(b, u, label, fn) {
+  if (!u || !u.alive) return false;
+  u._cdUsed = 1;
+  u.stats.channelDivinities = (u.stats.channelDivinities || 0) + 1;
+  u.stats.channel = (u.stats.channel || 0) + 1;
+  const cdMult = 1 + ((u.it && u.it.cdBoost) || 0);
+  if (fn) fn(cdMult);
+  callout(b, u, label || 'CHANNEL DIVINITY!', '#ffe9a0');
+  emitClassKw(b, u, 'channel_divinity', { label, cdMult });
+  return true;
+}
+
+function triggerBramCD(b, u) {
+  u._pres = 1;
+  return triggerChannelDivinity(b, u, 'CD · PRESERVE LIFE', mult => {
+    const ts = friends(b, u).filter(a => !a.minion && hd(a, u) <= 4);
+    b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 4, ty: 'radiant', ids: ts.map(x => x.id) });
+    ts.forEach(a => heal(b, u, a, a.maxHp * (.14 + .02 * Math.max(0, u.m.wis)) * mult, { raw: 1 }));
+  });
+}
+
+function triggerLumenCD(b, u) {
+  return triggerChannelDivinity(b, u, 'CD · RADIANCE OF DAWN', mult => {
+    const ts = foes(b, u).filter(x => hd(x, u) <= 3);
+    const list = ts.length ? ts : foes(b, u).slice(0, 2);
+    b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 3, ty: 'radiant', ids: list.map(x => x.id) });
+    list.forEach(x => {
+      hit(b, u, x, Math.round(roll(3, 8) * mult), { kind: 'holy', ty: 'radiant', area: 1, ab: 1 });
+      if (x.alive) {
+        applyStatus(b, u, x, 'burn', 8 * mult * chaK(u));
+        u.stats.searApplied = (u.stats.searApplied || 0) + 1;
+      }
+    });
+  });
+}
+
+function triggerJamisonCD(b, u) {
+  return triggerChannelDivinity(b, u, 'CD · BALM OF PEACE', mult => {
+    const fr = friends(b, u).filter(a => !a.minion);
+    const die = (u.f.goodVibes && u.tier >= 4) ? 6 : 4;
+    b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'radiant', ids: fr.map(x => x.id) });
+    fr.forEach(a => {
+      a.bonded = u;
+      a.bondDie = Math.max(a.bondDie || 0, die);
+      if (u.questDone) a.d20Floor = Math.max(a.d20Floor || 1, u.d20Floor || 1);
+      heal(b, u, a, (18 + Math.max(0, u.m.cha) * 4) * u.dm * mult, { raw: 1 });
+    });
+    u.stats.bondedCasts = (u.stats.bondedCasts || 0) + fr.length;
+  });
+}
+
+function triggerSaintCD(b, u) {
+  return triggerChannelDivinity(b, u, 'CD · INVOKE DUPLICITY', mult => {
+    const maxD = (u.f.twoFaced && u.tier >= 4) ? 2 : 1;
+    u.illusoryDouble = Math.min(maxD, (u.illusoryDouble || 0) + 1);
+    if (mult > 1.01) addWard(b, u, 16 * u.dm * mult, u.maxHp * .4, u);
+  });
+}
+
+function triggerSmite(b, u, t, dmg, opts = {}) {
+  if (!u || !u.alive || !t || !t.alive) return 0;
+  const dealt = hit(b, u, t, dmg, { kind: 'holy', ty: 'radiant', noBonus: 1, ab: opts.ab || 0, onhit: opts.onhit || 0, thorn: opts.thorn || 0 });
+  u.stats.smites = (u.stats.smites || 0) + 1;
+  if (opts.label) status(b, t, opts.label, '#ffe9a0');
+  emitClassKw(b, u, 'smite', { target: t, dmg: dealt });
+  return dealt;
+}
+
+function triggerArcaneRecovery(b, u, baseCharge, why) {
+  if (!u || !u.alive) return 0;
+  const mult = (u.it && u.it.doubleArcaneRec) ? 2 : 1;
+  const amt = Math.round(baseCharge * mult);
+  giveCharge(b, u, amt, 1);
+  u.stats.arcaneRecoveries = (u.stats.arcaneRecoveries || 0) + 1;
+  status(b, u, `ARCANE REC +${amt}`, '#8fb4e6');
+  emitClassKw(b, u, 'arcane_recovery', { charge: amt, why });
+  return amt;
+}
+
 function grantAlert(b, u, stacks = 1) {
   if (!u || !u.alive) return;
   u.alert = Math.max(u.alert || 0, stacks);
@@ -343,6 +607,17 @@ function grantInspDie(b, giver, target, sides, passes) {
     if (giver.key === 'rosalind' && giver.questDone) cur.expandCrit = true;
   }
   status(b, target, `INSPIRED d${target.inspDie.sides}`, '#ffd76a');
+  emitClassKw(b, giver, 'bardic_inspiration', { action: 'grant', target, kind: 'die' });
+}
+
+function grantInspMote(b, giver, target, chargeAmt) {
+  if (!target || !target.alive) return;
+  target.advantage = Math.max(target.advantage || 0, 1);
+  target.inspMote = { giver };
+  if (giver.f.busker && giver.tier >= 4) target.nextBonus = Math.min(6, (target.nextBonus || 0) + 2);
+  if (chargeAmt > 0) giveCharge(b, target, chargeAmt);
+  status(b, target, 'INSPIRED (MOTE)', '#ffd76a');
+  emitClassKw(b, giver, 'bardic_inspiration', { action: 'grant', target, kind: 'mote' });
 }
 
 function passInspDie(b, spentBy, dieObj) {
@@ -361,9 +636,12 @@ function addSorcery(b, u, n, excludeCenter, hurlFn) {
   if (!u || !u.alive) return;
   const maxPips = (u.f.draconicSurge && u.tier >= 4) ? 3 : 4;
   u.sorcery = Math.min(maxPips, (u.sorcery || 0) + n);
+  emitClassKw(b, u, 'sorcery_points', { added: n, total: u.sorcery });
   if (u.sorcery >= maxPips) {
     u.sorcery = 0;
-    callout(b, u, 'TWINNED FIREBALL!', '#ff9c4a');
+    u.stats.metamagics = (u.stats.metamagics || 0) + 1;
+    callout(b, u, 'METAMAGIC · TWINNED!', '#ff9c4a');
+    emitClassKw(b, u, 'metamagic', { kind: 'twinned' });
     later(b, .16, () => {
       if (!u.alive) return;
       if (hurlFn) hurlFn(excludeCenter, true);
@@ -388,16 +666,51 @@ function addBearRage(b, u, stacks = 1) {
   u.bearRage = (u.bearRage || 0) + stacks;
   u.stats.bearRagePeak = Math.max(u.stats.bearRagePeak || 0, u.bearRage);
   u.stats.rages = (u.stats.rages || 0) + stacks;
-  status(b, u, `BEAR RAGE ×${u.bearRage}`, '#ff6a4a');
-  if (u.f.totemRoar) {
-    const allies = friends(b, u).filter(a => a !== u && !a.minion && (u.tier >= 4 || hd(a, u) <= 1));
-    allies.forEach(a => {
-      a.tempHaste = Math.max(a.tempHaste || 0, 25);
-      a.tempHasteT = Math.max(a.tempHasteT || 0, 3);
-      giveCharge(b, a, 18);
-    });
-    if (allies.length) status(b, u, 'TOTEM ROAR', '#ffd27a');
+  status(b, u, `RAGE ×${u.bearRage}`, '#ff6a4a');
+  emitClassKw(b, u, 'rage', { kind: 'bear', stacks });
+}
+
+function enterZealotRage(b, u, dur) {
+  if (!u || !u.alive) return;
+  u.zealotT = Math.max(u.zealotT || 0, dur);
+  u.stats.zealotProcs = (u.stats.zealotProcs || 0) + 1;
+  u.stats.rages = (u.stats.rages || 0) + 1;
+  status(b, u, 'ZEALOT RAGE', '#ffe9a0');
+  emitClassKw(b, u, 'rage', { kind: 'zealot', dur });
+}
+
+function triggerWildShape(b, u, opts = {}) {
+  if (!u || !u.alive) return;
+  u.stats.wildShapes = (u.stats.wildShapes || 0) + 1;
+  if (opts.dur) u.wildShapeT = Math.max(u.wildShapeT || 0, opts.dur);
+  if (opts.thorns) {
+    friends(b, u).filter(a => hd(a, u) <= 2).forEach(a => { a.vineThornsT = Math.max(a.vineThornsT || 0, opts.dur || 5); });
   }
+  status(b, u, `WILD SHAPE · ${(opts.form || 'PRIMAL').toUpperCase()}`, '#6da670');
+  emitClassKw(b, u, 'wild_shape', opts);
+}
+
+function triggerCunningAction(b, u, target, opts = {}) {
+  if (!u || !u.alive) return;
+  u.stats.cunningActions = (u.stats.cunningActions || 0) + 1;
+  if (opts.stealth > 0) {
+    u.hidden = 1;
+    u.hideT = Math.max(u.hideT || 0, b.time + opts.stealth);
+    if (opts.stealthShield) u.stealthShield = 1;
+    b.units.forEach(x => { if (x.target === u) x.target = null; });
+  }
+  status(b, u, `CUNNING · ${opts.label || 'STEALTH'}`, '#c48fe6');
+  emitClassKw(b, u, 'cunning_action', { target, ...opts });
+}
+
+function triggerSneakAttack(b, u, target, opts = {}) {
+  if (!u || !u.alive || !target) return;
+  u.stats.sneaks = (u.stats.sneaks || 0) + 1;
+  if (!opts.ability && target.alive) {
+    const dice = (u.kw && u.kw.sneak_attack) || 1;
+    hit(b, u, target, roll(dice, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
+  }
+  emitClassKw(b, u, 'sneak_attack', { target, ...opts });
 }
 
 function kiCost(u) {
@@ -408,7 +721,7 @@ function fireNaillKiStrike(b, u, t) {
   if (!u || !u.alive || !t || !t.alive) return;
   u.ki = 0;
   u.stats.kiStrikes = (u.stats.kiStrikes || 0) + 1;
-  callout(b, u, 'KI STRIKE', '#8fd8d8');
+  callout(b, u, 'KI · OPEN HAND!', '#8fd8d8');
   b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: u.f.flowingLeaves ? 1 : 0.6, ty: 'thunder', ids: [t.id] });
   const got = hit(b, u, t, roll(1, 8) + Math.max(0, u.m.wis), { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1 });
   stagger(b, t, 2);
@@ -416,16 +729,44 @@ function fireNaillKiStrike(b, u, t) {
     if (t.alive) { onHit(b, u, t, got); onHit(b, u, t, got); }
     u.nextBonus += 1;
   }
-  if (u.f.flowingLeaves) {
-    foes(b, u).filter(x => x !== t && hd(x, t) <= 1).forEach(x => { stagger(b, x, 2); markFoe(b, u, x); });
-    if (u.tier >= 4) {
-      const lowC = friends(b, u).filter(a => a !== u && !a.minion && a.abil).sort((a, c) => a.charge - c.charge)[0];
-      if (lowC) giveCharge(b, lowC, 15);
-    }
-  }
   if (u.key === 'naill' && u.questDone) {
     u.advantage = 1; // Wraps of the Hundred Fists
   }
+  emitClassKw(b, u, 'ki_ability', { target: t });
+}
+
+function fireGenericKiAbility(b, u, t) {
+  if (!u || !u.alive || !t || !t.alive) return;
+  u.ki = 0;
+  u.stats.kiStrikes = (u.stats.kiStrikes || 0) + 1;
+  stagger(b, t, 2);
+  status(b, t, 'KI ABILITY', '#8fd8d8');
+  emitClassKw(b, u, 'ki_ability', { target: t });
+}
+
+function triggerPactBoon(b, nettle, victim, killer) {
+  if (!nettle) return;
+  nettle.stats.hexDeaths = (nettle.stats.hexDeaths || 0) + 1;
+  nettle.stats.pactBoons = (nettle.stats.pactBoons || 0) + 1;
+  if (victim && victim.st.hexJump && nettle.alive) {
+    const nx = foes(b, nettle)[0];
+    if (nx) applyNettleHex(b, nettle, nx, true);
+    friends(b, nettle).filter(a => !a.minion).forEach(a => heal(b, nettle, a, (5 + Math.max(0, nettle.m.cha)) * nettle.dm, { raw: 1 }));
+  }
+  if (nettle.f.darkBargain && killer && killer.side === 'P' && killer.alive) {
+    giveCharge(b, killer, 30);
+    killer.advantage = 1;
+    status(b, killer, 'PACT BOON ADV!', '#c48fe6');
+    if (nettle.tier >= 4 && victim && (victim.elite || victim.boss)) gainGold(b, nettle, 3, 'BARGAIN');
+  }
+  if (nettle.alive && nettle.key === 'nettle' && nettle.questDone) {
+    nettle.clauses = (nettle.clauses || 0) + 1;
+    nettle.rollBonus += 1;
+    nettle.cr *= 1.10;
+    nettle.chgX *= 1.10;
+    status(b, nettle, `CLAUSE ×${nettle.clauses}`, '#ffd76a');
+  }
+  emitClassKw(b, nettle, 'pact_boon', { victim, killer });
 }
 
 function applyRoot(b, src, t, dur) {
@@ -440,10 +781,6 @@ function applyRoot(b, src, t, dur) {
         x.st.root = Math.max(x.st.root, dur * .75);
       });
     }
-  }
-  if (src && src.f && src.f.bountifulVines && src.tier >= 4) {
-    const low = friends(b, src).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
-    if (low) heal(b, src, low, (8 + Math.max(0, src.m.wis) * 2) * src.dm, { raw: 1 });
   }
 }
 
@@ -465,12 +802,14 @@ function applyNettleHex(b, u, t, withJump) {
   t.st.hexStacks = Math.min(maxStacks, (t.st.hexStacks || 0) + 1);
   if (withJump) t.st.hexJump = 1;
   status(b, t, t.st.hexStacks > 1 ? 'HEX ×2' : 'HEXED', '#c48fe6');
+  emitClassKw(b, u, 'hex', { target: t });
 }
 
 function markFoe(b, u, t) {
   if (!t || !t.alive || t.side === u.side) return;
   t.st.mark = u;
-  status(b, t, 'MARKED', '#9fd86a');
+  status(b, t, 'HUNTER’S MARK', '#9fd86a');
+  emitClassKw(b, u, 'hunters_mark', { target: t });
 }
 function hexFoe(b, u, t) { applyNettleHex(b, u, t, false); }
 const liveMark = (b, u) => b.units.find(x => x.alive && x.st.mark === u);
@@ -478,8 +817,8 @@ const liveHex = (b, u) => b.units.find(x => x.alive && x.st.hex === u);
 
 function stagger(b, t, s) { if (!t || !t.alive) return; if (t.boss) s *= .6; t.st.stag = Math.max(t.st.stag || 0, s); status(b, t, 'STAGGERED', '#ffb27a'); }
 function expose(b, t, s) { if (!t || !t.alive) return; t.st.exp = Math.max(t.st.exp || 0, s); t.hidden = 0; status(b, t, 'EXPOSED', '#ff9cd0'); }
-function frighten(b, t, s) { if (!t || !t.alive || t.boss || t.f.braveSelf) return; t.st.fear = Math.max(t.st.fear || 0, s); status(b, t, 'FRIGHTENED', '#d0a0ff'); }
-function charm(b, src, t, s) { if (!t || !t.alive || t.boss || t.f.feyAncestry) return; t.st.charm = Math.max(t.st.charm || 0, s); t.target = null; status(b, t, 'CHARMED', '#ff9cd0'); }
+function frighten(b, t, s) { if (!t || !t.alive || t.boss || t.f.braveSelf || t.auraDane) return; t.st.fear = Math.max(t.st.fear || 0, s); status(b, t, 'FRIGHTENED', '#d0a0ff'); }
+function charm(b, src, t, s) { if (!t || !t.alive || t.boss || t.f.feyAncestry || t.auraDane) return; t.st.charm = Math.max(t.st.charm || 0, s); t.target = null; status(b, t, 'CHARMED', '#ff9cd0'); }
 function stun(b, t, s) { if (t.it && t.it.freeAct) s *= .5; t.st.stun = Math.max(t.st.stun, s); status(b, t, 'STUNNED', '#ffd27a'); }
 function acBuff(b, u, v, s) { u.st.acB = Math.max(u.st.acB && u.st.acBT > 0 ? u.st.acB : 0, v); u.st.acBT = Math.max(u.st.acBT, s); status(b, u, '+' + v + ' AC', '#a8b8cc'); }
 function taunt(b, u, R, T) { const fs = foes(b, u).filter(x => hd(x, u) <= R); fs.forEach(x => { x.st.taunt = T; x.st.tauntBy = u; x.target = u; }); b.events.push({ k: 'area', id: u.id, shape: 'nova', r: R, ty: 'force', ids: fs.map(x => x.id) }); }
@@ -497,10 +836,10 @@ function gainGold(b, u, v, why) {
     const add = Math.min(100 - (toot._buskerH || 0), got * 10);
     if (add > 0) { toot._buskerH = (toot._buskerH || 0) + add; toot.haste += add; toot.cr *= (1 + add / 100); toot.chgX *= (1 + add / 100); }
   });
-  // Gains Path 2 Liquid Assets: combat Gold feeds +12 Charge to all allies
-  if (alive(b, 'P').some(x => x.f.liquidAssets)) {
-    alive(b, 'P').filter(a => !a.minion).forEach(a => giveCharge(b, a, 12, 1));
-  }
+  // Gains Arcane Recovery (Transmutation): triggers whenever Gold drops in combat!
+  alive(b, 'P').filter(x => x.f.transmuter).forEach(g => {
+    triggerArcaneRecovery(b, g, 16, 'GOLD');
+  });
   return got;
 }
 
@@ -549,8 +888,9 @@ function hit(b, src, t, amt, o = {}) {
       t.alert--;
       t.stats.alertDodges = (t.stats.alertDodges || 0) + 1;
       status(b, t, 'ALERT DODGE!', '#8fd0ff');
-      if (t.f.vigilance && src.alive && hd(src, t) <= 2) {
-        later(b, .06, () => { if (t.alive && src.alive) strike(b, t, src); });
+      // Arthur Action Surge (Combat Reflexes): dodging with Alert triggers Action Surge!
+      if (t.f.arthurSurge) {
+        triggerActionSurge(b, t, { target: src, charge: 15, label: 'ACTION SURGE!' });
       }
       if (t.side === 'P' && alive(b, 'P').some(x => x.f.initSplash)) giveCharge(b, t, 22);
       onAllyDodge(b, t, src);
@@ -612,7 +952,9 @@ function hit(b, src, t, amt, o = {}) {
 
   const pre = dmg;
   const hadWard = t.ward > 0;
+  let wardAbsorbedHit = false;
   if (t.ward > 0 && dmg > 0) {
+    wardAbsorbedHit = true;
     const a = Math.min(t.ward, dmg);
     t.ward -= a;
     dmg -= a;
@@ -623,7 +965,7 @@ function hit(b, src, t, amt, o = {}) {
       const giver = t._wardBy;
       t._wardBy = null;
       if (giver.alive && giver.f.abjurer) {
-        giveCharge(b, giver, 22, 1);
+        triggerArcaneRecovery(b, giver, 20, 'WARD BREAK');
         giver._wardsBroken = (giver._wardsBroken || 0) + 1;
         if (giver.f.projWard && giver._wardsBroken % 3 === 0) {
           giver.advantage = 1;
@@ -642,7 +984,7 @@ function hit(b, src, t, amt, o = {}) {
     t.nextBonus = Math.min(6, (t.nextBonus || 0) + 2);
   }
 
-  // Kaska Panther Form: Beast HP absorbs incoming damage before main HP bar!
+  // Kaska Wild Shape (Panther Form): Beast HP absorbs incoming damage before main HP bar!
   if (t.beast && t.beast.hp > 0 && dmg > 0) {
     const abs = Math.min(t.beast.hp, dmg);
     t.beast.hp -= abs;
@@ -678,7 +1020,7 @@ function hit(b, src, t, amt, o = {}) {
     }
   }
 
-  // Pillar Path 2 Living Beacon: taking damage empowers adjacent allies' next strike with +1d6 Holy
+  // Pillar Path 2 Living Beacon: taking damage empowers adjacent allies' next strike with +1d6 Holy Smite
   if (t.f.livingBeacon && !o.dot && pre > 0 && t.alive) {
     friends(b, t).filter(a => a !== t && !a.minion && hd(a, t) <= 1).forEach(a => { a._beaconHoly = 1; });
   }
@@ -687,10 +1029,18 @@ function hit(b, src, t, amt, o = {}) {
     t.nextBonus = Math.min(6, (t.nextBonus || 0) + 2);
     heal(b, t, t, (3 + Math.max(0, t.m.con)) * t.dm, { raw: 1 });
   }
-  if (t.f.vigilance && !t._secondWind && t.alive && t.hp < t.maxHp * .5) {
+  // Arthur Action Surge at 50% HP (once per fight; Constant Vigilance also grants Alert!)
+  if (t.f.arthurSurge && !t._secondWind && t.alive && t.hp < t.maxHp * .5) {
     t._secondWind = 1;
-    grantAlert(b, t, t.tier >= 4 ? 2 : 1);
-    status(b, t, 'SECOND WIND', '#8fd0ff');
+    if (t.f.vigilance) grantAlert(b, t, t.tier >= 4 ? 2 : 1);
+    triggerActionSurge(b, t, { target: src, charge: 15, label: 'ACTION SURGE!' });
+  }
+  // Gilthrax Action Surge (Eldritch Counter): every 3 hits absorbed by Ward or reflected triggers Action Surge!
+  if (t.f.gilthraxSurge && !o.dot && pre > 0 && t.alive && (wardAbsorbedHit || t.arcaneReflectT > 0)) {
+    t._shieldHits = (t._shieldHits || 0) + 1;
+    if (t._shieldHits % 3 === 0) {
+      later(b, .04, () => { if (t.alive) triggerActionSurge(b, t, { target: src, cleave: 1, label: 'ELDRITCH SURGE!' }); });
+    }
   }
   if (t.it && t.it.potionHeal && !t._potionUsed && t.alive && t.hp < t.maxHp * .5) {
     t._potionUsed = 1;
@@ -717,8 +1067,9 @@ function hit(b, src, t, amt, o = {}) {
     if (t.sacredShieldT > 0) {
       later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, (4 + Math.max(0, t.m.cha)) * t.dm, { kind: 'holy', ty: 'radiant', noBonus: 1, thorn: 1 }); });
     }
-    if (t.f.oathDevotion && src.st.mark === t) {
-      later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, roll(1, 8), { kind: 'holy', ty: 'radiant', noBonus: 1, thorn: 1 }); });
+    // Sir Dane Path 1 Oath of Devotion: taking hits from his Taunted foe retaliates with a Smite!
+    if (t.f.oathDevotion && src.st.tauntBy === t) {
+      later(b, 0, () => { if (src.alive && t.alive) triggerSmite(b, t, src, roll(1, 8), { thorn: 1 }); });
     }
     if (t.vineThornsT > 0 && hd(src, t) <= 1) {
       later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, 5 * t.dm, { kind: 'magic', ty: 'poison', noBonus: 1, thorn: 1 }); });
@@ -735,7 +1086,7 @@ function hit(b, src, t, amt, o = {}) {
     }
   }
 
-  // Juniper Natural Recovery
+  // Juniper innate Charge gain when Rooted foes take damage (folded naturally into kit)
   if (pre > 0 && t.side === 'E' && t.st.root > 0) {
     alive(b, 'P').filter(x => x.f.naturalRecovery && b.time >= (x._nrT || 0)).forEach(x => {
       x._nrT = b.time + .4;
@@ -743,9 +1094,9 @@ function hit(b, src, t, amt, o = {}) {
     });
   }
 
-  // Mother Laurel Path 2 Bountiful Vines: Rooted foes take +1d6 Holy on every direct hit
+  // Mother Laurel Path 2 Bountiful Vines: Rooted foes take +1d6 Holy Smite on every direct hit
   if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.alive && t.st.root > 0 && !o.dot && !o.onhit && !o.vineProc && alive(b, 'P').some(x => x.f.bountifulVines)) {
-    later(b, 0, () => { if (t.alive) hit(b, src, t, roll(1, 6), { kind: 'holy', ty: 'radiant', noBonus: 1, vineProc: 1, onhit: 1 }); });
+    later(b, 0, () => { if (t.alive && src.alive) triggerSmite(b, src, t, roll(1, 6), { onhit: 1 }); });
   }
   // Lumen Path 2 Purifying Light: any ally Holy hit also applies Burn
   if (pre > 0 && o.kind === 'holy' && src && src.side === 'P' && t.side === 'E' && t.alive && !o.dot && alive(b, 'P').some(x => x.f.purifyingLight)) {
@@ -759,8 +1110,8 @@ function hit(b, src, t, amt, o = {}) {
       giveCharge(b, src, 10, 1);
     }
   }
-  // Corvin Tier IV First Strike: allies hitting Corvin's Marked foe deal +1d4 piercing
-  if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.alive && t.st.mark && t.st.mark.f && t.st.mark.f.firstStrike && t.st.mark.tier >= 4 && !o.dot && !o.onhit && !o.fsProc) {
+  // Corvin Tier IV First Strike: allies hitting any Hunter's Mark foe deal +1d4 piercing
+  if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.alive && t.st.mark && !o.dot && !o.onhit && !o.fsProc && alive(b, 'P').some(x => x.f.firstStrike && x.tier >= 4)) {
     later(b, 0, () => { if (t.alive) hit(b, src, t, roll(1, 4), { kind: 'phys', ty: 'piercing', noBonus: 1, fsProc: 1, onhit: 1 }); });
   }
 
@@ -779,13 +1130,10 @@ function hit(b, src, t, amt, o = {}) {
       later(b, 0, () => { if (t.alive) hit(b, hexer, t, roll(1, 6), { kind: 'magic', ty: 'fire', noBonus: 1, hexProc: 1 }); });
     }
   }
-  if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.st.duelCrusade > 0 && !o.dot && !o.crusadeProc) {
+  // Sir Dane Nat 20 Crusade Aura: allies attacking his Taunted foe trigger a bonus 1d8 Smite + 10 Charge!
+  if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.st.duelCrusade > 0 && !o.dot && !o.crusadeProc && !o.onhit) {
     giveCharge(b, src, 10, 1);
-    later(b, 0, () => { if (t.alive) hit(b, src, t, roll(1, 8), { kind: 'holy', ty: 'radiant', noBonus: 1, crusadeProc: 1 }); });
-  }
-  if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.st.mark && !o.dot && !o.onhit) {
-    const dane = alive(b, 'P').find(x => x.key === 'dane');
-    if (dane) dane.stats.markedAllyHits = (dane.stats.markedAllyHits || 0) + 1;
+    later(b, 0, () => { if (t.alive && src.alive) triggerSmite(b, src, t, roll(1, 8), { onhit: 1 }); });
   }
 
   if (pre > 0 || o.nec) {
@@ -868,6 +1216,7 @@ function kill(b, t, src, o) {
     t._rose = 1; t.hp = Math.round(t.maxHp * .3); status(b, t, 'GETS BACK UP', '#c8b48a'); return;
   }
 
+  const wasTauntedBy = t.st.tauntBy;
   t.alive = false; t.hp = Math.max(0, t.hp);
   b.events.push({ k: 'die', id: t.id });
   b.units.forEach(x => { if (x.target === t) x.target = null; if (x.st.tauntBy === t) { x.st.taunt = 0; x.st.tauntBy = null; } });
@@ -891,11 +1240,12 @@ function kill(b, t, src, o) {
       K.nextBonus += 2;
     }
 
-    // Gains Gilded death: pop +1 Gold, track quest, and Liquid Assets T4 Charge refund
+    // Gains Gilded death: pop +1 Gold (which triggers Arcane Recovery!), or trigger Arcane Recovery directly if Gold capped
     if (t.st.gilded) {
       const gainer = t.st.gilded;
       if (gainer.stats) gainer.stats.gildedKills = (gainer.stats.gildedKills || 0) + 1;
-      gainGold(b, gainer, 1, 'GILDED');
+      const gotG = gainGold(b, gainer, 1, 'GILDED');
+      if (!gotG && gainer.alive && gainer.f.transmuter) triggerArcaneRecovery(b, gainer, 16, 'GILDED KILL');
       if (gainer.f.liquidAssets && gainer.tier >= 4 && K && K.alive && K.side === 'P') giveCharge(b, K, 30);
     }
 
@@ -905,7 +1255,18 @@ function kill(b, t, src, o) {
       if (nx && hd(nx, t) <= 2) { nx.st.poison += t.st.poison; status(b, nx, 'VENOM SPREADS', '#9be38a'); }
     }
 
-    // Marked death triggers: Lorcan quest, Lorcan T4 Volley of Trophies haste, Sir Dane T4 Mark jump
+    // Sir Dane Tier IV Oath of Devotion: when his Taunted foe dies, auto-Taunt & Smite nearest enemy
+    if (wasTauntedBy && wasTauntedBy.alive && wasTauntedBy.f.oathDevotion && wasTauntedBy.tier >= 4) {
+      const nx = foes(b, wasTauntedBy).sort((a, c) => hd(a, wasTauntedBy) - hd(c, wasTauntedBy))[0];
+      if (nx) {
+        nx.st.taunt = Math.max(nx.st.taunt, 3 * chaK(wasTauntedBy));
+        nx.st.tauntBy = wasTauntedBy;
+        nx.target = wasTauntedBy;
+        triggerSmite(b, wasTauntedBy, nx, roll(1, 8), { label: 'OATH SMITE' });
+      }
+    }
+
+    // Hunter's Mark death triggers: Lorcan quest & T4 Volley of Trophies haste
     if (t.st.mark) {
       const lorcan = alive(b, 'P').find(x => x.key === 'lorcan');
       if (lorcan) {
@@ -913,10 +1274,6 @@ function kill(b, t, src, o) {
         if (lorcan.f.trophyVolley && lorcan.tier >= 4) {
           alive(b, 'P').forEach(a => { a.tempHaste = Math.max(a.tempHaste || 0, 25); a.tempHasteT = Math.max(a.tempHasteT || 0, 4); });
         }
-      }
-      if (t.st.mark.alive && t.st.mark.f.oathDevotion && t.st.mark.tier >= 4) {
-        const nx = foes(b, t.st.mark)[0];
-        if (nx) markFoe(b, t.st.mark, nx);
       }
     }
 
@@ -926,28 +1283,9 @@ function kill(b, t, src, o) {
       archOf(t.key).forEach(a => { if (!b.trophiesEarned.includes(a)) b.trophiesEarned.push(a); });
     }
 
-    // Nettle Hex death triggers: Quest, Jump+Heal, Dark One's Bargain, Infernal Contract Clause!
+    // Nettle Pact Boon (Dark One's Blessing) on Hexed death!
     if (t.st.hex) {
-      const nettle = t.st.hex;
-      if (nettle && nettle.stats) nettle.stats.hexDeaths = (nettle.stats.hexDeaths || 0) + 1;
-      if (t.st.hexJump && nettle && nettle.alive) {
-        const nx = foes(b, nettle)[0];
-        if (nx) applyNettleHex(b, nettle, nx, true);
-        friends(b, nettle).filter(a => !a.minion).forEach(a => heal(b, nettle, a, (5 + Math.max(0, nettle.m.cha)) * nettle.dm, { raw: 1 }));
-      }
-      if (nettle && nettle.f.darkBargain && K && K.side === 'P' && K.alive) {
-        giveCharge(b, K, 30);
-        K.advantage = 1;
-        status(b, K, 'BARGAIN ADV!', '#c48fe6');
-        if (nettle.tier >= 4 && (t.elite || t.boss)) gainGold(b, nettle, 3, 'BARGAIN');
-      }
-      if (nettle && nettle.alive && nettle.key === 'nettle' && nettle.questDone) {
-        nettle.clauses = (nettle.clauses || 0) + 1;
-        nettle.rollBonus += 1;
-        nettle.cr *= 1.10;
-        nettle.chgX *= 1.10;
-        status(b, nettle, `CLAUSE ×${nettle.clauses}`, '#ffd76a');
-      }
+      triggerPactBoon(b, t.st.hex, t, K);
     }
 
     // Cinder T4 Wildfire: Burn spreads on enemy death
@@ -1101,6 +1439,11 @@ function castAbility(b, u) {
   u.nextBonus = 0;
 
   let usedInsp = null;
+  let usedMote = null;
+  if (u.inspMote) {
+    usedMote = u.inspMote;
+    u.inspMote = null;
+  }
   if (u.it && u.it.clockworkHigh && !u._clockworkUsed) {
     u._clockworkUsed = 1;
     nat = Math.max(15, u.bands.hi);
@@ -1149,11 +1492,17 @@ function castAbility(b, u) {
   u.stats.rolls[P + 1]++;
   b.events.push({ k: 'roll', id: u.id, nat, band: Math.min(P, 2), name: A.n + (P === 3 ? '' : ' · ' + BAND_N[P]), side: u.side, bonus });
 
-  if (usedInsp) {
-    if (P === 3 && usedInsp.giver && usedInsp.giver.alive && usedInsp.giver.f.passRound) {
-      giveCharge(b, usedInsp.giver, 50);
+  // Unified Bardic Inspiration Spend (Lore Die OR Creation Mote!)
+  const spentInspiration = !!(usedInsp || usedMote);
+  if (usedMote && usedMote.giver && usedMote.giver.alive) {
+    gainGold(b, usedMote.giver, 1, 'MOTE SPENT');
+  }
+  if (spentInspiration) {
+    emitClassKw(b, u, 'bardic_inspiration', { action: 'spend', band: P });
+    if (P === 3) {
+      alive(b, 'P').filter(x => x.f.passRound).forEach(r => giveCharge(b, r, 50));
     }
-    passInspDie(b, u, usedInsp);
+    if (usedInsp) passInspDie(b, u, usedInsp);
   }
 
   u._casting = 1;
@@ -1174,13 +1523,17 @@ function castAbility(b, u) {
       }
     }
   }
-  // Toot Path 2 Street Performer: ally High/Nat 20 drops +1 Gold
+  // Toot Path 2 Street Performer: ally High/Nat 20 drops +1 Gold (+2 if spending Bardic Inspiration!)
   if (u.side === 'P' && P >= 2) {
-    alive(b, 'P').filter(x => x.f.streetPerformer).forEach(toot => gainGold(b, toot, 1, 'STREET PERFORMER'));
+    alive(b, 'P').filter(x => x.f.streetPerformer).forEach(toot => gainGold(b, toot, spentInspiration ? 2 : 1, 'STREET PERFORMER'));
   }
 
-  // Item on-cast hooks
+  // Item on-cast & Class Keyword hooks
   const I = u.it || {};
+  if (I.quickenFirst && u._casts === 1) {
+    u.stats.metamagics = (u.stats.metamagics || 0) + 1;
+    emitClassKw(b, u, 'metamagic', { kind: 'quicken' });
+  }
   if (I.wardOnCast) addWard(b, u, I.wardOnCast * u.dm, u.maxHp * .5, u);
   if (P === 3 && I.nat20Refund) later(b, .05, () => { if (u.alive) giveCharge(b, u, I.nat20Refund); });
   if (P >= 2 && I.highMarks && tgt && tgt.alive && tgt.side !== u.side) markFoe(b, u, tgt);
@@ -1189,6 +1542,12 @@ function castAbility(b, u) {
   }
   if (P >= 2 && I.highBurnBurst) {
     foes(b, u).filter(x => hd(x, u) <= 2).forEach(x => applyStatus(b, u, x, 'burn', 6));
+  }
+  if (P >= 2 && I.highSorcery && u.kw && u.kw.sorcery_points) {
+    addSorcery(b, u, 1, null, null);
+  }
+  if (P >= 2 && I.highKi && u.kw && u.kw.ki) {
+    u.ki = Math.min(KI_MAX, (u.ki || 0) + 1);
   }
 }
 
@@ -1336,12 +1695,16 @@ function strike(b, u, t, m) {
   const got = hit(b, u, t, roll(a.d[0], a.d[1]) + (a.flat || 0), { kind: a.kind, el: a.el, ty: a.ty, melee: u.rng <= 2, nec: a.nec || 0, mul: (a.mul || 1) * (m || 1), strike: 1 });
   if (t.alive || got > 0) {
     onHit(b, u, t, got);
-    // Sir Dane Path 2 Call to Arms: allies' 1st hit (and every 3rd at T4) vs Dane's Marked foe triggers on-hit twice!
-    if (u.side === 'P' && t.side === 'E' && t.alive && t.st.mark && t.st.mark.f.callToArms && t.st.mark !== u) {
-      u._ctaHits = u._ctaHits || {};
-      const n = (u._ctaHits[t.id] = (u._ctaHits[t.id] || 0) + 1);
-      if (n === 1 || (t.st.mark.tier >= 4 && n % 3 === 0)) {
-        onHit(b, u, t, got);
+    // Sir Dane Path 2 Call to Arms: allies inside Dane's Aura trigger on-hit twice on 1st hit (and every 3rd at T4)!
+    if (u.side === 'P' && t.side === 'E' && t.alive && u.auraDane && u.auraDane.f.callToArms && u.auraDane !== u) {
+      const dane = u.auraDane;
+      const isDaneTarget = (t.st.tauntBy === dane || dane.target === t);
+      if (isDaneTarget) {
+        u._ctaHits = u._ctaHits || {};
+        const n = (u._ctaHits[t.id] = (u._ctaHits[t.id] || 0) + 1);
+        if (n === 1 || (dane.tier >= 4 && n % 3 === 0)) {
+          onHit(b, u, t, got);
+        }
       }
     }
   }
@@ -1358,7 +1721,7 @@ function onHit(b, u, t, got) {
     else if (e.t === 'echo') later(b, e.delay || .25, () => { if (t.alive) hit(b, u, t, amt(), o); });
     else if (e.t === 'status') applyStatus(b, u, t, e.el, e.v || 1, e.max);
   }
-  // Pack 2 Item: Whetstone of the Hunt (attacks vs Marked apply Poison)
+  // Pack 2 Item: Whetstone of the Hunt (attacks vs Hunter's Mark apply Poison)
   if (u.it && u.it.markPoison && t.alive && t.st.mark) applyStatus(b, u, t, 'poison', 1.5);
   // Flametongue: every 2nd strike applies Burn (Favoured spreads to adjacent)
   if (u.it && u.it.flameEvery2 && t.alive) {
@@ -1371,17 +1734,17 @@ function onHit(b, u, t, got) {
       }
     }
   }
-  // Oathbow: +8 Charge vs Marked foes
+  // Oathbow: +8 Charge vs Hunter's Mark foes
   if (u.it && u.it.markCharge && t.st.mark) giveCharge(b, u, u.it.markCharge, 1);
   // Bram Path 2 Divine Strike: Bram & adjacent allies add 1d4 (1d8 T4) Holy to melee attacks
   if (u.side === 'P' && u.rng <= 2 && t.alive) {
     const bram = alive(b, 'P').find(x => x.f.divineStrike && hd(x, u) <= 1);
     if (bram) hit(b, u, t, roll(1, bram.tier >= 4 ? 8 : 4), { kind: 'holy', ty: 'radiant', noBonus: 1, onhit: 1 });
   }
-  // Pillar Path 2 Living Beacon: empowered next strike adds +1d6 Holy
+  // Pillar Path 2 Living Beacon: empowered next strike triggers a +1d6 Holy Smite!
   if (u._beaconHoly && t.alive) {
     u._beaconHoly = 0;
-    hit(b, u, t, roll(1, 6), { kind: 'holy', ty: 'radiant', noBonus: 1, onhit: 1 });
+    triggerSmite(b, u, t, roll(1, 6), { onhit: 1 });
   }
   // Pillar Path 1 Unstoppable Faith: +1d8 Holy during Zealot Rage
   if (u.f.unstoppableFaith && u.zealotT > 0 && t.alive) {
@@ -1400,27 +1763,31 @@ function onHit(b, u, t, got) {
 function postStrikeHooks(b, u, t, got) {
   if (!t) return;
   const K = u.kw || {};
-  // Pack 6 Item: Cloak of Elvenkind opening attack from Stealth applies Exposed for 4s
+  // Pack 6 Item: Cloak of Elvenkind opening attack from Stealth applies Exposed + triggers 1d6 Sneak Attack!
   if (u._stealthExposeReady && t.alive) {
     u._stealthExposeReady = 0;
     expose(b, t, 4);
+    if (u.it && u.it.cloakSneak) triggerSneakAttack(b, u, t, {});
   }
   // Velith Assassinate: strikes from Stealth apply bonus Poison
   if (u.hidden && u.f.assassinate && t.alive) {
     applyStatus(b, u, t, 'poison', 3);
   }
-  // Amulet of the Devout: every 5s next attack triggers flat 2d6 Holy Smite
+  // Amulet of the Devout: every 5s next attack triggers a 2d6 Holy Smite!
   if (u.it && u.it.devoutSmite && t.alive && b.time >= (u._devoutT || 0)) {
     u._devoutT = b.time + u.it.devoutSmite;
-    hit(b, u, t, roll(2, 6), { kind: 'holy', ty: 'radiant', noBonus: 1, onhit: 1 });
-    status(b, t, 'DEVOUT SMITE', '#ffe9a0');
+    triggerSmite(b, u, t, roll(2, 6), { label: 'DEVOUT SMITE', onhit: 1 });
   }
-  // Sir Dane / Mother Laurel Divine Smite: every 3rd strike empowers with flat 1d8 Holy
+  // Sir Dane / Mother Laurel Smite: every 3rd strike empowers with Divine Smite / Verdant Smite!
   if (u.f.smitePeriodic && t.alive) {
     u._smCnt = (u._smCnt || 0) + 1;
     if (u._smCnt % 3 === 0) {
-      hit(b, u, t, roll(1, 8), { kind: 'holy', ty: 'radiant', noBonus: 1, onhit: 1 });
-      u.stats.smites = (u.stats.smites || 0) + 1;
+      if (u.f.verdantSmite) {
+        triggerSmite(b, u, t, roll(1, 6), { label: 'VERDANT SMITE', onhit: 1 });
+        if (t.alive) applyRoot(b, u, t, 1.5 * chaK(u));
+      } else {
+        triggerSmite(b, u, t, roll(1, 8), { label: 'DIVINE SMITE', onhit: 1 });
+      }
     }
   }
   // Lumen Tier IV Judgement: Radiant Soul attacks splash 50% Holy to an adjacent foe
@@ -1438,13 +1805,13 @@ function postStrikeHooks(b, u, t, got) {
     u._sfCnt = (u._sfCnt || 0) + 1;
     if (u._sfCnt % 3 === 0) hit(b, u, t, roll(1, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
   }
-  // Kaska Path 1 Lunar Resilience: Panther Form cleaves 50% to an adjacent foe
+  // Kaska Path 1 Lunar Resilience: Wild Shape (Panther) cleaves 50% to an adjacent foe
   if (u.f.lunarResilience && u.beast && u.beast.hp > 0 && got > 0) {
     const adj = foes(b, u).find(x => x !== t && hd(x, u) <= 1);
     if (adj) hit(b, u, adj, Math.max(1, Math.round(got * .5)), { kind: 'phys', ty: 'slashing', noBonus: 1, onhit: 1 });
   }
   // Lorcan / Corvin Hunter's Mark: bonus WIS-scaled damage vs Marked + Colossus Slayer
-  if (K.mark && t.alive && t.st.mark) {
+  if (K.hunters_mark && t.alive && t.st.mark) {
     hit(b, u, t, roll(1, 6) + Math.max(0, u.m.wis), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
     if (u.f.colossusSlayer) {
       u._colCnt = (u._colCnt || 0) + 1;
@@ -1455,23 +1822,22 @@ function postStrikeHooks(b, u, t, got) {
       }
     }
   }
-  // Wallaby / Velith Sneak Attack: +1d6 when ally adjacent to target or target impaired
-  if (K.sneak && t.alive && b.time >= (u._snT || 0)) {
-    const ok = t.st.mark || t.st.hex || t.st.stag > 0 || t.st.stun > 0 || t.st.exp > 0 || alive(b, u.side).some(a => a !== u && hd(a, t) <= 1);
+  // Wallaby / Velith Sneak Attack: +1d6 when ally adjacent, in Stealth, or target impaired/Poisoned
+  if (K.sneak_attack && t.alive && b.time >= (u._snT || 0)) {
+    const ok = u.hidden || t.st.mark || t.st.hex || t.st.poison > 0 || t.st.stag > 0 || t.st.stun > 0 || t.st.exp > 0 || alive(b, u.side).some(a => a !== u && hd(a, t) <= 1);
     if (ok) {
       u._snT = b.time + 1;
-      hit(b, u, t, roll(K.sneak, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
-      u.stats.sneaks = (u.stats.sneaks || 0) + 1;
+      triggerSneakAttack(b, u, t, {});
     }
   }
   // Rosalind Vicious Mockery: slight enemy damage debuff
   if (u.key === 'rosalind' && t.alive) { t.st.mockT = Math.max(t.st.mockT || 0, 2.2 * chaK(u)); }
-  // Ki bar (Naill & Dragonhide Belt): 4-pip bar -> Ki Strike!
+  // Ki bar (Naill & Dragonhide Belt): 4-pip bar -> Ki Ability!
   if (K.ki && t.alive) {
     u.ki = Math.min(KI_MAX, (u.ki || 0) + 1);
     if (u.ki >= kiCost(u)) {
       if (u.f.monkNaill) fireNaillKiStrike(b, u, t);
-      else { u.ki = 0; stagger(b, t, 2); status(b, t, 'KI STAGGER', '#8fd8d8'); }
+      else fireGenericKiAbility(b, u, t);
     }
   }
 }
@@ -1485,7 +1851,7 @@ function newBattle(encKey, party, eTier) {
   UID = 1;
   const b = {
     time: 0, units: [], events: [], over: false, winner: null,
-    enc: encKey, eTier: eTier || 1, gold: 0, goodberries: 0,
+    enc: encKey, eTier: eTier || 1, gold: 0, goodberries: 0, kwCounts: {},
     waves: (enc.waves || []).map(w => ({ ...w, done: 0 }))
   };
   const usedDep = new Set(party.filter(c => c.c != null && c.r != null).map(c => c.c + ',' + c.r));
@@ -1507,7 +1873,7 @@ function newBattle(encKey, party, eTier) {
   const P = alive(b, 'P');
   // Start-of-combat hero keywords, passives, Pack Items & quest rewards
   P.forEach(u => {
-    if (u.kw.alert) {
+    if (u.f.startAlert) {
       grantAlert(b, u, u.f.vigilance && u.tier >= 4 ? 2 : 1);
       u.charge = Math.max(u.charge, 25);
     }
@@ -1525,16 +1891,19 @@ function newBattle(encKey, party, eTier) {
     if (u.key === 'dane' && u.questDone) {
       const fs = alive(b, 'E').sort((a, c) => hd(a, u) - hd(c, u));
       if (fs.length) {
-        fs.slice(0, 3).forEach(e => { push(b, u, e, 2, { stun: .8 }); markFoe(b, u, e); });
+        fs.slice(0, 3).forEach(e => { push(b, u, e, 2, { stun: .8 }); triggerSmite(b, u, e, roll(1, 8), { label: 'CHARGE SMITE' }); });
         callout(b, u, 'CAVALRY CHARGE!', '#ffe9a0');
       }
     }
-    // Pack 4-6 Start-of-combat hooks
+    // Item & Pack 4-6 Start-of-combat Class Keyword hooks
+    if (u.it && u.it.startSorcery && u.kw && u.kw.sorcery_points) {
+      u.sorcery = Math.min(4, (u.sorcery || 0) + u.it.startSorcery);
+    }
     if (u.it && u.it.startStealth) {
-      u.hidden = 1; u.hideT = Math.max(u.hideT || 0, u.it.startStealth);
+      triggerCunningAction(b, u, null, { stealth: u.it.startStealth, label: 'CLOAK' });
       if (u.it.stealthExpose) u._stealthExposeReady = 1;
     }
-    if (u.f.unstoppableFaith && u.tier >= 4) u.zealotT = Math.max(u.zealotT || 0, 1.5);
+    if (u.f.unstoppableFaith && u.tier >= 4) enterZealotRage(b, u, 1.5);
     if (u.f.streetPerformer && u.tier >= 4) {
       const bonusCh = Math.min(40, (u.goldHeld || 0) * 2);
       if (bonusCh > 0) P.forEach(a => { a.charge = Math.min(100, (a.charge || 0) + bonusCh); });
@@ -1544,7 +1913,7 @@ function newBattle(encKey, party, eTier) {
       status(b, u, 'GILDED WARD', '#ffd76a');
     }
     if (u.f.assassinate) {
-      u.hidden = 1; u.hideT = Math.max(u.hideT || 0, 3);
+      triggerCunningAction(b, u, null, { stealth: 3, label: 'AMBUSH' });
       if (u.f.deathsLedger) u.advantage = Math.max(u.advantage || 0, 1);
     }
     if (u.f.dreadAmbusher) {
@@ -1558,6 +1927,7 @@ function newBattle(encKey, party, eTier) {
     if (u.f.pantherForm) {
       const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .55 : .40) * (u.questDone ? 1.25 : 1));
       u.beast = { hp: bhp, max: bhp };
+      triggerWildShape(b, u, { form: 'Panther Form', beastHp: bhp });
     }
   });
 
@@ -1567,19 +1937,29 @@ function newBattle(encKey, party, eTier) {
 }
 
 function applyAuras(b) {
-  b.units.forEach(u => { u.auraHaste = 0; u.auraSR = 0; u.auraDmg = 0; u.auraAC = 0; u.auraCr = 0; u.auraFloor = 0; });
-  // Rosalind Path 2 Encore: adjacent Inspired ally gains +40% Charge speed
+  b.units.forEach(u => { u.auraHaste = 0; u.auraSR = 0; u.auraDmg = 0; u.auraAC = 0; u.auraCr = 0; u.auraFloor = 0; u.auraDane = null; });
+  // Paladin Aura: Sir Dane Aura of Devotion (+1 AC, +1 SR, Charm/Frighten immunity within 2 squares; 3 mounted)
+  alive(b, 'P').filter(x => x.f.auraDevotion).forEach(dane => {
+    const rad = dane.questDone ? 3 : 2;
+    friends(b, dane).filter(a => !a.minion && hd(a, dane) <= rad).forEach(a => {
+      a.auraAC = Math.max(a.auraAC, 1);
+      a.auraSR = Math.max(a.auraSR, 1);
+      a.auraDane = dane;
+    });
+  });
+  // Paladin Aura: Mother Laurel Aura of Warding (+2 SR baseline, +5 SR with Ancients' Ward, +1 d20 floor at T4)
+  alive(b, 'P').filter(x => x.f.auraWarding || x.f.ancientsWard).forEach(ml => {
+    const srBonus = (ml.f.auraWarding ? 2 : 0) + (ml.f.ancientsWard ? 3 : 0);
+    friends(b, ml).filter(a => !a.minion && hd(a, ml) <= 2).forEach(a => {
+      a.auraSR = Math.max(a.auraSR, srBonus);
+      if (ml.f.ancientsWard && ml.tier >= 4) a.auraFloor = Math.max(a.auraFloor, 1);
+    });
+  });
+  // Rosalind Path 2 Encore: adjacent Inspired ally (Lore Die OR Toot Mote!) gains +40% Charge speed
   alive(b, 'P').filter(x => x.f.encore).forEach(r => {
-    const adj = friends(b, r).filter(a => a !== r && a.inspDie && hd(a, r) <= 1);
+    const adj = friends(b, r).filter(a => a !== r && (a.inspDie || a.inspMote) && hd(a, r) <= 1);
     const list = r.tier >= 4 ? adj : adj.slice(0, 1);
     list.forEach(a => { a.auraCr = Math.max(a.auraCr, 40); });
-  });
-  // Mother Laurel Path 1 Ancients' Ward: allies within 2 squares gain +3 SR (+1 d20 floor at T4)
-  alive(b, 'P').filter(x => x.f.ancientsWard).forEach(ml => {
-    friends(b, ml).filter(a => hd(a, ml) <= 2).forEach(a => {
-      a.auraSR = Math.max(a.auraSR, 3);
-      if (ml.tier >= 4) a.auraFloor = Math.max(a.auraFloor, 1);
-    });
   });
   // Zoe Path 2 Just the Thing: allies carrying 2+ items gain +20% Charge speed
   if (alive(b, 'P').some(x => x.f.justTheThing)) {
@@ -1632,8 +2012,9 @@ function tick(b, dt) {
     u.zealotT = Math.max(0, (u.zealotT || 0) - dt);
     u.radiantSoulT = Math.max(0, (u.radiantSoulT || 0) - dt);
     u.arcaneReflectT = Math.max(0, (u.arcaneReflectT || 0) - dt);
+    u.wildShapeT = Math.max(0, (u.wildShapeT || 0) - dt);
 
-    // Kaska Quest Moon's Favour: Panther Form radiates moonlight healing every 2.5s
+    // Kaska Quest Moon's Favour: Wild Shape (Panther Form) radiates moonlight healing every 2.5s
     if (u.key === 'kaska' && u.questDone && u.beast && u.beast.hp > 0 && b.time >= (u._moonT || 2.5)) {
       u._moonT = b.time + 2.5;
       friends(b, u).filter(a => !a.minion && hd(a, u) <= 2).forEach(a => heal(b, u, a, 8 * u.dm, { raw: 1 }));
@@ -1675,16 +2056,17 @@ function tick(b, dt) {
       }
     }
 
-    // Bram Channel Divinity (Preserve Life)
-    if (u.side === 'P' && u.f.preserveLife && !u._pres && u.st.stun <= 0) {
-      const low = friends(b, u).find(a => !a.minion && hpPct(a) < .38 && hd(a, u) <= 4);
-      if (low) {
-        u._pres = 1;
-        const ts = friends(b, u).filter(a => !a.minion && hd(a, u) <= 4);
-        b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 4, ty: 'radiant', ids: ts.map(x => x.id) });
-        ts.forEach(a => heal(b, u, a, a.maxHp * (.14 + .02 * Math.max(0, u.m.wis)), { raw: 1 }));
-        callout(b, u, 'PRESERVE LIFE', '#8fe0a0');
-        u.stats.channel = (u.stats.channel || 0) + 1;
+    // Cleric Channel Divinity auto-triggers (Bram Preserve Life, Lumen Radiance of Dawn, Jamison Balm of Peace)
+    if (u.side === 'P' && !u._cdUsed && u.st.stun <= 0) {
+      if (u.f.preserveLife && !u._pres) {
+        const low = friends(b, u).find(a => !a.minion && hpPct(a) < .45 && hd(a, u) <= 4);
+        if (low) triggerBramCD(b, u);
+      } else if (u.f.lumenCaster) {
+        const burningCount = foes(b, u).filter(x => x.st.burn >= 1).length;
+        if (burningCount >= 3) triggerLumenCD(b, u);
+      } else if (u.f.peaceCleric) {
+        const hurt = friends(b, u).find(a => !a.minion && hpPct(a) < .60);
+        if (hurt) triggerJamisonCD(b, u);
       }
     }
 
@@ -1771,28 +2153,6 @@ function simulate(encKey, party, eTier) {
   return b;
 }
 
-/* ---------- Keyword Glossary Lookup Table ---------- */
-const KW = {
-  alert:   { n: 'Alert',              cls: 'Fighter',   x: 'Dodges the next attack directed at this hero.' },
-  channel: { n: 'Channel Divinity',   cls: 'Cleric',    x: 'Once per fight, Preserve Life bursts healing onto a nearby low-HP ally.' },
-  arcane:  { n: 'Arcane Recovery',    cls: 'Wizard',    x: 'Regains Charge whenever a Ward she placed breaks.' },
-  sneak:   { n: 'Sneak Attack',       cls: 'Rogue',     x: 'Once per second, strikes deal +1d6 when an ally is adjacent or the foe is impaired.' },
-  smite:   { n: 'Divine Smite',       cls: 'Paladin',   x: 'Every 3rd strike deals +1d8 flat Holy damage.' },
-  mark:    { n: 'Hunter’s Mark',      cls: 'Ranger',    x: 'Marks a target for bonus WIS-scaled damage and team on-hit triggers.' },
-  natrec:  { n: 'Natural Recovery',   cls: 'Druid',     x: 'Gains bonus Charge whenever a Rooted foe takes damage.' },
-  insp:    { n: 'Bardic Inspiration', cls: 'Bard',      x: 'Stackable bonus dice (d6/d8/d10) added to an ally’s next ability d20 roll.' },
-  meta:    { n: 'Sorcery Points',     cls: 'Sorcerer',  x: '4-pip bar that automatically Twins a free Fireball when full.' },
-  rage:    { n: 'Bear Rage',          cls: 'Barbarian', x: 'Uncapped combat stacks granting flat damage reduction and attack speed.' },
-  ki:      { n: 'Ki',                 cls: 'Monk',      x: '4-pip bar filled by attacking and taking hits; fires a Ki Strike at full.' },
-  hex:     { n: 'Hex',                cls: 'Warlock',   x: 'Curses a foe to take bonus necrotic damage on every hit; transfers on death.' },
-  zealot:  { n: 'Zealot Rage',        cls: 'Barbarian', x: 'Refuses to drop below 1 HP while Zealot Rage is active.' },
-  sear:    { n: 'Sear',               cls: 'Cleric',    x: 'Holy light stacks that burn enemies and can detonate on Sunbeam Nat 20.' },
-  bond:    { n: 'Emboldening Bond',   cls: 'Cleric',    x: 'Links allies for bonus d20 dice and shared Charge.' },
-  rune:    { n: 'Runic Upgrade',      cls: 'Fighter',   x: 'Amplifies allies’ equipped items and refreshes once-per-fight triggers.' },
-  mote:    { n: 'Mote of Potential',  cls: 'Bard',      x: 'Grants Advantage on an ally’s next ability d20 roll.' },
-  ward:    { n: 'Arcane Shield',      cls: 'Fighter',   x: 'Item-scaling Ward that reflects damage back to attackers.' },
-  gilded:  { n: 'Gilded',             cls: 'Wizard',    x: 'Staggered enemy that drops +1 Gold when slain.' },
-  double:  { n: 'Illusory Double',    cls: 'Cleric',    x: 'Absorbs an incoming hit and echoes Toll the Dead.' },
-  panther: { n: 'Panther Form',       cls: 'Druid',     x: 'Separate Beast HP bar that absorbs damage before Kaska shifts back to Half-Orc.' }
-};
+/* ---------- Unified Class Keyword Lookup Table (mirrors CLASS_KW in 03-heroes.js) ---------- */
+const KW = typeof CLASS_KW !== 'undefined' ? CLASS_KW : {};
 const KW_STATUS = { stag: 'Staggered', exp: 'Exposed', fear: 'Frightened', charm: 'Charmed' };

@@ -1,13 +1,17 @@
-/* ================= 0.22 HEROES: THE 12-HERO PROTOTYPE CAST (3 PACKS) =================
-   Replaces the old 0.21 placeholder cast with the 12 reworked heroes across 3 themed packs:
-     Pack 1: You Meet at a Tavern    (Arthur, Bram, Faelan, Wallaby)       — Potion of Healing
-     Pack 2: Around the Campfire     (Sir Dane, Lorcan, Juniper, Rosalind) — Whetstone of the Hunt
-     Pack 3: Off the Beaten Path     (Cinder, Zark, Naill, Nettle)         — Ember-Iron Bracers
+/* ================= 0.22 HEROES: 24-HERO CAST & 12-CLASS KEYWORD SYSTEM =================
+   All 24 heroes across 6 toggleable packs unified under 17 iconic D&D Class Keywords (1-2 per class):
+     Fighter:   Action Surge          | Cleric:    Channel Divinity
+     Paladin:   Smite, Aura           | Wizard:    Arcane Recovery
+     Barbarian: Rage                  | Bard:      Bardic Inspiration
+     Druid:     Wild Shape            | Ranger:    Hunter's Mark (Ranger-exclusive)
+     Rogue:     Sneak Attack, Cunning Action
+     Monk:      Ki -> Ki Ability      | Sorcerer:  Sorcery Points -> Metamagic
+     Warlock:   Hex, Pact Boon
    Standing Rules:
    - One ability forever per hero (except Arthur's Quest Flame Gauntlet upgrade).
    - High = signature state / recursion firework. Nat 20 = board-bending tabletop cheer moment.
    - Tier II Paths = The Wiring (Path 1 Vertical fuels own firework; Path 2 Splash wires into team).
-   - Tags are mechanical labels ONLY (no trait-counting bonuses).
+   - Tags & Class Keywords are mechanical labels/hooks ONLY (zero trait-counting bonuses).
    - One sentence per mechanic on player-facing cards.
 */
 
@@ -19,6 +23,42 @@ const HERO_ORDER = [
   'zoe', 'toot', 'gilthrax', 'gains',
   'velith', 'corvin', 'saint', 'kaska'
 ];
+
+/* ---------- Universal 12-Class Keyword Registry (17 Class Keywords) ---------- */
+const CLASS_KW = {
+  action_surge:       { n: 'Action Surge',       cls: 'Fighter',   kind: 'Trigger',        c: '#a84a1c', x: 'Fighter keyword. Fires an immediate burst of extra action economy (bonus strike, follow-up, or refresh) when its condition is met.' },
+  channel_divinity:   { n: 'Channel Divinity',   cls: 'Cleric',    kind: 'Trigger',        c: '#b88a1c', x: 'Cleric keyword. Once-per-fight signature divine miracle; can be reset by Nat 20s, items, or Cleric synergies.' },
+  smite:              { n: 'Smite',              cls: 'Paladin',   kind: 'Trigger',        c: '#c8a02c', x: 'Paladin keyword. Empowers a strike or ability with a radiant or nature burst that triggers Smite synergies.' },
+  aura:               { n: 'Aura',               cls: 'Paladin',   kind: 'Presence',       c: '#8a7a2c', x: 'Paladin keyword. Radiates a persistent protective or empowering zone to nearby allies.' },
+  arcane_recovery:    { n: 'Arcane Recovery',    cls: 'Wizard',    kind: 'Trigger',        c: '#2f5a8f', x: 'Wizard keyword. Recovers ability Charge whenever this Wizard’s signature condition occurs.' },
+  rage:               { n: 'Rage',               cls: 'Barbarian', kind: 'State',          c: '#a82a1c', x: 'Barbarian keyword. Enters or stacks a fierce combat state driving durability, speed, or immortality.' },
+  bardic_inspiration: { n: 'Bardic Inspiration', cls: 'Bard',      kind: 'Token',          c: '#a83a7a', x: 'Bard keyword. Grants an ally an Inspiration die or Mote that boosts their next ability roll and triggers effects when spent.' },
+  wild_shape:         { n: 'Wild Shape',         cls: 'Druid',     kind: 'Transformation', c: '#3c8a4c', x: 'Druid keyword. Channels a primal form or living nature aspect to transform combat presence.' },
+  hunters_mark:       { n: 'Hunter’s Mark',      cls: 'Ranger',    kind: 'Mark',           c: '#3f7a2c', x: 'Ranger keyword. Designates a quarry for bonus WIS-scaled Ranger damage and team focus-fire payoffs.' },
+  sneak_attack:       { n: 'Sneak Attack',       cls: 'Rogue',     kind: 'Trigger',        c: '#3a3a4a', x: 'Rogue keyword. Bonus precision damage against flanked, impaired, or ambushed foes.' },
+  cunning_action:     { n: 'Cunning Action',     cls: 'Rogue',     kind: 'Trigger',        c: '#5a4a6a', x: 'Rogue keyword. Agile tumble, Stealth, or trickery maneuver that triggers ambush payoffs.' },
+  ki:                 { n: 'Ki',                 cls: 'Monk',      kind: 'Resource',       c: '#2c7a8a', x: 'Monk resource. 4-pip bar filled by attacking and taking hits; filling it fires a Ki Ability.' },
+  ki_ability:         { n: 'Ki Ability',         cls: 'Monk',      kind: 'Payoff',         c: '#1f6a7a', x: 'Monk payoff. Signature martial technique fired whenever this hero’s Ki bar fills.' },
+  sorcery_points:     { n: 'Sorcery Points',     cls: 'Sorcerer',  kind: 'Resource',       c: '#c4441c', x: 'Sorcerer resource. 4-pip bar built by casts and elemental triggers; filling it fires Metamagic.' },
+  metamagic:          { n: 'Metamagic',          cls: 'Sorcerer',  kind: 'Payoff',         c: '#d45a1c', x: 'Sorcerer payoff. Spell-warping effect automatically fired when Sorcery Points fill.' },
+  hex:                { n: 'Hex',                cls: 'Warlock',   kind: 'Mark',           c: '#7a3fa0', x: 'Warlock keyword. Curses a foe to take bonus necrotic damage on every hit; transfers on death.' },
+  pact_boon:          { n: 'Pact Boon',          cls: 'Warlock',   kind: 'Trigger',        c: '#5a2a7a', x: 'Warlock keyword. Patron payoff triggered whenever a Hexed foe dies.' }
+};
+
+const classKwOf = k => {
+  const d = H[k];
+  if (!d) return [];
+  if (d.ckw && d.ckw.length) return d.ckw.map(e => e.k);
+  return Object.keys(d.kw || {}).filter(x => CLASS_KW[x]);
+};
+
+const classKwPill = (kwKey, match, sub) => {
+  const K = CLASS_KW[kwKey];
+  if (!K) return '';
+  const title = `${K.n} (${K.cls} · ${K.kind})${match ? ' — Party Synergy' : ''}`;
+  const tip = `${sub ? sub + ' — ' : ''}${K.x}${match ? ' Shares or interacts with a Class Keyword in your party.' : ''}`;
+  return `<span class="ckwpill${match ? ' syn' : ''}" style="--kc:${K.c}" data-tn="${esc(title)}" data-tip="${esc(tip)}">${match ? '★ ' : ''}${esc(K.n)}</span>`;
+};
 
 /* ---------- Tag definitions (mechanical labels only; zero trait-counting) ---------- */
 const TAGDEF = {
@@ -32,13 +72,13 @@ const TAGDEF = {
   backline:{ n: 'Backline',     c: '#5a4a6a', x: 'Leaps behind or targets distant enemy backliners.' },
   gold:    { n: 'Gold',         c: '#b08a1c', x: 'Generates or scales with Gold during the run.' },
   ambush:  { n: 'Ambush',       c: '#3a3a3a', x: 'Uses Stealth or sudden backline burst.' },
-  marked:  { n: 'Marked',       c: '#3f7a2c', x: 'Focus-fire mark amplifying strikes and on-hit effects.' },
+  marked:  { n: 'Marked',       c: '#3f7a2c', x: 'Ranger Hunter’s Mark amplifying strikes and on-hit effects.' },
   control: { n: 'Control',      c: '#8a6a1c', x: 'Roots, Stuns, Staggers, or Taunts enemies.' },
   poison:  { n: 'Poison',       c: '#4a8a2c', x: 'Stacking damage over time that never fades.' },
   d20:     { n: 'd20',          c: '#a83a7a', x: 'Manipulates ability d20 rolls, Inspiration dice, or Nat 20s.' },
   burn:    { n: 'Burn',         c: '#c4441c', x: 'Fire damage over time that can be fed and detonated.' },
-  rage:    { n: 'Rage',         c: '#a82a1c', x: 'Stacking Bear Rage driving durability and attack speed.' },
-  hex:     { n: 'Hex',          c: '#7a3fa0', x: 'Curses foes to take bonus necrotic damage on every hit.' },
+  rage:    { n: 'Rage',         c: '#a82a1c', x: 'Barbarian Rage state driving durability, speed, or immortality.' },
+  hex:     { n: 'Hex',          c: '#7a3fa0', x: 'Warlock curse dealing bonus necrotic damage on every hit.' },
   necrosis:{ n: 'Necrosis',     c: '#3a2a4a', x: 'Grows a kill threshold from the left end of the health bar.' }
 };
 
@@ -47,15 +87,15 @@ const HTAGS = {
   bram:          ['heal', 'ward', 'holy', 'side'],
   faelan:        ['ward', 'charge'],
   wallaby:       ['backline', 'gold', 'ambush'],
-  dane:          ['marked', 'holy', 'onhit'],
+  dane:          ['holy', 'onhit', 'side', 'control'],
   lorcan:        ['marked', 'onhit'],
   juniper:       ['control', 'poison', 'heal'],
   rosalind:      ['d20', 'charge', 'side'],
   cinder:        ['burn', 'charge'],
   zark:          ['rage', 'side', 'control'],
-  naill:         ['onhit', 'control', 'marked'],
+  naill:         ['onhit', 'control'],
   nettle:        ['hex', 'onhit', 'necrosis', 'd20'],
-  pillar:        ['holy', 'control', 'side'],
+  pillar:        ['rage', 'holy', 'control', 'side'],
   mother_laurel: ['control', 'heal', 'holy', 'ward'],
   lumen:         ['holy', 'burn', 'd20'],
   jamison:       ['d20', 'holy', 'charge', 'side'],
@@ -133,7 +173,11 @@ hero('arthur', {
   attr: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 10 },
   prim: 'str', pair: ['str', 'dex'],
   hp: 112, ac: 15, sr: 11,
-  kw: { alert: 1 },
+  kw: { action_surge: 1 },
+  ckw: [
+    { k: 'action_surge', sub: 'Combat Reflexes', x: 'Dodging with Alert—or dropping below 50% HP once per fight—triggers Action Surge (immediate free Longsword strike + 15 Charge).' }
+  ],
+  f: { startAlert: 1, arthurSurge: 1 },
   passive: { n: 'Alert', x: 'Starts every fight Alert (dodging the next attack) with +25 Charge.' },
   atk: { n: 'Longsword', d: [1, 8], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.35 },
   abil: {
@@ -184,15 +228,15 @@ hero('arthur', {
   paths: [
     {
       k: 'vigilance', n: 'Constant Vigilance', attr: 'dex', tags: ['alert', 'onhit'],
-      x: 'Dodging triggers a longsword riposte; kills refresh Alert; gains Alert once at 50% HP.',
-      full: 'Dodging an attack triggers a free Longsword riposte. Kills refresh Alert, and dropping below 50% HP grants Alert once per fight.',
+      x: 'Kills refresh Alert; Arthur’s Action Surge deals +50% damage and grants Alert at 50% HP.',
+      full: 'Kills refresh Alert. Arthur’s Action Surge strikes deal +50% damage, and dropping below 50% HP also grants Alert once per fight.',
       t4x: 'Each Alert dodges 2 attacks instead of 1.',
       f: { vigilance: 1 }
     },
     {
       k: 'initiative', n: 'Roll for Initiative', attr: 'int', tags: ['alert', 'charge'],
-      x: 'Whenever any ally dodges an attack, they gain +22 Charge; Arthur’s first volley applies Exposed.',
-      full: 'Whenever any ally dodges an attack, they gain +22 Charge. Arthur’s first ability cast each fight applies Exposed to every foe hit.',
+      x: 'Ally dodges grant +22 Charge; any ally Action Surge applies Exposed to its target.',
+      full: 'Whenever any ally dodges an attack, they gain +22 Charge. Arthur’s first volley and any ally Action Surge apply Exposed.',
       t4x: 'The entire party starts every fight Alert.',
       f: { initSplash: 1 }
     }
@@ -213,18 +257,21 @@ hero('bram', {
   attr: { str: 14, dex: 10, con: 16, int: 10, wis: 16, cha: 12 },
   prim: 'wis', pair: ['str', 'wis'],
   hp: 132, ac: 16, sr: 13,
-  kw: { channel: 1 },
+  kw: { channel_divinity: 1 },
+  ckw: [
+    { k: 'channel_divinity', sub: 'Preserve Life', x: 'Once per fight, when Bram or a nearby ally drops below 45% HP, bursts heavy healing onto nearby allies.' }
+  ],
   passive: { n: 'Stout', x: 'Immune to push and knockback.' },
   f: { pushResist: 1, preserveLife: 1 },
   atk: { n: 'Warhammer', d: [1, 8], flat: 3, kind: 'phys', ty: 'bludgeoning', iv: 1.45 },
   abil: {
     n: 'Cure Wounds', cr: 7, pa: 8, cut: [6, 13], self: 1,
-    one: 'Heals closest ally; High turns excess into Ward plus a free Warhammer swing, Nat 20 heals adjacent allies and resets Channel Divinity.',
+    one: 'Heals closest ally; High turns excess into Ward plus a free Warhammer swing, Nat 20 heals adjacent allies and resets Channel Divinity for all Clerics.',
     b: [
       'Heals the closest injured ally (or himself) for 2d6.',
       'Heals the closest injured ally for 3d6.',
       'Heals for 4d8, turning all excess into Ward, plus a free Warhammer swing.',
-      'Heals all adjacent allies for 4d8 (excess becomes Ward) and resets Channel Divinity.'
+      'Heals all adjacent allies for 4d8 (excess becomes Ward) and resets Channel Divinity for Bram and Cleric allies.'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
@@ -245,7 +292,8 @@ hero('bram', {
         const ts = fr.filter(a => hd(a, u) <= 1);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 1, ty: 'radiant', ids: ts.map(x => x.id) });
         ts.forEach(a => healWithOverWard(a, roll(4, 8), true));
-        u._pres = 0; // Reset Channel Divinity!
+        // Reset Channel Divinity for Bram AND any Cleric allies!
+        fr.filter(a => a.kw && a.kw.channel_divinity).forEach(cl => { cl._cdUsed = 0; cl._pres = 0; });
         callout(b, u, 'CHANNEL RESET!', '#ffe9a0');
         if (u.target && u.target.alive && hd(u.target, u) <= 1) {
           strike(b, u, u.target);
@@ -273,8 +321,8 @@ hero('bram', {
     },
     {
       k: 'divine', n: 'Divine Strike', attr: 'str', tags: ['holy', 'side'],
-      x: 'Bram and adjacent allies add 1d4 Holy to melee attacks; High/Nat 20 swings trigger adjacent allies’ Holy strikes.',
-      full: 'Bram and adjacent allies add 1d4 flat Holy damage to melee attacks. Bram’s High and Nat 20 free swings also trigger adjacent allies’ Holy strikes.',
+      x: 'Adjacent allies add 1d4 Holy to melee attacks; any ally Channel Divinity or High swing triggers adjacent Holy strikes.',
+      full: 'Bram and adjacent allies add 1d4 flat Holy damage to melee attacks. Bram’s High/Nat 20 swings and any ally Channel Divinity trigger adjacent allies’ Holy strikes.',
       t4x: 'Bonus Holy damage increases to 1d8.',
       f: { divineStrike: 1 }
     }
@@ -295,7 +343,10 @@ hero('faelan', {
   attr: { str: 8, dex: 12, con: 12, int: 16, wis: 14, cha: 10 },
   prim: 'int', pair: ['int', 'int'],
   hp: 86, ac: 12, sr: 14,
-  kw: { arcane: 1 },
+  kw: { arcane_recovery: 1 },
+  ckw: [
+    { k: 'arcane_recovery', sub: 'Abjuration', x: 'Triggers Arcane Recovery (+20 Charge) whenever a Ward she placed breaks.' }
+  ],
   passive: { n: 'Fey Ancestry', x: 'Immune to Charm and Sleep.' },
   f: { feyAncestry: 1, abjurer: 1 },
   atk: { n: 'Ray of Frost', d: [1, 8], flat: 1, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.45 },
@@ -338,15 +389,15 @@ hero('faelan', {
   paths: [
     {
       k: 'projected', n: 'Projected Ward', attr: 'int', tags: ['ward', 'd20'],
-      x: 'Larger Wards; every 3rd broken Ward grants Faelan Advantage on her next cast.',
-      full: 'Faelan’s Wards are 35% larger. Every 3rd Ward she placed that breaks grants her Advantage on her next ability d20 roll.',
+      x: 'Larger Wards; every 3rd Arcane Recovery grants Faelan Advantage on her next cast.',
+      full: 'Faelan’s Wards are 35% larger. Every 3rd Ward break (Arcane Recovery) grants her Advantage on her next ability d20 roll.',
       t4x: 'Every cast of Arcane Ward shields the top 2 threatened allies.',
       f: { projWard: 1 }
     },
     {
       k: 'battery', n: 'Spell Battery', attr: 'int', tags: ['ward', 'charge'],
-      x: 'When Faelan’s Ward breaks, the warded ally gains Charge scaling with her INT.',
-      full: 'Whenever a Ward Faelan placed breaks, the warded ally gains 16 + 3×INT Charge.',
+      x: 'When Faelan triggers Arcane Recovery, the warded ally gains Charge scaling with her INT.',
+      full: 'Whenever Faelan’s Ward breaks (Arcane Recovery), the warded ally gains 16 + 3×INT Charge.',
       t4x: 'The Charge burst also splashes to allies standing adjacent to the warded hero.',
       f: { spellBattery: 1 }
     }
@@ -367,19 +418,23 @@ hero('wallaby', {
   attr: { str: 10, dex: 16, con: 12, int: 12, wis: 10, cha: 14 },
   prim: 'dex', pair: ['dex', 'dex'],
   hp: 94, ac: 14, sr: 11,
-  kw: { sneak: 1 },
+  kw: { sneak_attack: 1, cunning_action: 1 },
+  ckw: [
+    { k: 'sneak_attack', sub: 'Backstab', x: 'Strikes deal +1d6 Sneak Attack (1/s) against flanked or impaired foes; Backstab is a burst Sneak Attack.' },
+    { k: 'cunning_action', sub: 'Tumble & Pilfer', x: 'High Backstab uses Cunning Action to tumble into Stealth; Fast Hands steals Gold and Exposes foes on Cunning Action.' }
+  ],
   passive: { n: 'Lucky', x: 'Rerolls natural 1s on ability rolls.' },
   f: { lucky: 1 },
   gold: { cap: 12 },
   atk: { n: 'Shortsword', d: [1, 6], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.05 },
   abil: {
     n: 'Backstab', cr: 7, pa: 10, cut: [6, 13], self: 1,
-    one: 'Tumbles behind the farthest foe for 2d6–8d6; High grants Stealth, Nat 20 refunds 100% Charge and pops Gold.',
+    one: 'Tumbles behind the farthest foe for a 2d6–8d6 Sneak Attack; High triggers Cunning Action Stealth, Nat 20 refunds 100% Charge + Gold.',
     b: [
-      'Tumbles behind the farthest foe for 2d6 piercing damage.',
-      'Tumbles behind the farthest foe for 4d6 piercing damage.',
-      'Strikes the farthest foe for 6d6 and enters Stealth (halves next hit and drops aggro).',
-      'Strikes for 8d6, instantly refunds 100% Charge, and pops +2 Gold.'
+      'Tumbles behind the farthest foe for a 2d6 Sneak Attack.',
+      'Tumbles behind the farthest foe for a 4d6 Sneak Attack.',
+      'Strikes for a 6d6 Sneak Attack and triggers Cunning Action (Stealth, halves next hit).',
+      'Strikes for an 8d6 Sneak Attack, refunds 100% Charge, and pops +2 Gold.'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -390,17 +445,14 @@ hero('wallaby', {
       b.events.push({ k: 'area', id: u.id, tid: far.id, shape: 'splash', r: 0.7, ty: 'psychic', ids: [far.id] });
       const nDice = [2, 4, 6, 8][P];
       hit(b, u, far, roll(nDice, 6), { kind: 'phys', ty: 'piercing', melee: 1, ab: 1 });
+      triggerSneakAttack(b, u, far, { ability: 1 });
       if (P >= 2) {
+        triggerCunningAction(b, u, far, { stealth: P === 2 ? 3.5 : 0, stealthShield: P === 2 ? 1 : 0, label: 'TUMBLE' });
         if (u.f.fastHands) {
           const amt = (P === 3 ? 2 : 1) * (u.tier >= 4 ? 2 : 1);
           gainGold(b, u, amt, 'FAST HANDS');
           if (far.alive) expose(b, far, 4 * chaK(u));
         }
-      }
-      if (P === 2) {
-        u.hidden = 1; u.hideT = b.time + 3.5; u.stealthShield = 1;
-        b.units.forEach(x => { if (x.target === u) x.target = null; });
-        status(b, u, 'STEALTH', '#c48fe6');
       }
       if (P === 3) {
         gainGold(b, u, 2, 'JACKPOT');
@@ -419,8 +471,8 @@ hero('wallaby', {
     },
     {
       k: 'fasthands', n: 'Fast Hands', attr: 'cha', tags: ['gold', 'ambush'],
-      x: 'High and Nat 20 rolls steal Gold and apply Exposed to the target.',
-      full: 'High and Nat 20 ability rolls steal bonus Gold (board-only) and apply Exposed (−2 AC and SR) to his target.',
+      x: 'Cunning Action and High/Nat 20 rolls steal Gold and apply Exposed to the target.',
+      full: 'Wallaby’s Cunning Action and High/Nat 20 ability rolls steal bonus Gold (board-only) and apply Exposed (−2 AC and SR) to his target.',
       t4x: 'Double Gold stolen from Fast Hands.',
       f: { fastHands: 1 }
     }
@@ -445,18 +497,22 @@ hero('dane', {
   attr: { str: 16, dex: 12, con: 16, int: 12, wis: 12, cha: 16 }, // Includes Human Versatility (+1 all six!)
   prim: 'cha', pair: ['str', 'cha'],
   hp: 136, ac: 17, sr: 13,
-  kw: { smite: 1 },
+  kw: { smite: 1, aura: 1 },
+  ckw: [
+    { k: 'smite', sub: 'Divine Smite', x: 'Every 3rd melee strike and Compelled Duel unleash a Smite (+1d8 Holy).' },
+    { k: 'aura', sub: 'Aura of Devotion', x: 'Allies within 2 squares (3 mounted) gain +1 AC, +1 SR, and immunity to Charm and Frighten.' }
+  ],
   passive: { n: 'Human Versatility', x: '+1 to all six attributes (included in stats).' },
-  f: { smitePeriodic: 1 },
+  f: { smitePeriodic: 1, auraDevotion: 1 },
   atk: { n: 'Longsword', d: [1, 8], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.4 },
   abil: {
     n: 'Compelled Duel', cr: 7.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Taunts and Marks his target; High adds Sacred Shield (Ward + thorns), Nat 20 empowers all allies attacking it with Holy and Charge.',
+    one: 'Taunts and Smites his target; High raises Sacred Shield (Ward + thorns), Nat 20 empowers his Aura so allies attacking the Taunted foe trigger Smites and +10 Charge.',
     b: [
-      'Taunts his target for 2.5s and applies Marked.',
-      'Taunts his target for 3.5s and applies Marked.',
-      'Taunts and Marks target, gaining Sacred Shield (Ward + thorns).',
-      'Taunts and Marks target; all allies attacking it deal +1d8 Holy and gain +10 Charge.'
+      'Taunts his target for 2.5s and unleashes a Smite (1d8 Holy).',
+      'Taunts his target for 3.5s and unleashes a Smite (2d8 Holy).',
+      'Taunts and Smites (2d8 Holy), raising Sacred Shield (Ward + thorns).',
+      'Taunts and Smites (3d8 Holy); allies attacking his Taunted foe trigger bonus 1d8 Smites and gain +10 Charge.'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -466,9 +522,9 @@ hero('dane', {
       t.st.taunt = Math.max(t.st.taunt, dur);
       t.st.tauntBy = u;
       t.target = u;
-      markFoe(b, u, t);
       b.events.push({ k: 'beam', id: u.id, tid: t.id, ty: 'radiant' });
       b.events.push({ k: 'area', id: u.id, tid: t.id, shape: P >= 2 ? 'nova' : 'splash', r: P >= 2 ? 1.2 : 0.75, ty: 'radiant', ids: [t.id] });
+      triggerSmite(b, u, t, roll([1, 2, 2, 3][P], 8), { label: 'DIVINE SMITE', ab: 1 });
       status(b, t, 'COMPELLED DUEL', '#ffe9a0');
       if (P >= 2) {
         const w = (26 + Math.max(0, u.m.cha) * 5) * u.dm * chaK(u);
@@ -478,31 +534,31 @@ hero('dane', {
       }
       if (P === 3) {
         t.st.duelCrusade = 6 * chaK(u);
-        callout(b, t, 'CRUSADE MARK!', '#ffe9a0');
+        callout(b, t, 'CRUSADE AURA!', '#ffe9a0');
       }
     }
   },
   paths: [
     {
-      k: 'devotion', n: 'Oath of Devotion', attr: 'cha', tags: ['marked', 'holy'],
-      x: 'Taking hits from his Marked foe smites them for 1d8 Holy damage.',
-      full: 'Whenever Sir Dane’s Marked target hits him, he retaliates with a 1d8 Holy Smite.',
-      t4x: 'When his Marked foe dies, the Mark automatically jumps to a new foe.',
+      k: 'devotion', n: 'Oath of Devotion', attr: 'cha', tags: ['holy', 'control'],
+      x: 'Taking hits from his Taunted foe retaliates with a 1d8 Holy Smite.',
+      full: 'Whenever Sir Dane’s Taunted target hits him, he retaliates with a 1d8 Holy Smite.',
+      t4x: 'When his Taunted foe dies, Dane automatically Taunts and Smites the nearest enemy.',
       f: { oathDevotion: 1 }
     },
     {
-      k: 'calltoarms', n: 'Call to Arms', attr: 'str', tags: ['marked', 'onhit'],
-      x: 'Allies hitting Dane’s Marked target trigger their on-hit effects twice on their first hit.',
-      full: 'Each ally’s first attack against Sir Dane’s Marked target triggers all of their on-hit effects twice.',
-      t4x: 'Every 3rd ally hit against Dane’s Marked target also triggers on-hit effects twice.',
+      k: 'calltoarms', n: 'Call to Arms', attr: 'str', tags: ['holy', 'onhit', 'side'],
+      x: 'Allies in Dane’s Aura trigger on-hit twice on their first hit; any ally Smite grants Aura allies +8 Charge.',
+      full: 'Allies standing inside Sir Dane’s Aura trigger on-hit effects twice on their first strike against his target. Whenever any ally triggers Smite, allies in Dane’s Aura gain +8 Charge.',
+      t4x: 'Every 3rd attack from allies in Dane’s Aura also triggers on-hit effects twice.',
       f: { callToArms: 1 }
     }
   ],
   quest: {
-    id: 'dane_q', statKey: 'markedAllyHits', goal: 20,
-    label: 'Allies trigger 20 hits on Marked targets',
+    id: 'dane_q', statKey: 'smites', goal: 20,
+    label: 'Trigger 20 Smites (Dane or allies in his Aura)',
     rewardName: 'Find Steed',
-    rewardDesc: '+2 STR, +2 CON; transforms into a Large (2×2) mounted knight whose opening cavalry charge pushes and Marks foes.'
+    rewardDesc: '+2 STR, +2 CON; transforms into a Large (2×2) mounted knight whose opening cavalry charge pushes & Smites foes and widens his Aura.'
   }
 });
 
@@ -514,18 +570,21 @@ hero('lorcan', {
   attr: { str: 10, dex: 16, con: 12, int: 10, wis: 16, cha: 10 },
   prim: 'wis', pair: ['dex', 'wis'],
   hp: 94, ac: 14, sr: 13,
-  kw: { mark: 1 },
+  kw: { hunters_mark: 1 },
+  ckw: [
+    { k: 'hunters_mark', sub: 'Hunter’s Quarry', x: 'Applies Hunter’s Mark; Ranger attacks against Marked foes deal +1d6 + WIS bonus damage.' }
+  ],
   passive: { n: 'Keen Sight', x: 'Extended range (+1 square) and ignores partial dodge or brush cover.' },
   f: { keenSight: 1, huntMark: 1 },
   atk: { n: 'Longbow', d: [1, 8], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.2 },
   abil: {
     n: 'Hunter’s Mark', cr: 7.5, pa: 10, cut: [6, 13],
-    one: 'Piercing shot + Marked; High fires a double-shot (2× on-hit), Nat 20 fires a 4-arrow volley that jumps and refunds 50% Charge on kill.',
+    one: 'Piercing shot + Hunter’s Mark; High fires a double-shot (2× on-hit), Nat 20 fires a 4-arrow volley that jumps and refunds 50% Charge on kill.',
     b: [
-      'Fires a piercing arrow (2d6) and applies Marked.',
-      'Fires a piercing arrow (3d6) and applies Marked.',
-      'Applies Marked and fires a double-shot (2× on-hit) at the Marked target.',
-      'Fires a 4-arrow volley (4× on-hit) at the Marked target; kills jump Mark and refund 50% Charge.'
+      'Fires a piercing arrow (2d6) and applies Hunter’s Mark.',
+      'Fires a piercing arrow (3d6) and applies Hunter’s Mark.',
+      'Applies Hunter’s Mark and fires a double-shot (2× on-hit) at the Marked target.',
+      'Fires a 4-arrow volley (4× on-hit) at the Marked target; kills jump Hunter’s Mark and refund 50% Charge.'
     ],
     fx(b, u, P) {
       const t = (u.target && u.target.alive) ? u.target : foes(b, u)[0];
@@ -563,21 +622,21 @@ hero('lorcan', {
     {
       k: 'colossus', n: 'Colossus Slayer', attr: 'dex', tags: ['marked', 'onhit', 'd20'],
       x: 'Every 3rd attack against a Marked foe deals +2d8 bonus damage and grants +1 to his next d20 roll.',
-      full: 'Every 3rd auto-attack against a Marked foe deals +2d8 physical damage and adds +1 to Lorcan’s next ability d20 roll.',
+      full: 'Every 3rd auto-attack against a Hunter’s Mark foe deals +2d8 physical damage and adds +1 to Lorcan’s next ability d20 roll.',
       t4x: 'Triggers on every 2nd auto-attack against a Marked foe.',
       f: { colossusSlayer: 1 }
     },
     {
       k: 'trophies', n: 'Volley of Trophies', attr: 'wis', tags: ['marked', 'onhit'],
-      x: 'Marked targets take +35% bonus damage from all allies’ on-hit effects and statuses.',
-      full: 'Marked targets take 35% more damage from all allies’ on-hit effects and damaging statuses (Burn, Poison).',
+      x: 'Hunter’s Mark targets take +35% bonus damage from all allies’ on-hit effects and statuses.',
+      full: 'Hunter’s Mark targets take 35% more damage from all allies’ on-hit effects and damaging statuses (Burn, Poison).',
       t4x: 'Killing a Marked foe grants the whole party +25% attack speed for 4s.',
       f: { trophyVolley: 1 }
     }
   ],
   quest: {
     id: 'lorcan_q', statKey: 'markedKills', goal: 20,
-    label: 'Kill 20 Marked targets',
+    label: 'Kill 20 Hunter’s Mark targets',
     rewardName: 'Favoured Enemy',
     rewardDesc: 'Each elite or boss archetype killed grants a permanent trophy (+1 DEX and +15% damage vs. that archetype).'
   }
@@ -591,18 +650,21 @@ hero('juniper', {
   attr: { str: 8, dex: 12, con: 14, int: 12, wis: 16, cha: 12 },
   prim: 'wis', pair: ['wis', 'wis'],
   hp: 96, ac: 13, sr: 16, // Includes Gnome Cunning (+2 SR)
-  kw: { natrec: 1 },
-  passive: { n: 'Gnome Cunning', x: '+2 Spell Resistance (included in stats).' },
+  kw: { wild_shape: 1 },
+  ckw: [
+    { k: 'wild_shape', sub: 'Bramble Aspect', x: 'High/Nat 20 Entangle channels Wild Shape for 5s, granting nearby allies Thorns and amplifying Root and Poison.' }
+  ],
+  passive: { n: 'Gnome Cunning', x: '+2 Spell Resistance (included in stats); gains +10 Charge when Rooted foes take damage.' },
   f: { naturalRecovery: 1 },
   atk: { n: 'Thorn Whip', d: [1, 8], flat: 1, kind: 'magic', ty: 'piercing', iv: 1.4 },
   abil: {
     n: 'Entangle', cr: 8, pa: 8, cut: [6, 13], self: 1,
-    one: 'Roots a clump of foes; High adds Poison and ally Thorns, Nat 20 Roots the whole enemy frontline and double-triggers Poison.',
+    one: 'Roots a clump of foes; High channels Wild Shape (Bramble Aspect) + Poison, Nat 20 Roots the enemy frontline and double-triggers Poison.',
     b: [
       'Roots target area for 1.8s and deals 1d6 nature damage.',
       'Roots target area for 2.6s and deals 2d6 nature damage.',
-      'Roots for 3.2s, applies 4 Poison/s, and grants adjacent allies Thorns.',
-      'Roots the entire enemy frontline for 4s and immediately triggers all active Poison twice.'
+      'Roots for 3.2s, applies 4 Poison/s, and channels Wild Shape (Bramble Aspect + ally Thorns).',
+      'Roots the enemy frontline for 4s, channels Wild Shape, and immediately triggers all active Poison twice.'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -618,14 +680,15 @@ hero('juniper', {
         targets = fs.filter(x => hd(x, centerT) <= 1);
       }
       b.events.push({ k: 'area', id: u.id, tid: centerT.id, shape: 'splash', r: P === 3 ? 2 : 1, ty: 'poison', ids: targets.map(x => x.id) });
-      const dur = [1.8, 2.6, 3.2, 4.0][P] * chaK(u);
+      const wsMult = (u.wildShapeT > 0 || P >= 2) ? 1.25 : 1;
+      const dur = [1.8, 2.6, 3.2, 4.0][P] * chaK(u) * wsMult;
       targets.forEach(t => {
         applyRoot(b, u, t, dur);
         hit(b, u, t, roll([1, 2, 2, 3][P], 6), { kind: 'magic', ty: 'poison', area: 1 });
-        if (P >= 2) applyStatus(b, u, t, 'poison', 3 + Math.max(0, u.m.wis) * .6);
+        if (P >= 2) applyStatus(b, u, t, 'poison', (3 + Math.max(0, u.m.wis) * .6) * wsMult);
       });
       if (P >= 2) {
-        friends(b, u).filter(a => hd(a, u) <= 2).forEach(a => { a.vineThornsT = Math.max(a.vineThornsT || 0, 5); });
+        triggerWildShape(b, u, { form: 'Bramble Aspect', dur: 5 * chaK(u), thorns: 1 });
       }
       if (P === 3) {
         fs.forEach(t => {
@@ -648,8 +711,8 @@ hero('juniper', {
     },
     {
       k: 'land', n: 'Circle of the Land', attr: 'con', tags: ['control', 'poison', 'heal'],
-      x: 'Whenever a foe is Rooted or Poisoned, the lowest-HP ally heals and gains a small Ward.',
-      full: 'Whenever Juniper Roots or Poisons a foe, the lowest-HP ally heals for 4 + WIS and gains a small Ward.',
+      x: 'Whenever a foe is Rooted/Poisoned—or any ally triggers Wild Shape—the lowest-HP ally heals and gains Ward.',
+      full: 'Whenever Juniper Roots or Poisons a foe, or any ally channels Wild Shape, the lowest-HP ally heals for 4 + WIS and gains a small Ward.',
       t4x: 'Heals and Wards the entire party instead of one ally.',
       f: { circleLand: 1 }
     }
@@ -670,18 +733,21 @@ hero('rosalind', {
   attr: { str: 8, dex: 12, con: 12, int: 14, wis: 12, cha: 16 },
   prim: 'cha', pair: ['cha', 'cha'],
   hp: 90, ac: 13, sr: 13,
-  kw: { insp: 1 },
+  kw: { bardic_inspiration: 1 },
+  ckw: [
+    { k: 'bardic_inspiration', sub: 'Lore Die', x: 'Grants a stackable d6/d8/d10 Bardic Inspiration die added directly to an ally’s next ability d20 roll.' }
+  ],
   passive: { n: 'Socialite’s Poise', x: 'Starts combat with +30 Charge when positioned beside an ally.' },
   f: { socialite: 1, bardSelf: 1 },
   atk: { n: 'Vicious Mockery', d: [1, 6], flat: 1, kind: 'magic', ty: 'psychic', iv: 1.4 },
   abil: {
     n: 'Bardic Inspiration', cr: 8.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Grants a stackable d6/d8/d10 Inspiration die to an ally’s next d20; High passes the die on, Nat 20 inspires the whole party with +30% Charge.',
+    one: 'Grants a d6/d8/d10 Bardic Inspiration die; High passes the die on, Nat 20 inspires the whole party with +30% Charge.',
     b: [
-      'Grants the closest ally a d6 Inspiration die for their next ability d20 roll.',
-      'Grants an ally a d6 Inspiration die (+CHA bonus) for their next ability d20 roll.',
-      'Grants a d8 Inspiration die that passes to another ally after being spent.',
-      'Inspires the entire party with d10 dice and grants +30% Charge to everyone.'
+      'Grants the closest ally a d6 Bardic Inspiration die for their next ability d20 roll.',
+      'Grants an ally a d6 Bardic Inspiration die (+CHA bonus) for their next ability d20 roll.',
+      'Grants a d8 Bardic Inspiration die that passes to another ally after being spent.',
+      'Inspires the entire party with d10 Bardic Inspiration dice and grants +30% Charge to everyone.'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => a !== u && !a.minion && a.abil);
@@ -706,15 +772,15 @@ hero('rosalind', {
   paths: [
     {
       k: 'passround', n: 'Pass the Round', attr: 'cha', tags: ['d20', 'charge'],
-      x: 'Inspired allies pass a diminishing die up to CHA times; ally Nat 20s refund Rosalind 50% Charge.',
-      full: 'Inspired allies pass a diminishing Inspiration die up to CHA times. Any ally rolling a Nat 20 with Inspiration refunds Rosalind 50% Charge.',
+      x: 'Inspired allies pass a diminishing die up to CHA times; any Inspired Nat 20 refunds Rosalind 50% Charge.',
+      full: 'Inspired allies pass a diminishing Inspiration die up to CHA times. Any ally rolling a Nat 20 while spending Bardic Inspiration (Lore Die or Mote) refunds Rosalind 50% Charge.',
       t4x: 'Passed Inspiration dice never shrink in size.',
       f: { passRound: 1 }
     },
     {
       k: 'encore', n: 'Encore', attr: 'int', tags: ['d20', 'charge', 'side'],
-      x: 'Adjacent Inspired ally gains +40% Charge speed for rapid casting.',
-      full: 'An Inspired ally standing beside Rosalind gains +40% Charge speed (as if boosted by massive INT) until they cast.',
+      x: 'Adjacent Inspired ally (Lore Die or Mote) gains +40% Charge speed for rapid casting.',
+      full: 'An ally holding any Bardic Inspiration beside Rosalind gains +40% Charge speed until they cast.',
       t4x: 'Applies to all adjacent Inspired allies.',
       f: { encore: 1 }
     }
@@ -739,17 +805,21 @@ hero('cinder', {
   attr: { str: 8, dex: 12, con: 12, int: 14, wis: 10, cha: 16 },
   prim: 'cha', pair: ['cha', 'cha'],
   hp: 90, ac: 13, sr: 13,
-  kw: { meta: 1 },
+  kw: { sorcery_points: 1, metamagic: 1 },
+  ckw: [
+    { k: 'sorcery_points', sub: 'Draconic Sparks', x: '4-pip Sorcery Points bar built by High Fireballs (+2) and Burn ticks (Draconic Surge).' },
+    { k: 'metamagic', sub: 'Twinned Spell', x: 'When Sorcery Points fill, Metamagic automatically casts a free Twinned Fireball at the next densest group.' }
+  ],
   passive: { n: 'Hellish Resistance', x: 'Takes 50% less fire and Burn damage.' },
   f: { hellishRes: 1, sorceryBar: 1 },
   atk: { n: 'Fire Bolt', d: [1, 10], flat: 1, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.45 },
   abil: {
     n: 'Fireball', cr: 8, pa: 8, cut: [6, 13], self: 1,
-    one: 'Blasts the densest clump with Fire + Burn; High builds 2 Sorcery Points (Twins at 4), Nat 20 detonates all Burn on the board.',
+    one: 'Blasts the densest clump with Fire + Burn; High builds +2 Sorcery Points (fires Metamagic at 4), Nat 20 detonates all Burn.',
     b: [
       'Hurls a Fireball (2d6 fire + light Burn) at the densest clump.',
       'Hurls a Fireball (4d6 fire + Burn) at the densest clump.',
-      'Hurls a Fireball (5d6 fire + Burn) and gains +2 Sorcery Points (auto-Twins at 4).',
+      'Hurls a Fireball (5d6 fire + Burn) and gains +2 Sorcery Points (auto-fires Metamagic: Twinned Spell at 4).',
       'Hurls a massive Fireball (7d6 fire) and detonates all Burn on the board immediately.'
     ],
     fx(b, u, P) {
@@ -797,13 +867,13 @@ hero('cinder', {
       k: 'draconic', n: 'Draconic Surge', attr: 'cha', tags: ['burn', 'd20'],
       x: 'Enemy Burn ticks feed Cinder Sorcery Points and +1 to her next d20 roll.',
       full: 'Every 3rd enemy Burn tick grants Cinder +1 Sorcery Point and +1 to her next ability d20 roll.',
-      t4x: 'Automatically Twins Fireball at 3 Sorcery Points instead of 4.',
+      t4x: 'Metamagic fires at 3 Sorcery Points instead of 4.',
       f: { draconicSurge: 1 }
     },
     {
       k: 'wildfire', n: 'Wildfire', attr: 'int', tags: ['burn', 'charge'],
-      x: 'Twinned casts apply Exposed and shred enemy Spell Resistance.',
-      full: 'Twinned Fireballs apply Exposed and shred −2 SR on every foe hit.',
+      x: 'Metamagic casts apply Exposed and shred enemy Spell Resistance.',
+      full: 'Metamagic (Twinned) Fireballs apply Exposed and shred −2 SR on every foe hit.',
       t4x: 'Burning foes spread 80% of their Burn to the nearest enemy on death.',
       f: { wildfire: 1 }
     }
@@ -825,12 +895,15 @@ hero('zark', {
   prim: 'con', pair: ['str', 'con'],
   hp: 142, ac: 14, sr: 11,
   kw: { rage: 1 },
+  ckw: [
+    { k: 'rage', sub: 'Bear Rage', x: 'High/Nat 20 Bear Cleave stacks uncapped Rage (+4% damage reduction & +10% attack speed per stack).' }
+  ],
   passive: { n: 'Relentless Endurance', x: 'Once per fight, survives lethal damage at 1 HP.' },
   f: { relentlessEndurance: 1, bearTotem: 1 },
   atk: { n: 'Greataxe', d: [1, 12], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.5 },
   abil: {
     n: 'Bear Cleave', cr: 7.5, pa: 9, cut: [6, 13], self: 1,
-    one: 'Cleaves frontline foes; High stacks uncapped Bear Rage (+DR & speed), Nat 20 adds 2 Rage stacks, Stun, and 50% Charge refund.',
+    one: 'Cleaves frontline foes; High stacks uncapped Rage (+DR & speed), Nat 20 adds 2 Rage stacks, Stun, and 50% Charge refund.',
     b: [
       'Sweeps his greataxe across adjacent foes for 2d8 slashing.',
       'Sweeps his greataxe across adjacent foes for 3d8 slashing.',
@@ -866,8 +939,8 @@ hero('zark', {
     },
     {
       k: 'totemroar', n: 'Totem Roar', attr: 'str', tags: ['rage', 'side', 'charge'],
-      x: 'Gaining a Bear Rage stack gives adjacent allies a burst of attack speed and +18 Charge.',
-      full: 'Whenever Zark gains a Bear Rage stack, adjacent allies gain +25% attack speed for 3s and +18 Charge.',
+      x: 'Whenever Zark or any ally enters/stacks Rage, adjacent allies gain +25% attack speed and +18 Charge.',
+      full: 'Whenever Zark or any Barbarian ally enters or stacks Rage, adjacent allies gain +25% attack speed for 3s and +18 Charge.',
       t4x: 'Totem Roar affects the entire party.',
       f: { totemRoar: 1 }
     }
@@ -888,18 +961,22 @@ hero('naill', {
   attr: { str: 10, dex: 16, con: 12, int: 10, wis: 16, cha: 10 },
   prim: 'wis', pair: ['dex', 'wis'],
   hp: 100, ac: 15, sr: 13,
-  kw: { ki: 1 },
+  kw: { ki: 1, ki_ability: 1 },
+  ckw: [
+    { k: 'ki', sub: '4-Pip Ki Bar', x: 'Builds Ki from attacks, taking hits, and High Flurry of Blows.' },
+    { k: 'ki_ability', sub: 'Open Hand Strike', x: 'At full Ki, unleashes an immediate Staggering strike that triggers on-hit effects.' }
+  ],
   passive: { n: 'Fleet of Foot', x: '40 ft speed for rapid movement and target-switching on the grid.' },
   f: { monkNaill: 1 },
   atk: { n: 'Unarmed Strike', d: [1, 6], flat: 1, kind: 'phys', ty: 'bludgeoning', iv: 0.95 },
   abil: {
     n: 'Flurry of Blows', cr: 7.5, pa: 9, cut: [6, 13],
-    one: 'Rapid unarmed barrage triggering on-hit; High fills Ki for an immediate Ki Strike, Nat 20 fires two Ki Strikes + Afterimage.',
+    one: 'Rapid unarmed barrage triggering on-hit; High fills Ki for an immediate Ki Ability, Nat 20 fires two Ki Abilities + Afterimage.',
     b: [
       'Unleashes 3 rapid unarmed strikes triggering on-hit effects.',
       'Unleashes 4 rapid unarmed strikes triggering on-hit effects.',
-      'Unleashes 4 strikes and fills Ki, immediately firing a Ki Strike (Stagger + bonus hit).',
-      'Unleashes 5 strikes, fires two Ki Strikes, and gains Afterimage (dodges next 2 attacks).'
+      'Unleashes 4 strikes and fills Ki, immediately firing Ki Ability: Open Hand Strike (Stagger + bonus hit).',
+      'Unleashes 5 strikes, fires two Ki Abilities, and gains Afterimage (dodges next 2 attacks).'
     ],
     fx(b, u, P) {
       const t = (u.target && u.target.alive) ? u.target : foes(b, u)[0];
@@ -935,24 +1012,24 @@ hero('naill', {
   paths: [
     {
       k: 'openhand', n: 'Open Hand', attr: 'dex', tags: ['onhit', 'd20'],
-      x: 'Every Ki Strike triggers on-hit effects twice and grants +1 to Naill’s next d20 roll.',
-      full: 'Every Ki Strike triggers Naill’s on-hit effects twice and adds +1 to Naill’s next ability d20 roll.',
+      x: 'Every Ki Ability triggers on-hit effects twice and grants +1 to Naill’s next d20 roll.',
+      full: 'Every Ki Ability (Open Hand Strike) triggers Naill’s on-hit effects twice and adds +1 to Naill’s next ability d20 roll.',
       t4x: 'Ki bar shrinks from 4 to 3.',
       f: { naillOpenHand: 1 }
     },
     {
-      k: 'flowing', n: 'Flowing Leaves', attr: 'wis', tags: ['control', 'marked', 'charge'],
-      x: 'Ki Strikes Stagger and Mark adjacent foes.',
-      full: 'Whenever Naill lands a Ki Strike, foes adjacent to the target are also Staggered and Marked.',
-      t4x: 'Ki Strikes feed +15 Charge to the lowest-Charge ally.',
+      k: 'flowing', n: 'Flowing Leaves', attr: 'wis', tags: ['control', 'charge'],
+      x: 'Ki Abilities Stagger and Expose adjacent foes.',
+      full: 'Whenever Naill (or any ally) lands a Ki Ability, foes adjacent to the target are also Staggered and Exposed.',
+      t4x: 'Ki Abilities feed +15 Charge to the lowest-Charge ally.',
       f: { flowingLeaves: 1 }
     }
   ],
   quest: {
     id: 'naill_q', statKey: 'kiStrikes', goal: 25,
-    label: 'Trigger 25 Ki Strikes',
+    label: 'Trigger 25 Ki Abilities',
     rewardName: 'Wraps of the Hundred Fists',
-    rewardDesc: '+2 DEX; Ki Strikes grant Advantage on Naill’s next ability d20 roll, and dodging via Afterimage grants +1 Ki.'
+    rewardDesc: '+2 DEX; Ki Abilities grant Advantage on Naill’s next ability d20 roll, and dodging via Afterimage grants +1 Ki.'
   }
 });
 
@@ -964,17 +1041,21 @@ hero('nettle', {
   attr: { str: 8, dex: 12, con: 12, int: 14, wis: 10, cha: 16 },
   prim: 'cha', pair: ['cha', 'cha'],
   hp: 88, ac: 13, sr: 13,
-  kw: { hex: 1 },
+  kw: { hex: 1, pact_boon: 1 },
+  ckw: [
+    { k: 'hex', sub: 'Infernal Hex', x: 'Curses foes to take bonus necrotic damage on every hit; transfers on death.' },
+    { k: 'pact_boon', sub: 'Dark One’s Blessing', x: 'When a Hexed foe dies, Pact Boon heals Nettle’s team and triggers Bargain / Contract clauses.' }
+  ],
   passive: { n: 'Brave', x: 'Immune to Frighten.' },
   f: { braveSelf: 1 },
   atk: { n: 'Eldritch Blast', d: [1, 10], flat: 1, kind: 'magic', ty: 'force', iv: 1.4 },
   abil: {
     n: 'Infernal Hex', cr: 8, pa: 9, cut: [6, 13], self: 1,
-    one: 'Curses a foe with Hex (bonus necrotic on every hit); High adds Necrosis + death-jump heal, Nat 20 Hexes 3 foes and slows them.',
+    one: 'Curses a foe with Hex (bonus necrotic on every hit); High adds Necrosis + Pact Boon jump-heal, Nat 20 Hexes 3 foes and slows them.',
     b: [
       'Curses 1 foe with Hex (takes +1d4 necrotic on every hit).',
       'Curses 1 foe with Hex (takes +1d6 necrotic on every hit) and deals 2d6 force.',
-      'Applies Hex + Necrosis; on death, Hex jumps to a new foe and heals Nettle’s team.',
+      'Applies Hex + Necrosis; on death, Pact Boon jumps Hex and heals Nettle’s team.',
       'Hexes 3 foes and slows their attack speed and d20 rolls for 4s.'
     ],
     fx(b, u, P) {
@@ -1010,17 +1091,17 @@ hero('nettle', {
     },
     {
       k: 'bargain', n: 'Dark One’s Bargain', attr: 'int', tags: ['hex', 'd20', 'charge'],
-      x: 'Allies who kill a Hexed foe gain +30 Charge and Advantage on their next ability roll.',
-      full: 'Whenever any ally kills a Hexed foe, that ally gains +30 Charge and Advantage on their next ability d20 roll.',
+      x: 'Pact Boon grants the ally who slew a Hexed foe +30 Charge and Advantage on their next roll.',
+      full: 'Whenever any ally kills a Hexed foe (Pact Boon), that ally gains +30 Charge and Advantage on their next ability d20 roll.',
       t4x: 'Killing a Hexed Elite or Boss drops +3 bonus Gold.',
       f: { darkBargain: 1 }
     }
   ],
   quest: {
     id: 'nettle_q', statKey: 'hexDeaths', goal: 15,
-    label: 'Have 15 Hexed foes die',
+    label: 'Trigger Pact Boon 15 times (Hexed deaths)',
     rewardName: 'Infernal Contract',
-    rewardDesc: '+2 INT; each Hexed death adds a glowing clause for the rest of the fight (+1 d20 and +10% Charge speed, uncapped).'
+    rewardDesc: '+2 INT; each Pact Boon adds a glowing clause for the rest of the fight (+1 d20 and +10% Charge speed, uncapped).'
   }
 });
 
@@ -1036,17 +1117,20 @@ hero('pillar', {
   attr: { str: 16, dex: 10, con: 16, int: 8, wis: 12, cha: 10 },
   prim: 'str', pair: ['str', 'str'],
   hp: 152, ac: 15, sr: 12,
-  kw: { zealot: 1 },
+  kw: { rage: 1 },
+  ckw: [
+    { k: 'rage', sub: 'Zealot Rage', x: 'High/Nat 20 Monument Charge enters Rage (cannot drop below 1 HP for 2.5s/3.5s).' }
+  ],
   passive: { n: 'Stone’s Endurance', x: 'Reduces incoming heavy hits by 4 damage.' },
   f: { stoneEndure: 4 },
   atk: { n: 'Maul of Faith', d: [1, 10], flat: 3, kind: 'phys', ty: 'bludgeoning', iv: 1.5 },
   abil: {
     n: 'Monument Charge', cr: 7.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Slams foes with Holy impact; High triggers Zealot Rage (cannot drop below 1 HP), Nat 20 cracks a line Stun + Holy shockwave.',
+    one: 'Slams foes with Holy impact; High enters Rage (cannot drop below 1 HP), Nat 20 cracks a line Stun + Holy shockwave.',
     b: [
       'Slams target for 2d8 bludgeoning + 1d6 Holy.',
       'Slams target for 3d8 + 2d6 Holy and Taunts adjacent foes.',
-      'Triggers Zealot Rage (cannot drop below 1 HP for 2.5s) and deals 3d8 + 2d6 Holy.',
+      'Enters Zealot Rage (cannot drop below 1 HP for 2.5s) and deals 3d8 + 2d6 Holy.',
       'Cracks the ground in a line (4d8 Holy + Stun 1.6s) and enters Zealot Rage for 3.5s.'
     ],
     fx(b, u, P) {
@@ -1059,8 +1143,7 @@ hero('pillar', {
         const ts = fs.filter(x => x === t || line.some(h => hd(h, x) <= (u.questDone ? 1 : 0)));
         b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'line', r: len, ty: 'radiant', ids: ts.map(x => x.id) });
         ts.forEach(x => { hit(b, u, x, roll(4, 8), { kind: 'holy', ty: 'radiant', area: 1, ab: 1 }); stun(b, x, 1.6); });
-        u.zealotT = Math.max(u.zealotT || 0, 3.5);
-        u.stats.zealotProcs = (u.stats.zealotProcs || 0) + 1;
+        enterZealotRage(b, u, 3.5);
         callout(b, u, 'LIVING MONUMENT!', '#ffe9a0');
       } else {
         b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: 1, ty: 'radiant', ids: [t.id] });
@@ -1068,27 +1151,24 @@ hero('pillar', {
         if (t.alive) hit(b, u, t, roll(P === 0 ? 1 : 2, 6), { kind: 'holy', ty: 'radiant', noBonus: 1, ab: 1 });
         if (P >= 1) taunt(b, u, 2, 2.5);
         if (P === 2) {
-          u.zealotT = Math.max(u.zealotT || 0, 2.5);
-          u.stats.zealotProcs = (u.stats.zealotProcs || 0) + 1;
-          status(b, u, 'ZEALOT RAGE', '#ffe9a0');
-          if (u.f.livingBeacon && u.tier >= 4) friends(b, u).filter(a => a !== u && hd(a, u) <= 2).forEach(a => heal(b, u, a, 24 * u.dm));
+          enterZealotRage(b, u, 2.5);
         }
       }
     }
   },
   paths: [
     {
-      k: 'unstoppable', n: 'Unstoppable Faith', attr: 'str', tags: ['holy', 'control'],
-      x: 'While in Zealot Rage, attacks deal +1d8 Holy and kills extend Zealot Rage by 1.5s.',
-      full: 'During Zealot Rage, Pillar’s attacks add +1d8 Holy damage and every kill extends Zealot Rage by 1.5s.',
-      t4x: 'Starts every fight with 1.5s of Zealot Rage.',
+      k: 'unstoppable', n: 'Unstoppable Faith', attr: 'str', tags: ['rage', 'holy', 'control'],
+      x: 'While in Rage, attacks deal +1d8 Holy and kills extend Rage by 1.5s.',
+      full: 'During Zealot Rage, Pillar’s attacks add +1d8 Holy damage and every kill extends Rage by 1.5s.',
+      t4x: 'Starts every fight in Zealot Rage for 1.5s.',
       f: { unstoppableFaith: 1 }
     },
     {
       k: 'beacon', n: 'Living Beacon', attr: 'con', tags: ['holy', 'side'],
-      x: 'Taking hits empowers adjacent allies’ next strikes with +1d6 Holy damage.',
-      full: 'Whenever Pillar takes damage, adjacent allies gain a Holy charge adding +1d6 Holy to their next strike.',
-      t4x: 'Triggering Zealot Rage also heals nearby allies.',
+      x: 'Taking hits empowers adjacent allies’ next strikes with a +1d6 Holy Smite.',
+      full: 'Whenever Pillar takes damage, adjacent allies gain a Smite charge adding +1d6 Holy to their next strike.',
+      t4x: 'Entering Rage also heals nearby allies.',
       f: { livingBeacon: 1 }
     }
   ],
@@ -1108,18 +1188,22 @@ hero('mother_laurel', {
   attr: { str: 14, dex: 12, con: 14, int: 10, wis: 16, cha: 12 },
   prim: 'wis', pair: ['str', 'wis'],
   hp: 134, ac: 16, sr: 15,
-  kw: { smite: 1 },
+  kw: { smite: 1, aura: 1 },
+  ckw: [
+    { k: 'smite', sub: 'Verdant Smite', x: 'Every 3rd glaive strike and Nature’s Wrath trigger Smite (+1d6 Holy + Root).' },
+    { k: 'aura', sub: 'Aura of Warding', x: 'Allies within 2 squares gain +2 Spell Resistance (upgraded by Ancients’ Ward).' }
+  ],
   passive: { n: 'Warden’s Reach', x: 'Sweeping melee glaive strikes from 2 squares away.' },
-  f: { smitePeriodic: 1 },
+  f: { smitePeriodic: 1, verdantSmite: 1, auraWarding: 1 },
   atk: { n: 'Verdant Glaive', d: [1, 10], flat: 2, kind: 'phys', ty: 'slashing', iv: 1.45 },
   abil: {
     n: 'Nature’s Wrath', cr: 7.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Sweeping glaive + Root; High blooms party healing and cleanse, Nat 20 Roots all melee foes + grants party Ward.',
+    one: 'Sweeping glaive + Verdant Smite & Root; High blooms party healing and cleanse, Nat 20 Roots all melee foes + party Ward.',
     b: [
-      'Sweeps target for 2d6 slashing and Roots it for 2s.',
-      'Sweeps 2 foes for 2d8 slashing and Roots them for 2.5s.',
-      'Sweeps 2 foes + Roots them, blooming a heal and cleansing debuffs on nearby allies.',
-      'Roots all melee foes for 3.5s and blooms a party-wide Heal + Ward.'
+      'Sweeps target for 2d6 slashing + Verdant Smite (1d6 Holy) and Roots it for 2s.',
+      'Sweeps 2 foes for 2d8 slashing + Verdant Smite and Roots them for 2.5s.',
+      'Sweeps 2 foes + Verdant Smite & Root, blooming a heal and cleansing debuffs on nearby allies.',
+      'Roots all melee foes for 3.5s, Smites them, and blooms a party-wide Heal + Ward.'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden).sort((a, c) => hd(a, u) - hd(c, u));
@@ -1129,7 +1213,10 @@ hero('mother_laurel', {
       b.events.push({ k: 'area', id: u.id, tid: hitList[0].id, shape: P === 3 ? 'nova' : 'cone', r: P === 3 ? 3 : 2, ty: 'poison', ids: hitList.map(x => x.id) });
       hitList.forEach(t => {
         hit(b, u, t, roll(2, P === 0 ? 6 : 8), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
-        if (t.alive) applyRoot(b, u, t, [2, 2.5, 3, 3.5][P] * chaK(u));
+        if (t.alive) {
+          triggerSmite(b, u, t, roll(1, 6), { label: 'VERDANT SMITE', ab: 1 });
+          applyRoot(b, u, t, [2, 2.5, 3, 3.5][P] * chaK(u));
+        }
       });
       if (P >= 2) {
         const allies = friends(b, u).filter(a => !a.minion && (P === 3 || hd(a, u) <= 3));
@@ -1148,16 +1235,16 @@ hero('mother_laurel', {
   paths: [
     {
       k: 'ancients_ward', n: 'Ancients’ Ward', attr: 'wis', tags: ['ward', 'holy'],
-      x: 'Allies within 2 squares gain +3 Spell Resistance.',
-      full: 'Radiates an aura granting nearby allies +3 Spell Resistance against magic damage.',
+      x: 'Mother Laurel’s Aura grants an extra +3 Spell Resistance to nearby allies.',
+      full: 'Supercharges Aura of Warding, granting nearby allies +3 additional Spell Resistance against magic damage.',
       t4x: 'Aura also raises nearby allies’ minimum natural d20 floor by +1.',
       f: { ancientsWard: 1 }
     },
     {
       k: 'bountiful_vines', n: 'Bountiful Vines', attr: 'str', tags: ['control', 'holy'],
-      x: 'Rooted foes take +1d6 bonus Holy damage on every hit.',
-      full: 'Whenever any ally strikes a Rooted foe, the target takes +1d6 bonus Holy damage.',
-      t4x: 'Rooting a foe also pulses a small heal to the most-hurt ally.',
+      x: 'Rooted foes take +1d6 Holy Smite on hit; any ally Smite or Wild Shape heals the most-hurt ally.',
+      full: 'Striking a Rooted foe adds +1d6 Holy Smite damage. Whenever any ally triggers Smite or Wild Shape, pulses a heal to the lowest-HP ally.',
+      t4x: 'Heals the whole party instead of one ally.',
       f: { bountifulVines: 1 }
     }
   ],
@@ -1177,18 +1264,21 @@ hero('lumen', {
   attr: { str: 8, dex: 12, con: 12, int: 12, wis: 16, cha: 14 },
   prim: 'wis', pair: ['wis', 'wis'],
   hp: 94, ac: 13, sr: 15,
-  kw: { sear: 1 },
-  passive: { n: 'Warding Flare', x: 'Blinding light applies Sear (burning Holy stack) with abilities.' },
+  kw: { channel_divinity: 1 },
+  ckw: [
+    { k: 'channel_divinity', sub: 'Radiance of the Dawn', x: 'Once per fight, on her first High/Nat 20 Sunbeam (or when 3+ foes Burn), unleashes a 3d8 Holy + Burn nova.' }
+  ],
+  passive: { n: 'Warding Flare', x: 'Blinding sunlight applies burning Sear stacks with Sunbeam.' },
   f: { lumenCaster: 1 },
   atk: { n: 'Sacred Flame', d: [1, 8], flat: 2, kind: 'holy', ty: 'radiant', iv: 1.4 },
   abil: {
     n: 'Sunbeam', cr: 8.5, pa: 9, cut: [6, 13],
-    one: 'Line of Holy damage + Sear; High awakens Radiant Soul (piercing Holy attacks), Nat 20 detonates all Sear and Burn.',
+    one: 'Line of Holy damage + Burn (Sear); High awakens Radiant Soul & Channel Divinity, Nat 20 detonates all Burn.',
     b: [
-      'Fires a narrow Sunbeam (2d8 Holy + Sear) along a line.',
-      'Fires a Sunbeam (3d8 Holy + 2 Sear) along a line.',
-      'Fires a Sunbeam (4d8 Holy + 2 Sear) and awakens Radiant Soul for 5s.',
-      'Double-width Sunbeam (5d8 Holy) detonating all Sear and Burn on hit foes!'
+      'Fires a narrow Sunbeam (2d8 Holy + Burn) along a line.',
+      'Fires a Sunbeam (3d8 Holy + Burn) along a line.',
+      'Fires a Sunbeam (4d8 Holy + Burn), awakens Radiant Soul, and fires Channel Divinity if ready.',
+      'Double-width Sunbeam (5d8 Holy) detonating all Burn on hit foes!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -1222,6 +1312,7 @@ hero('lumen', {
         u.tempHaste = Math.max(u.tempHaste || 0, 30);
         u.tempHasteT = Math.max(u.tempHasteT || 0, 5);
         status(b, u, 'RADIANT SOUL', '#ffe9a0');
+        if (!u._cdUsed) triggerLumenCD(b, u);
       }
       if (P === 3) callout(b, u, 'SOLAR DETONATION!', '#ffe9a0');
     }
@@ -1236,9 +1327,9 @@ hero('lumen', {
     },
     {
       k: 'purifying', n: 'Purifying Light', attr: 'cha', tags: ['holy', 'burn'],
-      x: 'Any ally dealing Holy damage also applies Burn (Sear) to the target.',
-      full: 'Whenever any ally deals Holy damage, it also applies Burn to the foe (fueling Fire & Burn synergies).',
-      t4x: 'Detonating Sear/Burn heals the whole party.',
+      x: 'Ally Holy damage applies Burn; whenever any ally triggers Channel Divinity, Lumen fires a free Sear bolt.',
+      full: 'Whenever any ally deals Holy damage, it applies Burn. Whenever any ally triggers Channel Divinity, Lumen fires a free 2d8 Holy + Burn bolt at the highest-HP foe.',
+      t4x: 'Detonating Burn heals the whole party.',
       f: { purifyingLight: 1 }
     }
   ],
@@ -1258,17 +1349,20 @@ hero('jamison', {
   attr: { str: 12, dex: 10, con: 14, int: 10, wis: 14, cha: 16 },
   prim: 'cha', pair: ['cha', 'cha'],
   hp: 118, ac: 15, sr: 14,
-  kw: { bond: 1 },
-  passive: { n: 'Peaceful Aura', x: 'Links allies with Emboldening Bond (+1d4 to ability d20 rolls).' },
+  kw: { channel_divinity: 1 },
+  ckw: [
+    { k: 'channel_divinity', sub: 'Balm of Peace', x: 'Once per fight, when an ally drops below 60% HP (or on High Bond), bonds and heals the entire party.' }
+  ],
+  passive: { n: 'Peaceful Aura', x: 'Emboldening Bond links allies for +1d4 on ability d20 rolls.' },
   f: { peaceCleric: 1 },
   atk: { n: 'Quarterstaff', d: [1, 6], flat: 2, kind: 'phys', ty: 'bludgeoning', iv: 1.45 },
   abil: {
     n: 'Emboldening Bond', cr: 8.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Links allies for bonus d20 dice; High links 3 + pulses Word of Radiance, Nat 20 bonds whole party with shared Charge.',
+    one: 'Links allies for bonus d20 dice; High links 3 + pulses Word of Radiance & Balm of Peace, Nat 20 bonds whole party with shared Charge.',
     b: [
       'Links 2 allies with Emboldening Bond (+1d4 to their next ability roll).',
       'Links 2 allies with Emboldening Bond and heals them for 1d8.',
-      'Links 3 allies and pulses Word of Radiance (2d8 Holy AoE around Jamison).',
+      'Links 3 allies, pulses Word of Radiance (2d8 Holy AoE), and triggers Channel Divinity if ready.',
       'Bonds the entire party! Any ally High/Nat 20 feeds +18 Charge to all bonded allies.'
     ],
     fx(b, u, P) {
@@ -1289,6 +1383,7 @@ hero('jamison', {
       if (P >= 2) {
         const near = foes(b, u).filter(x => hd(x, u) <= 2);
         near.forEach(x => hit(b, u, x, roll(2, 8), { kind: 'holy', ty: 'radiant', area: 1, ab: 1 }));
+        if (!u._cdUsed) triggerJamisonCD(b, u);
       }
       if (P === 3) callout(b, u, 'EMBOLDENING BOND!', '#ffe9a0');
     }
@@ -1303,8 +1398,8 @@ hero('jamison', {
     },
     {
       k: 'peace_radiance', n: 'Peace & Radiance', attr: 'cha', tags: ['holy', 'charge'],
-      x: 'Bonded ally casts trigger a free 1d8 Holy pulse around Jamison.',
-      full: 'Whenever a bonded ally casts an ability, Jamison radiates a free 1d8 Holy burst to nearby enemies.',
+      x: 'Bonded ally casts and ally Channel Divinity triggers radiate a free 1d8 Holy pulse around Jamison.',
+      full: 'Whenever a bonded ally casts an ability—or any ally triggers Channel Divinity—Jamison radiates a free 1d8 Holy burst to nearby enemies.',
       t4x: 'Each Holy pulse also heals the lowest-HP bonded ally.',
       f: { peaceRadiance: 1 }
     }
@@ -1329,18 +1424,21 @@ hero('zoe', {
   attr: { str: 14, dex: 12, con: 14, int: 16, wis: 10, cha: 12 },
   prim: 'int', pair: ['str', 'int'],
   hp: 116, ac: 15, sr: 12,
-  kw: { rune: 1 },
+  kw: { action_surge: 1 },
+  ckw: [
+    { k: 'action_surge', sub: 'Runic Momentum', x: 'High/Nat 20 Rummage triggers Action Surge on buffed allies (immediate free attack + Runic Upgrade Ward).' }
+  ],
   passive: { n: 'Pack Rat', x: 'Rummages battle buffs that supercharge allies’ equipped items.' },
   f: { runeKnight: 1 },
   atk: { n: 'Runed Hammer', d: [1, 8], flat: 2, kind: 'phys', ty: 'bludgeoning', iv: 1.35 },
   abil: {
     n: 'Rummage', cr: 8.5, pa: 9, cut: [6, 13], self: 1,
-    one: 'Tosses a battle buff to an ally; High triggers Runic Upgrade (+50% item power), Nat 20 refreshes once-per-fight items + Gold.',
+    one: 'Tosses a battle buff to an ally; High triggers Action Surge + Runic Upgrade, Nat 20 triggers party Action Surge + refreshes items + Gold.',
     b: [
       'Tosses a tonic to an ally (+18 HP + 15% Haste for 3s).',
       'Tosses a tonic to an ally (+28 HP + 25% Haste + 15 Charge).',
-      'Grants Runic Upgrade (ally’s stats & damage +25% + 25 Ward) to the most-equipped ally.',
-      'Refreshes all once-per-fight items party-wide, pops +2 Gold, and grants Runic Upgrade!'
+      'Triggers Action Surge (immediate free attack) + Runic Upgrade (+12% damage + Ward) on the most-equipped ally.',
+      'Triggers party-wide Action Surge, refreshes all once-per-fight items, and pops +2 Gold!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
@@ -1356,6 +1454,7 @@ hero('zoe', {
           a.dm *= 1.12;
           addWard(b, a, (25 + Math.max(0, u.m.int) * 4) * u.dm, a.maxHp * .5, u);
           status(b, a, 'RUNIC UPGRADE', '#ffd76a');
+          triggerActionSurge(b, a, { giver: u, label: 'RUNIC SURGE' });
         }
         if (P === 3) {
           a._potionUsed = 0; a._luckUsed = 0; a._clockworkUsed = 0; a._casts = 0;
@@ -1373,13 +1472,13 @@ hero('zoe', {
       k: 'rune_carver', n: 'Rune Carver', attr: 'str', tags: ['onhit', 'charge'],
       x: 'Zoe’s attacks deal +3 bonus force damage for each item carried by your party.',
       full: 'Every basic attack Zoe lands adds +3 bonus force damage per item equipped across your party.',
-      t4x: 'High Rummage upgrades 2 allies at once.',
+      t4x: 'High Rummage triggers Action Surge & Runic Upgrade on 2 allies at once.',
       f: { runeCarver: 1 }
     },
     {
       k: 'just_the_thing', n: 'Just the Thing', attr: 'int', tags: ['charge', 'gold'],
-      x: 'Allies carrying 2+ items gain +20% Charge speed and arcane on-hit sparks.',
-      full: 'Any ally wearing 2 or more items gains +20% Charge speed and deals +1d4 force damage on hit.',
+      x: 'Allies with 2+ items gain +20% Charge speed & on-hit sparks; any ally Action Surge grants them Ward + 12 Charge.',
+      full: 'Any ally wearing 2+ items gains +20% Charge speed and +1d4 force on hit. Whenever any ally triggers Action Surge, Zoe tosses them a Ward and +12 Charge.',
       t4x: 'Zoe gains +1 extra item slot.',
       f: { justTheThing: 1 }
     }
@@ -1400,32 +1499,31 @@ hero('toot', {
   attr: { str: 8, dex: 12, con: 14, int: 12, wis: 10, cha: 16 },
   prim: 'cha', pair: ['cha', 'cha'],
   hp: 102, ac: 13, sr: 13,
-  kw: { mote: 1 },
+  kw: { bardic_inspiration: 1 },
+  ckw: [
+    { k: 'bardic_inspiration', sub: 'Mote of Potential', x: 'Grants a Bardic Inspiration Mote (Advantage on next roll + Charge); spending a Mote pops +1 Gold.' }
+  ],
   passive: { n: 'Tip Jar', x: 'Every 3rd attack pops +1 Gold (up to fight cap).' },
   f: { tipJar: 1 },
   gold: { cap: 14 },
   atk: { n: 'Brass Honk', d: [1, 8], flat: 1, kind: 'magic', ty: 'thunder', iv: 1.35 },
   abil: {
     n: 'Fanfare (Motes)', cr: 8.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Sends Motes of Potential (Advantage on next cast); High sends 2 Motes + Gold, Nat 20 Motes whole party + double Gold.',
+    one: 'Sends Bardic Inspiration Motes (Advantage on next cast); High sends 2 Motes + Gold, Nat 20 inspires the whole party + Gold.',
     b: [
-      'Sends 1 Mote (Advantage on next ability roll) to the highest-Charge ally.',
-      'Sends 1 Mote (Advantage + 12 Charge) to an ally.',
-      'Sends 2 Motes (Advantage + 16 Charge) and pops +1 Gold.',
-      'Gives the whole party Motes + Advantage and pops +3 Gold!'
+      'Sends 1 Bardic Inspiration Mote (Advantage on next ability roll) to the highest-Charge ally.',
+      'Sends 1 Bardic Inspiration Mote (Advantage + 12 Charge) to an ally.',
+      'Sends 2 Bardic Inspiration Motes (Advantage + 16 Charge) and pops +1 Gold.',
+      'Gives the whole party Bardic Inspiration Motes + Advantage and pops +3 Gold!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => a !== u && !a.minion && a.abil);
       const pool = fr.length ? fr : [u];
       const count = P === 3 ? pool.length : P === 2 ? 2 : 1;
-      const picked = pool.slice().sort((a, c) => (a.advantage ? 1 : 0) - (c.advantage ? 1 : 0) || c.charge - a.charge).slice(0, count);
+      const picked = pool.slice().sort((a, c) => (a.advantage || a.inspMote ? 1 : 0) - (c.advantage || c.inspMote ? 1 : 0) || c.charge - a.charge).slice(0, count);
       b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'psychic', ids: picked.map(x => x.id) });
       picked.forEach(a => {
-        a.advantage = Math.max(a.advantage || 0, 1);
-        if (u.f.busker && u.tier >= 4) a.nextBonus = Math.min(6, (a.nextBonus || 0) + 2);
-        const ch = (P >= 2 ? 16 : P === 1 ? 12 : 6) + (u.questDone ? 14 : 0);
-        giveCharge(b, a, ch);
-        status(b, a, 'MOTE (ADV)', '#ffd76a');
+        grantInspMote(b, u, a, (P >= 2 ? 16 : P === 1 ? 12 : 6) + (u.questDone ? 14 : 0));
       });
       if (P === 2) gainGold(b, u, u.questDone ? 2 : 1, 'ENCORE TIP');
       if (P === 3) {
@@ -1444,8 +1542,8 @@ hero('toot', {
     },
     {
       k: 'street_performer', n: 'Street Performer', attr: 'dex', tags: ['gold', 'd20'],
-      x: 'Whenever any ally lands a High or Nat 20 roll, Toot drops +1 Gold.',
-      full: 'Every ally High or Nat 20 ability roll triggers +1 Gold (up to fight cap) and cheers the team.',
+      x: 'Ally High/Nat 20 rolls drop +1 Gold (+2 Gold if the ally spent Bardic Inspiration).',
+      full: 'Every ally High or Nat 20 ability roll triggers +1 Gold (+2 if spending Bardic Inspiration from any Bard, up to fight cap).',
       t4x: 'Unspent Gold grants the party +2% starting Charge per Gold (max +40%).',
       f: { streetPerformer: 1 }
     }
@@ -1466,14 +1564,17 @@ hero('gilthrax', {
   attr: { str: 16, dex: 10, con: 16, int: 12, wis: 10, cha: 12 },
   prim: 'con', pair: ['str', 'con'],
   hp: 146, ac: 17, sr: 13,
-  kw: { ward: 1 },
+  kw: { action_surge: 1 },
+  ckw: [
+    { k: 'action_surge', sub: 'Eldritch Counter', x: 'Every 3 hits absorbed or reflected by Arcane Shield triggers Action Surge (free cleave + 2d6 force pulse).' }
+  ],
   passive: { n: 'Hoard Scales', x: 'Gains +10 bonus Ward on Arcane Shield for each item carried.' },
-  f: { hoardScales: 1 },
+  f: { hoardScales: 1, gilthraxSurge: 1 },
   gold: { cap: 10 },
   atk: { n: 'Gilded Greataxe', d: [1, 10], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.45 },
   abil: {
     n: 'Arcane Shield', cr: 7.5, pa: 8, cut: [6, 13], self: 1,
-    one: 'Raises item-scaling Ward; High adds 100% thorns reflect, Nat 20 blasts an Arcane Nova + pops +2 Gold.',
+    one: 'Raises item-scaling Ward (fueling Action Surge counters); High adds 100% reflect, Nat 20 blasts Arcane Nova + Gold.',
     b: [
       'Raises a 28 Ward (+10 per equipped item).',
       'Raises a 42 Ward (+12 per equipped item) and Taunts adjacent foes.',
@@ -1509,7 +1610,7 @@ hero('gilthrax', {
       k: 'gilded_hoard', n: 'Gilded Hoard', attr: 'con', tags: ['ward', 'gold'],
       x: '+2 AC and +1 to ability d20 rolls for every item Gilthrax carries.',
       full: 'Each item equipped on Gilthrax grants +2 AC and +1 to his Arcane Shield d20 rolls.',
-      t4x: 'Arcane Reflect damages all adjacent enemies instead of just the attacker.',
+      t4x: 'Action Surge and Arcane Reflect damage all adjacent enemies.',
       f: { gildedHoard: 1 }
     },
     {
@@ -1536,7 +1637,10 @@ hero('gains', {
   attr: { str: 8, dex: 12, con: 12, int: 16, wis: 12, cha: 12 },
   prim: 'int', pair: ['int', 'int'],
   hp: 88, ac: 13, sr: 14,
-  kw: { gilded: 1 },
+  kw: { arcane_recovery: 1 },
+  ckw: [
+    { k: 'arcane_recovery', sub: 'Transmutation', x: 'Triggers Arcane Recovery (+16 Charge) whenever Gold drops in combat or a Gilded foe dies.' }
+  ],
   passive: { n: 'Transmuter’s Eye', x: 'Gilded foes are Staggered and drop +1 Gold when slain.' },
   f: { transmuter: 1 },
   gold: { cap: 12 },
@@ -1584,8 +1688,8 @@ hero('gains', {
     },
     {
       k: 'liquid_assets', n: 'Liquid Assets', attr: 'cha', tags: ['gold', 'charge'],
-      x: 'Whenever Gold drops in combat, all allies gain +12 Charge.',
-      full: 'Every time Gold is generated during combat, the entire party gains +12 Charge.',
+      x: 'Gains’s Arcane Recovery shares 50% of its Charge with the whole party whenever Gold drops.',
+      full: 'Every time Gold drops in combat, Gains triggers Arcane Recovery and shares half of that Charge with every ally.',
       t4x: 'Killing a Gilded foe refunds 30% Charge to the killer.',
       f: { liquidAssets: 1 }
     }
@@ -1610,17 +1714,21 @@ hero('velith', {
   attr: { str: 10, dex: 16, con: 12, int: 12, wis: 12, cha: 10 },
   prim: 'dex', pair: ['dex', 'dex'],
   hp: 94, ac: 15, sr: 12,
-  kw: { sneak: 1 },
+  kw: { sneak_attack: 1, cunning_action: 1 },
+  ckw: [
+    { k: 'sneak_attack', sub: 'Venomous Strike', x: 'Strikes from Stealth or vs. Poisoned/impaired foes trigger Sneak Attack (+1d6 + Poison).' },
+    { k: 'cunning_action', sub: 'Shadow Fade', x: 'Starts combat in Stealth via Cunning Action and re-enters Stealth on High Cloak of Darkness.' }
+  ],
   passive: { n: 'Assassinate', x: 'Starts every fight in Stealth; strikes from Stealth deal bonus Poison.' },
   f: { assassinate: 1 },
   atk: { n: 'Venom Dagger', d: [1, 6], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.05 },
   abil: {
     n: 'Cloak of Darkness', cr: 7.5, pa: 10, cut: [6, 13], self: 1,
-    one: 'Ambush burst strike; High adds Poison + re-enters Stealth, Nat 20 executes wounded targets and chains to a second foe.',
+    one: 'Ambush Sneak Attack burst; High adds Poison + Cunning Action Stealth, Nat 20 executes wounded targets and chains.',
     b: [
-      'Strikes target for 3d6 piercing damage.',
-      'Strikes target for 4d6 piercing + 2 Poison.',
-      'Strikes for 6d6 piercing + 4 Poison and re-enters Stealth (3s).',
+      'Strikes target for a 3d6 Sneak Attack.',
+      'Strikes target for a 4d6 Sneak Attack + 2 Poison.',
+      'Strikes for a 6d6 Sneak Attack + 4 Poison and triggers Cunning Action (Stealth 3s).',
       'Strikes for 8d6 (executes < 25% HP) and immediately chains to a second foe!'
     ],
     fx(b, u, P) {
@@ -1634,6 +1742,7 @@ hero('velith', {
         b.events.push({ k: 'area', id: u.id, tid: target.id, shape: 'splash', r: .75, ty: 'poison', ids: [target.id] });
         const dmg = roll([3, 4, 6, 8][P], 6) * (mult || 1);
         hit(b, u, target, dmg, { kind: 'phys', ty: 'piercing', melee: 1, ab: 1 });
+        triggerSneakAttack(b, u, target, { ability: 1 });
         if (target.alive && P >= 1) applyStatus(b, u, target, 'poison', P >= 2 ? 4 : 2);
         const exCut = u.questDone ? 0.30 : 0.25;
         if (target.alive && P === 3 && hpPct(target) < exCut) {
@@ -1643,9 +1752,7 @@ hero('velith', {
       };
       strikeOne(t, 1);
       if (P >= 2) {
-        u.hidden = 1; u.hideT = b.time + 3.0; u.stealthShield = 1;
-        b.units.forEach(x => { if (x.target === u) x.target = null; });
-        status(b, u, 'STEALTH', '#c48fe6');
+        triggerCunningAction(b, u, t, { stealth: 3.0, stealthShield: 1, label: 'SHADOW FADE' });
       }
       if (P === 3) {
         const next = foes(b, u).filter(x => x !== t && !x.hidden).sort((a, c) => hpPct(a) - hpPct(c))[0];
@@ -1664,8 +1771,8 @@ hero('velith', {
     },
     {
       k: 'nightshade', n: 'Nightshade Vials', attr: 'wis', tags: ['poison', 'ambush'],
-      x: 'Applying Poison also Exposes the target; party deals +18% damage in the first 5s.',
-      full: 'Velith’s Poison applies Exposed (−2 AC/SR), and the whole party deals +18% damage during the opening 5s.',
+      x: 'Poison Exposes targets; party deals +18% damage in the first 5s and any ally Sneak Attack splashes Poison.',
+      full: 'Velith’s Poison applies Exposed (−2 AC/SR), the whole party deals +18% damage during the opening 5s, and any ally Sneak Attack splashes 2 Poison.',
       t4x: 'Killing a Poisoned foe spreads its Poison to an adjacent enemy.',
       f: { nightshade: 1 }
     }
@@ -1686,17 +1793,20 @@ hero('corvin', {
   attr: { str: 12, dex: 16, con: 12, int: 10, wis: 14, cha: 10 },
   prim: 'dex', pair: ['dex', 'wis'],
   hp: 104, ac: 15, sr: 13,
-  kw: { mark: 1 },
+  kw: { hunters_mark: 1 },
+  ckw: [
+    { k: 'hunters_mark', sub: 'Gloom Quarry', x: 'Applies Hunter’s Mark via Dread Ambush; Ranger strikes vs. Marked foes deal +1d6 + WIS bonus damage.' }
+  ],
   passive: { n: 'Dread Ambusher', x: 'Starts every fight with +30 Charge and +25% opening Haste (4s).' },
-  f: { dreadAmbusher: 1 },
+  f: { dreadAmbusher: 1, huntMark: 1 },
   atk: { n: 'Twin Shortswords', d: [1, 6], flat: 1, hits: 2, kind: 'phys', ty: 'slashing', iv: 1.25 },
   abil: {
     n: 'Dread Ambush', cr: 7.5, pa: 9, cut: [6, 13],
-    one: 'Rapid twin-blade spin; High fires 3 on-hit strikes + Umbral Sight (Stealth) + Marked, Nat 20 spawns a shadow echo.',
+    one: 'Rapid twin-blade spin + Hunter’s Mark; High fires 3 on-hit strikes + Umbral Sight (Stealth), Nat 20 spawns a shadow echo.',
     b: [
-      'Unleashes 2 rapid strikes (triggering on-hit) and Marks the target.',
-      'Unleashes 3 rapid strikes (triggering on-hit) and Marks the target.',
-      'Unleashes 3 strikes, Marks target, and enters Umbral Sight (untargetable Stealth 2s).',
+      'Unleashes 2 rapid strikes (triggering on-hit) and applies Hunter’s Mark.',
+      'Unleashes 3 rapid strikes (triggering on-hit) and applies Hunter’s Mark.',
+      'Unleashes 3 strikes, applies Hunter’s Mark, and enters Umbral Sight (Stealth 2s).',
       'Unleashes 4 strikes + Umbral Sight, then spawns a Shadow Echo repeating the entire spin!'
     ],
     fx(b, u, P) {
@@ -1740,9 +1850,9 @@ hero('corvin', {
     },
     {
       k: 'first_strike', n: 'First Strike', attr: 'wis', tags: ['marked', 'charge'],
-      x: 'Casting in the first 5s grants all allies +15 Charge and Marks the target.',
+      x: 'Casting in the first 5s grants all allies +15 Charge and applies Hunter’s Mark.',
       full: 'Whenever Corvin casts Dread Ambush within the opening 5s of battle, the whole party gains +15 Charge.',
-      t4x: 'Allies attacking Corvin’s Marked foe deal +1d4 bonus piercing damage.',
+      t4x: 'Allies attacking any Hunter’s Mark foe deal +1d4 bonus piercing damage.',
       f: { firstStrike: 1 }
     }
   ],
@@ -1762,18 +1872,21 @@ hero('saint', {
   attr: { str: 8, dex: 12, con: 12, int: 10, wis: 16, cha: 16 },
   prim: 'cha', pair: ['wis', 'cha'],
   hp: 96, ac: 14, sr: 15,
-  kw: { double: 1 },
-  passive: { n: 'Invoke Duplicity', x: 'Maintains an Illusory Double that absorbs a hit and mimics casts.' },
+  kw: { channel_divinity: 1 },
+  ckw: [
+    { k: 'channel_divinity', sub: 'Invoke Duplicity', x: 'Summons an Illusory Double (absorbs a hit & echoes Toll the Dead); resets on High/Nat 20 or Cleric resets.' }
+  ],
+  passive: { n: 'Fey Trickster', x: 'Toll the Dead upgrades from d8 to d12 against wounded foes.' },
   f: { trickeryCleric: 1 },
   atk: { n: 'Bell of Passing', d: [1, 8], flat: 1, kind: 'magic', ty: 'necrotic', iv: 1.4 },
   abil: {
     n: 'Toll the Dead', cr: 8.5, pa: 9, cut: [6, 13],
-    one: 'Necrotic bell (stronger vs wounded foes) + Illusory Double; High adds Necrosis + Double echo, Nat 20 heals party & disrupts backline.',
+    one: 'Necrotic bell (stronger vs wounded) + Channel Divinity Double; High adds Necrosis + Double echo, Nat 20 heals party & disrupts backline.',
     b: [
-      'Rings Toll the Dead (2d8 necrotic, or 2d12 vs wounded foe) and summons an Illusory Double.',
-      'Rings Toll the Dead (3d8 / 3d12 vs wounded) and refreshes Illusory Double.',
-      'Deals 3d12 + 12 Necrosis; active Illusory Double immediately echoes Toll the Dead!',
-      'Deals 4d12 + 16 Necrosis, confuses enemy backline, and heals the entire party!'
+      'Rings Toll the Dead (2d8 necrotic, or 2d12 vs wounded foe) and invokes Channel Divinity if ready.',
+      'Rings Toll the Dead (3d8 / 3d12 vs wounded) and invokes Channel Divinity if ready.',
+      'Deals 3d12 + 12 Necrosis, refreshes Channel Divinity Double, and echoes Toll the Dead!',
+      'Deals 4d12 + 16 Necrosis, confuses enemy backline, refreshes Double, and heals the entire party!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -1788,8 +1901,8 @@ hero('saint', {
         if (target.alive && necAmt > 0) { addNec(b, u, target, necAmt * chaK(u)); u.stats.saintCasts = (u.stats.saintCasts || 0) + 1; }
       };
       const hadDouble = (u.illusoryDouble || 0) > 0;
-      const maxD = (u.f.twoFaced && u.tier >= 4) ? 2 : 1;
-      u.illusoryDouble = Math.min(maxD, (u.illusoryDouble || 0) + 1);
+      if (P >= 2) u._cdUsed = 0; // High/Nat 20 refreshes Invoke Duplicity!
+      if (!u._cdUsed) triggerSaintCD(b, u);
       u.stats.saintCasts = (u.stats.saintCasts || 0) + 1;
       ringBell(t, [2, 3, 3, 4][P], [0, 6, 12, 16][P]);
       if (P >= 2 && hadDouble) {
@@ -1816,8 +1929,8 @@ hero('saint', {
     },
     {
       k: 'smoke_mirrors', n: 'Smoke & Mirrors', attr: 'wis', tags: ['d20', 'heal'],
-      x: 'Whenever any ally dodges (Alert/Stealth/Afterimage), Saint heals them and grants +2 d20.',
-      full: 'Every ally dodge triggers Saint’s blessing: heals that ally and adds +2 to their next ability d20 roll.',
+      x: 'Ally dodges heal + grant +2 d20; any ally Channel Divinity spawns Saint a free Illusory Double.',
+      full: 'Every ally dodge heals that ally and adds +2 to their next d20 roll. Whenever any ally triggers Channel Divinity, Saint spawns a free Illusory Double.',
       t4x: 'Ally dodges also ring a free 2d8 Toll the Dead on the attacker.',
       f: { smokeMirrors: 1 }
     }
@@ -1838,18 +1951,21 @@ hero('kaska', {
   attr: { str: 16, dex: 12, con: 14, int: 10, wis: 16, cha: 10 },
   prim: 'wis', pair: ['str', 'wis'],
   hp: 124, ac: 15, sr: 14,
-  kw: { panther: 1 },
-  passive: { n: 'Panther Form', x: 'Starts in Panther Form (extra Beast HP bar); leaps onto foes and applies Exposed.' },
+  kw: { wild_shape: 1 },
+  ckw: [
+    { k: 'wild_shape', sub: 'Panther Form', x: 'Starts in Wild Shape (Panther Form with separate Beast HP bar); High/Nat 20 Moonlit Pounce re-shifts with fresh Beast HP.' }
+  ],
+  passive: { n: 'Predator’s Leap', x: 'Pounces onto targets to apply Exposed; reverts to Thorn Whip when Panther HP breaks.' },
   f: { pantherForm: 1 },
   atk: { n: 'Panther Claws / Thorn Whip', d: [1, 8], flat: 2, kind: 'phys', ty: 'slashing', iv: 1.3 },
   abil: {
     n: 'Moonlit Pounce', cr: 8, pa: 9, cut: [6, 13], self: 1,
-    one: 'Pounces and Exposes target; High heals & re-shifts into Panther Form, Nat 20 Stuns + radiates party moonlight heal and Haste.',
+    one: 'Pounces and Exposes target; High heals & re-shifts into Wild Shape (Panther), Nat 20 Stuns + radiates party moonlight heal and Haste.',
     b: [
       'Pounces target for 2d8 slashing and applies Exposed (3s).',
       'Pounces target for 3d8 slashing, applies Exposed (4s), and heals Kaska.',
-      'Pounces for 3d8 + Exposed, heals Kaska, and re-shifts into Panther Form (fresh Beast HP)!',
-      'Stuns target (2s), Exposes nearby foes, and bathes the whole party in Moonlight (Heal + 25% Haste)!'
+      'Pounces for 3d8 + Exposed, heals Kaska, and re-shifts into Wild Shape (fresh Panther Beast HP)!',
+      'Stuns target (2s), Exposes nearby foes, re-shifts into Wild Shape, and bathes party in Moonlight (Heal + 25% Haste)!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -1869,7 +1985,7 @@ hero('kaska', {
         const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .55 : .4) * (u.questDone ? 1.25 : 1));
         u.beast = { hp: bhp, max: bhp };
         if (u.f.lunarResilience && u.tier >= 4) { grantAlert(b, u, 1); addWard(b, u, 26 * u.dm, u.maxHp * .5, u); }
-        status(b, u, 'PANTHER FORM', '#8fd0ff');
+        triggerWildShape(b, u, { form: 'Panther Form', beastHp: bhp });
       }
       if (P === 3) {
         if (t.alive) stun(b, t, 2);
@@ -1885,9 +2001,9 @@ hero('kaska', {
   paths: [
     {
       k: 'lunar_resilience', n: 'Lunar Resilience', attr: 'str', tags: ['control', 'ward'],
-      x: 'Panther Form gains +40% Beast HP and cleaves adjacent enemies.',
+      x: 'Wild Shape (Panther) gains +40% Beast HP and cleaves adjacent enemies.',
       full: 'Panther Form starts with 40% more Beast HP and Kaska’s melee attacks cleave 50% damage to an adjacent foe.',
-      t4x: 'Shifting into Panther Form grants Alert and a Ward.',
+      t4x: 'Shifting into Wild Shape grants Alert and a Ward.',
       f: { lunarResilience: 1 }
     },
     {
@@ -1902,7 +2018,7 @@ hero('kaska', {
     id: 'kaska_q', statKey: 'pounces', goal: 16,
     label: 'Land 16 Moonlit Pounces',
     rewardName: 'Moon’s Favour',
-    rewardDesc: '+2 STR, +2 WIS; Panther Form gains +25% extra Beast HP and radiates moonlight healing.'
+    rewardDesc: '+2 STR, +2 WIS; Wild Shape gains +25% extra Beast HP and radiates moonlight healing.'
   }
 });
 
@@ -1912,33 +2028,15 @@ Object.values(H).forEach(d => {
   if (d.f && d.f.keenSight) d.rng += 1; // Lorcan's Keen Sight: extended range
 });
 
-/* One-sentence glance helper for cards & shop offers */
+/* One-sentence glance helper for cards & shop offers (now displays Hero Class Keyword Expressions!) */
 const abil1 = k => (H[k] && H[k].abil && H[k].abil.one) || '';
-const KW1 = {
-  alert:   'Starts Alert (dodging the next attack) with bonus Charge.',
-  channel: 'Once per fight, Preserve Life bursts healing onto a low ally.',
-  arcane:  'Regains Charge whenever a Ward she placed breaks.',
-  sneak:   'Deals +1d6 when an ally is adjacent or the foe is impaired.',
-  smite:   'Periodically empowers strikes with flat Holy damage.',
-  mark:    'Bonus WIS-scaled damage on attacks against Marked foes.',
-  natrec:  'Gains bonus Charge whenever a Rooted foe takes damage.',
-  insp:    'Grants stackable Inspiration dice added to allies’ d20 rolls.',
-  meta:    '4-pip Sorcery Point bar that auto-Twins Fireball when full.',
-  rage:    'Stacking Bear Rage driving flat damage reduction and attack speed.',
-  ki:      '4-pip Ki bar; full bar fires a Ki Strike (Stagger + bonus hit).',
-  hex:     'Per-hit necrotic amplifier that transfers on death.',
-  zealot:  'Zealot Rage prevents dropping below 1 HP while active.',
-  sear:    'Sunbeam applies burning Holy Sear stacks that can detonate.',
-  bond:    'Emboldening Bond links allies for bonus d20 dice and shared Charge.',
-  rune:    'Rummage supercharges allies’ equipped items and refreshes triggers.',
-  mote:    'Motes of Potential grant Advantage on allies’ next ability roll.',
-  ward:    'Arcane Shield scales with equipped items and reflects damage.',
-  gilded:  'Gilded foes are Staggered and drop Gold when slain.',
-  double:  'Illusory Double absorbs an incoming hit and echoes Toll the Dead.',
-  panther: 'Starts in Panther Form with a separate Beast HP bar.'
-};
 function glanceHTML(k, pathKey, G) {
   const d = H[k]; if (!d) return '';
   const P = pathKey ? d.paths.find(p => p.k === pathKey) : null;
-  return `<div class="glance"><div><b>${esc(d.abil.n)}</b> ${G(abil1(k))}</div>${d.passive ? `<div><b>${esc(d.passive.n)}</b> ${G(d.passive.x)}</div>` : ''}${Object.keys(d.kw || {}).map(x => KW[x] && KW1[x] ? `<div class="gk"><b>${esc(KW[x].n)}</b> ${G(KW1[x])}</div>` : '').join('')}${P ? `<div class="gp"><b>${esc(P.n)}</b> ${G(P.x)}</div>` : ''}</div>`;
+  const ckwHtml = (d.ckw || []).map(e => {
+    const K = CLASS_KW[e.k];
+    const head = K ? `${K.n}${e.sub ? ' — ' + e.sub : ''}` : (e.sub || e.k);
+    return `<div class="gk"><span class="ckwtag" style="--kc:${K ? K.c : '#5a4a8a'}" data-tn="${esc(K ? `${K.n} (${K.cls} · ${K.kind})` : head)}" data-tip="${esc(K ? K.x : '')}">${esc(K ? K.n : head)}</span><b>${esc(e.sub || '')}</b> ${G(e.x)}</div>`;
+  }).join('');
+  return `<div class="glance">${ckwHtml}<div><b>${esc(d.abil.n)}</b> ${G(abil1(k))}</div>${d.passive ? `<div><b>${esc(d.passive.n)}</b> ${G(d.passive.x)}</div>` : ''}${P ? `<div class="gp"><b>${esc(P.n)}</b> ${G(P.x)}</div>` : ''}</div>`;
 }

@@ -29,15 +29,23 @@ const GLOSS = [
   { k: "key-attr", n: "Key Attribute", re: /\bkey attribute\b/i, d: "Added to the hero’s ability d20 roll, shifts the High roll threshold, and scales ability/heal/Ward potency." },
   { k: "tier2", n: "Tier II Path", re: /\bTier (II|2) (path|choice)s?\b/i, d: "Path 1 (Vertical) fuels the hero’s own firework; Path 2 (Splash) wires it into teammates. Retrain freely at Campfires." },
   { k: "tier", n: "Tier", re: /\b[Tt]ier\b/, d: "Upgrading raises HP (×1.45) and damage/healing (×1.3), unlocks Tier II Paths, Tier III ASI (+2), and Tier IV payoffs." },
-  { k: "marked", n: "Marked", re: /\bMarked\b|\bHunter’s Mark\b/, d: "Focus-fire mark amplifying strikes, on-hit triggers, and Ranger attacks." },
-  { k: "hex", n: "Hex", re: /\bHex(es|ed)?\b/, d: "Curse dealing bonus necrotic damage on every hit from any ally." },
-  { k: "rage", n: "Bear Rage", re: /\bBear Rage\b|\bRage\b/, d: "Uncapped combat stacks granting +4% flat damage reduction and +10% attack speed each." },
-  { k: "ki", n: "Ki", re: /\bKi Strikes?\b|\bKi\b/, d: "4-pip bar filled by attacking and taking hits; fires a Ki Strike at full (3 at Tier IV Open Hand)." },
-  { k: "insp", n: "Bardic Inspiration", re: /\b(Bardic )?Inspiration\b|\bInspired\b/, d: "Stackable bonus die (d6/d8/d10) added directly to an ally’s next ability d20 roll." },
-  { k: "meta", n: "Sorcery Points", re: /\bSorcery Points?\b|\bTwins?\b/, d: "4-pip bar; when full, automatically casts a free Twinned Fireball at the next densest clump." },
-  { k: "sneak", n: "Sneak Attack", re: /\bSneak Attack\b/, d: "Bonus +1d6 physical damage once per second against flanked or impaired targets." },
-  { k: "smite", n: "Divine Smite", re: /\bDivine Smite\b|\bSmites?\b/, d: "Flat Holy damage bursts that ignore AC and SR." },
-  { k: "channel", n: "Channel Divinity", re: /\bChannel Divinity\b/, d: "Once per fight, Preserve Life bursts healing onto a nearby low-HP ally." },
+  { k: "action_surge", n: "Action Surge (Fighter)", re: /\bAction Surges?\b/, d: "Fighter Class Keyword. Fires an immediate burst of extra action economy (bonus strike, follow-up, or refresh) when its condition is met." },
+  { k: "channel_divinity", n: "Channel Divinity (Cleric)", re: /\bChannel Divinity\b/, d: "Cleric Class Keyword. Once-per-fight signature divine miracle; can be reset by Nat 20s, items, or Cleric synergies." },
+  { k: "smite", n: "Smite (Paladin)", re: /\b(Divine |Verdant )?Smites?\b/, d: "Paladin Class Keyword. Empowers a strike or ability with a radiant or nature burst that triggers Smite synergies." },
+  { k: "aura", n: "Aura (Paladin)", re: /\bAuras?\b/, d: "Paladin Class Keyword. Persistent protective or empowering zone radiating to nearby allies." },
+  { k: "arcane_recovery", n: "Arcane Recovery (Wizard)", re: /\bArcane Recovery\b/, d: "Wizard Class Keyword. Recovers ability Charge whenever this Wizard’s signature condition occurs." },
+  { k: "rage", n: "Rage (Barbarian)", re: /\b(Bear |Zealot )?Rage\b/, d: "Barbarian Class Keyword. Fierce combat state driving durability, speed, or immortality." },
+  { k: "bardic_inspiration", n: "Bardic Inspiration (Bard)", re: /\b(Bardic )?Inspiration\b|\bInspired\b/, d: "Bard Class Keyword. Grants an ally a bonus d20 die or Advantage Mote that triggers effects when spent." },
+  { k: "wild_shape", n: "Wild Shape (Druid)", re: /\bWild Shape\b/, d: "Druid Class Keyword. Channels a primal beast form or living nature aspect to transform combat presence." },
+  { k: "hunters_mark", n: "Hunter’s Mark (Ranger)", re: /\bHunter’s Mark\b|\bMarked\b/, d: "Ranger Class Keyword. Designates a quarry for bonus WIS-scaled Ranger damage and team focus-fire payoffs." },
+  { k: "sneak_attack", n: "Sneak Attack (Rogue)", re: /\bSneak Attacks?\b/, d: "Rogue Class Keyword. Bonus precision damage against flanked, impaired, or ambushed foes." },
+  { k: "cunning_action", n: "Cunning Action (Rogue)", re: /\bCunning Action\b/, d: "Rogue Class Keyword. Agile tumble, Stealth, or trickery maneuver triggering ambush payoffs." },
+  { k: "ki_ability", n: "Ki Ability (Monk)", re: /\bKi Abilit(y|ies)\b|\bKi Strikes?\b/, d: "Monk Class Keyword (Payoff). Signature martial technique automatically fired whenever the Ki bar fills." },
+  { k: "ki", n: "Ki (Monk)", re: /\bKi\b/, d: "Monk Class Keyword (Resource). 4-pip bar filled by attacking and taking hits; fires a Ki Ability when full." },
+  { k: "sorcery_points", n: "Sorcery Points (Sorcerer)", re: /\bSorcery Points?\b/, d: "Sorcerer Class Keyword (Resource). 4-pip bar built by casts and elemental triggers; fires Metamagic when full." },
+  { k: "metamagic", n: "Metamagic (Sorcerer)", re: /\bMetamagic\b|\bTwins?\b/, d: "Sorcerer Class Keyword (Payoff). Spell-warping effect automatically fired when Sorcery Points fill." },
+  { k: "hex", n: "Hex (Warlock)", re: /\bHex(es|ed)?\b/, d: "Warlock Class Keyword. Curses a foe to take bonus necrotic damage on every hit; transfers on death." },
+  { k: "pact_boon", n: "Pact Boon (Warlock)", re: /\bPact Boons?\b/, d: "Warlock Class Keyword. Patron payoff triggered whenever a Hexed foe dies." },
   { k: "trig-struck", n: "Struck", re: /\bStruck\b/, d: "Gains Charge when taking damage." },
   { k: "trig-striking", n: "Striking", re: /\bStriking\b/, d: "Gains Charge each time an attack lands." },
   { k: "trig-watchful", n: "Watchful", re: /\bWatchful\b/, d: "Gains Charge when allies in range take damage or are healed." },
@@ -85,12 +93,13 @@ function glossaryInit() {
     tip.style.left = x + "px"; tip.style.top = y + "px";
   };
   const hide = () => { tip.hidden = true; pinned = null; };
-  document.addEventListener("mouseover", e => { const el = e.target.closest(".kw"); if (el) show(el); });
-  document.addEventListener("mouseout", e => { const el = e.target.closest(".kw"); if (el && !pinned) tip.hidden = true; });
-  document.addEventListener("focusin", e => { const el = e.target.closest(".kw"); if (el) show(el); });
-  document.addEventListener("focusout", e => { if (e.target.closest(".kw") && !pinned) tip.hidden = true; });
-  document.addEventListener("click", e => { const el = e.target.closest(".kw"); if (el) { e.preventDefault(); e.stopPropagation(); if (pinned === el) { hide(); return; } pinned = el; show(el); return; } if (pinned) hide(); }, true);
-  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("kw")) { e.preventDefault(); pinned = e.target; show(e.target); } });
+  const TIP_SEL = ".kw,.ckwpill,.ckwtag,.tag18";
+  document.addEventListener("mouseover", e => { const el = e.target.closest(TIP_SEL); if (el) show(el); });
+  document.addEventListener("mouseout", e => { const el = e.target.closest(TIP_SEL); if (el && !pinned) tip.hidden = true; });
+  document.addEventListener("focusin", e => { const el = e.target.closest(TIP_SEL); if (el) show(el); });
+  document.addEventListener("focusout", e => { if (e.target.closest(TIP_SEL) && !pinned) tip.hidden = true; });
+  document.addEventListener("click", e => { const el = e.target.closest(TIP_SEL); if (el && !el.closest('[data-a="buyHero"],[data-a="buyItem"]')) { e.preventDefault(); e.stopPropagation(); if (pinned === el) { hide(); return; } pinned = el; show(el); return; } if (pinned) hide(); }, true);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(TIP_SEL)) { e.preventDefault(); pinned = e.target; show(e.target); } });
   window.addEventListener("scroll", () => { if (!tip.hidden && !pinned) tip.hidden = true; }, true);
 }
 

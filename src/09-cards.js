@@ -242,9 +242,10 @@ function largeCard(k, t, opts = {}) {
 
   const formMap = { dane: 'dane_form', arthur: 'arthur_form', pillar: 'pillar_form', jamison: 'jamison_quest', saint: 'saint_quest' };
   const activeForm = qDone && formMap[k] ? formMap[k] : '';
+  const ckwPills = (d.ckw || []).map(e => classKwPill(e.k, false, e.sub)).join('');
   return `<div class="hcard lg c13" style="--tc:${TIER_INK[t]};--rc:${ROLE_COL[role]}">
    <div class="ribbon">${kw('tier', TIER_NAME[t])}</div>
-   <div class="chead"><div><h2 class="cname">${esc(d.name)}</h2><div class="ctitle">${esc(d.title)}</div></div><span class="rolechip">${role}</span></div>
+   <div class="chead"><div><h2 class="cname">${esc(d.name)}</h2><div class="ctitle">${esc(d.title)}</div>${ckwPills ? `<div class="cckw">${ckwPills}</div>` : ''}</div><span class="rolechip">${role}</span></div>
    <div class="splash"><canvas data-splash="${k}"${activeForm ? ` data-form="${activeForm}"` : ''}></canvas><div class="reach">${G(d.reach)} · ${st.sz > 1 ? 'Large 2×2 · ' : ''}${G(d.ft + ' ft')}</div></div>
    ${glanceHTML(k, cp, G)}
    <div class="stats">${statTiles(N, false)}</div>

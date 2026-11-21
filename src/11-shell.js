@@ -353,13 +353,21 @@ function renderShop() {
 
   const on = R.team;
   const selItemKey = SHOP_SEL_ITEM != null ? R.stash[SHOP_SEL_ITEM] : null;
-  // Mechanical tags shown as labels only (zero trait-counting bonuses)
-  const tc = {}; on.forEach(h => tagsOf(h.key).forEach(t => tc[t] = (tc[t] || 0) + 1));
+  // Mechanical tags & Class Keywords shown as readability cues (zero trait-counting bonuses)
+  const tc = {}, kc = {};
+  on.forEach(h => {
+    tagsOf(h.key).forEach(t => tc[t] = (tc[t] || 0) + 1);
+    classKwOf(h.key).forEach(kwk => kc[kwk] = (kc[kwk] || 0) + 1);
+    (h.items || []).forEach(ik => itemKwHooks(ik).forEach(kwk => kc[kwk] = (kc[kwk] || 0) + 1));
+  });
   const partyTagSet = new Set(Object.keys(tc));
+  const partyKwSet = new Set(Object.keys(kc));
 
   $('boardCount').textContent = `${on.length} of ${ECON.board}`;
   $('slots').innerHTML = on.map(h => partyChip(h, selItemKey)).join('') + Array.from({ length: Math.max(0, ECON.board - on.length) }, () => `<div class="pchip empty">Empty</div>`).join('');
-  $('partyTags').innerHTML = Object.entries(tc).sort((a, b) => b[1] - a[1]).map(([t, n]) => tagPill(t, n)).join('');
+  const partyKwHtml = Object.entries(kc).sort((a, b) => b[1] - a[1]).map(([kwk]) => classKwPill(kwk, false)).join('');
+  const partyTagHtml = Object.entries(tc).sort((a, b) => b[1] - a[1]).map(([t, n]) => tagPill(t, n)).join('');
+  $('partyTags').innerHTML = partyKwHtml + partyTagHtml;
 
   $('stashCount').textContent = `${R.stash.length} of ${ECON.stash}`;
   $('stash').innerHTML = R.stash.length
@@ -378,8 +386,8 @@ function renderShop() {
     }
   }
 
-  $('offers').innerHTML = R.shop.heroes.map((k, i) => heroOfferCard(k, i, partyTagSet)).join('');
-  $('itemOffers').innerHTML = R.shop.items.map((k, i) => itemOfferCard(k, i)).join('');
+  $('offers').innerHTML = R.shop.heroes.map((k, i) => heroOfferCard(k, i, partyTagSet, partyKwSet)).join('');
+  $('itemOffers').innerHTML = R.shop.items.map((k, i) => itemOfferCard(k, i, partyKwSet)).join('');
 
   const rp = rerollPrice(R);
   $('rerollBtn').innerHTML = `Reroll · ${gold(rp)}`; $('rerollBtn').disabled = R.gold < rp;
@@ -390,13 +398,15 @@ function renderShop() {
   checkPendingPath();
 }
 
-function heroOfferCard(k, i, partyTagSet) {
+function heroOfferCard(k, i, partyTagSet, partyKwSet) {
   const kind = (RUN.shop.slotKind && RUN.shop.slotKind[i]) || (i === 2 ? 'upgrade' : 'recruit');
   if (!k) return `<div class="ho18 sold"><span class="small mute">${kind === 'upgrade' ? 'Upgrade slot · Sold' : 'Recruit slot · Sold'}</span></div>`;
   const d = H[k], o = heroOffer(RUN, k, i), ot = o.offerTier || 1, lk = RUN.shop.lockH[i];
   const can = !o.maxed && RUN.gold >= o.price;
   const slotBadge = o.upgrade ? `<span class="slotbadge upg">UPGRADE</span>` : `<span class="slotbadge rec">RECRUIT</span>`;
   const own = o.upgrade ? `<div class="ownline">Tier ${rom[o.upgrade.tier]} → <b>Tier ${rom[o.tier]}</b></div>` : (ot >= 2 ? `<div class="ownline">Pre-tiered <b>Tier ${rom[ot]}</b> recruit (pick Path on buy)</div>` : '');
+  const ckwHtml = (d.ckw || []).map(e => classKwPill(e.k, !!(partyKwSet && partyKwSet.has(e.k)), e.sub)).join('');
+  const ckwLine = (d.ckw && d.ckw[0]) ? `<div class="hoab kwline"><b>${esc(CLASS_KW[d.ckw[0].k].n)}</b> ${esc(d.ckw[0].x)}</div>` : '';
   const tagHtml = tagsOf(k).map(t => {
     const D = TAGDEF[t]; if (!D) return '';
     const match = partyTagSet && partyTagSet.has(t);
@@ -404,7 +414,7 @@ function heroOfferCard(k, i, partyTagSet) {
   }).join('');
   return `<div class="ho18${lk ? ' locked' : ''}${can ? '' : ' poor'}" style="--tc:${TIERCOL[ot]}" data-a="${o.maxed ? 'offerCard' : 'buyHero'}" data-i="${i}">
     <div class="hoart"><canvas data-osplash="${k}"></canvas>${slotBadge}<span class="hotier">${rom[ot]}</span>${o.sale ? `<span class="salebadge">−${o.sale}</span>` : ''}</div>
-    <div class="hob"><div class="hon">${esc(d.name)}</div><div class="hoc">${esc(d.cls)} · ${esc(d.role)}</div><div class="hotags">${tagHtml}</div><div class="hoab"><b>${esc(d.abil.n)}</b> ${esc(abil1(k))}</div>${d.passive ? `<div class="hoab pas"><b>${esc(d.passive.n)}</b> ${esc(d.passive.x)}</div>` : ''}${own}</div>
+    <div class="hob"><div class="hon">${esc(d.name)}</div><div class="hoc">${esc(d.cls)} · ${esc(d.role)}</div><div class="hotags">${ckwHtml}${tagHtml}</div>${ckwLine}<div class="hoab"><b>${esc(d.abil.n)}</b> ${esc(abil1(k))}</div>${own}</div>
     <div class="hof"><b class="price">${o.maxed ? 'Max' : gold(o.price)}</b><span><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockH" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button><button class="btn sm" data-a="offerCard" data-i="${i}">Card</button></span></div></div>`;
 }
 
@@ -433,12 +443,15 @@ function partyChip(h, selItemKey) {
     <button class="btn sm" data-a="sell" data-u="${h.uid}" ${RUN.team.length <= 1 ? 'disabled' : ''}>Sell ${heroValue(h.tier)}</button></div>`;
 }
 
-function itemOfferCard(k, i) {
+function itemOfferCard(k, i, partyKwSet) {
   if (!k) return `<div class="io18 sold"><span class="small mute">Sold</span></div>`;
   const it = ITEMS[k], R = RARITY[it.r], p = itemPrice(RUN, i), lk = RUN.shop.lockI[i];
   const favNames = RUN.team.filter(h => isFavMatch(k, h)).map(h => short(H[h.key].name));
-  const favLine = favNames.length ? `<div class="iofav">★ Favoured: ${esc(favNames.join(', '))}</div>` : '';
-  return `<div class="io18${lk ? ' locked' : ''}${favNames.length ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div>${favLine}</div><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockI" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button></div>`;
+  const kwMatches = itemKwHooks(k).filter(kwk => partyKwSet && partyKwSet.has(kwk)).map(kwk => CLASS_KW[kwk].n);
+  const favLine = favNames.length
+    ? `<div class="iofav">★ Favoured: ${esc(favNames.join(', '))}</div>`
+    : (kwMatches.length ? `<div class="iofav kw">★ Synergy: ${esc(kwMatches.slice(0, 2).join(', '))}</div>` : '');
+  return `<div class="io18${lk ? ' locked' : ''}${(favNames.length || kwMatches.length) ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div>${favLine}</div><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockI" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button></div>`;
 }
 
 function heroCardModal(h, extra) {
@@ -625,14 +638,20 @@ function afterFight() {
 
 function highlights(u) {
   const s = u.stats, c = [];
-  if (s.alertDodges) c.push(`${s.alertDodges} dodges`);
+  if (s.actionSurges) c.push(`${s.actionSurges} Action Surge${s.actionSurges > 1 ? 's' : ''}`);
+  if (s.channelDivinities) c.push(`${s.channelDivinities} Channel Div.`);
+  if (s.smites) c.push(`${s.smites} Smites`);
+  if (s.arcaneRecoveries) c.push(`${s.arcaneRecoveries} Arcane Rec.`);
   if (s.bearRagePeak) c.push(`Rage ×${s.bearRagePeak}`);
-  if (s.kiStrikes) c.push(`${s.kiStrikes} Ki Strikes`);
-  if (s.hexDeaths) c.push(`${s.hexDeaths} Hex kills`);
+  else if (s.zealotProcs) c.push(`${s.zealotProcs} Zealot Rage`);
+  if (s.wildShapes) c.push(`${s.wildShapes} Wild Shape`);
+  if (s.kiStrikes) c.push(`${s.kiStrikes} Ki Abil.`);
+  if (s.metamagics) c.push(`${s.metamagics} Metamagic`);
+  if (s.pactBoons) c.push(`${s.pactBoons} Pact Boons`);
+  if (s.sneaks) c.push(`${s.sneaks} Sneaks`);
+  if (s.alertDodges) c.push(`${s.alertDodges} dodges`);
   if (s.rootsApplied) c.push(`${s.rootsApplied} roots`);
   if (s.inspPassed) c.push(`${s.inspPassed} passes`);
-  if (s.sneaks) c.push(`${s.sneaks} Sneaks`);
-  if (s.smites) c.push(`${s.smites} Smites`);
   if (s.gold) c.push(`+${s.gold}g`);
   return c.length ? `<div class="hl">${c.slice(0, 3).map(x => `<span>${x}</span>`).join('')}</div>` : '';
 }

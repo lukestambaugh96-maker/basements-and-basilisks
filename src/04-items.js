@@ -30,9 +30,10 @@ const ITEMS = {
   },
   whetstone: {
     n: 'Whetstone of the Hunt', r: 1, ic: 'stone', packOnly: 'campfire',
+    kwHooks: ['hunters_mark'],
     a: { dex: 2 },
     s: { markPoison: 1 },
-    x: 'Attacks against Marked targets apply 1 stack of Poison'
+    x: 'Attacks against Hunter’s Mark targets apply 1 stack of Poison'
   },
   ember_bracers: {
     n: 'Ember-Iron Bracers', r: 1, ic: 'bracers', packOnly: 'beaten',
@@ -42,6 +43,7 @@ const ITEMS = {
   },
   sunlit_censer: {
     n: 'Sunlit Censer', r: 1, ic: 'holy', packOnly: 'divine',
+    kwHooks: ['channel_divinity', 'smite'],
     a: { wis: 2 },
     s: { healHolyPulse: 1 },
     x: 'Whenever the holder heals or Wards an ally, pulse 1d6 Holy damage to the nearest enemy'
@@ -54,59 +56,67 @@ const ITEMS = {
   },
   cloak_elvenkind: {
     n: 'Cloak of Elvenkind', r: 1, ic: 'cloak', packOnly: 'surprise',
+    kwHooks: ['cunning_action', 'sneak_attack'],
     a: { dex: 2 },
-    s: { startStealth: 3, stealthExpose: 1 },
-    x: 'Starts each fight in Stealth for 3s; opening attack from Stealth applies Exposed for 4s'
+    s: { startStealth: 3, stealthExpose: 1, cloakSneak: 1 },
+    x: 'Triggers Cunning Action (Stealth 3s) at fight start; opening attack Exposes and triggers a 1d6 Sneak Attack'
   },
 
-  /* ---------- 2. CLASSIC D&D WEAPONS (Favoured Class bonuses) ---------- */
+  /* ---------- 2. CLASSIC D&D WEAPONS (Favoured Class bonuses & Class Keyword hooks) ---------- */
   flametongue: {
     n: 'Flametongue', r: 2, ic: 'sword_flame', t: 'melee',
+    kwHooks: ['action_surge', 'smite'],
     a: { str: 4 },
     s: { flameEvery2: 1 },
     x: 'Every 2nd strike applies Burn',
-    fav: { cls: ['Fighter', 'Paladin'], s: { flameEvery2: 1, flameSpread: 1 }, x: 'Burn spreads to an adjacent foe' }
+    fav: { cls: ['Fighter', 'Paladin'], s: { flameEvery2: 1, flameSpread: 1, flameKwBurn: 1 }, x: 'Triggering Action Surge or Smite spreads Burn to an adjacent foe' }
   },
   oathbow: {
     n: 'Oathbow', r: 2, ic: 'bow', t: 'ranged',
+    kwHooks: ['hunters_mark', 'action_surge'],
     a: { dex: 4 },
     s: { markPenPct: 0.30, markCharge: 8 },
-    x: 'Attacks vs. Marked foes ignore 30% AC and build +8 Charge',
-    fav: { cls: ['Ranger', 'Fighter'], s: { markPenPct: 0.30, markCharge: 8, highMarks: 1 }, x: 'High ability rolls apply Marked' }
+    x: 'Attacks vs. Hunter’s Mark foes ignore 30% AC and build +8 Charge',
+    fav: { cls: ['Ranger', 'Fighter'], s: { markPenPct: 0.30, markCharge: 8, highMarks: 1, surgeArrow: 1 }, x: 'High rolls apply Hunter’s Mark; Action Surge looses a bonus piercing arrow' }
   },
   staff_power: {
     n: 'Staff of Power', r: 2, ic: 'staff', t: 'ranged',
+    kwHooks: ['arcane_recovery', 'sorcery_points', 'pact_boon'],
     a: { int: 4 },
     s: { wardOnCast: 12 },
     x: 'Casting grants a small Ward',
-    fav: { cls: ['Wizard', 'Sorcerer', 'Warlock'], s: { wardOnCast: 12, nat20Refund: 30 }, x: 'Nat 20s refund 30% Charge' }
+    fav: { cls: ['Wizard', 'Sorcerer', 'Warlock'], s: { wardOnCast: 12, nat20Refund: 30, doubleArcaneRec: 1, highSorcery: 1, pactHeal: 1 }, x: 'Doubles Arcane Recovery Charge, grants +1 Sorcery Point on High/Nat 20, and heals on Pact Boon' }
   },
   sunblade: {
     n: 'Sunblade', r: 2, ic: 'greatsword', t: 'melee',
+    kwHooks: ['smite', 'channel_divinity'],
     a: { str: 2, wis: 2 },
     s: { holyAttacks: 1 },
     x: 'Attacks deal Holy damage (ignoring AC and SR)',
-    fav: { cls: ['Cleric', 'Paladin'], s: { holyAttacks: 1, highPulseHeal: 1 }, x: 'High rolls pulse a small heal to nearby allies' }
+    fav: { cls: ['Cleric', 'Paladin'], s: { holyAttacks: 1, highPulseHeal: 1, kwHolyHeal: 1 }, x: 'Triggering Smite or Channel Divinity pulses a heal to nearby allies' }
   },
 
-  /* ---------- 3. MULTICLASS ENERGY ITEMS ---------- */
+  /* ---------- 3. MULTICLASS ENERGY ITEMS (Grant or Amplify Class Keywords!) ---------- */
   amulet_devout: {
     n: 'Amulet of the Devout', r: 1, ic: 'holy',
+    kwHooks: ['smite', 'channel_divinity'],
     a: { cha: 2 },
-    s: { devoutSmite: 5 },
-    x: 'Every 5s, the holder’s next attack triggers a flat Holy Smite (2d6)'
+    s: { devoutSmite: 5, cdBoost: 0.35 },
+    x: 'Every 5s, next attack triggers a Smite (2d6 Holy); boosts Channel Divinity potency by +35%'
   },
   metarod_quicken: {
     n: 'Metamagic Rod (Quicken)', r: 1, ic: 'rod',
+    kwHooks: ['metamagic', 'sorcery_points'],
     a: { int: 4 },
-    s: { quickenFirst: 1 },
-    x: 'First ability cast each fight charges at 2× speed'
+    s: { quickenFirst: 1, startSorcery: 2 },
+    x: 'Triggers Metamagic (first ability cast charges at 2× speed) and grants +2 starting Sorcery Points'
   },
   dragonhide_belt: {
     n: 'Dragonhide Belt', r: 1, ic: 'belt',
+    kwHooks: ['ki', 'ki_ability'],
     a: { dex: 2, wis: 2 },
-    s: { kw_ki: 1 },
-    x: 'Grants any hero a 4-hit Ki bar (4th hit Staggers)'
+    s: { kw_ki: 1, kw_ki_ability: 1, highKi: 1 },
+    x: 'Grants a 4-pip Ki bar + Ki Ability (Stagger strike); Monks also gain +1 Ki on High rolls'
   },
 
   /* ---------- 4. d20 / INT / WIS LEVER ITEMS ---------- */
@@ -132,6 +142,7 @@ const ITEMS = {
 
 const CORE_ITEM_KEYS = Object.keys(ITEMS).filter(k => !ITEMS[k].packOnly);
 const ITEM_ORDER = Object.keys(ITEMS).sort((a, b) => ITEMS[a].r - ITEMS[b].r);
+const itemKwHooks = k => (ITEMS[k] && ITEMS[k].kwHooks) || [];
 
 /* Favoured Class clones (`key@fav`) read transparently by heroStats() */
 const favFor = (k, heroKey) => {
@@ -183,8 +194,10 @@ function canCarry(heroOrKey, k) {
 const ITEM_MAX = new Set([
   'pushRes', 'freeAct', 'burnImm', 'deathWard', 'displace', 'bigArea',
   'holyAttacks', 'quickenFirst', 'rerollLowOnce', 'clockworkHigh', 'capToRoll',
-  'flameEvery2', 'flameSpread', 'highMarks', 'highPulseHeal', 'potionHeal', 'highBurnBurst',
-  'healHolyPulse', 'sellBonus', 'stealthExpose', 'startStealth'
+  'flameEvery2', 'flameSpread', 'flameKwBurn', 'highMarks', 'surgeArrow',
+  'doubleArcaneRec', 'highSorcery', 'pactHeal', 'highPulseHeal', 'kwHolyHeal',
+  'potionHeal', 'highBurnBurst', 'healHolyPulse', 'sellBonus',
+  'stealthExpose', 'startStealth', 'cloakSneak', 'highKi'
 ]);
 const ITEM_MUL = new Set(['poisonX']);
 
