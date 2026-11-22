@@ -345,7 +345,7 @@ hero('faelan', {
   f: { abjurer: 1 },
   atk: { n: 'Ray of Frost', d: [1, 8], flat: 1, kind: 'magic', ty: 'cold', iv: 1.5 },
   abil: {
-    n: 'Arcane Ward', cr: 10.5, pa: 7, cut: [5, 13], self: 1,
+    n: 'Arcane Ward', cr: 9.5, pa: 6, cut: [5, 13], self: 1,
     one: 'Places an INT-scaled Ward on the most-threatened ally; High Wards 2 allies, Nat 20 Wards everyone & recasts.',
     b: [
       'Places a light Arcane Ward on the most-threatened ally.',
@@ -357,14 +357,14 @@ hero('faelan', {
       const fr = friends(b, u).filter(a => !a.minion);
       const threat = a => (hpPct(a) * 100) + a.ward * .4 - (a.role === 'Tank' ? 14 : 0);
       const ord = fr.slice().sort((a, c) => threat(a) - threat(c));
-      const base = [24, 40, 48, 52][P] + Math.max(0, u.m.int) * [5, 7, 8, 9][P];
-      const val = Math.round(base * u.dm * chaK(u) * (u.f.projWard ? 1.35 : 1));
-      const cap = a => a.maxHp * .7;
+      const base = [14, 22, 28, 34][P] + Math.max(0, u.m.int) * [2, 3, 4, 5][P];
+      const val = Math.round(base * u.dm * chaK(u) * (u.f.projWard ? 1.20 : 1));
+      const cap = a => a.maxHp * .48;
       if (P === 3) {
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'force', ids: fr.map(x => x.id) });
         fr.forEach(a => addWard(b, a, val, cap(a), u));
         const low = fr.slice().sort((a, c) => hpPct(a) - hpPct(c))[0];
-        if (low) addWard(b, low, val, low.maxHp * .85, u);
+        if (low) addWard(b, low, val, low.maxHp * .60, u);
         callout(b, u, 'AEGIS OF ABJURATION!', '#8fb4e6');
       } else {
         const list = ord.slice(0, P === 2 ? 2 : 1);
@@ -374,7 +374,7 @@ hero('faelan', {
     }
   },
   paths: [
-    { k: 'proj_ward', n: 'Projected Ward', attr: 'int', tags: ['ward'], x: 'Arcane Wards are 35% stronger.', f: { projWard: 1 } },
+    { k: 'proj_ward', n: 'Projected Ward', attr: 'int', tags: ['ward'], x: 'Arcane Wards are 20% stronger.', f: { projWard: 1 } },
     { k: 'spell_battery', n: 'Spell Battery', attr: 'int', tags: ['ward', 'charge'], x: 'When Faelan’s Ward breaks, that ally gains +25 Charge.', f: { spellBattery: 1 } }
   ],
   quest: {

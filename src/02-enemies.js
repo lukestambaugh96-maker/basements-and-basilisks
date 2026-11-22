@@ -537,14 +537,14 @@ const E = {
     }
   },
   keraptis: {
-    name: 'Simulacrum of Keraptis', arch: ['caster', 'summoner'], hp: 190, ac: 14, sr: 18, ft: 30, rng: 5, boss: 1,
-    atk: { n: 'Arcane Bolt', d: [2, 8], flat: 3, kind: 'magic', ty: 'force', iv: 1.35 },
-    f: { pushResist: .6, summon: { k: 'steam_mephit', n: 1, every: 9, first: 4, cap: 3, hp: .7 } },
+    name: 'Simulacrum of Keraptis', arch: ['caster', 'summoner'], hp: 175, ac: 14, sr: 16, ft: 30, rng: 5, boss: 1,
+    atk: { n: 'Arcane Bolt', d: [2, 8], flat: 3, kind: 'magic', ty: 'force', iv: 1.4 },
+    f: { pushResist: .6, summon: { k: 'steam_mephit', n: 1, every: 10, first: 5, cap: 2, hp: .65 } },
     role: 'Act 2 Boss: mad archmage weaving Wards, constructs, and Elemental Novas',
     abil: {
-      n: 'Funhouse Nova', cr: 8.0, cut: [7, 14],
+      n: 'Funhouse Nova', cr: 8.2, cut: [7, 14],
       fx(b, u, P) {
-        addWard(b, u, Math.round(u.maxHp * [0.10, 0.14, 0.20, 0.26][P]), u.maxHp * .5, u);
+        addWard(b, u, Math.round(u.maxHp * [0.08, 0.11, 0.15, 0.20][P]), u.maxHp * .4, u);
         const ts = foes(b, u).filter(x => !x.hidden);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: P >= 2 ? 'lightning' : 'fire', ids: ts.map(x => x.id) });
         ts.forEach(x => hit(b, u, x, roll([2, 3, 4, 5][P], 6), { kind: 'magic', el: P >= 2 ? 'cold' : 'fire', ty: P >= 2 ? 'cold' : 'fire', area: 1, ab: 1 }));
@@ -553,52 +553,52 @@ const E = {
     }
   },
   blackrazor_wielder: {
-    name: 'Wielder of Blackrazor', arch: 'brute', hp: 205, ac: 16, sr: 15, ft: 35, rng: 1, boss: 1,
-    atk: { n: 'Blackrazor', d: [2, 10], flat: 5, kind: 'phys', ty: 'slashing', iv: 1.25 },
+    name: 'Wielder of Blackrazor', arch: 'brute', hp: 185, ac: 15, sr: 14, ft: 35, rng: 1, boss: 1,
+    atk: { n: 'Blackrazor', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.35 },
     f: { pushResist: .7, blackrazorBoss: 1 },
     role: 'Act 2 Boss: soul-drinker gaining Ward, Haste & Damage whenever ANY unit dies!',
     abil: {
-      n: 'Devour Soul', cr: 7.5, cut: [7, 14],
+      n: 'Devour Soul', cr: 7.8, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
-        const dealt = hit(b, u, t, roll([3, 4, 5, 7][P], 8), { kind: 'phys', ty: 'necrotic', nec: [6, 8, 12, 16][P], melee: 1, ab: 1 });
-        if (dealt > 0) addWard(b, u, Math.round(dealt * .6), u.maxHp * .6, u);
-        if (P === 3) { u.tempHaste = 35; u.tempHasteT = 5; }
+        const dealt = hit(b, u, t, roll([2, 3, 4, 6][P], 8), { kind: 'phys', ty: 'necrotic', nec: [4, 6, 9, 12][P], melee: 1, ab: 1 });
+        if (dealt > 0) addWard(b, u, Math.round(dealt * .4), u.maxHp * .4, u);
+        if (P === 3) { u.tempHaste = 25; u.tempHasteT = 4; }
       }
     }
   },
   gynosphinx: {
-    name: 'Gynosphinx', arch: 'caster', hp: 225, ac: 16, sr: 17, ft: 35, rng: 2, boss: 1, large: 1,
+    name: 'Gynosphinx', arch: 'caster', hp: 205, ac: 15, sr: 16, ft: 35, rng: 2, boss: 1, large: 1,
     atk: { n: 'Golden Claws', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.35 },
     f: { pushResist: .8 },
     role: 'Act 2 Boss (2×2): Roar of Ages stuns/drains Charge; Temporal Shift cleanses debuffs',
     abil: {
-      n: 'Roar of Ages', cr: 7.5, cut: [7, 14],
+      n: 'Roar of Ages', cr: 7.8, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'thunder', ids: ts.map(x => x.id) });
         ts.forEach(x => {
           hit(b, u, x, roll([2, 3, 4, 5][P], 6), { kind: 'magic', ty: 'thunder', area: 1, ab: 1 });
-          if (x.alive) { x.charge = Math.max(0, (x.charge || 0) - [10, 15, 22, 30][P]); if (P >= 2) stagger(b, x, 2.5); if (P === 3) stun(b, x, 1.5); }
+          if (x.alive) { x.charge = Math.max(0, (x.charge || 0) - [8, 12, 18, 25][P]); if (P >= 2) stagger(b, x, 2.0); if (P === 3) stun(b, x, 1.2); }
         });
-        if (P >= 2) { u.st.burn = 0; u.st.poison = 0; u.st.exp = 0; heal(b, u, u, Math.round(u.maxHp * .12), { raw: 1 }); status(b, u, 'TEMPORAL SHIFT', '#ffd76a'); }
+        if (P >= 2) { u.st.burn = 0; u.st.poison = 0; u.st.exp = 0; heal(b, u, u, Math.round(u.maxHp * .10), { raw: 1 }); status(b, u, 'TEMPORAL SHIFT', '#ffd76a'); }
       }
     }
   },
   giant_crab: {
-    name: 'Giant Crab of the Bubble', arch: 'wall', hp: 235, ac: 19, sr: 12, ft: 25, rng: 1, boss: 1, large: 1,
-    atk: { n: 'Crushing Claw', d: [2, 8], flat: 5, kind: 'phys', ty: 'bludgeoning', iv: 1.45 },
+    name: 'Giant Crab of the Bubble', arch: 'wall', hp: 215, ac: 17, sr: 12, ft: 25, rng: 1, boss: 1, large: 1,
+    atk: { n: 'Crushing Claw', d: [2, 8], flat: 4, kind: 'phys', ty: 'bludgeoning', iv: 1.45 },
     f: { pushResist: .9, fireproof: 1 },
-    role: 'Act 2 Boss (2×2): AC 19 carapace, Crushing Claw Root, and Boiling Splash fire AoE',
+    role: 'Act 2 Boss (2×2): AC 17 carapace, Crushing Claw Root, and Boiling Splash fire AoE',
     abil: {
-      n: 'Boiling Splash', cr: 7.5, cut: [7, 14],
+      n: 'Boiling Splash', cr: 7.8, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= (P === 3 ? 4 : 2));
         const list = ts.length ? ts : foes(b, u).slice(0, 2);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: P === 3 ? 4 : 2, ty: 'fire', ids: list.map(x => x.id) });
         list.forEach(x => {
           hit(b, u, x, roll([2, 3, 4, 6][P], 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, ab: 1 });
-          if (x.alive && hd(x, u) <= 2) x.st.root = Math.max(x.st.root, 2.5);
+          if (x.alive && hd(x, u) <= 2) x.st.root = Math.max(x.st.root, 2.0);
         });
       }
     }
@@ -729,58 +729,57 @@ const E = {
     }
   },
   pit_fiend: {
-    name: 'Pit Fiend Enforcer', arch: ['brute', 'summoner'], hp: 230, ac: 18, sr: 17, ft: 35, rng: 2, elite: 1, boss: 1, large: 1,
-    atk: { n: 'Infernal Mace', d: [2, 10], flat: 5, kind: 'phys', el: 'fire', ty: 'fire', iv: 1.35, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
-    f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 11, first: 6, cap: 2, hp: .65 } },
+    name: 'Pit Fiend Enforcer', arch: ['brute', 'summoner'], hp: 205, ac: 16, sr: 16, ft: 35, rng: 2, elite: 1, boss: 1, large: 1,
+    atk: { n: 'Infernal Mace', d: [2, 8], flat: 4, kind: 'phys', el: 'fire', ty: 'fire', iv: 1.4, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
+    f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 12, first: 6, cap: 1, hp: .6 } },
     role: 'Act 3 Wandering Miniboss (2×2): fire/poison lord summoning Bearded Devils',
     abil: {
-      n: 'Meteor Fireball', cr: 7.5, cut: [7, 14],
+      n: 'Meteor Fireball', cr: 7.8, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target || foes(b, u)[0]; if (!t) return;
         const ts = foes(b, u).filter(x => hd(x, t) <= (P === 3 ? 2 : 1));
         b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: P === 3 ? 2 : 1, ty: 'fire', ids: ts.map(x => x.id) });
-        ts.forEach(x => { hit(b, u, x, roll([3, 4, 6, 8][P], 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, ab: 1 }); if (x.alive) applyStatus(b, u, x, 'burn', 8); });
+        ts.forEach(x => { hit(b, u, x, roll([2, 3, 5, 7][P], 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, ab: 1 }); if (x.alive) applyStatus(b, u, x, 'burn', 6); });
       }
     }
   },
   orcus: {
-    name: 'Orcus (Prince of Undeath)', arch: ['summoner', 'afflicter'], hp: 265, ac: 17, sr: 18, ft: 30, rng: 2, boss: 1, large: 1,
-    atk: { n: 'Wand of Orcus', d: [2, 10], flat: 5, kind: 'magic', ty: 'necrotic', iv: 1.35, nec: 5 },
-    f: { pushResist: .9, summon: { k: 'wight', n: 1, every: 10, first: 5, cap: 2, hp: .65 } },
+    name: 'Orcus (Prince of Undeath)', arch: ['summoner', 'afflicter'], hp: 225, ac: 16, sr: 16, ft: 30, rng: 2, boss: 1, large: 1,
+    atk: { n: 'Wand of Orcus', d: [2, 8], flat: 4, kind: 'magic', ty: 'necrotic', iv: 1.45, nec: 3 },
+    f: { pushResist: .9, summon: { k: 'wight', n: 1, every: 12, first: 6, cap: 1, hp: .6 } },
     role: 'Act 3 Boss (2×2): massive Necrosis waves and undead legions',
     abil: {
-      n: 'Power Word Kill Wave', cr: 7.8, cut: [7, 14],
+      n: 'Power Word Kill Wave', cr: 8.2, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'necrotic', ids: ts.map(x => x.id) });
-        ts.forEach(x => hit(b, u, x, roll([2, 3, 4, 5][P], 8), { kind: 'magic', ty: 'necrotic', nec: [8, 12, 16, 22][P], area: 1, ab: 1 }));
-        if (P === 3) { spawn(b, 'ghoul', u.c - 1, u.r + 1); spawn(b, 'ghoul', u.c + 2, u.r + 1); }
+        ts.forEach(x => hit(b, u, x, roll([2, 2, 3, 4][P], 8), { kind: 'magic', ty: 'necrotic', nec: [4, 7, 10, 14][P], area: 1, ab: 1 }));
+        if (P === 3) { spawn(b, 'ghoul', u.c - 1, u.r + 1); }
       }
     }
   },
   asmodeus: {
-    name: 'Asmodeus (Lord of the Ninth)', arch: ['caster', 'summoner'], hp: 255, ac: 18, sr: 19, ft: 35, rng: 5, boss: 1,
-    atk: { n: 'Ruby Rod', d: [2, 10], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.3 },
-    f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 10, first: 5, cap: 2, hp: .6 } },
-    role: 'Act 3 Boss: Ruby Rod hellfire beams, Infernal Command stuns, and massive Ward',
+    name: 'Asmodeus (Lord of the Ninth)', arch: ['caster', 'summoner'], hp: 215, ac: 16, sr: 17, ft: 35, rng: 5, boss: 1,
+    atk: { n: 'Ruby Rod', d: [2, 8], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.4 },
+    f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 12, first: 6, cap: 1, hp: .55 } },
+    role: 'Act 3 Boss: Ruby Rod hellfire beams, Infernal Command stuns, and heavy Wards',
     abil: {
-      n: 'Infernal Command', cr: 8.0, cut: [7, 14],
+      n: 'Infernal Command', cr: 8.4, cut: [7, 14],
       fx(b, u, P) {
-        addWard(b, u, Math.round(u.maxHp * [0.10, 0.14, 0.20, 0.28][P]), u.maxHp * .55, u);
+        addWard(b, u, Math.round(u.maxHp * [0.08, 0.11, 0.15, 0.20][P]), u.maxHp * .40, u);
         const ts = foes(b, u).filter(x => !x.hidden);
         const targets = P >= 2 ? ts : ts.slice(0, 2);
         b.events.push({ k: 'area', id: u.id, shape: 'line', r: 5, ty: 'fire', ids: targets.map(x => x.id) });
         targets.forEach(x => {
-          hit(b, u, x, roll([3, 4, 5, 6][P], 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, ab: 1 });
-          if (P >= 2 && x.alive) stun(b, x, 1.2);
-          if (P === 3 && x.alive) expose(b, x, 4);
+          hit(b, u, x, roll([2, 3, 4, 5][P], 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, ab: 1 });
+          if (P === 3 && x.alive) { stun(b, x, 1.0); expose(b, x, 4); }
         });
       }
     }
   },
   tiamat: {
-    name: 'Tiamat (Queen of Dragons)', arch: ['brute', 'caster'], hp: 280, ac: 18, sr: 17, ft: 35, rng: 3, boss: 1, large: 1,
-    atk: { n: 'Five-Headed Snap', d: [2, 8], flat: 5, kind: 'phys', ty: 'piercing', iv: 1.4, hits: 2 },
+    name: 'Tiamat (Queen of Dragons)', arch: ['brute', 'caster'], hp: 245, ac: 16, sr: 16, ft: 35, rng: 3, boss: 1, large: 1,
+    atk: { n: 'Five-Headed Snap', d: [2, 6], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.45, hits: 2 },
     f: { fireproof: 1, pushResist: .9 },
     role: 'Act 3 Boss (2×2): cycles all Five Chromatic Breath Weapons (Fire, Poison, Lightning, Cold, Acid)',
     abil: {
@@ -904,7 +903,7 @@ const ENC = {
   },
   glasstaff: {
     n: 'Glasstaff, Redbrand Mage', place: 'Tresendar Manor', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'Act 1 Boss', sc: { hp: .95, dmg: .90 }, note: 'Boss: Arcane Wards, piercing Lightning Bolt lines, and Hold Person behind Redbrand Shieldbearers.',
+    q: 'Act 1 Boss', sc: { hp: 1.18, dmg: 1.12 }, note: 'Boss: Arcane Wards, piercing Lightning Bolt lines, and Hold Person behind Redbrand Shieldbearers.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
     u: [['glasstaff', 5, 0], ['hobgoblin', 3, 3], ['hobgoblin', 6, 3], ['ruffian', 4, 4], ['skeleton', 2, 1], ['skeleton', 7, 1]]
   },
@@ -972,27 +971,27 @@ const ENC = {
   },
   keraptis: {
     n: 'Simulacrum of Keraptis', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: .96, dmg: .92 }, note: 'Boss: Archmage of White Plume weaving Arcane Wards, Elemental Novas, and constructs.',
+    q: 'Act 2 Boss', sc: { hp: 1.08, dmg: 1.05 }, note: 'Boss: Archmage of White Plume weaving Arcane Wards, Elemental Novas, and constructs.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
     u: [['keraptis', 5, 0], ['gargoyle', 3, 3], ['gargoyle', 6, 3], ['steam_mephit', 2, 1], ['steam_mephit', 7, 1]]
   },
   blackrazor_boss: {
     n: 'Wielder of Blackrazor', place: 'Shadow Crypt', theme: 'cave', mapKey: 'shadow_crypt',
-    q: 'Act 2 Boss', sc: { hp: .96, dmg: .92 }, note: 'Boss: Gains Ward, Haste & Damage whenever ANY unit dies — focus him down fast!',
+    q: 'Act 2 Boss', sc: { hp: .98, dmg: .95 }, note: 'Boss: Gains Ward, Haste & Damage whenever ANY unit dies — focus him down fast!',
     map: BATTLE_MAPS.shadow_crypt.grid,
     u: [['blackrazor_wielder', 4, 2], ['ghoul', 2, 3], ['ghoul', 7, 3], ['wight', 4, 3], ['shadow_assassin', 6, 1]]
   },
   gynosphinx: {
     n: 'Gynosphinx', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: .96, dmg: .92 }, note: 'Boss (2×2): Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
+    q: 'Act 2 Boss', sc: { hp: 1.06, dmg: 1.04 }, note: 'Boss (2×2): Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
     u: [['gynosphinx', 4, 1], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['manticore', 5, 0]]
   },
   giant_crab: {
     n: 'Giant Crab of the Bubble', place: 'Boiling Bubble Chamber', theme: 'cave', mapKey: 'boiling_bubble',
-    q: 'Act 2 Boss', sc: { hp: .96, dmg: .92 }, note: 'Boss (2×2): Sky-high AC 19 carapace, Crushing Claw Root, and Boiling Splash fire AoE.',
+    q: 'Act 2 Boss', sc: { hp: 1.20, dmg: 1.16 }, note: 'Boss (2×2): High-AC carapace, Crushing Claw Root, and Boiling Splash fire AoE.',
     map: BATTLE_MAPS.boiling_bubble.grid,
-    u: [['giant_crab', 4, 2], ['kelpie', 2, 1], ['kelpie', 7, 1], ['steam_mephit', 5, 0]]
+    u: [['giant_crab', 4, 2], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['kelpie', 5, 0], ['steam_mephit', 1, 1]]
   },
 
   /* ---------- ACT 3: THE HELLS ---------- */
@@ -1064,15 +1063,15 @@ const ENC = {
   },
   orcus: {
     n: 'Orcus, Prince of Undeath', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .96, dmg: .92 }, note: 'Final Boss (2×2): Wand of Orcus deals massive Necrosis waves and raises relentless undead.',
+    q: 'Act 3 Final Boss', sc: { hp: .92, dmg: .88 }, note: 'Final Boss (2×2): Wand of Orcus deals massive Necrosis waves and raises relentless undead.',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['orcus', 4, 1], ['wight', 2, 3], ['wight', 7, 3], ['bone_devil', 5, 3]]
   },
   asmodeus: {
     n: 'Asmodeus, Lord of the Ninth', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .96, dmg: .92 }, note: 'Final Boss: Ruby Rod hellfire beams, Infernal Command stuns, and heavy Wards behind Hell knights.',
+    q: 'Act 3 Final Boss', sc: { hp: .98, dmg: .94 }, note: 'Final Boss: Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
     map: BATTLE_MAPS.throne_ninth.grid,
-    u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['narzugon', 6, 3], ['erinyes', 2, 1], ['cambion', 7, 1]]
+    u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['erinyes', 2, 1], ['spined_devil', 7, 1]]
   },
   tiamat: {
     n: 'Tiamat, Queen of Dragons', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',

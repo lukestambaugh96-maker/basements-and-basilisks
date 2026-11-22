@@ -16,7 +16,7 @@
 const ECON = {
   freeLosses: 1,
   piggyPerWin: 2,
-  winGold: d => 5 + Math.floor(d / 5),
+  winGold: d => 6 + Math.floor(d / 4),
   lossGold: () => 0,
   heroPrice: t => [0, 3, 6, 9, 13][t] || 13,
   itemPrice: [2, 3, 4, 6, 10, 5], // Common 2, Uncommon 3, Rare 4, Very Rare 6, Legendary 10, Unique 5
@@ -102,9 +102,9 @@ function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0, minR = 0
 /* ---------- Difficulty Curve & Hazards ---------- */
 const CURVE = {
   share: [.50, .65, .80, .92, 1],
-  grow: 1.18,
-  dmgGrow: 1.21,
-  ease: [0.90, 1.05, 1.16, 1.26, 1.34],
+  grow: 1.141,
+  dmgGrow: 1.151,
+  ease: [0.88, 1.00, 1.10, 1.19, 1.28],
   retry: .88
 };
 function curveAt(d) {
@@ -123,10 +123,10 @@ const HAZARD_KEYS = Object.keys(HAZARDS);
 
 const ADV = {
   acts: 3, rows: 9, bossRow: 8,
-  depth: (act, r) => [1, 6.2, 10.6][act - 1] + r * [.68, .58, .55][act - 1],
-  bossDepth: act => [6.6, 11.2, 15.6][act - 1],
-  eliteDepth: 1.0, eliteK: 1.18, eliteGold: 3,
-  minibossDepth: 1.2, minibossK: 1.20,
+  depth: (act, r) => [1, 5.7, 9.6][act - 1] + r * [.60, .50, .48][act - 1],
+  bossDepth: act => [6.0, 10.1, 13.7][act - 1],
+  eliteDepth: 0.90, eliteK: 1.15, eliteGold: 4,
+  minibossDepth: 1.05, minibossK: 1.16,
   startGold: 6
 };
 
@@ -1091,6 +1091,7 @@ function clearNode(run, rand = Math.random) {
   run.adv.node = null;
   run.adv.curio = null;
   run.adv.mystery = null;
+  run.adv.retryPending = false;
   advanceWanderer(run, rand);
   run.adv.stage = 'map';
 }

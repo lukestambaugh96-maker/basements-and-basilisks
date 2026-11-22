@@ -1,1717 +1,312 @@
-/* Auto-generated live meta telemetry & changelog for tools/wiki.html */
+/* Auto-generated v0.23 live meta telemetry & changelog for tools/wiki.html */
 window.WIKI_META = {
-  "version": "0.22 Live Balance",
-  "generatedAt": "2026-11-21",
+  "version": "0.23 Live Build",
+  "generatedAt": "2026-11-22",
   "heroes": {
-    "zoe": {
-      "key": "zoe",
-      "name": "Zoe",
-      "cls": "Fighter",
+    "faelan": {
+      "key": "faelan",
+      "name": "Faelan",
       "role": "Support",
-      "reach": "Melee",
-      "pack": 5,
-      "packKey": "market",
-      "nMid": 48,
-      "nLate": 44,
-      "midWR": 58.3,
-      "lateWR": 40.9,
-      "avgWR": 49.6,
-      "midScore": 54.9,
-      "lateScore": 48.6,
-      "avgScore": 51.8,
-      "avgTime": 23.6,
-      "avgDmg": 271,
-      "avgHeal": 362,
-      "avgWard": 387,
-      "avgTaken": 711,
-      "avgGold": 0.49,
-      "survPct": 37,
+      "cls": "Wizard",
+      "avgScore": 76,
+      "avgWR": 80,
+      "midWR": 100,
+      "lateWR": 66.7,
+      "avgDmg": 224,
+      "avgHeal": 0,
+      "avgWard": 1653,
+      "avgGold": 0,
+      "survPct": 70,
+      "avgTime": 35,
       "liveRank": 1,
-      "baseRank": 1,
-      "rankDelta": 0,
-      "baseScore": 93.7,
-      "baseWR": 94.4,
-      "scoreDelta": -41.9,
-      "wrDelta": -44.8,
-      "changeStatus": "nerf",
-      "archetype": "Action Surge Accelerator & Item-Scaling Force Multiplier",
-      "useCase": "Still the #1 individual hero in the live build—but now earned through offensive tempo instead of infinite sustain. Zoe turns your most-equipped ally into a hyper-carry via Action Surge, capped Runic Upgrades (+8% ×2), Haste, and Nat 20 item refreshes. Draft her with Sir Dane, Gilthrax, or Arthur and stack Charge speed (Staff of Power, Ring of Spell Storing, Headband of Intellect).",
+      "baseRank": 11,
+      "rankDelta": 10,
+      "baseScore": 38.9,
+      "scoreDelta": 37.1,
+      "changeStatus": "rebal",
+      "archetype": "Arcane Recovery Battery & Projected Ward Wizard",
+      "useCase": "Your premier Ward-and-Charge engine. Whenever Faelan’s Arcane Ward breaks, Arcane Recovery fuels his next cast—making him an ideal partner for Gains, Zoe, and Gilthrax. Choose `Spell Battery` to feed Charge to allies or `Projected Ward` to protect fragile carries against Act 3 boss nukes.",
       "changes": [
         {
-          "type": "fix",
-          "text": "Fixed double-scaled `u.dm²` heal bug on Rummage (added `{ raw: 1 }`)."
+          "type": "rebal",
+          "text": "Clean v0.23 Arcane Recovery loop: broken Wards restore Charge to keep casting smoothly without stalling."
         },
         {
-          "type": "nerf",
-          "text": "Rummage heal cut `[18, 28, 32, 36]+3×INT → [8, 12, 16, 20]+2×INT`, Ward cut `25+4×INT → 16+2×INT` (cap 50% → 35%), Charge 15 → 12, Nat 20 Gold 2g → 1g."
-        },
-        {
-          "type": "nerf",
-          "text": "Runic Upgrade capped at max 2 stacks of +8% damage (was uncapped +12% per High roll)."
-        },
-        {
-          "type": "nerf",
-          "text": "Just the Thing Path Action Surge Ward reduced (`16+2×INT → 10+INT`, cap 35%, Charge 12 → 10) with a 1.0s cooldown."
+          "type": "buff",
+          "text": "Specializations trimmed to 1-line choices (`Projected Ward` / `Spell Battery`); scales naturally with INT Charge speed and Spell Pen."
         }
       ],
       "paths": {
-        "key": "zoe",
-        "name": "Zoe",
+        "key": "faelan",
         "p0": {
-          "k": "rune_carver",
-          "n": "Rune Carver",
-          "wr": 90,
-          "score": 79.8
+          "k": "proj_ward",
+          "n": "Projected Ward",
+          "score": 74.2,
+          "wr": 80
         },
         "p1": {
-          "k": "just_the_thing",
-          "n": "Just the Thing",
-          "wr": 90,
-          "score": 85.6
+          "k": "spell_battery",
+          "n": "Spell Battery",
+          "score": 75.2,
+          "wr": 80
         },
-        "diff": -5.8,
-        "winner": "Just the Thing"
+        "winner": "Even"
       },
       "bestPartners": [
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 100,
-          "score": 91.2,
-          "sharedKw": [],
-          "lift": 33.9,
-          "why": "Sir Dane’s Aura keeps Zoe alive while Zoe’s Action Surge & Runic Upgrade accelerate Dane’s Smites and Quest."
-        },
-        {
-          "partner": "gilthrax",
-          "name": "Gilthrax",
-          "role": "Tank",
-          "cls": "Fighter",
-          "winRate": 100,
-          "score": 90.6,
-          "sharedKw": [
-            "action_surge"
-          ],
-          "lift": 33.3,
-          "why": "Shared Action Surge loop: Gilthrax’s item-loaded Ward triggers Action Surge counters & Zoe’s Runic Upgrades."
-        },
         {
           "partner": "arthur",
           "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 100,
-          "score": 86.5,
+          "sharedKw": [],
+          "score": 52,
+          "winRate": 50,
+          "lift": -12.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 47.1,
+          "winRate": 50,
+          "lift": -15.3,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 36.1,
+          "winRate": 50,
+          "lift": -28.6,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "gains",
+          "name": "Gains",
           "sharedKw": [
-            "action_surge"
+            "arcane_recovery"
           ],
-          "lift": 29.2,
-          "why": "Shared Action Surge loop: Zoe turbocharges Arthur’s multi-arrow Volleys with Haste, Charge, and free attacks."
-        },
-        {
-          "partner": "faelan",
-          "name": "Faelan",
-          "role": "Support",
-          "cls": "Wizard",
-          "winRate": 100,
-          "score": 78,
-          "sharedKw": [],
-          "lift": 20.7,
-          "why": "Zoe’s Haste/Charge speeds up Faelan’s Wards while Spell Battery loops Zoe’s Rummage & Action Surges."
+          "score": 22.1,
+          "winRate": 0,
+          "lift": -39.8,
+          "why": "Shared arcane recovery Class Keyword engine chains triggers across both kits."
         }
       ],
       "bestItems": [
         {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 62,
-          "lift": 32.8,
-          "valPerGold": 4.69
-        },
-        {
           "item": "ring_spell_storing",
           "name": "Ring of Spell Storing",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 50,
-          "score": 60.8,
-          "lift": 31.6,
-          "valPerGold": 6.32
+          "winRate": 100,
+          "score": 67.1,
+          "lift": 38.9,
+          "valPerGold": 9.72
         },
         {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
+          "item": "arcane_grimoire",
+          "name": "Arcane Grimoire",
+          "rarity": 5,
           "cost": 5,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 57.9,
-          "lift": 28.7,
-          "valPerGold": 5.74
-        },
-        {
-          "item": "weapon_warning",
-          "name": "Weapon of Warning",
-          "rarity": 1,
-          "cost": 3,
           "kwMatch": true,
           "winRate": 50,
-          "score": 51.8,
-          "lift": 22.6,
-          "valPerGold": 7.53
+          "score": 54.4,
+          "lift": 26.2,
+          "valPerGold": 5.24
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 44.8,
+          "lift": 16.6,
+          "valPerGold": 4.15
+        },
+        {
+          "item": "pearl_power",
+          "name": "Pearl of Power",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 42,
+          "lift": 13.8,
+          "valPerGold": 2.76
         }
       ],
       "bestValueItems": [
         {
-          "item": "weapon_warning",
-          "name": "Weapon of Warning",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 50,
-          "score": 51.8,
-          "lift": 22.6,
-          "valPerGold": 7.53
-        },
-        {
           "item": "ring_spell_storing",
           "name": "Ring of Spell Storing",
           "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 60.8,
-          "lift": 31.6,
-          "valPerGold": 6.32
-        },
-        {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 57.9,
-          "lift": 28.7,
-          "valPerGold": 5.74
-        }
-      ]
-    },
-    "velith": {
-      "key": "velith",
-      "name": "Velith",
-      "cls": "Rogue",
-      "role": "Damage",
-      "reach": "Melee",
-      "pack": 6,
-      "packKey": "surprise",
-      "nMid": 50,
-      "nLate": 44,
-      "midWR": 56,
-      "lateWR": 31.8,
-      "avgWR": 43.9,
-      "midScore": 54.1,
-      "lateScore": 40.9,
-      "avgScore": 47.5,
-      "avgTime": 22.4,
-      "avgDmg": 541,
-      "avgHeal": 2,
-      "avgWard": 0,
-      "avgTaken": 190,
-      "avgGold": 0,
-      "survPct": 37.2,
-      "liveRank": 2,
-      "baseRank": 6,
-      "rankDelta": 4,
-      "baseScore": 72.9,
-      "baseWR": 78.3,
-      "scoreDelta": -25.4,
-      "wrDelta": -34.4,
-      "changeStatus": "buff",
-      "archetype": "Premier Melee Assassin & Poison/Exposed Finisher",
-      "useCase": "The #1 Damage hero in the live meta (#2 overall at 47.5, 541 avg dmg!). Velith combines stealth ambush openings, buffed passive Sneak Attack (+1d6), and Nightshade Poison scaling to erase high-priority targets before enemy waves overwhelm you. Pair her with Corvin, Kaska, or Sir Dane, and equip Dagger of Venom or Dwarven Plate to turn her into an unstoppable carry.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`)."
-        },
-        {
-          "type": "buff",
-          "text": "Passive Sneak Attack trigger upgraded by +1 bonus d6 piercing damage."
-        }
-      ],
-      "paths": {
-        "key": "velith",
-        "name": "Velith",
-        "p0": {
-          "k": "deaths_ledger",
-          "n": "Death’s Ledger",
-          "wr": 70,
-          "score": 56.7
-        },
-        "p1": {
-          "k": "nightshade",
-          "n": "Nightshade Vials",
-          "wr": 80,
-          "score": 59.7
-        },
-        "diff": -3,
-        "winner": "Nightshade Vials"
-      },
-      "bestPartners": [
-        {
-          "partner": "corvin",
-          "name": "Corvin",
-          "role": "Damage",
-          "cls": "Ranger",
-          "winRate": 75,
-          "score": 59.5,
-          "sharedKw": [],
-          "lift": 12.6,
-          "why": "Corvin marks and Exposes frontline/midline targets for Velith’s Poison & Sneak Attack executes."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 56.4,
-          "sharedKw": [],
-          "lift": 9.5,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 25,
-          "score": 53.3,
-          "sharedKw": [],
-          "lift": 6.4,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "lorcan",
-          "name": "Lorcan",
-          "role": "Damage",
-          "cls": "Ranger",
-          "winRate": 75,
-          "score": 52.7,
-          "sharedKw": [],
-          "lift": 5.8,
-          "why": "High-tempo Damage duo whose kits cover each other’s scaling curves through Act 3."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
+          "cost": 4,
           "kwMatch": false,
           "winRate": 100,
-          "score": 79,
-          "lift": 10.1,
-          "valPerGold": 1.44
+          "score": 67.1,
+          "lift": 38.9,
+          "valPerGold": 9.72
         },
         {
-          "item": "dagger_venom",
-          "name": "Dagger of Venom",
-          "rarity": 2,
+          "item": "arcane_grimoire",
+          "name": "Arcane Grimoire",
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
-          "winRate": 100,
-          "score": 78.2,
-          "lift": 9.3,
-          "valPerGold": 1.86
+          "winRate": 50,
+          "score": 54.4,
+          "lift": 26.2,
+          "valPerGold": 5.24
         },
         {
-          "item": "flametongue",
-          "name": "Flame Tongue",
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 100,
-          "score": 76.3,
-          "lift": 7.4,
-          "valPerGold": 1.48
-        },
-        {
-          "item": "frost_brand",
-          "name": "Frost Brand",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 74.8,
-          "lift": 5.9,
-          "valPerGold": 0.84
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "dagger_venom",
-          "name": "Dagger of Venom",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 78.2,
-          "lift": 9.3,
-          "valPerGold": 1.86
-        },
-        {
-          "item": "flametongue",
-          "name": "Flame Tongue",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 76.3,
-          "lift": 7.4,
-          "valPerGold": 1.48
-        },
-        {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 79,
-          "lift": 10.1,
-          "valPerGold": 1.44
+          "winRate": 0,
+          "score": 44.8,
+          "lift": 16.6,
+          "valPerGold": 4.15
         }
       ]
     },
     "juniper": {
       "key": "juniper",
       "name": "Juniper",
-      "cls": "Druid",
       "role": "Support",
-      "reach": "Ranged",
-      "pack": 2,
-      "packKey": "campfire",
-      "nMid": 45,
-      "nLate": 52,
-      "midWR": 28.9,
-      "lateWR": 51.9,
-      "avgWR": 40.4,
-      "midScore": 44.7,
-      "lateScore": 49,
-      "avgScore": 46.9,
-      "avgTime": 22.5,
-      "avgDmg": 554,
-      "avgHeal": 37,
-      "avgWard": 16,
-      "avgTaken": 245,
+      "cls": "Druid",
+      "avgScore": 65.5,
+      "avgWR": 70,
+      "midWR": 100,
+      "lateWR": 50,
+      "avgDmg": 431,
+      "avgHeal": 101,
+      "avgWard": 0,
       "avgGold": 0,
-      "survPct": 34,
-      "liveRank": 3,
-      "baseRank": 5,
-      "rankDelta": 2,
-      "baseScore": 73.4,
-      "baseWR": 77.4,
-      "scoreDelta": -26.5,
-      "wrDelta": -37,
-      "changeStatus": "nerf",
+      "survPct": 60,
+      "avgTime": 25.6,
+      "liveRank": 2,
+      "baseRank": 3,
+      "rankDelta": 1,
+      "baseScore": 46.9,
+      "scoreDelta": 18.6,
+      "changeStatus": "rebal",
       "archetype": "Root/Poison Controller & Wild Shape Anchor",
-      "useCase": "Even after Circle of the Land’s sustain nerfs, Juniper remains an S-tier control powerhouse (554 avg damage + constant Roots). Overgrowth locks down melee rushers while Poison ticks through high-AC tanks, and pairing her with Mother Laurel or Kaska forms the #1 tested Act 3 comp (Wild Shape Moon & Land, 100% WR).",
+      "useCase": "Versatile Druid controller who locks melee rushers in place with Entangle Roots while Poison ticks through high AC. Pairs naturally with Mother Laurel and Kaska to trigger Wild Shape engines and shines on Act 2–3 choke maps.",
       "changes": [
         {
-          "type": "nerf",
-          "text": "Circle of the Land Path now has a 1.0s internal cooldown, hits 2 allies (not whole party) at Tier IV, and trims heal (`4+WIS → 3+0.8×WIS`) and Ward (`0.8× → 0.45×`, cap `40% → 30%`)."
+          "type": "rebal",
+          "text": "Unified under canonical `Wild Shape` keyword with clean 1-line `Circle of the Land` / `Circle of Spores` Specializations."
         },
         {
           "type": "global",
-          "text": "28s Overtime anti-stall decay applies to Circle of the Land heals and Wards."
+          "text": "Poison bypasses Cubed AC/SR armor scaling, keeping Juniper dangerous into Act 3."
         }
       ],
       "paths": {
         "key": "juniper",
-        "name": "Juniper",
         "p0": {
           "k": "overgrowth",
           "n": "Overgrowth",
-          "wr": 50,
-          "score": 51.8
+          "score": 56.8,
+          "wr": 60
         },
         "p1": {
-          "k": "land",
+          "k": "circle_land",
           "n": "Circle of the Land",
-          "wr": 20,
-          "score": 45.3
+          "score": 71.5,
+          "wr": 80
         },
-        "diff": 6.5,
-        "winner": "Overgrowth"
+        "winner": "Circle of the Land"
       },
       "bestPartners": [
         {
-          "partner": "mother_laurel",
-          "name": "Mother Laurel",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 100,
-          "score": 80.4,
-          "sharedKw": [],
-          "lift": 23.7,
-          "why": "Juniper’s Roots & Wild Shapes constantly trigger Mother Laurel’s Bountiful Vines Smite damage and heals."
-        },
-        {
           "partner": "kaska",
           "name": "Kaska",
-          "role": "Support",
-          "cls": "Druid",
-          "winRate": 75,
-          "score": 71.7,
           "sharedKw": [
             "wild_shape"
           ],
-          "lift": 15,
-          "why": "Double Wild Shape triggers Circle of the Land heals/Wards while Kaska Exposes Rooted foes."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
+          "score": 62.6,
           "winRate": 100,
-          "score": 63.3,
-          "sharedKw": [],
-          "lift": 6.6,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
+          "lift": 1.4,
+          "why": "Shared wild shape Class Keyword engine chains triggers across both kits."
         },
         {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 51.8,
+          "winRate": 50,
+          "lift": -7.4,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 33.6,
+          "winRate": 0,
+          "lift": -23.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 24,
+          "winRate": 0,
+          "lift": -35.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "staff_woodlands",
+          "name": "Staff of the Woodlands",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 50,
+          "score": 60,
+          "lift": 22.5,
+          "valPerGold": 4.5
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
           "winRate": 50,
           "score": 56.2,
-          "sharedKw": [],
-          "lift": -0.5,
-          "why": "Strong Support/Damage role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "moon_sickle",
-          "name": "Moon Sickle",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 78.5,
-          "lift": 18.4,
-          "valPerGold": 6.13
+          "lift": 18.7,
+          "valPerGold": 4.67
         },
         {
-          "item": "staff_woodlands",
-          "name": "Staff of the Woodlands",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 78,
-          "lift": 17.9,
-          "valPerGold": 2.56
-        },
-        {
-          "item": "staff_healing",
-          "name": "Staff of Healing",
+          "item": "boots_speed",
+          "name": "Boots of Speed",
           "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 74.6,
-          "lift": 14.5,
-          "valPerGold": 2.9
-        },
-        {
-          "item": "horn_valhalla",
-          "name": "Horn of Valhalla",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 74.4,
-          "lift": 14.3,
-          "valPerGold": 2.86
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "moon_sickle",
-          "name": "Moon Sickle",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 78.5,
-          "lift": 18.4,
-          "valPerGold": 6.13
-        },
-        {
-          "item": "amulet_devout",
-          "name": "Amulet of the Devout",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 70.3,
-          "lift": 10.2,
-          "valPerGold": 3.4
-        },
-        {
-          "item": "staff_healing",
-          "name": "Staff of Healing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 74.6,
-          "lift": 14.5,
-          "valPerGold": 2.9
-        }
-      ]
-    },
-    "kaska": {
-      "key": "kaska",
-      "name": "Kaska",
-      "cls": "Druid",
-      "role": "Support",
-      "reach": "Melee",
-      "pack": 6,
-      "packKey": "surprise",
-      "nMid": 49,
-      "nLate": 55,
-      "midWR": 53.1,
-      "lateWR": 21.8,
-      "avgWR": 37.5,
-      "midScore": 53.6,
-      "lateScore": 33.6,
-      "avgScore": 43.6,
-      "avgTime": 25.4,
-      "avgDmg": 395,
-      "avgHeal": 291,
-      "avgWard": 0,
-      "avgTaken": 1148,
-      "avgGold": 0,
-      "survPct": 27.9,
-      "liveRank": 4,
-      "baseRank": 7,
-      "rankDelta": 3,
-      "baseScore": 72.8,
-      "baseWR": 79.6,
-      "scoreDelta": -29.2,
-      "wrDelta": -42.1,
-      "changeStatus": "nerf",
-      "archetype": "Exposed-Spreading Bruiser Support & Wild Shape Anchor",
-      "useCase": "Even after Panther Beast HP and Pack Hunt nerfs, Kaska holds S-tier (#4 overall at 43.6) because Exposed + Wild Shape + frontline disruption fits almost every aggressive squad. Pack Hunt turns Velith (100% pair WR!), Arthur, and Zark into drain-bruisers, while pairing with Mother Laurel & Juniper unlocks the #1 Act 3 comp. Best gear: Staff of Healing & Staff of the Woodlands.",
-      "changes": [
-        {
-          "type": "fix",
-          "text": "Fixed double-scaled `u.dm²` heal bug on Pounce self-heal and Nat 20 party heal (added `{ raw: 1 }`)."
-        },
-        {
-          "type": "nerf",
-          "text": "Panther Form Beast HP reduced 40% → 32% Max HP (Lunar Resilience 55% → 44%); Tier IV Lunar Ward 26 → 20 (cap 40%)."
-        },
-        {
-          "type": "nerf",
-          "text": "Pack Hunt Path trimmed from 10 HP + 10 Charge (1.0s CD) → 7 HP + 8 Charge (1.2s CD)."
-        },
-        {
-          "type": "nerf",
-          "text": "Pounce self-heal trimmed `22+4×WIS → 18+3×WIS`; Nat 20 party heal trimmed `24+4×WIS → 20+3×WIS`."
-        }
-      ],
-      "paths": {
-        "key": "kaska",
-        "name": "Kaska",
-        "p0": {
-          "k": "lunar_resilience",
-          "n": "Lunar Resilience",
-          "wr": 60,
-          "score": 60.4
-        },
-        "p1": {
-          "k": "pack_hunt",
-          "n": "Pack Hunt",
-          "wr": 90,
-          "score": 73.9
-        },
-        "diff": -13.5,
-        "winner": "Pack Hunt"
-      },
-      "bestPartners": [
-        {
-          "partner": "velith",
-          "name": "Velith",
-          "role": "Damage",
-          "cls": "Rogue",
-          "winRate": 100,
-          "score": 73.2,
-          "sharedKw": [],
-          "lift": 24.3,
-          "why": "Kaska spreads Exposed onto targets so Velith’s Ambush & Sneak Attacks melt backlines while healing via Pack Hunt."
-        },
-        {
-          "partner": "zark",
-          "name": "Zark",
-          "role": "Tank",
-          "cls": "Barbarian",
-          "winRate": 75,
-          "score": 63.5,
-          "sharedKw": [],
-          "lift": 14.6,
-          "why": "Kaska’s Exposed + Pack Hunt fuels Zark’s Rage cleaves with bonus sustain and faster Charge."
-        },
-        {
-          "partner": "arthur",
-          "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 61.4,
-          "sharedKw": [],
-          "lift": 12.5,
-          "why": "Strong Support/Damage role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 55.6,
-          "sharedKw": [],
-          "lift": 6.7,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "staff_healing",
-          "name": "Staff of Healing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 89.7,
-          "lift": 48.1,
-          "valPerGold": 9.62
-        },
-        {
-          "item": "staff_woodlands",
-          "name": "Staff of the Woodlands",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 85.8,
-          "lift": 44.2,
-          "valPerGold": 6.31
-        },
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 76.3,
-          "lift": 34.7,
-          "valPerGold": 4.96
-        },
-        {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 76.1,
-          "lift": 34.5,
-          "valPerGold": 4.93
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "moon_sickle",
-          "name": "Moon Sickle",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 75,
-          "score": 71.9,
-          "lift": 30.3,
-          "valPerGold": 10.1
-        },
-        {
-          "item": "staff_healing",
-          "name": "Staff of Healing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 89.7,
-          "lift": 48.1,
-          "valPerGold": 9.62
-        },
-        {
-          "item": "amulet_devout",
-          "name": "Amulet of the Devout",
-          "rarity": 1,
-          "cost": 3,
+          "cost": 4,
           "kwMatch": false,
           "winRate": 50,
-          "score": 62.4,
-          "lift": 20.8,
-          "valPerGold": 6.93
-        }
-      ]
-    },
-    "gilthrax": {
-      "key": "gilthrax",
-      "name": "Gilthrax",
-      "cls": "Fighter",
-      "role": "Tank",
-      "reach": "Melee",
-      "pack": 5,
-      "packKey": "market",
-      "nMid": 53,
-      "nLate": 66,
-      "midWR": 45.3,
-      "lateWR": 27.3,
-      "avgWR": 36.3,
-      "midScore": 47,
-      "lateScore": 39.9,
-      "avgScore": 43.5,
-      "avgTime": 22,
-      "avgDmg": 532,
-      "avgHeal": 4,
-      "avgWard": 244,
-      "avgTaken": 861,
-      "avgGold": 0.62,
-      "survPct": 21,
-      "liveRank": 5,
-      "baseRank": 4,
-      "rankDelta": -1,
-      "baseScore": 74.8,
-      "baseWR": 79.3,
-      "scoreDelta": -31.3,
-      "wrDelta": -43,
-      "changeStatus": "nerf",
-      "archetype": "Item-Scaling Shield Tank & Action Surge Anchor",
-      "useCase": "Despite targeted Ward and gold-cap nerfs, Gilthrax remains an S-tier frontline carry (532 avg dmg + 248 Ward!). Hoard Scales rewards loading him with 3–4 items, Arcane Shield feeds Action Surge counters into Zoe/Arthur, and Arcane Reflect punishes fast attackers. Pair him with Zoe or Faelan (Arcane Recovery Battery hits 91.7% Act 3 WR!).",
-      "changes": [
-        {
-          "type": "nerf",
-          "text": "Arcane Shield base Ward cut [28, 42, 56, 70] → [22, 34, 46, 58], per-item bonus [10, 12, 15, 18] → [8, 10, 12, 14], CON scaling 5× → 4×, cap 90% → 65% Max HP."
+          "score": 54.1,
+          "lift": 16.6,
+          "valPerGold": 4.15
         },
         {
-          "type": "nerf",
-          "text": "Arcane Reflect duration reduced 4s → 3s; Tier IV Bodyguard’s Fee ally Ward trimmed 35% → 30% (cap 40%)."
-        },
-        {
-          "type": "nerf",
-          "text": "Combat Gold cap reduced 10g → 6g per fight."
-        }
-      ],
-      "paths": {
-        "key": "gilthrax",
-        "name": "Gilthrax",
-        "p0": {
-          "k": "gilded_hoard",
-          "n": "Gilded Hoard",
-          "wr": 60,
-          "score": 54.7
-        },
-        "p1": {
-          "k": "bodyguard_fee",
-          "n": "Bodyguard’s Fee",
-          "wr": 50,
-          "score": 50.8
-        },
-        "diff": 3.9,
-        "winner": "Gilded Hoard"
-      },
-      "bestPartners": [
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 100,
-          "score": 79.3,
-          "sharedKw": [
-            "action_surge"
-          ],
-          "lift": 13.7,
-          "why": "Shared Action Surge loop: Gilthrax’s item-loaded Ward triggers Action Surge counters & Zoe’s Runic Upgrades."
-        },
-        {
-          "partner": "faelan",
-          "name": "Faelan",
-          "role": "Support",
-          "cls": "Wizard",
-          "winRate": 100,
-          "score": 72.4,
-          "sharedKw": [],
-          "lift": 6.8,
-          "why": "Layered Wards keep Gilthrax topped off while broken Wards feed Faelan’s Spell Battery Charge back into the party."
-        },
-        {
-          "partner": "toot",
-          "name": "Toot",
-          "role": "Support",
-          "cls": "Bard",
-          "winRate": 75,
-          "score": 70.4,
-          "sharedKw": [],
-          "lift": 4.8,
-          "why": "Pack 5 economy duo: Toot’s gold + Motes (Inspired Flourish) buy extra items that directly scale Gilthrax’s Hoard Scales."
-        },
-        {
-          "partner": "jamison",
-          "name": "Brother Jamison",
-          "role": "Support",
-          "cls": "Cleric",
-          "winRate": 75,
-          "score": 68.6,
-          "sharedKw": [],
-          "lift": 3,
-          "why": "Strong Tank/Support role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 33.3,
-          "score": 46.5,
-          "lift": 31,
-          "valPerGold": 4.43
-        },
-        {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 16.7,
-          "score": 31.2,
-          "lift": 15.7,
-          "valPerGold": 2.24
-        },
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
+          "item": "wand_web",
+          "name": "Wand of Web",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 16.7,
-          "score": 27.7,
-          "lift": 12.2,
-          "valPerGold": 2.44
-        },
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 16.7,
-          "score": 25.2,
-          "lift": 9.7,
-          "valPerGold": 1.39
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 33.3,
-          "score": 46.5,
-          "lift": 31,
-          "valPerGold": 4.43
-        },
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 16.7,
-          "score": 27.7,
-          "lift": 12.2,
-          "valPerGold": 2.44
-        },
-        {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 16.7,
-          "score": 31.2,
-          "lift": 15.7,
-          "valPerGold": 2.24
-        }
-      ]
-    },
-    "dane": {
-      "key": "dane",
-      "name": "Sir Dane",
-      "cls": "Paladin",
-      "role": "Tank",
-      "reach": "Melee",
-      "pack": 2,
-      "packKey": "campfire",
-      "nMid": 72,
-      "nLate": 71,
-      "midWR": 50,
-      "lateWR": 16.9,
-      "avgWR": 33.5,
-      "midScore": 50.7,
-      "lateScore": 34.7,
-      "avgScore": 42.7,
-      "avgTime": 21.9,
-      "avgDmg": 351,
-      "avgHeal": 2,
-      "avgWard": 156,
-      "avgTaken": 671,
-      "avgGold": 0,
-      "survPct": 16.1,
-      "liveRank": 6,
-      "baseRank": 13,
-      "rankDelta": 7,
-      "baseScore": 65.2,
-      "baseWR": 67.2,
-      "scoreDelta": -22.5,
-      "wrDelta": -33.7,
-      "changeStatus": "global",
-      "archetype": "Aura Tank, Smite Enabler & 2×2 Colossus Scaler",
-      "useCase": "The single most versatile frontline glue hero in the live meta. Sir Dane’s Paladin Aura protects both tanks and squishy carries, his Smites trigger Ally Smite hooks (Mother Laurel, Sun Blade), and completing his Quest transforms him into a Large 2×2 mounted tank. Pair him with almost any top carry or Zoe for consistent 80%+ win rates.",
-      "changes": [
-        {
-          "type": "global",
-          "text": "No direct nerfs; benefits heavily from live meta shift toward faster fights where Aura + Smite burst outpace slow stall heals."
-        },
-        {
-          "type": "global",
-          "text": "Indirectly impacted by global enemy scaling (+50% dmg/HP curve) and 28s Overtime Ward/Heal decay."
-        }
-      ],
-      "paths": {
-        "key": "dane",
-        "name": "Sir Dane",
-        "p0": {
-          "k": "devotion",
-          "n": "Oath of Devotion",
-          "wr": 70,
-          "score": 59
-        },
-        "p1": {
-          "k": "calltoarms",
-          "n": "Call to Arms",
-          "wr": 50,
-          "score": 53.3
-        },
-        "diff": 5.7,
-        "winner": "Oath of Devotion"
-      },
-      "bestPartners": [
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 100,
-          "score": 82.6,
-          "sharedKw": [],
-          "lift": 22.4,
-          "why": "Sir Dane’s Aura keeps Zoe alive while Zoe’s Action Surge & Runic Upgrade accelerate Dane’s Smites and Quest."
-        },
-        {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
-          "winRate": 100,
-          "score": 77.5,
-          "sharedKw": [],
-          "lift": 17.3,
-          "why": "Sir Dane’s Aura & Taunt clump enemies safely in front so Cinder’s Fireballs hit maximum targets."
-        },
-        {
-          "partner": "jamison",
-          "name": "Brother Jamison",
-          "role": "Support",
-          "cls": "Cleric",
-          "winRate": 75,
-          "score": 72.3,
-          "sharedKw": [],
-          "lift": 12.1,
-          "why": "Stacked Aura + Good Vibes (−15% dmg taken) + Bonded d20 dice create an ultra-reliable frontline core."
-        },
-        {
-          "partner": "mother_laurel",
-          "name": "Mother Laurel",
-          "role": "Tank",
-          "cls": "Paladin",
           "winRate": 50,
-          "score": 68.8,
-          "sharedKw": [
-            "smite",
-            "aura"
-          ],
-          "lift": 8.6,
-          "why": "Shared smite & aura keyword engine amplifies both heroes’ triggers."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 85.7,
-          "lift": 20,
-          "valPerGold": 2.86
-        },
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 82.5,
-          "lift": 16.8,
-          "valPerGold": 2.4
-        },
-        {
-          "item": "sentinel_shield",
-          "name": "Sentinel Shield",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 69.8,
-          "lift": 4.1,
-          "valPerGold": 1.37
-        },
-        {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 63.2,
-          "lift": -2.5,
-          "valPerGold": -0.36
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 85.7,
-          "lift": 20,
-          "valPerGold": 2.86
-        },
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 82.5,
-          "lift": 16.8,
-          "valPerGold": 2.4
-        },
-        {
-          "item": "sentinel_shield",
-          "name": "Sentinel Shield",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 69.8,
-          "lift": 4.1,
-          "valPerGold": 1.37
-        }
-      ]
-    },
-    "mother_laurel": {
-      "key": "mother_laurel",
-      "name": "Mother Laurel",
-      "cls": "Paladin",
-      "role": "Tank",
-      "reach": "Melee",
-      "pack": 4,
-      "packKey": "divine",
-      "nMid": 71,
-      "nLate": 68,
-      "midWR": 28.2,
-      "lateWR": 32.4,
-      "avgWR": 30.3,
-      "midScore": 42.6,
-      "lateScore": 40.6,
-      "avgScore": 41.6,
-      "avgTime": 22.8,
-      "avgDmg": 266,
-      "avgHeal": 160,
-      "avgWard": 11,
-      "avgTaken": 478,
-      "avgGold": 0,
-      "survPct": 28.8,
-      "liveRank": 7,
-      "baseRank": 3,
-      "rankDelta": -4,
-      "baseScore": 77.2,
-      "baseWR": 75.4,
-      "scoreDelta": -35.6,
-      "wrDelta": -45.1,
-      "changeStatus": "nerf",
-      "archetype": "Paladin/Druid Hybrid Tank & Root-Smite Engine",
-      "useCase": "Fixed from a broken double-scaling heal bug into a still-strong A-tier synergy tank. Mother Laurel bridges Paladin Smite/Aura and Druid Root/Wild Shape engines: Bountiful Vines converts ally Smites and Wild Shapes into steady heals while punishing Rooted foes. Pair her with Kaska, Juniper, or Velith for one of the strongest mid-to-late shells in the game.",
-      "changes": [
-        {
-          "type": "fix",
-          "text": "Fixed double-scaled `u.dm²` heal bug on Bloom ability (added `{ raw: 1 }`)."
-        },
-        {
-          "type": "nerf",
-          "text": "Bloom heal trimmed `18 + 4×WIS → 14 + 3×WIS`, Ward trimmed `22 + 3×WIS → 16 + 2×WIS` (cap 50% → 40%)."
-        },
-        {
-          "type": "nerf",
-          "text": "Bountiful Vines Path now has a 1.0s cooldown, reduced heal (`8+2×WIS → 6+1.5×WIS`), and heals 2 allies (not whole party) at Tier IV."
-        }
-      ],
-      "paths": {
-        "key": "mother_laurel",
-        "name": "Mother Laurel",
-        "p0": {
-          "k": "ancients_ward",
-          "n": "Ancients’ Ward",
-          "wr": 40,
-          "score": 42.8
-        },
-        "p1": {
-          "k": "bountiful_vines",
-          "n": "Bountiful Vines",
-          "wr": 60,
-          "score": 60.4
-        },
-        "diff": -17.6,
-        "winner": "Bountiful Vines"
-      },
-      "bestPartners": [
-        {
-          "partner": "kaska",
-          "name": "Kaska",
-          "role": "Support",
-          "cls": "Druid",
-          "winRate": 100,
-          "score": 84.6,
-          "sharedKw": [],
-          "lift": 24.1,
-          "why": "Kaska’s Wild Shapes trigger Bountiful Vines while Pack Hunt sustains Laurel’s melee frontline."
-        },
-        {
-          "partner": "arthur",
-          "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 79.9,
-          "sharedKw": [],
-          "lift": 19.4,
-          "why": "Strong Tank/Damage role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "velith",
-          "name": "Velith",
-          "role": "Damage",
-          "cls": "Rogue",
-          "winRate": 100,
-          "score": 76.6,
-          "sharedKw": [],
-          "lift": 16.1,
-          "why": "Strong Tank/Damage role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 75,
-          "score": 68,
-          "sharedKw": [
-            "smite",
-            "aura"
-          ],
-          "lift": 7.5,
-          "why": "Shared smite & aura keyword engine amplifies both heroes’ triggers."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 69.8,
-          "lift": 10.6,
-          "valPerGold": 2.12
-        },
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 75,
-          "score": 69.5,
-          "lift": 10.3,
-          "valPerGold": 1.47
-        },
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 68.8,
-          "lift": 9.6,
-          "valPerGold": 1.37
-        },
-        {
-          "item": "potion_healing",
-          "name": "Potion of Healing",
-          "rarity": 0,
-          "cost": 2,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 66.4,
-          "lift": 7.2,
-          "valPerGold": 3.6
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "potion_healing",
-          "name": "Potion of Healing",
-          "rarity": 0,
-          "cost": 2,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 66.4,
-          "lift": 7.2,
-          "valPerGold": 3.6
-        },
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 69.8,
-          "lift": 10.6,
-          "valPerGold": 2.12
-        },
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 75,
-          "score": 69.5,
-          "lift": 10.3,
-          "valPerGold": 1.47
-        }
-      ]
-    },
-    "cinder": {
-      "key": "cinder",
-      "name": "Cinder",
-      "cls": "Sorcerer",
-      "role": "Damage",
-      "reach": "Ranged",
-      "pack": 3,
-      "packKey": "beaten",
-      "nMid": 45,
-      "nLate": 59,
-      "midWR": 48.9,
-      "lateWR": 18.6,
-      "avgWR": 33.8,
-      "midScore": 48.6,
-      "lateScore": 32.9,
-      "avgScore": 40.8,
-      "avgTime": 20.2,
-      "avgDmg": 482,
-      "avgHeal": 1,
-      "avgWard": 0,
-      "avgTaken": 224,
-      "avgGold": 0,
-      "survPct": 26,
-      "liveRank": 8,
-      "baseRank": 9,
-      "rankDelta": 1,
-      "baseScore": 68.8,
-      "baseWR": 72.9,
-      "scoreDelta": -28,
-      "wrDelta": -39.1,
-      "changeStatus": "buff",
-      "archetype": "AoE Burn Nuke & Metamagic Clump-Punisher",
-      "useCase": "Your premier AoE boss-and-swarm sweeper who climbed sharply into A-tier. With buffed Fireball dice (3d6–8d6), faster Burn accumulation (55%), 2.2× Burn Detonation, and Wildfire shredding SR + applying Exposed on every Fireball, Cinder annihilates Wolf Packs, Blights, and Necromancers. Protect her with Sir Dane or Faelan and accelerate her first cast with Ring of Spell Storing.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`)."
-        },
-        {
-          "type": "buff",
-          "text": "Fireball buffed [2, 4, 5, 7]d6 → [3, 5, 6, 8]d6 and Burn stacks [4, 7, 10, 14] → [5, 8, 12, 16]; Twinned Spell buffed 4d6 → 5d6."
-        },
-        {
-          "type": "buff",
-          "text": "Nat 20 Burn Detonation multiplier raised 1.8× → 2.2× (min 12); global Fire element Burn feed increased 45% → 55%."
-        },
-        {
-          "type": "buff",
-          "text": "Wildfire Path now applies Exposed + −2 SR shred on EVERY Fireball (not just Twinned Spell)."
-        }
-      ],
-      "paths": {
-        "key": "cinder",
-        "name": "Cinder",
-        "p0": {
-          "k": "draconic",
-          "n": "Draconic Surge",
-          "wr": 60,
-          "score": 56.8
-        },
-        "p1": {
-          "k": "wildfire",
-          "n": "Wildfire",
-          "wr": 40,
-          "score": 50.5
-        },
-        "diff": 6.3,
-        "winner": "Draconic Surge"
-      },
-      "bestPartners": [
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 100,
-          "score": 75.2,
-          "sharedKw": [],
-          "lift": 28,
-          "why": "Sir Dane’s Aura & Taunt clump enemies safely in front so Cinder’s Fireballs hit maximum targets."
-        },
-        {
-          "partner": "faelan",
-          "name": "Faelan",
-          "role": "Support",
-          "cls": "Wizard",
-          "winRate": 75,
-          "score": 63.6,
-          "sharedKw": [],
-          "lift": 16.4,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "mother_laurel",
-          "name": "Mother Laurel",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 75,
-          "score": 61.2,
-          "sharedKw": [],
-          "lift": 14,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "arthur",
-          "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 59.9,
-          "sharedKw": [],
-          "lift": 12.7,
-          "why": "High-tempo Damage duo whose kits cover each other’s scaling curves through Act 3."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 80.2,
-          "lift": 10.8,
-          "valPerGold": 2.16
-        },
-        {
-          "item": "scimitar_speed",
-          "name": "Scimitar of Speed",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 79.4,
-          "lift": 10,
-          "valPerGold": 1.43
-        },
-        {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 78,
-          "lift": 8.6,
-          "valPerGold": 1.23
-        },
-        {
-          "item": "bloodwell_vial",
-          "name": "Bloodwell Vial",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 77.7,
-          "lift": 8.3,
-          "valPerGold": 2.77
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "bloodwell_vial",
-          "name": "Bloodwell Vial",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 77.7,
-          "lift": 8.3,
-          "valPerGold": 2.77
-        },
-        {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 80.2,
-          "lift": 10.8,
-          "valPerGold": 2.16
-        },
-        {
-          "item": "oathbow",
-          "name": "Oathbow",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 77.1,
-          "lift": 7.7,
-          "valPerGold": 1.54
-        }
-      ]
-    },
-    "naill": {
-      "key": "naill",
-      "name": "Naill",
-      "cls": "Monk",
-      "role": "Damage",
-      "reach": "Melee",
-      "pack": 3,
-      "packKey": "beaten",
-      "nMid": 48,
-      "nLate": 54,
-      "midWR": 41.7,
-      "lateWR": 14.8,
-      "avgWR": 28.3,
-      "midScore": 49.9,
-      "lateScore": 31.4,
-      "avgScore": 40.6,
-      "avgTime": 23.8,
-      "avgDmg": 470,
-      "avgHeal": 0,
-      "avgWard": 0,
-      "avgTaken": 312,
-      "avgGold": 0,
-      "survPct": 18.6,
-      "liveRank": 9,
-      "baseRank": 12,
-      "rankDelta": 3,
-      "baseScore": 65.5,
-      "baseWR": 68,
-      "scoreDelta": -24.9,
-      "wrDelta": -39.7,
-      "changeStatus": "buff",
-      "archetype": "Rapid Multi-Hit Ki Bruiser & On-Hit Disrupter",
-      "useCase": "Now a genuine A-tier melee skirmisher whose 4-pip Ki bar hits like a truck (2d10 + 2×WIS + Stagger + free Alert stack). Because Naill triggers rapid strikes and double on-hit procs on Open Hand, he pairs explosively with Corvin/Lorcan (Hunter’s Mark +22% & First Strike) and Zoe, and dominates with Cloak of Displacement or Staff of Striking.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`)."
-        },
-        {
-          "type": "buff",
-          "text": "Ki Strike (Open Hand) buffed from 1d8 + WIS → 2d10 + 2×WIS bludgeoning and now grants +1 Alert stack on every trigger."
-        }
-      ],
-      "paths": {
-        "key": "naill",
-        "name": "Naill",
-        "p0": {
-          "k": "openhand",
-          "n": "Open Hand",
-          "wr": 40,
-          "score": 45
-        },
-        "p1": {
-          "k": "flowing",
-          "n": "Flowing Leaves",
-          "wr": 40,
-          "score": 46.2
-        },
-        "diff": -1.2,
-        "winner": "Even"
-      },
-      "bestPartners": [
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 50,
-          "score": 66.4,
-          "sharedKw": [],
-          "lift": 28.2,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "corvin",
-          "name": "Corvin",
-          "role": "Damage",
-          "cls": "Ranger",
-          "winRate": 50,
-          "score": 51.6,
-          "sharedKw": [],
-          "lift": 13.4,
-          "why": "Corvin’s First Strike applies Hunter’s Mark (+22% team dmg) that multiplies every rapid Ki strike from Naill."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 25,
-          "score": 46.6,
-          "sharedKw": [],
-          "lift": 8.4,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "lorcan",
-          "name": "Lorcan",
-          "role": "Damage",
-          "cls": "Ranger",
-          "winRate": 25,
-          "score": 39.3,
-          "sharedKw": [],
-          "lift": 1.1,
-          "why": "High-tempo Damage duo whose kits cover each other’s scaling curves through Act 3."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "cloak_displacement",
-          "name": "Cloak of Displacement",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 74.2,
-          "lift": 13.2,
-          "valPerGold": 2.64
-        },
-        {
-          "item": "staff_striking",
-          "name": "Staff of Striking",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 75,
-          "score": 73.2,
-          "lift": 12.2,
-          "valPerGold": 1.74
-        },
-        {
-          "item": "flametongue",
-          "name": "Flame Tongue",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 68.5,
-          "lift": 7.5,
-          "valPerGold": 1.5
-        },
-        {
-          "item": "dagger_venom",
-          "name": "Dagger of Venom",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 68.3,
-          "lift": 7.3,
-          "valPerGold": 1.46
+          "score": 53.5,
+          "lift": 16,
+          "valPerGold": 4
         }
       ],
       "bestValueItems": [
@@ -1719,3236 +314,4051 @@ window.WIKI_META = {
           "item": "cloak_displacement",
           "name": "Cloak of Displacement",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 75,
-          "score": 74.2,
-          "lift": 13.2,
-          "valPerGold": 2.64
+          "winRate": 50,
+          "score": 56.2,
+          "lift": 18.7,
+          "valPerGold": 4.67
         },
         {
-          "item": "staff_striking",
-          "name": "Staff of Striking",
-          "rarity": 3,
-          "cost": 7,
+          "item": "staff_woodlands",
+          "name": "Staff of the Woodlands",
+          "rarity": 5,
+          "cost": 5,
           "kwMatch": true,
-          "winRate": 75,
-          "score": 73.2,
-          "lift": 12.2,
-          "valPerGold": 1.74
+          "winRate": 50,
+          "score": 60,
+          "lift": 22.5,
+          "valPerGold": 4.5
         },
         {
-          "item": "flametongue",
-          "name": "Flame Tongue",
+          "item": "boots_speed",
+          "name": "Boots of Speed",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 75,
-          "score": 68.5,
-          "lift": 7.5,
-          "valPerGold": 1.5
+          "winRate": 50,
+          "score": 54.1,
+          "lift": 16.6,
+          "valPerGold": 4.15
         }
       ]
     },
     "jamison": {
       "key": "jamison",
       "name": "Brother Jamison",
-      "cls": "Cleric",
       "role": "Support",
-      "reach": "Melee",
-      "pack": 4,
-      "packKey": "divine",
-      "nMid": 57,
-      "nLate": 48,
-      "midWR": 38.6,
-      "lateWR": 20.8,
-      "avgWR": 29.7,
-      "midScore": 46.2,
-      "lateScore": 33.1,
-      "avgScore": 39.7,
-      "avgTime": 22.3,
-      "avgDmg": 233,
-      "avgHeal": 216,
-      "avgWard": 0,
-      "avgTaken": 419,
+      "cls": "Cleric",
+      "avgScore": 63,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 118,
+      "avgHeal": 675,
+      "avgWard": 119,
       "avgGold": 0,
-      "survPct": 12.4,
-      "liveRank": 10,
-      "baseRank": 8,
-      "rankDelta": -2,
-      "baseScore": 70.3,
-      "baseWR": 76.1,
-      "scoreDelta": -30.6,
-      "wrDelta": -46.4,
-      "changeStatus": "nerf",
-      "archetype": "Damage-Reduction Bonder & d20 Consistency Support",
-      "useCase": "A steady A-tier defensive support whose Good Vibes (−15% damage taken on Bonded allies) and Bonded d20 dice stabilize high-risk frontlines without turning fights into unkillable stalls. Draft Brother Jamison alongside Sir Dane or Zark when you need consistent High/Nat 20 rolls and damage mitigation against Act 3 bosses.",
+      "survPct": 40,
+      "avgTime": 31.5,
+      "liveRank": 3,
+      "baseRank": 10,
+      "rankDelta": 7,
+      "baseScore": 39.7,
+      "scoreDelta": 23.3,
+      "changeStatus": "rebal",
+      "archetype": "Spatial Closest-Ally Bonder & Channel Divinity Support",
+      "useCase": "Position Brother Jamison right next to your main tank or carry (shown via live dashed targeting lines on Deployment!): Emboldening Bond grants Good Vibes damage reduction + d20 consistency, while Balm of Peace keeps frontlines standing through Act 3 bosses.",
       "changes": [
         {
-          "type": "fix",
-          "text": "Fixed double-scaled `u.dm²` heal bug on Emboldening Bond cast (added `{ raw: 1 }`)."
+          "type": "buff",
+          "text": "Spatial targeting (`closest_ally`): Emboldening Bond reliably anchors to your chosen adjacent ally."
         },
         {
-          "type": "nerf",
-          "text": "Channel Divinity Balm of Peace heal trimmed `18 + 4×CHA → 14 + 3×CHA`; Tier IV Peace & Radiance heal trimmed `12 → 10`."
-        },
-        {
-          "type": "global",
-          "text": "28s Overtime decay reins in long-fight healing output."
+          "type": "rebal",
+          "text": "Unified under `Channel Divinity` with crisp 1-line Specializations and opt-in Quest."
         }
       ],
       "paths": {
         "key": "jamison",
-        "name": "Brother Jamison",
         "p0": {
-          "k": "good_vibes",
-          "n": "Good Vibes",
-          "wr": 30,
-          "score": 44.7
+          "k": "shared_grace",
+          "n": "Shared Grace",
+          "score": 61.9,
+          "wr": 40
         },
         "p1": {
-          "k": "peace_radiance",
-          "n": "Peace & Radiance",
-          "wr": 20,
-          "score": 38
+          "k": "radiant_link",
+          "n": "Radiant Link",
+          "score": 57.9,
+          "wr": 40
         },
-        "diff": 6.7,
-        "winner": "Good Vibes"
+        "winner": "Shared Grace"
       },
       "bestPartners": [
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 75,
-          "score": 67.7,
-          "sharedKw": [],
-          "lift": 30.6,
-          "why": "Stacked Aura + Good Vibes (−15% dmg taken) + Bonded d20 dice create an ultra-reliable frontline core."
-        },
-        {
-          "partner": "zark",
-          "name": "Zark",
-          "role": "Tank",
-          "cls": "Barbarian",
-          "winRate": 50,
-          "score": 50.5,
-          "sharedKw": [],
-          "lift": 13.4,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "mother_laurel",
-          "name": "Mother Laurel",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 25,
-          "score": 42.1,
-          "sharedKw": [],
-          "lift": 5,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "pillar",
-          "name": "Pillar",
-          "role": "Tank",
-          "cls": "Barbarian",
-          "winRate": 25,
-          "score": 40.4,
-          "sharedKw": [],
-          "lift": 3.3,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "robe_stars",
-          "name": "Robe of Stars",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 58.7,
-          "lift": 9.2,
-          "valPerGold": 1.31
-        },
-        {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 53,
-          "lift": 3.5,
-          "valPerGold": 0.7
-        },
-        {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 50.5,
-          "lift": 1,
-          "valPerGold": 0.2
-        },
-        {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 49.4,
-          "lift": -0.1,
-          "valPerGold": -0.01
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "robe_stars",
-          "name": "Robe of Stars",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 58.7,
-          "lift": 9.2,
-          "valPerGold": 1.31
-        },
-        {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 53,
-          "lift": 3.5,
-          "valPerGold": 0.7
-        },
-        {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 50.5,
-          "lift": 1,
-          "valPerGold": 0.2
-        }
-      ]
-    },
-    "faelan": {
-      "key": "faelan",
-      "name": "Faelan",
-      "cls": "Wizard",
-      "role": "Support",
-      "reach": "Ranged",
-      "pack": 1,
-      "packKey": "tavern",
-      "nMid": 59,
-      "nLate": 56,
-      "midWR": 39,
-      "lateWR": 19.6,
-      "avgWR": 29.3,
-      "midScore": 43.6,
-      "lateScore": 34.2,
-      "avgScore": 38.9,
-      "avgTime": 26.1,
-      "avgDmg": 199,
-      "avgHeal": 0,
-      "avgWard": 909,
-      "avgTaken": 417,
-      "avgGold": 0,
-      "survPct": 20.9,
-      "liveRank": 11,
-      "baseRank": 2,
-      "rankDelta": -9,
-      "baseScore": 84.7,
-      "baseWR": 94.1,
-      "scoreDelta": -45.8,
-      "wrDelta": -64.8,
-      "changeStatus": "nerf",
-      "archetype": "Arcane Recovery Battery & Anti-Burst Warder",
-      "useCase": "No longer a solo unlosable shield wall (dropped from #2 to middle of the pack), Faelan is now a dedicated Charge battery and burst-mitigation specialist. Draft him on Spell Battery alongside Action Surge / Arcane Recovery partners (Zoe, Gilthrax, Gains) and feed him Staff of Power or Ring of Spell Storing to turbocharge team casts.",
-      "changes": [
-        {
-          "type": "nerf",
-          "text": "Arcane Ward base trimmed [14, 24, 30, 36] + 3×INT → [12, 18, 24, 28] + 2×INT, and max Ward cap reduced 75% → 55% Max HP."
-        },
-        {
-          "type": "nerf",
-          "text": "High roll Charge refund cut 35% → 18%; Projected Ward Path multiplier trimmed 1.35× → 1.18×."
-        },
-        {
-          "type": "nerf",
-          "text": "Arcane Recovery on Ward break reduced 20 → 12 Charge."
-        },
-        {
-          "type": "fix",
-          "text": "Fixed double-counted `u.stats.ward` stat tracking bug."
-        },
-        {
-          "type": "global",
-          "text": "Overtime decay (starting at 28s) reduces Ward generation in stall fights."
-        }
-      ],
-      "paths": {
-        "key": "faelan",
-        "name": "Faelan",
-        "p0": {
-          "k": "projected",
-          "n": "Projected Ward",
-          "wr": 60,
-          "score": 55.4
-        },
-        "p1": {
-          "k": "battery",
-          "n": "Spell Battery",
-          "wr": 80,
-          "score": 71.6
-        },
-        "diff": -16.2,
-        "winner": "Spell Battery"
-      },
-      "bestPartners": [
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 78.2,
-          "sharedKw": [],
-          "lift": 28.1,
-          "why": "Zoe’s Haste/Charge speeds up Faelan’s Wards while Spell Battery loops Zoe’s Rummage & Action Surges."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 75,
-          "score": 63.8,
-          "sharedKw": [],
-          "lift": 13.7,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "gilthrax",
-          "name": "Gilthrax",
-          "role": "Tank",
-          "cls": "Fighter",
-          "winRate": 50,
-          "score": 63.5,
-          "sharedKw": [],
-          "lift": 13.4,
-          "why": "Layered Wards keep Gilthrax topped off while broken Wards feed Faelan’s Spell Battery Charge back into the party."
-        },
         {
           "partner": "arthur",
           "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 50,
-          "score": 55.3,
           "sharedKw": [],
-          "lift": 5.2,
-          "why": "Strong Support/Damage role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 92.3,
-          "lift": 50.2,
-          "valPerGold": 7.17
+          "score": 28.3,
+          "winRate": 0,
+          "lift": -29.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         },
         {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 88.8,
-          "lift": 46.7,
-          "valPerGold": 9.34
-        },
-        {
-          "item": "staff_woodlands",
-          "name": "Staff of the Woodlands",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 88.2,
-          "lift": 46.1,
-          "valPerGold": 6.59
-        },
-        {
-          "item": "robe_stars",
-          "name": "Robe of Stars",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 84.6,
-          "lift": 42.5,
-          "valPerGold": 6.07
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 88.8,
-          "lift": 46.7,
-          "valPerGold": 9.34
-        },
-        {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 82.2,
-          "lift": 40.1,
-          "valPerGold": 8.02
-        },
-        {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 92.3,
-          "lift": 50.2,
-          "valPerGold": 7.17
-        }
-      ]
-    },
-    "arthur": {
-      "key": "arthur",
-      "name": "Arthur",
-      "cls": "Fighter",
-      "role": "Damage",
-      "reach": "Melee",
-      "pack": 1,
-      "packKey": "tavern",
-      "nMid": 55,
-      "nLate": 47,
-      "midWR": 27.3,
-      "lateWR": 23.4,
-      "avgWR": 25.4,
-      "midScore": 41.1,
-      "lateScore": 35,
-      "avgScore": 38,
-      "avgTime": 21.7,
-      "avgDmg": 351,
-      "avgHeal": 4,
-      "avgWard": 0,
-      "avgTaken": 362,
-      "avgGold": 0,
-      "survPct": 11.8,
-      "liveRank": 12,
-      "baseRank": 10,
-      "rankDelta": -2,
-      "baseScore": 67.1,
-      "baseWR": 66,
-      "scoreDelta": -29.1,
-      "wrDelta": -40.6,
-      "changeStatus": "buff",
-      "archetype": "Backline Sniper & Action Surge Trigger",
-      "useCase": "Your premier multi-arrow on-hit carrier and Action Surge bridge. Draft Arthur to snipe fragile enemy summoners/healers from the back with Longbow Volley while proccing on-hit items (Frost Brand, Sun Blade, Flame Tongue) across multiple targets—and pair him with Zoe or Gilthrax to chain Action Surge loops.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Global Damage Role Buff: +12% base damage scaling (`u.dm × 1.12`) across all attacks and Volley arrows."
-        },
-        {
-          "type": "buff",
-          "text": "Longbow Volley: each arrow now deals +3 flat bonus piercing damage (`2d6+3` / `2d8+3` on Nat 20)."
-        }
-      ],
-      "paths": {
-        "key": "arthur",
-        "name": "Arthur",
-        "p0": {
-          "k": "vigilance",
-          "n": "Constant Vigilance",
-          "wr": 60,
-          "score": 56
-        },
-        "p1": {
-          "k": "initiative",
-          "n": "Roll for Initiative",
-          "wr": 50,
-          "score": 54.1
-        },
-        "diff": 1.9,
-        "winner": "Constant Vigilance"
-      },
-      "bestPartners": [
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 67.4,
-          "sharedKw": [
-            "action_surge"
-          ],
-          "lift": 19.8,
-          "why": "Shared Action Surge loop: Zoe turbocharges Arthur’s multi-arrow Volleys with Haste, Charge, and free attacks."
-        },
-        {
-          "partner": "naill",
-          "name": "Naill",
-          "role": "Damage",
-          "cls": "Monk",
-          "winRate": 75,
-          "score": 57.7,
+          "partner": "wallaby",
+          "name": "Wallaby",
           "sharedKw": [],
-          "lift": 10.1,
-          "why": "Dual high-tempo on-hit strikers: Arthur Exposes backlines while Naill Staggers and disrupts the front."
-        },
-        {
-          "partner": "faelan",
-          "name": "Faelan",
-          "role": "Support",
-          "cls": "Wizard",
-          "winRate": 50,
-          "score": 56.2,
-          "sharedKw": [],
-          "lift": 8.6,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
-          "winRate": 50,
-          "score": 55.6,
-          "sharedKw": [],
-          "lift": 8,
-          "why": "High-tempo Damage duo whose kits cover each other’s scaling curves through Act 3."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "frost_brand",
-          "name": "Frost Brand",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 76.5,
-          "lift": 23,
-          "valPerGold": 3.29
-        },
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 75.1,
-          "lift": 21.6,
-          "valPerGold": 3.09
-        },
-        {
-          "item": "boots_speed",
-          "name": "Boots of Speed",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 66.6,
-          "lift": 13.1,
-          "valPerGold": 2.62
-        },
-        {
-          "item": "flametongue",
-          "name": "Flame Tongue",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": true,
-          "winRate": 75,
-          "score": 58.9,
-          "lift": 5.4,
-          "valPerGold": 1.08
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "frost_brand",
-          "name": "Frost Brand",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 76.5,
-          "lift": 23,
-          "valPerGold": 3.29
-        },
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 75.1,
-          "lift": 21.6,
-          "valPerGold": 3.09
-        },
-        {
-          "item": "boots_speed",
-          "name": "Boots of Speed",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 66.6,
-          "lift": 13.1,
-          "valPerGold": 2.62
-        }
-      ]
-    },
-    "nettle": {
-      "key": "nettle",
-      "name": "Nettle",
-      "cls": "Warlock",
-      "role": "Support",
-      "reach": "Ranged",
-      "pack": 3,
-      "packKey": "beaten",
-      "nMid": 55,
-      "nLate": 58,
-      "midWR": 40,
-      "lateWR": 17.2,
-      "avgWR": 28.6,
-      "midScore": 45.4,
-      "lateScore": 29.8,
-      "avgScore": 37.6,
-      "avgTime": 17.8,
-      "avgDmg": 624,
-      "avgHeal": 93,
-      "avgWard": 0,
-      "avgTaken": 216,
-      "avgGold": 0,
-      "survPct": 20.4,
-      "liveRank": 13,
-      "baseRank": 21,
-      "rankDelta": 8,
-      "baseScore": 55.1,
-      "baseWR": 51.9,
-      "scoreDelta": -17.5,
-      "wrDelta": -23.3,
-      "changeStatus": "buff",
-      "archetype": "Single-Target Hex Shredder & Pact Boon Battery",
-      "useCase": "One of the biggest meta risers—delivering the highest average damage of any Support (624 avg dmg!). Reworked Hex adds 1d8/1d10 necrotic to EVERY allied hit on the cursed foe, while Pact Boon now feeds +16 Charge to Nettle and the killer plus heals the lowest-HP ally. Draft Nettle with sturdy tanks (Mother Laurel, Bram) and fast casters (Headband of Intellect / Staff of Power).",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Hex on-hit necrotic proc buffed from d4 (T1) / d6 (T2+) → d8 (T1) / d10 (T2+) per stack."
-        },
-        {
-          "type": "buff",
-          "text": "Pact Boon now restores +16 Charge to both Nettle and the killer, and heals the lowest-HP ally (`7 + 1.5×CHA`)."
-        },
-        {
-          "type": "rebal",
-          "text": "Jumping Hex party heal lightly trimmed (`5+CHA → 4+CHA`) to balance the new lowest-HP heal."
-        }
-      ],
-      "paths": {
-        "key": "nettle",
-        "name": "Nettle",
-        "p0": {
-          "k": "fineprint",
-          "n": "Fine Print",
-          "wr": 10,
-          "score": 30.5
-        },
-        "p1": {
-          "k": "bargain",
-          "n": "Dark One’s Bargain",
-          "wr": 0,
-          "score": 26.3
-        },
-        "diff": 4.2,
-        "winner": "Fine Print"
-      },
-      "bestPartners": [
-        {
-          "partner": "mother_laurel",
-          "name": "Mother Laurel",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 46.3,
-          "sharedKw": [],
-          "lift": 10.5,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
+          "score": 23.2,
+          "winRate": 0,
+          "lift": -32.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         },
         {
           "partner": "bram",
           "name": "Bram",
-          "role": "Tank",
-          "cls": "Cleric",
-          "winRate": 25,
-          "score": 44.5,
-          "sharedKw": [],
-          "lift": 8.7,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
+          "sharedKw": [
+            "channel_divinity"
+          ],
+          "score": 15.2,
+          "winRate": 0,
+          "lift": -43,
+          "why": "Shared channel divinity Class Keyword engine chains triggers across both kits."
         },
         {
-          "partner": "juniper",
-          "name": "Juniper",
-          "role": "Support",
-          "cls": "Druid",
-          "winRate": 25,
-          "score": 43.9,
-          "sharedKw": [],
-          "lift": 8.1,
-          "why": "High-tempo Support duo whose kits cover each other’s scaling curves through Act 3."
-        },
-        {
-          "partner": "zark",
-          "name": "Zark",
-          "role": "Tank",
-          "cls": "Barbarian",
-          "winRate": 25,
-          "score": 40.7,
-          "sharedKw": [],
-          "lift": 4.9,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
+          "partner": "saint",
+          "name": "Saint",
+          "sharedKw": [
+            "channel_divinity"
+          ],
+          "score": 11.5,
+          "winRate": 0,
+          "lift": -43.6,
+          "why": "Shared channel divinity Class Keyword engine chains triggers across both kits."
         }
       ],
       "bestItems": [
         {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
+          "item": "staff_healing",
+          "name": "Staff of Healing",
+          "rarity": 5,
           "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 58.8,
-          "lift": 13.4,
-          "valPerGold": 2.68
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 39.1,
+          "lift": 6.1,
+          "valPerGold": 1.22
         },
         {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 38.8,
+          "lift": 5.8,
+          "valPerGold": 1.45
+        },
+        {
+          "item": "amulet_devout",
+          "name": "Amulet of the Devout",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 29,
+          "lift": -4,
+          "valPerGold": -0.8
+        },
+        {
+          "item": "glamoured_leather",
+          "name": "Glamoured Studded Leather",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 29,
+          "lift": -4,
+          "valPerGold": -1
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 38.8,
+          "lift": 5.8,
+          "valPerGold": 1.45
+        },
+        {
+          "item": "staff_healing",
+          "name": "Staff of Healing",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 39.1,
+          "lift": 6.1,
+          "valPerGold": 1.22
+        },
+        {
+          "item": "amulet_devout",
+          "name": "Amulet of the Devout",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 29,
+          "lift": -4,
+          "valPerGold": -0.8
+        }
+      ]
+    },
+    "gilthrax": {
+      "key": "gilthrax",
+      "name": "Gilthrax",
+      "role": "Tank",
+      "cls": "Fighter",
+      "avgScore": 62.5,
+      "avgWR": 60,
+      "midWR": 100,
+      "lateWR": 33.3,
+      "avgDmg": 505,
+      "avgHeal": 0,
+      "avgWard": 247,
+      "avgGold": 0,
+      "survPct": 60,
+      "avgTime": 24.1,
+      "liveRank": 4,
+      "baseRank": 5,
+      "rankDelta": 1,
+      "baseScore": 43.5,
+      "scoreDelta": 19,
+      "changeStatus": "rebal",
+      "archetype": "Item-Value Ward Tank & Gold Dragon Fire-Breath Fighter",
+      "useCase": "Hoard-scaled Dragonborn tank whose Arcane Shield scales directly with the **gold value/rarity** of his equipped items! When his Ward breaks, he triggers `Action Surge` to breathe **Gold Dragon Fire + Burn** across enemies equal to absorbed damage.",
+      "changes": [
+        {
+          "type": "rebal",
+          "text": "Reworked Ward scaling to item gold value/rarity; broken Ward triggers Action Surge Gold Dragon Fire Breath."
+        },
+        {
+          "type": "rebal",
+          "text": "Bridges Pack 5 economy with `Action Surge` partners (Zoe, Arthur) and Burn allies (Cinder, Lumen)."
+        }
+      ],
+      "paths": {
+        "key": "gilthrax",
+        "p0": {
+          "k": "gilded_hoard",
+          "n": "Gilded Hoard",
+          "score": 62.1,
+          "wr": 60
+        },
+        "p1": {
+          "k": "bodyguard_fee",
+          "n": "Bodyguard’s Fee",
+          "score": 59.5,
+          "wr": 60
+        },
+        "winner": "Gilded Hoard"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 68.1,
+          "winRate": 50,
+          "lift": -1.2,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 56.4,
+          "winRate": 50,
+          "lift": 0.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [
+            "action_surge"
+          ],
+          "score": 36.2,
+          "winRate": 50,
+          "lift": -21.5,
+          "why": "Shared action surge Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "zoe",
+          "name": "Zoe",
+          "sharedKw": [
+            "action_surge"
+          ],
+          "score": 34.3,
+          "winRate": 0,
+          "lift": -20.6,
+          "why": "Shared action surge Class Keyword engine chains triggers across both kits."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
           "kwMatch": false,
           "winRate": 50,
-          "score": 58.6,
-          "lift": 13.2,
-          "valPerGold": 1.89
+          "score": 51.6,
+          "lift": 28.2,
+          "valPerGold": 7.05
+        },
+        {
+          "item": "weapon_warning",
+          "name": "Weapon of Warning",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 34.4,
+          "lift": 11,
+          "valPerGold": 2.2
+        },
+        {
+          "item": "flame_tongue",
+          "name": "Flame Tongue",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 33.7,
+          "lift": 10.3,
+          "valPerGold": 2.06
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 33.3,
+          "lift": 9.9,
+          "valPerGold": 2.48
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 50,
+          "score": 51.6,
+          "lift": 28.2,
+          "valPerGold": 7.05
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 33.3,
+          "lift": 9.9,
+          "valPerGold": 2.48
+        },
+        {
+          "item": "weapon_warning",
+          "name": "Weapon of Warning",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 34.4,
+          "lift": 11,
+          "valPerGold": 2.2
+        }
+      ]
+    },
+    "velith": {
+      "key": "velith",
+      "name": "Velith",
+      "role": "Damage",
+      "cls": "Rogue",
+      "avgScore": 61.4,
+      "avgWR": 60,
+      "midWR": 100,
+      "lateWR": 33.3,
+      "avgDmg": 674,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 60,
+      "avgTime": 31.6,
+      "liveRank": 5,
+      "baseRank": 2,
+      "rankDelta": -3,
+      "baseScore": 47.5,
+      "scoreDelta": 13.9,
+      "changeStatus": "buff",
+      "archetype": "Stealth Ambush Assassin & Nightshade Poison Finisher",
+      "useCase": "Premier melee Rogue assassin who opens from Stealth with devastating Sneak Attacks and Nightshade Poison stacks that melt high-AC Act 2–3 bosses. Pair with Corvin (`Hunter’s Mark`) or Kaska (`Exposed`) and equip Evasion + Poison gear.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Unified under `Sneak Attack` with Poison & Exposed scaling that bypasses high-AC bosses cleanly."
+        },
+        {
+          "type": "rebal",
+          "text": "Clean 1-line Specializations (`Nightshade` / `Shadowstep`) and opt-in Quest."
+        }
+      ],
+      "paths": {
+        "key": "velith",
+        "p0": {
+          "k": "first_blood",
+          "n": "First Blood",
+          "score": 59.4,
+          "wr": 60
+        },
+        "p1": {
+          "k": "nightshade",
+          "n": "Nightshade Vials",
+          "score": 57.9,
+          "wr": 60
+        },
+        "winner": "First Blood"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 69.7,
+          "winRate": 50,
+          "lift": 1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 41.7,
+          "winRate": 50,
+          "lift": -15.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [],
+          "score": 34.6,
+          "winRate": 50,
+          "lift": -21.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [
+            "sneak_attack"
+          ],
+          "score": 20.6,
+          "winRate": 0,
+          "lift": -34.4,
+          "why": "Shared sneak attack Class Keyword engine chains triggers across both kits."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "dagger_venom",
+          "name": "Dagger of Venom",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 29.3,
+          "lift": 5,
+          "valPerGold": 1
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 27.7,
+          "lift": 3.4,
+          "valPerGold": 0.85
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 25.7,
+          "lift": 1.4,
+          "valPerGold": 0.35
+        },
+        {
+          "item": "cloak_elvenkind",
+          "name": "Cloak of Elvenkind",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 23.1,
+          "lift": -1.2,
+          "valPerGold": -0.24
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "dagger_venom",
+          "name": "Dagger of Venom",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 29.3,
+          "lift": 5,
+          "valPerGold": 1
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 27.7,
+          "lift": 3.4,
+          "valPerGold": 0.85
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 25.7,
+          "lift": 1.4,
+          "valPerGold": 0.35
+        }
+      ]
+    },
+    "kaska": {
+      "key": "kaska",
+      "name": "Kaska",
+      "role": "Support",
+      "cls": "Druid",
+      "avgScore": 57,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 309,
+      "avgHeal": 117,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 29.2,
+      "liveRank": 6,
+      "baseRank": 4,
+      "rankDelta": -2,
+      "baseScore": 43.6,
+      "scoreDelta": 13.4,
+      "changeStatus": "rebal",
+      "archetype": "Wild Shape Panther Bruiser & Pack Hunt Support",
+      "useCase": "Agile Moon Druid skirmisher who pounces into the fray in Panther Form, spreads `Exposed`, and sustains aggressive melee squads via `Pack Hunt`. Bridges seamlessly with Juniper, Mother Laurel, Velith, and Zark.",
+      "changes": [
+        {
+          "type": "rebal",
+          "text": "Unified under `Wild Shape` with balanced Panther Beast HP and Pack Hunt sustain."
+        },
+        {
+          "type": "rebal",
+          "text": "Clean 1-line Specializations (`Lunar Resilience` / `Pack Hunt`) and opt-in Quest."
+        }
+      ],
+      "paths": {
+        "key": "kaska",
+        "p0": {
+          "k": "lunar_resilience",
+          "n": "Lunar Resilience",
+          "score": 51.5,
+          "wr": 40
+        },
+        "p1": {
+          "k": "pack_hunt",
+          "n": "Pack Hunt",
+          "score": 56.5,
+          "wr": 40
+        },
+        "winner": "Pack Hunt"
+      },
+      "bestPartners": [
+        {
+          "partner": "juniper",
+          "name": "Juniper",
+          "sharedKw": [
+            "wild_shape"
+          ],
+          "score": 47,
+          "winRate": 50,
+          "lift": -14.3,
+          "why": "Shared wild shape Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 18.1,
+          "winRate": 0,
+          "lift": -36.9,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 17.9,
+          "winRate": 0,
+          "lift": -35,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 15.2,
+          "winRate": 0,
+          "lift": -40,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 28.2,
+          "lift": 8.8,
+          "valPerGold": 2.2
         },
         {
           "item": "staff_woodlands",
           "name": "Staff of the Woodlands",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 55.6,
-          "lift": 10.2,
-          "valPerGold": 1.46
-        },
-        {
-          "item": "staff_withering",
-          "name": "Staff of Withering",
-          "rarity": 2,
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
-          "winRate": 50,
-          "score": 55.1,
-          "lift": 9.7,
-          "valPerGold": 1.94
+          "winRate": 0,
+          "score": 22.9,
+          "lift": 3.5,
+          "valPerGold": 0.7
+        },
+        {
+          "item": "moon_sickle",
+          "name": "Moon Sickle",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 19.4,
+          "lift": 0,
+          "valPerGold": 0
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 21.4,
+          "lift": 2,
+          "valPerGold": 0.5
         }
       ],
       "bestValueItems": [
         {
-          "item": "headband",
-          "name": "Headband of Intellect",
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 75,
-          "score": 58.8,
-          "lift": 13.4,
-          "valPerGold": 2.68
-        },
-        {
-          "item": "staff_withering",
-          "name": "Staff of Withering",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": true,
-          "winRate": 50,
-          "score": 55.1,
-          "lift": 9.7,
-          "valPerGold": 1.94
-        },
-        {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 58.6,
-          "lift": 13.2,
-          "valPerGold": 1.89
-        }
-      ]
-    },
-    "zark": {
-      "key": "zark",
-      "name": "Zark",
-      "cls": "Barbarian",
-      "role": "Tank",
-      "reach": "Melee",
-      "pack": 3,
-      "packKey": "beaten",
-      "nMid": 67,
-      "nLate": 79,
-      "midWR": 25.4,
-      "lateWR": 19,
-      "avgWR": 22.2,
-      "midScore": 39.4,
-      "lateScore": 32.3,
-      "avgScore": 35.8,
-      "avgTime": 22.3,
-      "avgDmg": 279,
-      "avgHeal": 102,
-      "avgWard": 0,
-      "avgTaken": 775,
-      "avgGold": 0,
-      "survPct": 11.6,
-      "liveRank": 14,
-      "baseRank": 18,
-      "rankDelta": 4,
-      "baseScore": 58.4,
-      "baseWR": 51.6,
-      "scoreDelta": -22.6,
-      "wrDelta": -29.4,
-      "changeStatus": "buff",
-      "archetype": "Scaling Drain-Tank Barbarian & Rage Snowballer",
-      "useCase": "A frontline bruiser who scales harder the longer he swings. Buffed Bear Rage (6% DR per stack + 10%/15% Max HP self-heal on High/Nat 20 Bear Cleave) fixes his old Act 2 fragility while Relentless Endurance absorbs lethal spikes. Pair Zark with Zoe (extra swings/Rage tempo) or Kaska (Pack Hunt sustain) and gear him with Sun Blade or Ring of Regeneration.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Bear Rage damage reduction buffed 4% → 6% per stack (cap adjusted to 55%)."
-        },
-        {
-          "type": "buff",
-          "text": "High Bear Cleave now restores 10% Max HP; Nat 20 restores 15% Max HP."
-        }
-      ],
-      "paths": {
-        "key": "zark",
-        "name": "Zark",
-        "p0": {
-          "k": "relentless",
-          "n": "Relentless Bear",
-          "wr": 70,
-          "score": 54.7
-        },
-        "p1": {
-          "k": "totemroar",
-          "n": "Totem Roar",
-          "wr": 50,
-          "score": 50
-        },
-        "diff": 4.7,
-        "winner": "Relentless Bear"
-      },
-      "bestPartners": [
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 69.4,
-          "sharedKw": [],
-          "lift": 20.9,
-          "why": "Strong Tank/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "kaska",
-          "name": "Kaska",
-          "role": "Support",
-          "cls": "Druid",
-          "winRate": 50,
-          "score": 60.9,
-          "sharedKw": [],
-          "lift": 12.4,
-          "why": "Kaska’s Exposed + Pack Hunt fuels Zark’s Rage cleaves with bonus sustain and faster Charge."
-        },
-        {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
-          "winRate": 75,
-          "score": 57.3,
-          "sharedKw": [],
+          "winRate": 0,
+          "score": 28.2,
           "lift": 8.8,
-          "why": "Strong Tank/Damage role synergy balancing frontline survivability with live burst tempo."
+          "valPerGold": 2.2
         },
         {
-          "partner": "jamison",
-          "name": "Brother Jamison",
-          "role": "Support",
-          "cls": "Cleric",
-          "winRate": 75,
-          "score": 57.2,
-          "sharedKw": [],
-          "lift": 8.7,
-          "why": "Strong Tank/Support role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 80,
-          "lift": 11.8,
-          "valPerGold": 1.69
-        },
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 79,
-          "lift": 10.8,
-          "valPerGold": 1.54
-        },
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
-          "rarity": 2,
+          "item": "staff_woodlands",
+          "name": "Staff of the Woodlands",
+          "rarity": 5,
           "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 77.4,
-          "lift": 9.2,
-          "valPerGold": 1.84
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 22.9,
+          "lift": 3.5,
+          "valPerGold": 0.7
         },
         {
-          "item": "periapt_wound_closure",
-          "name": "Periapt of Wound Closure",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 73.9,
-          "lift": 5.7,
-          "valPerGold": 1.9
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "periapt_wound_closure",
-          "name": "Periapt of Wound Closure",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 73.9,
-          "lift": 5.7,
-          "valPerGold": 1.9
-        },
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
+          "item": "boots_speed",
+          "name": "Boots of Speed",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 100,
-          "score": 77.4,
-          "lift": 9.2,
-          "valPerGold": 1.84
-        },
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 80,
-          "lift": 11.8,
-          "valPerGold": 1.69
+          "winRate": 0,
+          "score": 21.4,
+          "lift": 2,
+          "valPerGold": 0.5
         }
       ]
     },
     "bram": {
       "key": "bram",
       "name": "Bram",
-      "cls": "Cleric",
       "role": "Tank",
-      "reach": "Melee",
-      "pack": 1,
-      "packKey": "tavern",
-      "nMid": 61,
-      "nLate": 74,
-      "midWR": 27.9,
-      "lateWR": 14.9,
-      "avgWR": 21.4,
-      "midScore": 39.3,
-      "lateScore": 27.8,
-      "avgScore": 33.5,
-      "avgTime": 23,
-      "avgDmg": 159,
-      "avgHeal": 237,
-      "avgWard": 4,
-      "avgTaken": 693,
+      "cls": "Cleric",
+      "avgScore": 53.5,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 94,
+      "avgHeal": 227,
+      "avgWard": 1,
       "avgGold": 0,
-      "survPct": 7.4,
-      "liveRank": 15,
-      "baseRank": 17,
-      "rankDelta": 2,
-      "baseScore": 59.2,
-      "baseWR": 55.6,
-      "scoreDelta": -25.7,
-      "wrDelta": -34.2,
-      "changeStatus": "buff",
-      "archetype": "Stalwart Frontline & Emergency Burst Healer",
-      "useCase": "Reliable Act 1–3 frontline anchor who buys time for glass-cannon carries with a boosted 146 HP pool and his once-per-fight Preserve Life Channel Divinity save. Bram shines alongside high-burst carries like Cinder or paired tanks like Sir Dane who let him soak spikes without dying before Preserve Life fires.",
+      "survPct": 40,
+      "avgTime": 24.9,
+      "liveRank": 7,
+      "baseRank": 15,
+      "rankDelta": 8,
+      "baseScore": 33.5,
+      "scoreDelta": 20,
+      "changeStatus": "rebal",
+      "archetype": "Stalwart Frontline & Channel Divinity Burst Healer",
+      "useCase": "Classic Life Cleric frontline anchor whose Preserve Life spikes your entire squad back from the brink when an ally drops below 40% HP. Pair Bram with high-output carries (Cinder, Gains, Velith) and equip Heavy Armor or Devotee’s Censer to amplify his Channel Divinity burst.",
       "changes": [
         {
+          "type": "rebal",
+          "text": "Card simplified to strict progressive disclosure; `Channel Divinity` fires Preserve Life automatically below 40% HP."
+        },
+        {
           "type": "buff",
-          "text": "Base HP increased 132 → 146 (+14 HP) so he survives buffed Act 2–3 frontline burst."
+          "text": "Specializations: `Blessed Healer` (self-heal 50% of heals cast) and `Radiant Shield` (grant Ward on overheal)."
         },
         {
           "type": "global",
-          "text": "28s Overtime anti-stall decay (−15% Heal/Ward every 5s, max −60%) trims drawn-out attrition fights."
+          "text": "Benefits from Cubed AC/SR (`K=14`), making Plate Armor & Shield upgrades noticeably tankier."
         }
       ],
       "paths": {
         "key": "bram",
-        "name": "Bram",
         "p0": {
-          "k": "disciple",
+          "k": "disciple_life",
           "n": "Disciple of Life",
-          "wr": 50,
-          "score": 52.6
+          "score": 50.5,
+          "wr": 40
         },
         "p1": {
-          "k": "divine",
+          "k": "divine_strike",
           "n": "Divine Strike",
-          "wr": 50,
-          "score": 51.9
+          "score": 50.2,
+          "wr": 40
         },
-        "diff": 0.7,
         "winner": "Even"
       },
       "bestPartners": [
         {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
-          "winRate": 100,
-          "score": 72.2,
-          "sharedKw": [],
-          "lift": 26,
-          "why": "Bram’s 146 HP frontline + Preserve Life burst heal guarantees Cinder lives long enough to detonate Burn."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 75,
-          "score": 70.6,
-          "sharedKw": [],
-          "lift": 24.4,
-          "why": "High-tempo Tank duo whose kits cover each other’s scaling curves through Act 3."
-        },
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 64.8,
-          "sharedKw": [],
-          "lift": 18.6,
-          "why": "Strong Tank/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "arthur",
-          "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 60.1,
-          "sharedKw": [],
-          "lift": 13.9,
-          "why": "Strong Tank/Damage role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 86.6,
-          "lift": 27.7,
-          "valPerGold": 3.96
-        },
-        {
-          "item": "cloak_displacement",
-          "name": "Cloak of Displacement",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 73,
-          "lift": 14.1,
-          "valPerGold": 2.82
-        },
-        {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 69,
-          "lift": 10.1,
-          "valPerGold": 1.44
-        },
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 65.8,
-          "lift": 6.9,
-          "valPerGold": 1.38
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 86.6,
-          "lift": 27.7,
-          "valPerGold": 3.96
-        },
-        {
-          "item": "cloak_displacement",
-          "name": "Cloak of Displacement",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 73,
-          "lift": 14.1,
-          "valPerGold": 2.82
-        },
-        {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 69,
-          "lift": 10.1,
-          "valPerGold": 1.44
-        }
-      ]
-    },
-    "corvin": {
-      "key": "corvin",
-      "name": "Corvin",
-      "cls": "Ranger",
-      "role": "Damage",
-      "reach": "Melee",
-      "pack": 6,
-      "packKey": "surprise",
-      "nMid": 50,
-      "nLate": 45,
-      "midWR": 28,
-      "lateWR": 13.3,
-      "avgWR": 20.6,
-      "midScore": 39.9,
-      "lateScore": 27,
-      "avgScore": 33.5,
-      "avgTime": 19.2,
-      "avgDmg": 355,
-      "avgHeal": 1,
-      "avgWard": 0,
-      "avgTaken": 296,
-      "avgGold": 0,
-      "survPct": 11.6,
-      "liveRank": 16,
-      "baseRank": 11,
-      "rankDelta": -5,
-      "baseScore": 66.7,
-      "baseWR": 65.4,
-      "scoreDelta": -33.2,
-      "wrDelta": -44.8,
-      "changeStatus": "buff",
-      "archetype": "Melee Hunter’s Mark Skirmisher & Exposed Flanker",
-      "useCase": "Corvin is the premier melee enabler for on-hit and ambush comps. His First Strike Path spreads Hunter’s Mark (+22% party damage + 1d10+WIS Ranger proc) right at fight start—turning Naill (100% pair WR!), Velith (75% pair WR), and Lorcan into shredding machines. Give him Dagger of Venom, Cloak of Displacement, or Boots of Speed to keep him swinging safely.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`)."
-        },
-        {
-          "type": "buff",
-          "text": "Hunter’s Mark rework: Marked foes take +22% damage from all allies, and Ranger bonus proc buffed 1d6+WIS → 1d10+WIS."
-        }
-      ],
-      "paths": {
-        "key": "corvin",
-        "name": "Corvin",
-        "p0": {
-          "k": "stalker_flurry",
-          "n": "Stalker’s Flurry",
-          "wr": 10,
-          "score": 28.1
-        },
-        "p1": {
-          "k": "first_strike",
-          "n": "First Strike",
-          "wr": 20,
-          "score": 30.7
-        },
-        "diff": -2.6,
-        "winner": "First Strike"
-      },
-      "bestPartners": [
-        {
-          "partner": "naill",
-          "name": "Naill",
-          "role": "Damage",
-          "cls": "Monk",
-          "winRate": 100,
-          "score": 69.2,
-          "sharedKw": [],
-          "lift": 23.5,
-          "why": "Corvin’s First Strike applies Hunter’s Mark (+22% team dmg) that multiplies every rapid Ki strike from Naill."
-        },
-        {
-          "partner": "velith",
-          "name": "Velith",
-          "role": "Damage",
-          "cls": "Rogue",
-          "winRate": 75,
-          "score": 54,
-          "sharedKw": [],
-          "lift": 8.3,
-          "why": "Corvin marks and Exposes frontline/midline targets for Velith’s Poison & Sneak Attack executes."
-        },
-        {
-          "partner": "juniper",
-          "name": "Juniper",
-          "role": "Support",
-          "cls": "Druid",
-          "winRate": 50,
-          "score": 52.8,
-          "sharedKw": [],
-          "lift": 7.1,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 51.9,
-          "sharedKw": [],
-          "lift": 6.2,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "dagger_venom",
-          "name": "Dagger of Venom",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 71.5,
-          "lift": 23.4,
-          "valPerGold": 4.68
-        },
-        {
-          "item": "cloak_displacement",
-          "name": "Cloak of Displacement",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 68.6,
-          "lift": 20.5,
-          "valPerGold": 4.1
-        },
-        {
-          "item": "boots_speed",
-          "name": "Boots of Speed",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 67.8,
-          "lift": 19.7,
-          "valPerGold": 3.94
-        },
-        {
-          "item": "cloak_elvenkind",
-          "name": "Cloak of Elvenkind",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 64.6,
-          "lift": 16.5,
-          "valPerGold": 5.5
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "cloak_elvenkind",
-          "name": "Cloak of Elvenkind",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 64.6,
-          "lift": 16.5,
-          "valPerGold": 5.5
-        },
-        {
-          "item": "dagger_venom",
-          "name": "Dagger of Venom",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 71.5,
-          "lift": 23.4,
-          "valPerGold": 4.68
-        },
-        {
-          "item": "cloak_displacement",
-          "name": "Cloak of Displacement",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 68.6,
-          "lift": 20.5,
-          "valPerGold": 4.1
-        }
-      ]
-    },
-    "pillar": {
-      "key": "pillar",
-      "name": "Pillar",
-      "cls": "Barbarian",
-      "role": "Tank",
-      "reach": "Melee",
-      "pack": 4,
-      "packKey": "divine",
-      "nMid": 79,
-      "nLate": 69,
-      "midWR": 30.4,
-      "lateWR": 10.1,
-      "avgWR": 20.3,
-      "midScore": 40.1,
-      "lateScore": 25.8,
-      "avgScore": 33,
-      "avgTime": 21.1,
-      "avgDmg": 185,
-      "avgHeal": 2,
-      "avgWard": 0,
-      "avgTaken": 651,
-      "avgGold": 0,
-      "survPct": 10.8,
-      "liveRank": 17,
-      "baseRank": 14,
-      "rankDelta": -3,
-      "baseScore": 64.9,
-      "baseWR": 70.8,
-      "scoreDelta": -31.9,
-      "wrDelta": -50.5,
-      "changeStatus": "rebal",
-      "archetype": "Stone-Colossus Meatshield & Anti-Spike Tank",
-      "useCase": "Pillar trades burst damage for sheer immovable bulk—Stone’s Endurance shaves flat damage off every heavy hit, and completing his Quest transforms him into a Large 2×2 Living Colossus that shields your entire backline. Pair him with high-output ranged carries like Cinder or Arthur and prioritize Ring of Regeneration or Plate Armor.",
-      "changes": [
-        {
-          "type": "fix",
-          "text": "Fixed double-scaled `u.dm²` heal bug on Tier IV Living Beacon (added `{ raw: 1 }`)."
-        },
-        {
-          "type": "global",
-          "text": "Indirectly feels the tougher Act 2–3 enemy curve; thrives most once Quest 2×2 Colossus form + sustain gear come online."
-        }
-      ],
-      "paths": {
-        "key": "pillar",
-        "name": "Pillar",
-        "p0": {
-          "k": "unstoppable",
-          "n": "Unstoppable Faith",
-          "wr": 10,
-          "score": 31.4
-        },
-        "p1": {
-          "k": "beacon",
-          "n": "Living Beacon",
-          "wr": 20,
-          "score": 37.9
-        },
-        "diff": -6.5,
-        "winner": "Living Beacon"
-      },
-      "bestPartners": [
-        {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
-          "winRate": 100,
-          "score": 64.8,
-          "sharedKw": [],
-          "lift": 21.9,
-          "why": "Pillar’s Stone’s Endurance & 2×2 Colossus body clumps enemies cleanly for Cinder’s Fireballs."
-        },
-        {
-          "partner": "arthur",
-          "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 50,
-          "score": 58.6,
-          "sharedKw": [],
-          "lift": 15.7,
-          "why": "Strong Tank/Damage role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
           "partner": "faelan",
           "name": "Faelan",
-          "role": "Support",
-          "cls": "Wizard",
-          "winRate": 25,
-          "score": 51.4,
           "sharedKw": [],
-          "lift": 8.5,
-          "why": "Strong Tank/Support role synergy balancing frontline survivability with live burst tempo."
+          "score": 20.5,
+          "winRate": 0,
+          "lift": -44.3,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         },
         {
           "partner": "jamison",
           "name": "Brother Jamison",
-          "role": "Support",
-          "cls": "Cleric",
-          "winRate": 50,
-          "score": 50.8,
-          "sharedKw": [],
-          "lift": 7.9,
-          "why": "Strong Tank/Support role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 65.2,
-          "lift": 10.2,
-          "valPerGold": 1.46
-        },
-        {
-          "item": "plate_armor",
-          "name": "Plate Armor",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 64.5,
-          "lift": 9.5,
-          "valPerGold": 1.9
-        },
-        {
-          "item": "potion_healing",
-          "name": "Potion of Healing",
-          "rarity": 0,
-          "cost": 2,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 61.3,
-          "lift": 6.3,
-          "valPerGold": 3.15
-        },
-        {
-          "item": "sentinel_shield",
-          "name": "Sentinel Shield",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 60.7,
-          "lift": 5.7,
-          "valPerGold": 1.9
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "potion_healing",
-          "name": "Potion of Healing",
-          "rarity": 0,
-          "cost": 2,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 61.3,
-          "lift": 6.3,
-          "valPerGold": 3.15
-        },
-        {
-          "item": "plate_armor",
-          "name": "Plate Armor",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 64.5,
-          "lift": 9.5,
-          "valPerGold": 1.9
-        },
-        {
-          "item": "sentinel_shield",
-          "name": "Sentinel Shield",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 60.7,
-          "lift": 5.7,
-          "valPerGold": 1.9
-        }
-      ]
-    },
-    "lorcan": {
-      "key": "lorcan",
-      "name": "Lorcan",
-      "cls": "Ranger",
-      "role": "Damage",
-      "reach": "Ranged",
-      "pack": 2,
-      "packKey": "campfire",
-      "nMid": 56,
-      "nLate": 52,
-      "midWR": 21.4,
-      "lateWR": 17.3,
-      "avgWR": 19.4,
-      "midScore": 34.6,
-      "lateScore": 31.2,
-      "avgScore": 32.9,
-      "avgTime": 19.6,
-      "avgDmg": 433,
-      "avgHeal": 0,
-      "avgWard": 0,
-      "avgTaken": 254,
-      "avgGold": 0,
-      "survPct": 13,
-      "liveRank": 18,
-      "baseRank": 16,
-      "rankDelta": -2,
-      "baseScore": 62.2,
-      "baseWR": 65.7,
-      "scoreDelta": -29.3,
-      "wrDelta": -46.3,
-      "changeStatus": "buff",
-      "archetype": "Hunter’s Mark Boss-Melter & On-Hit Marksman",
-      "useCase": "Mediocre naked, terrifying once geared. Lorcan’s reworked Hunter’s Mark now amplifies ALL party damage against the marked target by +22% while his own arrows proc +1d10+WIS bonus damage. Give him Ring of Spell Storing (instant Turn-1 Mark) or Oathbow and pair him with Zoe, Sir Dane, or Corvin to shred high-HP bosses like Owlbear and Brood Mother.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`); Base HP increased 94 → 104; Longbow flat damage 2 → 3."
-        },
-        {
-          "type": "buff",
-          "text": "Hunter’s Mark rework: Marked enemies now take +22% damage from the entire party, and Ranger bonus proc buffed 1d6+WIS → 1d10+WIS."
-        }
-      ],
-      "paths": {
-        "key": "lorcan",
-        "name": "Lorcan",
-        "p0": {
-          "k": "colossus",
-          "n": "Colossus Slayer",
-          "wr": 40,
-          "score": 49.7
-        },
-        "p1": {
-          "k": "trophies",
-          "n": "Volley of Trophies",
-          "wr": 30,
-          "score": 46.2
-        },
-        "diff": 3.5,
-        "winner": "Colossus Slayer"
-      },
-      "bestPartners": [
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 67.2,
-          "sharedKw": [],
-          "lift": 26.4,
-          "why": "Zoe’s Runic Upgrade, Haste, and Action Surge multiply Lorcan’s Hunter’s Mark arrows and Colossus Slayer procs."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 54.4,
-          "sharedKw": [],
-          "lift": 13.6,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "corvin",
-          "name": "Corvin",
-          "role": "Damage",
-          "cls": "Ranger",
-          "winRate": 50,
-          "score": 47.2,
           "sharedKw": [
-            "hunters_mark"
+            "channel_divinity"
           ],
-          "lift": 6.4,
-          "why": "Double Ranger Hunter’s Mark keeps +22% team-wide amplification and 1d10+WIS procs active all fight."
-        },
-        {
-          "partner": "juniper",
-          "name": "Juniper",
-          "role": "Support",
-          "cls": "Druid",
-          "winRate": 50,
-          "score": 46.8,
-          "sharedKw": [],
-          "lift": 6,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 80.4,
-          "lift": 29.8,
-          "valPerGold": 5.96
-        },
-        {
-          "item": "oathbow",
-          "name": "Oathbow",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 76.4,
-          "lift": 25.8,
-          "valPerGold": 5.16
-        },
-        {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 74.7,
-          "lift": 24.1,
-          "valPerGold": 3.44
-        },
-        {
-          "item": "wand_fireballs",
-          "name": "Wand of Fireballs",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 67,
-          "lift": 16.4,
-          "valPerGold": 3.28
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "ring_spell_storing",
-          "name": "Ring of Spell Storing",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 80.4,
-          "lift": 29.8,
-          "valPerGold": 5.96
-        },
-        {
-          "item": "oathbow",
-          "name": "Oathbow",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 76.4,
-          "lift": 25.8,
-          "valPerGold": 5.16
-        },
-        {
-          "item": "bracers_archery",
-          "name": "Bracers of Archery",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 75,
-          "score": 65.3,
-          "lift": 14.7,
-          "valPerGold": 4.9
-        }
-      ]
-    },
-    "rosalind": {
-      "key": "rosalind",
-      "name": "Rosalind",
-      "cls": "Bard",
-      "role": "Support",
-      "reach": "Ranged",
-      "pack": 2,
-      "packKey": "campfire",
-      "nMid": 46,
-      "nLate": 59,
-      "midWR": 17.4,
-      "lateWR": 11.9,
-      "avgWR": 14.6,
-      "midScore": 37.1,
-      "lateScore": 28.4,
-      "avgScore": 32.8,
-      "avgTime": 19.8,
-      "avgDmg": 150,
-      "avgHeal": 1,
-      "avgWard": 0,
-      "avgTaken": 262,
-      "avgGold": 0,
-      "survPct": 9.5,
-      "liveRank": 19,
-      "baseRank": 24,
-      "rankDelta": 5,
-      "baseScore": 49,
-      "baseWR": 42.9,
-      "scoreDelta": -16.2,
-      "wrDelta": -28.3,
-      "changeStatus": "buff",
-      "archetype": "Inspired Flourish Hyper-Buffer & Roll Fixer",
-      "useCase": "Reborn as a true offensive amplifier. Spending Rosalind’s Bardic Inspiration now triggers Inspired Flourish (+25% damage & +25% Haste for 4.5s) on top of +15/18 Charge and d20 roll boosting, while Vicious Mockery cuts enemy damage by −22% and Staggers. Draft her on Pass the Round beside high-impact casters/carries (Sir Dane, Cinder, Zark) and equip Horn of Valhalla or Pipes of Haunting.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "New Inspired Flourish mechanic: any ally spending Bardic Inspiration gains +25% Damage & +25% Haste for 4.5s (CHA-scaled)."
-        },
-        {
-          "type": "buff",
-          "text": "Bardic Inspiration now also grants +15 Charge (Low/Mid) and +18 Charge (High) immediately on cast."
-        },
-        {
-          "type": "buff",
-          "text": "Base HP buffed 90 → 102; Vicious Mockery buffed 1d6+1 (1.4s) → 1d8+2 (1.35s), enemy damage debuff −15% → −22%, and now applies Stagger."
-        }
-      ],
-      "paths": {
-        "key": "rosalind",
-        "name": "Rosalind",
-        "p0": {
-          "k": "passround",
-          "n": "Pass the Round",
-          "wr": 50,
-          "score": 47.1
-        },
-        "p1": {
-          "k": "encore",
-          "n": "Encore",
-          "wr": 30,
-          "score": 40.6
-        },
-        "diff": 6.5,
-        "winner": "Pass the Round"
-      },
-      "bestPartners": [
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 54.8,
-          "sharedKw": [],
-          "lift": 27.7,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "zark",
-          "name": "Zark",
-          "role": "Tank",
-          "cls": "Barbarian",
-          "winRate": 25,
-          "score": 41.5,
-          "sharedKw": [],
-          "lift": 14.4,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
+          "score": 14.8,
           "winRate": 0,
-          "score": 29,
-          "sharedKw": [],
-          "lift": 1.9,
-          "why": "Strong Support/Damage role synergy balancing frontline survivability with live burst tempo."
+          "lift": -43.5,
+          "why": "Shared channel divinity Class Keyword engine chains triggers across both kits."
         },
         {
-          "partner": "jamison",
-          "name": "Brother Jamison",
-          "role": "Support",
-          "cls": "Cleric",
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 14,
           "winRate": 0,
-          "score": 24.4,
-          "sharedKw": [],
-          "lift": -2.7,
-          "why": "High-tempo Support duo whose kits cover each other’s scaling curves through Act 3."
+          "lift": -39.2,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "saint",
+          "name": "Saint",
+          "sharedKw": [
+            "channel_divinity"
+          ],
+          "score": 9.7,
+          "winRate": 0,
+          "lift": -40.7,
+          "why": "Shared channel divinity Class Keyword engine chains triggers across both kits."
         }
       ],
       "bestItems": [
         {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 56.5,
-          "lift": 21.8,
-          "valPerGold": 3.11
-        },
-        {
-          "item": "horn_valhalla",
-          "name": "Horn of Valhalla",
-          "rarity": 2,
+          "item": "staff_healing",
+          "name": "Staff of Healing",
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
-          "winRate": 50,
-          "score": 51.3,
-          "lift": 16.6,
-          "valPerGold": 3.32
+          "winRate": 0,
+          "score": 26.4,
+          "lift": 6.8,
+          "valPerGold": 1.36
         },
         {
-          "item": "pipes_haunting",
-          "name": "Pipes of Haunting",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 50,
-          "score": 50.8,
-          "lift": 16.1,
-          "valPerGold": 5.37
-        },
-        {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 50,
-          "score": 49,
-          "lift": 14.3,
-          "valPerGold": 2.04
-        }
-      ],
-      "bestValueItems": [
-        {
-          "item": "pipes_haunting",
-          "name": "Pipes of Haunting",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 50,
-          "score": 50.8,
-          "lift": 16.1,
-          "valPerGold": 5.37
-        },
-        {
-          "item": "horn_valhalla",
-          "name": "Horn of Valhalla",
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
           "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 21.3,
+          "lift": 1.7,
+          "valPerGold": 0.42
+        },
+        {
+          "item": "amulet_devout",
+          "name": "Amulet of the Devout",
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
-          "winRate": 50,
-          "score": 51.3,
-          "lift": 16.6,
-          "valPerGold": 3.32
-        },
-        {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 56.5,
-          "lift": 21.8,
-          "valPerGold": 3.11
-        }
-      ]
-    },
-    "gains": {
-      "key": "gains",
-      "name": "Gains",
-      "cls": "Wizard",
-      "role": "Damage",
-      "reach": "Ranged",
-      "pack": 5,
-      "packKey": "market",
-      "nMid": 49,
-      "nLate": 53,
-      "midWR": 22.4,
-      "lateWR": 15.1,
-      "avgWR": 18.8,
-      "midScore": 36.5,
-      "lateScore": 28.9,
-      "avgScore": 32.7,
-      "avgTime": 22,
-      "avgDmg": 444,
-      "avgHeal": 1,
-      "avgWard": 0,
-      "avgTaken": 279,
-      "avgGold": 1.42,
-      "survPct": 12.7,
-      "liveRank": 20,
-      "baseRank": 19,
-      "rankDelta": -1,
-      "baseScore": 58.4,
-      "baseWR": 52.5,
-      "scoreDelta": -25.7,
-      "wrDelta": -33.7,
-      "changeStatus": "rebal",
-      "archetype": "Late-Run Gold-Hoarding Arcane Artillery",
-      "useCase": "Gains scales with your unspent bankroll and Arcane Recovery tempo. In bare-bones midgame tests he looks modest (32.7), but inside Pack 5 Market Cartel or Arcane Recovery Battery (with Faelan + Gilthrax + Zoe, 91.7% Act 3 WR!) he snowballs into devastating burst. Equip Scimitar of Speed, Boots of Speed, or Robe of Stars to supercharge his output.",
-      "changes": [
-        {
-          "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`)."
-        },
-        {
-          "type": "nerf",
-          "text": "Combat Gold cap tightened 12g → 6g per fight."
-        }
-      ],
-      "paths": {
-        "key": "gains",
-        "name": "Gains",
-        "p0": {
-          "k": "compound_interest",
-          "n": "Compound Interest",
-          "wr": 40,
-          "score": 50.2
-        },
-        "p1": {
-          "k": "liquid_assets",
-          "n": "Liquid Assets",
-          "wr": 30,
-          "score": 48.1
-        },
-        "diff": 2.1,
-        "winner": "Compound Interest"
-      },
-      "bestPartners": [
-        {
-          "partner": "gilthrax",
-          "name": "Gilthrax",
-          "role": "Tank",
-          "cls": "Fighter",
-          "winRate": 50,
-          "score": 56,
-          "sharedKw": [],
-          "lift": 19.1,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 25,
-          "score": 51.1,
-          "sharedKw": [],
-          "lift": 14.2,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 50.7,
-          "sharedKw": [],
-          "lift": 13.8,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
-          "winRate": 50,
-          "score": 47.6,
-          "sharedKw": [],
-          "lift": 10.7,
-          "why": "High-tempo Damage duo whose kits cover each other’s scaling curves through Act 3."
-        }
-      ],
-      "bestItems": [
-        {
-          "item": "scimitar_speed",
-          "name": "Scimitar of Speed",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 74.7,
-          "lift": 28.5,
-          "valPerGold": 4.07
+          "winRate": 0,
+          "score": 17.1,
+          "lift": -2.5,
+          "valPerGold": -0.5
         },
         {
           "item": "boots_speed",
           "name": "Boots of Speed",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 100,
-          "score": 73.6,
-          "lift": 27.4,
-          "valPerGold": 5.48
-        },
-        {
-          "item": "robe_stars",
-          "name": "Robe of Stars",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 68.6,
-          "lift": 22.4,
-          "valPerGold": 3.2
-        },
-        {
-          "item": "pearl_power",
-          "name": "Pearl of Power",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 100,
-          "score": 68,
-          "lift": 21.8,
-          "valPerGold": 7.27
+          "winRate": 0,
+          "score": 18.1,
+          "lift": -1.5,
+          "valPerGold": -0.38
         }
       ],
       "bestValueItems": [
         {
-          "item": "pearl_power",
-          "name": "Pearl of Power",
-          "rarity": 1,
-          "cost": 3,
+          "item": "staff_healing",
+          "name": "Staff of Healing",
+          "rarity": 5,
+          "cost": 5,
           "kwMatch": true,
-          "winRate": 100,
-          "score": 68,
-          "lift": 21.8,
-          "valPerGold": 7.27
+          "winRate": 0,
+          "score": 26.4,
+          "lift": 6.8,
+          "valPerGold": 1.36
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 21.3,
+          "lift": 1.7,
+          "valPerGold": 0.42
         },
         {
           "item": "boots_speed",
           "name": "Boots of Speed",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 100,
-          "score": 73.6,
-          "lift": 27.4,
-          "valPerGold": 5.48
-        },
-        {
-          "item": "wand_fireballs",
-          "name": "Wand of Fireballs",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 67.8,
-          "lift": 21.6,
-          "valPerGold": 4.32
+          "winRate": 0,
+          "score": 18.1,
+          "lift": -1.5,
+          "valPerGold": -0.38
         }
       ]
     },
     "lumen": {
       "key": "lumen",
       "name": "Lumen",
-      "cls": "Cleric",
       "role": "Damage",
-      "reach": "Ranged",
-      "pack": 4,
-      "packKey": "divine",
-      "nMid": 55,
-      "nLate": 51,
-      "midWR": 23.6,
-      "lateWR": 17.6,
-      "avgWR": 20.6,
-      "midScore": 35.3,
-      "lateScore": 29.5,
-      "avgScore": 32.4,
-      "avgTime": 19.3,
-      "avgDmg": 311,
-      "avgHeal": 2,
+      "cls": "Warlock",
+      "avgScore": 53.3,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 701,
+      "avgHeal": 43,
       "avgWard": 0,
-      "avgTaken": 236,
       "avgGold": 0,
-      "survPct": 15.1,
-      "liveRank": 21,
-      "baseRank": 15,
-      "rankDelta": -6,
-      "baseScore": 64.9,
-      "baseWR": 64.7,
-      "scoreDelta": -32.5,
-      "wrDelta": -44.1,
+      "survPct": 40,
+      "avgTime": 29.5,
+      "liveRank": 8,
+      "baseRank": 21,
+      "rankDelta": 13,
+      "baseScore": 32.4,
+      "scoreDelta": 20.9,
       "changeStatus": "rebal",
-      "archetype": "Burn-Detonating Radiant Blaster & Execute Cleric",
-      "useCase": "Lumen shines as a dedicated Burn-payoff and Channel Divinity finisher rather than a solo carry. On Purifying Light, Lumen turns ally Holy hits into Burn and detonates accumulated Burn for massive radiant AoE—making Cinder her undisputed #1 partner. Gear her with Scimitar of Speed, Wand of Fireballs, or Sun Blade to accelerate casts and executes.",
+      "archetype": "Celestial Warlock (`CHA/CHA`) & Radiant True-Damage Blaster",
+      "useCase": "Completely reworked in v0.23 into a **Celestial Warlock** (`CHA/CHA`) wielding **Radiant true damage** that cuts straight through Giant Crab’s AC 17 and Act 3 Boss resistances while triggering `Eldritch Pact` + Burn detonations alongside Cinder and Nettle!",
       "changes": [
         {
-          "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`)."
+          "type": "rebal",
+          "text": "Reworked class & scaling to Celestial Warlock (`CHA/CHA`, `Eldritch Pact` keyword) firing Radiant true damage."
         },
         {
-          "type": "fix",
-          "text": "Fixed double-scaled `u.dm²` heal bug on Tier IV Purifying Light Burn detonation (added `{ raw: 1 }`)."
+          "type": "buff",
+          "text": "Radiant damage bypasses both AC and SR on the v0.23 Cubed defense curve."
         }
       ],
       "paths": {
         "key": "lumen",
-        "name": "Lumen",
         "p0": {
-          "k": "judgement",
-          "n": "Judgement",
-          "wr": 30,
-          "score": 51.6
+          "k": "searing_focus",
+          "n": "Searing Focus",
+          "score": 48.2,
+          "wr": 40
         },
         "p1": {
-          "k": "purifying",
-          "n": "Purifying Light",
-          "wr": 60,
-          "score": 62.3
+          "k": "healing_light",
+          "n": "Healing Light",
+          "score": 51.8,
+          "wr": 40
         },
-        "diff": -10.7,
-        "winner": "Purifying Light"
+        "winner": "Healing Light"
       },
       "bestPartners": [
         {
-          "partner": "cinder",
-          "name": "Cinder",
-          "role": "Damage",
-          "cls": "Sorcerer",
-          "winRate": 50,
-          "score": 48.4,
+          "partner": "faelan",
+          "name": "Faelan",
           "sharedKw": [],
-          "lift": 16.2,
-          "why": "Cinder floods the board with Burn while Lumen (Purifying Light) detonates it for massive radiant AoE."
+          "score": 58.4,
+          "winRate": 50,
+          "lift": -6.3,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         },
         {
-          "partner": "zark",
-          "name": "Zark",
-          "role": "Tank",
-          "cls": "Barbarian",
-          "winRate": 25,
-          "score": 41.9,
+          "partner": "nettle",
+          "name": "Nettle",
+          "sharedKw": [
+            "hex"
+          ],
+          "score": 18.5,
+          "winRate": 0,
+          "lift": -32.3,
+          "why": "Shared hex Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
           "sharedKw": [],
-          "lift": 9.7,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
+          "score": 18.1,
+          "winRate": 0,
+          "lift": -35.3,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         },
         {
           "partner": "dane",
           "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
+          "sharedKw": [],
+          "score": 17.2,
           "winRate": 0,
-          "score": 39.3,
-          "sharedKw": [],
-          "lift": 7.1,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "pillar",
-          "name": "Pillar",
-          "role": "Tank",
-          "cls": "Barbarian",
-          "winRate": 25,
-          "score": 39,
-          "sharedKw": [],
-          "lift": 6.8,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
+          "lift": -34.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         }
       ],
       "bestItems": [
         {
-          "item": "scimitar_speed",
-          "name": "Scimitar of Speed",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 70.5,
-          "lift": 18.3,
-          "valPerGold": 2.61
+          "item": "staff_withering",
+          "name": "Staff of Withering",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 20.5,
+          "lift": 6.4,
+          "valPerGold": 1.28
         },
+        {
+          "item": "bag_holding",
+          "name": "Bag of Holding",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 21.1,
+          "lift": 7,
+          "valPerGold": 1.75
+        },
+        {
+          "item": "rod_pact_keeper",
+          "name": "Rod of the Pact Keeper",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 17,
+          "lift": 2.9,
+          "valPerGold": 0.58
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 15.7,
+          "lift": 1.6,
+          "valPerGold": 0.4
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "bag_holding",
+          "name": "Bag of Holding",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 21.1,
+          "lift": 7,
+          "valPerGold": 1.75
+        },
+        {
+          "item": "staff_withering",
+          "name": "Staff of Withering",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 20.5,
+          "lift": 6.4,
+          "valPerGold": 1.28
+        },
+        {
+          "item": "rod_pact_keeper",
+          "name": "Rod of the Pact Keeper",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 17,
+          "lift": 2.9,
+          "valPerGold": 0.58
+        }
+      ]
+    },
+    "cinder": {
+      "key": "cinder",
+      "name": "Cinder",
+      "role": "Damage",
+      "cls": "Sorcerer",
+      "avgScore": 53.1,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 371,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 27.2,
+      "liveRank": 9,
+      "baseRank": 8,
+      "rankDelta": -1,
+      "baseScore": 40.8,
+      "scoreDelta": 12.3,
+      "changeStatus": "buff",
+      "archetype": "Metamagic Fireball Nuke & Burn AoE Sweeper",
+      "useCase": "Premier AoE blaster who punishes enemy clumps across Phandalin and White Plume Mountain, and melts high-AC foes with Burn and Spell Pen. Pair with Lumen or Nettle to chain Burn/Hex detonations, and prioritize Spell Pen + INT Charge gear.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Unified under canonical `Metamagic` keyword with clean 1-line `Wildfire` / `Twinned Spell` Specializations."
+        },
+        {
+          "type": "global",
+          "text": "Spell Pen items (Circlet of Blasting, Wand of the War Mage, Robe of the Archmagi) dramatically boost Fireball against Act 3 SR 16–17 bosses."
+        }
+      ],
+      "paths": {
+        "key": "cinder",
+        "p0": {
+          "k": "draconic_surge",
+          "n": "Draconic Surge",
+          "score": 51.3,
+          "wr": 40
+        },
+        "p1": {
+          "k": "wildfire",
+          "n": "Wildfire",
+          "score": 48.3,
+          "wr": 40
+        },
+        "winner": "Draconic Surge"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 63.5,
+          "winRate": 50,
+          "lift": -1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "juniper",
+          "name": "Juniper",
+          "sharedKw": [],
+          "score": 56.5,
+          "winRate": 50,
+          "lift": -2.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 29.6,
+          "winRate": 0,
+          "lift": -23.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [],
+          "score": 26.4,
+          "winRate": 0,
+          "lift": -25.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
         {
           "item": "wand_fireballs",
           "name": "Wand of Fireballs",
-          "rarity": 2,
+          "rarity": 5,
           "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 70,
-          "lift": 17.8,
-          "valPerGold": 3.56
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 33.6,
+          "lift": 8,
+          "valPerGold": 1.6
         },
         {
-          "item": "sunblade",
-          "name": "Sun Blade",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 66.5,
-          "lift": 14.3,
-          "valPerGold": 2.04
+          "item": "bloodwell_vial",
+          "name": "Bloodwell Vial",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 29.3,
+          "lift": 3.7,
+          "valPerGold": 0.74
         },
         {
-          "item": "oathbow",
-          "name": "Oathbow",
+          "item": "bag_holding",
+          "name": "Bag of Holding",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 75,
-          "score": 66.4,
-          "lift": 14.2,
-          "valPerGold": 2.84
+          "winRate": 0,
+          "score": 26.7,
+          "lift": 1.1,
+          "valPerGold": 0.28
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 25.6,
+          "lift": 0,
+          "valPerGold": 0
         }
       ],
       "bestValueItems": [
         {
           "item": "wand_fireballs",
           "name": "Wand of Fireballs",
-          "rarity": 2,
+          "rarity": 5,
           "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 70,
-          "lift": 17.8,
-          "valPerGold": 3.56
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 33.6,
+          "lift": 8,
+          "valPerGold": 1.6
         },
+        {
+          "item": "bloodwell_vial",
+          "name": "Bloodwell Vial",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 29.3,
+          "lift": 3.7,
+          "valPerGold": 0.74
+        },
+        {
+          "item": "bag_holding",
+          "name": "Bag of Holding",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 26.7,
+          "lift": 1.1,
+          "valPerGold": 0.28
+        }
+      ]
+    },
+    "arthur": {
+      "key": "arthur",
+      "name": "Arthur",
+      "role": "Damage",
+      "cls": "Fighter",
+      "avgScore": 52.9,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 462,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 33,
+      "liveRank": 10,
+      "baseRank": 12,
+      "rankDelta": 2,
+      "baseScore": 38,
+      "scoreDelta": 14.9,
+      "changeStatus": "rebal",
+      "archetype": "Evasion Duelist & Action Surge Counter-Striker",
+      "useCase": "Rebuilt around v0.23 Universal Evasion and Action Surge counter-strikes. Every time Arthur dodges an attack, he fires a free Longsword strike—stack multiplicative Evasion (Constant Vigilance + Cloak of Displacement + Boots of Speed) and let him shred frontlines while triggering Ally Action Surge hooks with Zoe and Gilthrax.",
+      "changes": [
+        {
+          "type": "rebal",
+          "text": "Reworked into melee Longsword + Longbow Volley Evasion Fighter; every Evade triggers an immediate Action Surge counter-strike."
+        },
+        {
+          "type": "buff",
+          "text": "Specializations streamlined to 1-line rules: `Constant Vigilance` (+15% Evasion) and `Deadeye` (Volley fires +1 extra arrow)."
+        },
+        {
+          "type": "rebal",
+          "text": "Opt-in Quest (`Flame Gauntlet`): Evade 12 attacks to replace Longbow Volley with a frontline fire cone + Burn."
+        }
+      ],
+      "paths": {
+        "key": "arthur",
+        "p0": {
+          "k": "vigilance",
+          "n": "Constant Vigilance",
+          "score": 50.2,
+          "wr": 40
+        },
+        "p1": {
+          "k": "init_splash",
+          "n": "Roll for Initiative",
+          "score": 48.7,
+          "wr": 40
+        },
+        "winner": "Constant Vigilance"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 38,
+          "winRate": 0,
+          "lift": -26.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "gilthrax",
+          "name": "Gilthrax",
+          "sharedKw": [
+            "action_surge"
+          ],
+          "score": 33.4,
+          "winRate": 0,
+          "lift": -24.3,
+          "why": "Shared action surge Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "zoe",
+          "name": "Zoe",
+          "sharedKw": [
+            "action_surge"
+          ],
+          "score": 20.1,
+          "winRate": 0,
+          "lift": -30,
+          "why": "Shared action surge Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 19.2,
+          "winRate": 0,
+          "lift": -34,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "flame_tongue",
+          "name": "Flame Tongue",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 16.8,
+          "lift": 4.3,
+          "valPerGold": 0.86
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.2,
+          "lift": 5.7,
+          "valPerGold": 1.43
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 17.4,
+          "lift": 4.9,
+          "valPerGold": 1.23
+        },
+        {
+          "item": "weapon_warning",
+          "name": "Weapon of Warning",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 15.1,
+          "lift": 2.6,
+          "valPerGold": 0.52
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.2,
+          "lift": 5.7,
+          "valPerGold": 1.43
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 17.4,
+          "lift": 4.9,
+          "valPerGold": 1.23
+        },
+        {
+          "item": "sword_sharpness",
+          "name": "Sword of Sharpness",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16.8,
+          "lift": 4.3,
+          "valPerGold": 1.07
+        }
+      ]
+    },
+    "naill": {
+      "key": "naill",
+      "name": "Naill",
+      "role": "Damage",
+      "cls": "Monk",
+      "avgScore": 50.5,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 531,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 33.1,
+      "liveRank": 11,
+      "baseRank": 9,
+      "rankDelta": -2,
+      "baseScore": 40.6,
+      "scoreDelta": 9.9,
+      "changeStatus": "buff",
+      "archetype": "Rapid Multi-Hit Ki Bruiser & Stagger Disrupter",
+      "useCase": "Lightning-fast melee Monk who racks up 4-pip Ki combos and procs Hunter’s Mark / Hex / on-hit weapons faster than anyone else in the cast. Pair with Corvin, Lorcan, or Nettle, and gear him with Evasion + DEX speed items.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Unified under canonical `Ki` keyword with clean Evasion + Stagger tempo."
+        },
+        {
+          "type": "rebal",
+          "text": "1-line Specializations (`Open Hand` / `Drunken Sway` +Evasion) and opt-in Quest."
+        }
+      ],
+      "paths": {
+        "key": "naill",
+        "p0": {
+          "k": "open_hand",
+          "n": "Open Hand",
+          "score": 46.5,
+          "wr": 40
+        },
+        "p1": {
+          "k": "flowing_leaves",
+          "n": "Flowing Leaves",
+          "score": 47.8,
+          "wr": 40
+        },
+        "winner": "Flowing Leaves"
+      },
+      "bestPartners": [
+        {
+          "partner": "juniper",
+          "name": "Juniper",
+          "sharedKw": [],
+          "score": 59,
+          "winRate": 100,
+          "lift": 1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 54.1,
+          "winRate": 50,
+          "lift": -9.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [],
+          "score": 18,
+          "winRate": 0,
+          "lift": -32.3,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 14.3,
+          "winRate": 0,
+          "lift": -37.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "staff_striking",
+          "name": "Staff of Striking",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 18.7,
+          "lift": 5.3,
+          "valPerGold": 1.06
+        },
+        {
+          "item": "dragonhide_belt",
+          "name": "Dragonhide Belt",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 17.3,
+          "lift": 3.9,
+          "valPerGold": 0.78
+        },
+        {
+          "item": "ring_protection",
+          "name": "Ring of Protection",
+          "rarity": 1,
+          "cost": 3,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16,
+          "lift": 2.6,
+          "valPerGold": 0.87
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 11.6,
+          "lift": -1.8,
+          "valPerGold": -0.45
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "staff_striking",
+          "name": "Staff of Striking",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 18.7,
+          "lift": 5.3,
+          "valPerGold": 1.06
+        },
+        {
+          "item": "ring_protection",
+          "name": "Ring of Protection",
+          "rarity": 1,
+          "cost": 3,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16,
+          "lift": 2.6,
+          "valPerGold": 0.87
+        },
+        {
+          "item": "dragonhide_belt",
+          "name": "Dragonhide Belt",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 17.3,
+          "lift": 3.9,
+          "valPerGold": 0.78
+        }
+      ]
+    },
+    "dane": {
+      "key": "dane",
+      "name": "Sir Dane",
+      "role": "Tank",
+      "cls": "Paladin",
+      "avgScore": 50,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 150,
+      "avgHeal": 0,
+      "avgWard": 113,
+      "avgGold": 0,
+      "survPct": 30,
+      "avgTime": 24.3,
+      "liveRank": 12,
+      "baseRank": 6,
+      "rankDelta": -6,
+      "baseScore": 42.7,
+      "scoreDelta": 7.3,
+      "changeStatus": "rebal",
+      "archetype": "Aura Tank, Radiant Smite Anchor & 2×2 Mount Scaler",
+      "useCase": "The gold-standard Paladin frontline anchor. Sir Dane’s Aura adds +AC/+SR directly inside the Cubed AC/SR sweet spot, while his Divine Smite deals **Radiant true damage** that bypasses high-AC Act 2–3 bosses like Giant Crab, Orcus, and Tiamat completely.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Divine Smite now deals true **Radiant** damage, bypassing both AC and SR on heavily armored bosses."
+        },
+        {
+          "type": "rebal",
+          "text": "Aura of Protection shines on the Cubed AC/SR curve (`K=14`), turning +2 AC/SR into massive effective HP."
+        },
+        {
+          "type": "rebal",
+          "text": "Opt-in Quest (`Find Steed`): transforms Sir Dane into a Large 2×2 mounted colossus."
+        }
+      ],
+      "paths": {
+        "key": "dane",
+        "p0": {
+          "k": "oath_devotion",
+          "n": "Oath of Devotion",
+          "score": 47.5,
+          "wr": 40
+        },
+        "p1": {
+          "k": "aura_protection",
+          "n": "Aura of Protection",
+          "score": 47.5,
+          "wr": 40
+        },
+        "winner": "Even"
+      },
+      "bestPartners": [
+        {
+          "partner": "mother_laurel",
+          "name": "Mother Laurel",
+          "sharedKw": [
+            "aura",
+            "smite"
+          ],
+          "score": 18,
+          "winRate": 0,
+          "lift": -31.8,
+          "why": "Shared aura & smite Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 15.2,
+          "winRate": 0,
+          "lift": -36.3,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 14.5,
+          "winRate": 0,
+          "lift": -48.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 11.8,
+          "winRate": 0,
+          "lift": -37.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "holy_symbol_ravenkind",
+          "name": "Holy Symbol of Ravenkind",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 24,
+          "lift": 8.1,
+          "valPerGold": 1.62
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 25.5,
+          "lift": 9.6,
+          "valPerGold": 2.4
+        },
+        {
+          "item": "sun_blade",
+          "name": "Sun Blade",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 14,
+          "lift": -1.9,
+          "valPerGold": -0.38
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 13,
+          "lift": -2.9,
+          "valPerGold": -0.72
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 25.5,
+          "lift": 9.6,
+          "valPerGold": 2.4
+        },
+        {
+          "item": "holy_symbol_ravenkind",
+          "name": "Holy Symbol of Ravenkind",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 24,
+          "lift": 8.1,
+          "valPerGold": 1.62
+        },
+        {
+          "item": "sun_blade",
+          "name": "Sun Blade",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 14,
+          "lift": -1.9,
+          "valPerGold": -0.38
+        }
+      ]
+    },
+    "mother_laurel": {
+      "key": "mother_laurel",
+      "name": "Mother Laurel",
+      "role": "Tank",
+      "cls": "Paladin",
+      "avgScore": 49.5,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 218,
+      "avgHeal": 101,
+      "avgWard": 1,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 23.4,
+      "liveRank": 13,
+      "baseRank": 7,
+      "rankDelta": -6,
+      "baseScore": 41.6,
+      "scoreDelta": 7.9,
+      "changeStatus": "rebal",
+      "archetype": "Melee Cleave Drain Tank (Paladin / Druid Hybrid)",
+      "useCase": "Rebuilt in v0.23 as a true **Range 1 Melee Cleave Drain Tank** who swings thorny sweeps across adjacent enemies, heals through Bloom, and bridges Paladin `Smite` + Druid `Wild Shape` synergy hooks. Pair with Sir Dane, Juniper, or Kaska.",
+      "changes": [
+        {
+          "type": "rebal",
+          "text": "Reworked to Range 1 melee cleave tank with thorny sweeps, Radiant Smite hooks, and Wild Shape synergy."
+        },
+        {
+          "type": "rebal",
+          "text": "Streamlined 1-line Specializations (`Bountiful Vines` / `Thorn Cleave`) with zero text bloat."
+        }
+      ],
+      "paths": {
+        "key": "mother_laurel",
+        "p0": {
+          "k": "overgrowth_ward",
+          "n": "Overgrowth Ward",
+          "score": 49.3,
+          "wr": 40
+        },
+        "p1": {
+          "k": "bountiful_vines",
+          "n": "Bountiful Vines",
+          "score": 44.2,
+          "wr": 40
+        },
+        "winner": "Overgrowth Ward"
+      },
+      "bestPartners": [
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [
+            "smite",
+            "aura"
+          ],
+          "score": 22.7,
+          "winRate": 0,
+          "lift": -27.1,
+          "why": "Shared smite & aura Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 23,
+          "winRate": 0,
+          "lift": -39.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 19,
+          "winRate": 0,
+          "lift": -32.2,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 13.3,
+          "winRate": 0,
+          "lift": -35.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "sword_sharpness",
+          "name": "Sword of Sharpness",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.2,
+          "lift": 6.5,
+          "valPerGold": 1.63
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 17.9,
+          "lift": 6.2,
+          "valPerGold": 1.55
+        },
+        {
+          "item": "sun_blade",
+          "name": "Sun Blade",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 9.9,
+          "lift": -1.8,
+          "valPerGold": -0.36
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 11.8,
+          "lift": 0.1,
+          "valPerGold": 0.03
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "sword_sharpness",
+          "name": "Sword of Sharpness",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.2,
+          "lift": 6.5,
+          "valPerGold": 1.63
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 17.9,
+          "lift": 6.2,
+          "valPerGold": 1.55
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 11.8,
+          "lift": 0.1,
+          "valPerGold": 0.03
+        }
+      ]
+    },
+    "lorcan": {
+      "key": "lorcan",
+      "name": "Lorcan",
+      "role": "Damage",
+      "cls": "Ranger",
+      "avgScore": 49.4,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 304,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 28.3,
+      "liveRank": 14,
+      "baseRank": 18,
+      "rankDelta": 4,
+      "baseScore": 32.9,
+      "scoreDelta": 16.5,
+      "changeStatus": "buff",
+      "archetype": "Hunter’s Mark Boss-Melter & Ranged On-Hit Carry",
+      "useCase": "Your premier single-target boss shredder. Lorcan applies Hunter’s Mark (+1d4 bonus damage from EVERY allied hit) and stacks Colossus Slayer / on-hit procs—pair him with rapid-hit allies (Naill, Corvin, Arthur) and grab Hunter’s Mark Curio Uniques or Oathbow.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Hunter’s Mark unified across Rangers: marked foes take stacking +1d4 bonus damage from every hit."
+        },
+        {
+          "type": "rebal",
+          "text": "Streamlined 1-line Specializations (`Colossus Slayer` vs `Volley Master`) and opt-in Trophy Hunter Quest."
+        }
+      ],
+      "paths": {
+        "key": "lorcan",
+        "p0": {
+          "k": "colossus_slayer",
+          "n": "Colossus Slayer",
+          "score": 46.2,
+          "wr": 40
+        },
+        "p1": {
+          "k": "pack_hunter",
+          "n": "Pack Hunter",
+          "score": 44.4,
+          "wr": 40
+        },
+        "winner": "Colossus Slayer"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 49.2,
+          "winRate": 50,
+          "lift": -13.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "corvin",
+          "name": "Corvin",
+          "sharedKw": [
+            "hunters_mark"
+          ],
+          "score": 16.7,
+          "winRate": 0,
+          "lift": -32.7,
+          "why": "Shared hunters mark Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 13.4,
+          "winRate": 0,
+          "lift": -38.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [],
+          "score": 11.7,
+          "winRate": 0,
+          "lift": -38,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
         {
           "item": "oathbow",
           "name": "Oathbow",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 66.4,
-          "lift": 14.2,
-          "valPerGold": 2.84
-        },
-        {
-          "item": "staff_healing",
-          "name": "Staff of Healing",
-          "rarity": 2,
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
+          "winRate": 0,
+          "score": 13.5,
+          "lift": 5.1,
+          "valPerGold": 1.02
+        },
+        {
+          "item": "bracers_archery",
+          "name": "Bracers of Archery",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 11.8,
+          "lift": 3.4,
+          "valPerGold": 0.68
+        },
+        {
+          "item": "vicious_bow",
+          "name": "Vicious Bow",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 12.1,
+          "lift": 3.7,
+          "valPerGold": 0.93
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 9,
+          "lift": 0.6,
+          "valPerGold": 0.15
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "oathbow",
+          "name": "Oathbow",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 13.5,
+          "lift": 5.1,
+          "valPerGold": 1.02
+        },
+        {
+          "item": "vicious_bow",
+          "name": "Vicious Bow",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 12.1,
+          "lift": 3.7,
+          "valPerGold": 0.93
+        },
+        {
+          "item": "bracers_archery",
+          "name": "Bracers of Archery",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 11.8,
+          "lift": 3.4,
+          "valPerGold": 0.68
+        }
+      ]
+    },
+    "corvin": {
+      "key": "corvin",
+      "name": "Corvin",
+      "role": "Damage",
+      "cls": "Ranger",
+      "avgScore": 49.4,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 486,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 31.4,
+      "liveRank": 15,
+      "baseRank": 16,
+      "rankDelta": 1,
+      "baseScore": 33.5,
+      "scoreDelta": 15.9,
+      "changeStatus": "buff",
+      "archetype": "Melee Dread Ambush Ranger & Hunter’s Mark Enabler",
+      "useCase": "Melee skirmisher who opens with Dread Ambush, spreads stacking `Hunter’s Mark` (+1d4 per hit from the entire party!), and summons a Shadow Echo on Nat 20. Turns Naill, Velith, and Arthur into boss-melting machines.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Unified under `Hunter’s Mark` + melee on-hit multi-strikes; Dread Ambush excels into Act 2–3 elites."
+        },
+        {
+          "type": "rebal",
+          "text": "Clean 1-line Specializations (`First Strike` / `Shadow Stalker`) and opt-in Quest."
+        }
+      ],
+      "paths": {
+        "key": "corvin",
+        "p0": {
+          "k": "stalker_flurry",
+          "n": "Stalker’s Flurry",
+          "score": 45.4,
+          "wr": 40
+        },
+        "p1": {
+          "k": "first_strike",
+          "n": "First Strike",
+          "score": 46.9,
+          "wr": 40
+        },
+        "winner": "First Strike"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 58.1,
           "winRate": 50,
-          "score": 65.9,
-          "lift": 13.7,
-          "valPerGold": 2.74
+          "lift": -4.6,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 22.6,
+          "winRate": 0,
+          "lift": -28.9,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "lorcan",
+          "name": "Lorcan",
+          "sharedKw": [
+            "hunters_mark"
+          ],
+          "score": 19.7,
+          "winRate": 0,
+          "lift": -29.7,
+          "why": "Shared hunters mark Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [],
+          "score": 19.5,
+          "winRate": 0,
+          "lift": -30.2,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "bracers_archery",
+          "name": "Bracers of Archery",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 24.8,
+          "lift": 1.2,
+          "valPerGold": 0.24
+        },
+        {
+          "item": "ring_protection",
+          "name": "Ring of Protection",
+          "rarity": 1,
+          "cost": 3,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.5,
+          "lift": -5.1,
+          "valPerGold": -1.7
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.2,
+          "lift": -5.4,
+          "valPerGold": -1.35
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 15.8,
+          "lift": -7.8,
+          "valPerGold": -1.95
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "bracers_archery",
+          "name": "Bracers of Archery",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 24.8,
+          "lift": 1.2,
+          "valPerGold": 0.24
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.2,
+          "lift": -5.4,
+          "valPerGold": -1.35
+        },
+        {
+          "item": "ring_protection",
+          "name": "Ring of Protection",
+          "rarity": 1,
+          "cost": 3,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.5,
+          "lift": -5.1,
+          "valPerGold": -1.7
         }
       ]
     },
     "wallaby": {
       "key": "wallaby",
       "name": "Wallaby",
-      "cls": "Rogue",
       "role": "Damage",
-      "reach": "Melee",
-      "pack": 1,
-      "packKey": "tavern",
-      "nMid": 54,
-      "nLate": 46,
-      "midWR": 25.9,
-      "lateWR": 4.3,
-      "avgWR": 15.1,
-      "midScore": 39.2,
-      "lateScore": 23.6,
-      "avgScore": 31.4,
-      "avgTime": 20.3,
-      "avgDmg": 320,
+      "cls": "Rogue",
+      "avgScore": 48.7,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 326,
       "avgHeal": 0,
       "avgWard": 0,
-      "avgTaken": 313,
-      "avgGold": 0.59,
-      "survPct": 10,
-      "liveRank": 22,
-      "baseRank": 20,
-      "rankDelta": -2,
-      "baseScore": 55.6,
-      "baseWR": 50,
-      "scoreDelta": -24.2,
-      "wrDelta": -34.9,
-      "changeStatus": "rebal",
-      "archetype": "Backline Assassin & Burst Execute Rogue",
-      "useCase": "A high-variance backline diver who jumps straight onto enemy archers, necromancers, and Battle Mages. Buffed Backstab dice (3d6–9d6), +1d6 passive Sneak Attack, and free shadow-evade on kill make him a lethal finisher—just give him one defensive or tempo item (Dwarven Plate, Amulet of Health, or Boots of Speed) so he survives the dive.",
+      "avgGold": 1.8,
+      "survPct": 40,
+      "avgTime": 28.8,
+      "liveRank": 16,
+      "baseRank": 22,
+      "rankDelta": 6,
+      "baseScore": 31.4,
+      "scoreDelta": 17.3,
+      "changeStatus": "buff",
+      "archetype": "Backline Assassin & Class-Bypassing Thief",
+      "useCase": "High-impact backline diver who leaps behind Act 2–3 shield walls to assassinate casters and summoners. His v0.23 `Use Magic Device` trait lets him equip ANY of the 24 Curio Unique items regardless of class lock, and his Quest (`Bag of Holding`) unlocks a 4th item slot!",
       "changes": [
         {
           "type": "buff",
-          "text": "Global Damage Role Buff (+12% `u.dm`); Base HP increased 94 → 106; Shortsword flat damage 2 → 3."
+          "text": "New Thief passive (`Use Magic Device`): Wallaby bypasses class locks on all 24 Curio Unique items!"
         },
         {
           "type": "buff",
-          "text": "Backstab Sneak Attack dice buffed [2, 4, 6, 8]d6 → [3, 5, 7, 9]d6; passive Sneak Attack gains +1 bonus d6."
+          "text": "Evasion synergy: benefits multiplicatively from Boots/Cloak/Ring evasion stacking while diving backlines."
         },
         {
-          "type": "buff",
-          "text": "Now gains Stealth Shadow Evade (halves next hit) automatically whenever he scores a kill."
-        },
-        {
-          "type": "nerf",
-          "text": "Combat Gold cap tightened 12g → 8g per fight to keep economy healthy."
+          "type": "rebal",
+          "text": "Opt-in Quest (`Bag of Holding`): open a 4th equipment slot after stealing gold in combat."
         }
       ],
       "paths": {
         "key": "wallaby",
-        "name": "Wallaby",
         "p0": {
-          "k": "slippery",
-          "n": "Slippery",
-          "wr": 20,
-          "score": 31.8
+          "k": "cutthroat",
+          "n": "Cutthroat",
+          "score": 45.7,
+          "wr": 40
         },
         "p1": {
-          "k": "fasthands",
-          "n": "Fast Hands",
-          "wr": 20,
-          "score": 33.3
+          "k": "pickpocket",
+          "n": "Pickpocket",
+          "score": 44.5,
+          "wr": 40
         },
-        "diff": -1.5,
-        "winner": "Even"
+        "winner": "Cutthroat"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 55.7,
+          "winRate": 50,
+          "lift": -6.6,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "velith",
+          "name": "Velith",
+          "sharedKw": [
+            "sneak_attack"
+          ],
+          "score": 33.5,
+          "winRate": 0,
+          "lift": -21.5,
+          "why": "Shared sneak attack Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [],
+          "score": 16.6,
+          "winRate": 0,
+          "lift": -32.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 15,
+          "winRate": 0,
+          "lift": -36.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "dagger_venom",
+          "name": "Dagger of Venom",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 16.8,
+          "lift": 6.9,
+          "valPerGold": 1.38
+        },
+        {
+          "item": "cloak_elvenkind",
+          "name": "Cloak of Elvenkind",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 11.2,
+          "lift": 1.3,
+          "valPerGold": 0.26
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 12.1,
+          "lift": 2.2,
+          "valPerGold": 0.55
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 11.4,
+          "lift": 1.5,
+          "valPerGold": 0.38
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "dagger_venom",
+          "name": "Dagger of Venom",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 16.8,
+          "lift": 6.9,
+          "valPerGold": 1.38
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 12.1,
+          "lift": 2.2,
+          "valPerGold": 0.55
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 11.4,
+          "lift": 1.5,
+          "valPerGold": 0.38
+        }
+      ]
+    },
+    "nettle": {
+      "key": "nettle",
+      "name": "Nettle",
+      "role": "Support",
+      "cls": "Warlock",
+      "avgScore": 48.4,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 228,
+      "avgHeal": 0,
+      "avgWard": 33,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 19.4,
+      "liveRank": 17,
+      "baseRank": 13,
+      "rankDelta": -4,
+      "baseScore": 37.6,
+      "scoreDelta": 10.8,
+      "changeStatus": "buff",
+      "archetype": "Infernal Hex Shredder & Hellfire Warlock",
+      "useCase": "Reworked into an Infernal Pact Hex caster who curses priority targets so every allied hit deals bonus necrotic damage, then unleashes Hellfire & Pact Boon Charge/heal surges when cursed foes fall. Devastating alongside rapid attackers (Naill, Corvin, Arthur).",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Reworked kit: Infernal Hex + Hellfire burst + Pact Boon Charge/heal trigger on cursed enemy death."
+        },
+        {
+          "type": "rebal",
+          "text": "Unified under canonical `Eldritch Pact` keyword with clean 1-line Specializations."
+        }
+      ],
+      "paths": {
+        "key": "nettle",
+        "p0": {
+          "k": "fine_print",
+          "n": "Fine Print",
+          "score": 47.1,
+          "wr": 40
+        },
+        "p1": {
+          "k": "dark_bargain",
+          "n": "Dark One’s Blessing",
+          "score": 43.7,
+          "wr": 40
+        },
+        "winner": "Fine Print"
+      },
+      "bestPartners": [
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 22.3,
+          "winRate": 0,
+          "lift": -28.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "lumen",
+          "name": "Lumen",
+          "sharedKw": [
+            "hex"
+          ],
+          "score": 15.7,
+          "winRate": 0,
+          "lift": -35.1,
+          "why": "Shared hex Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 17.1,
+          "winRate": 0,
+          "lift": -33.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 12.8,
+          "winRate": 0,
+          "lift": -35.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "rod_pact_keeper",
+          "name": "Rod of the Pact Keeper",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 26.4,
+          "lift": 3.5,
+          "valPerGold": 0.7
+        },
+        {
+          "item": "staff_withering",
+          "name": "Staff of Withering",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 18.1,
+          "lift": -4.8,
+          "valPerGold": -0.96
+        },
+        {
+          "item": "bag_holding",
+          "name": "Bag of Holding",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16.7,
+          "lift": -6.2,
+          "valPerGold": -1.55
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 15.4,
+          "lift": -7.5,
+          "valPerGold": -1.88
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "rod_pact_keeper",
+          "name": "Rod of the Pact Keeper",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 26.4,
+          "lift": 3.5,
+          "valPerGold": 0.7
+        },
+        {
+          "item": "staff_withering",
+          "name": "Staff of Withering",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 18.1,
+          "lift": -4.8,
+          "valPerGold": -0.96
+        },
+        {
+          "item": "bag_holding",
+          "name": "Bag of Holding",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16.7,
+          "lift": -6.2,
+          "valPerGold": -1.55
+        }
+      ]
+    },
+    "gains": {
+      "key": "gains",
+      "name": "Gains",
+      "role": "Damage",
+      "cls": "Wizard",
+      "avgScore": 47.7,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 260,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 4.3,
+      "survPct": 40,
+      "avgTime": 26.6,
+      "liveRank": 18,
+      "baseRank": 20,
+      "rankDelta": 2,
+      "baseScore": 32.7,
+      "scoreDelta": 15,
+      "changeStatus": "rebal",
+      "archetype": "Slow Gold-Bolt Heavy-CD Wizard & Arcane Recovery Artillery",
+      "useCase": "Rebuilt as a deliberate, hard-hitting **slow Gold-bolt heavy-CD Wizard** whose Gilded Beam marks enemies Gilded (+1g on kill) and scales explosively on Nat 20 with unspent gold held. Pair with Faelan (`Arcane Recovery`) and Toot for huge Act 3 spikes.",
+      "changes": [
+        {
+          "type": "rebal",
+          "text": "Reworked into slow Gold-bolt heavy-cooldown artillery Wizard; combat gold drops restore +15 Charge (`Arcane Recovery`)."
+        },
+        {
+          "type": "rebal",
+          "text": "1-line Specializations (`Compound Interest` / `Golden Beam`) and opt-in Quest."
+        }
+      ],
+      "paths": {
+        "key": "gains",
+        "p0": {
+          "k": "compound_interest",
+          "n": "Compound Interest",
+          "score": 44.5,
+          "wr": 40
+        },
+        "p1": {
+          "k": "liquid_assets",
+          "n": "Liquid Assets",
+          "score": 43,
+          "wr": 40
+        },
+        "winner": "Compound Interest"
+      },
+      "bestPartners": [
+        {
+          "partner": "juniper",
+          "name": "Juniper",
+          "sharedKw": [],
+          "score": 40.1,
+          "winRate": 50,
+          "lift": -16.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [
+            "arcane_recovery"
+          ],
+          "score": 20.8,
+          "winRate": 0,
+          "lift": -41,
+          "why": "Shared arcane recovery Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 15.9,
+          "winRate": 0,
+          "lift": -34.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "dane",
+          "name": "Sir Dane",
+          "sharedKw": [],
+          "score": 11.5,
+          "winRate": 0,
+          "lift": -37.4,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "arcane_grimoire",
+          "name": "Arcane Grimoire",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 11.5,
+          "lift": 2.7,
+          "valPerGold": 0.54
+        },
+        {
+          "item": "ring_spell_storing",
+          "name": "Ring of Spell Storing",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 11.1,
+          "lift": 2.3,
+          "valPerGold": 0.57
+        },
+        {
+          "item": "pearl_power",
+          "name": "Pearl of Power",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 8.7,
+          "lift": -0.1,
+          "valPerGold": -0.02
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 9.9,
+          "lift": 1.1,
+          "valPerGold": 0.28
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "ring_spell_storing",
+          "name": "Ring of Spell Storing",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 11.1,
+          "lift": 2.3,
+          "valPerGold": 0.57
+        },
+        {
+          "item": "arcane_grimoire",
+          "name": "Arcane Grimoire",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 11.5,
+          "lift": 2.7,
+          "valPerGold": 0.54
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 9.9,
+          "lift": 1.1,
+          "valPerGold": 0.28
+        }
+      ]
+    },
+    "zark": {
+      "key": "zark",
+      "name": "Zark",
+      "role": "Tank",
+      "cls": "Barbarian",
+      "avgScore": 47.6,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 172,
+      "avgHeal": 57,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 40,
+      "avgTime": 23.5,
+      "liveRank": 19,
+      "baseRank": 14,
+      "rankDelta": -5,
+      "baseScore": 35.8,
+      "scoreDelta": 11.8,
+      "changeStatus": "buff",
+      "archetype": "Bear Rage Frontline Bruiser & Relentless Endurance Tank",
+      "useCase": "Unstoppable melee brawler who gets deadlier the longer he fights. Zark’s `Relentless Endurance` sits at priority #2 in v0.23’s Lethal-Revive order (survives fatal hits at 1 HP!), and `Bear Rage` stacks physical mitigation + self-heal cleaves.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Unified under `Rage` keyword; `Relentless Endurance` obeys exact v0.23 Lethal-Revive priority (survives at 1 HP)."
+        },
+        {
+          "type": "rebal",
+          "text": "1-line Specializations (`Totem of the Bear` / `Reckless Cleave`) and opt-in Quest."
+        }
+      ],
+      "paths": {
+        "key": "zark",
+        "p0": {
+          "k": "relentless_bear",
+          "n": "Relentless Bear",
+          "score": 46.4,
+          "wr": 40
+        },
+        "p1": {
+          "k": "totem_roar",
+          "n": "Totem Roar",
+          "score": 43.4,
+          "wr": 40
+        },
+        "winner": "Relentless Bear"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 25.8,
+          "winRate": 0,
+          "lift": -36,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "pillar",
+          "name": "Pillar",
+          "sharedKw": [
+            "rage"
+          ],
+          "score": 17.2,
+          "winRate": 0,
+          "lift": -27.9,
+          "why": "Shared rage Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 15.9,
+          "winRate": 0,
+          "lift": -34.4,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 9.8,
+          "winRate": 0,
+          "lift": -38.4,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "periapt_wound_closure",
+          "name": "Periapt of Wound Closure",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 18.6,
+          "lift": 2.1,
+          "valPerGold": 0.42
+        },
+        {
+          "item": "berserker_axe",
+          "name": "Berserker Axe",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 15.7,
+          "lift": -0.8,
+          "valPerGold": -0.16
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 15.3,
+          "lift": -1.2,
+          "valPerGold": -0.3
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 15.2,
+          "lift": -1.3,
+          "valPerGold": -0.33
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "periapt_wound_closure",
+          "name": "Periapt of Wound Closure",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 18.6,
+          "lift": 2.1,
+          "valPerGold": 0.42
+        },
+        {
+          "item": "berserker_axe",
+          "name": "Berserker Axe",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 15.7,
+          "lift": -0.8,
+          "valPerGold": -0.16
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 15.3,
+          "lift": -1.2,
+          "valPerGold": -0.3
+        }
+      ]
+    },
+    "zoe": {
+      "key": "zoe",
+      "name": "Zoe",
+      "role": "Support",
+      "cls": "Fighter",
+      "avgScore": 47.3,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 68,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 30,
+      "avgTime": 23.8,
+      "liveRank": 20,
+      "baseRank": 1,
+      "rankDelta": -19,
+      "baseScore": 51.8,
+      "scoreDelta": -4.5,
+      "changeStatus": "rebal",
+      "archetype": "Artificer Action-Surge Accelerator & Rummage Crafter",
+      "useCase": "High-tempo support Artificer whose v0.23 `Rummage` tosses **any random Common item** from the 12-item Common pool onto an ally for the fight (doubled by `Rune Carver`!), while triggering `Action Surge` loops with Gilthrax and Arthur.",
+      "changes": [
+        {
+          "type": "rebal",
+          "text": "Reworked `Rummage`: tosses a random Common item from the full 12-item Common pool (+1 extra with `Rune Carver`)."
+        },
+        {
+          "type": "rebal",
+          "text": "Unified under `Action Surge` with clean 1-line Specializations (`Just the Thing` / `Rune Carver`)."
+        }
+      ],
+      "paths": {
+        "key": "zoe",
+        "p0": {
+          "k": "rune_carver",
+          "n": "Rune Carver",
+          "score": 45.4,
+          "wr": 40
+        },
+        "p1": {
+          "k": "just_the_thing",
+          "n": "Just the Thing",
+          "score": 43.5,
+          "wr": 40
+        },
+        "winner": "Rune Carver"
       },
       "bestPartners": [
         {
           "partner": "gilthrax",
           "name": "Gilthrax",
-          "role": "Tank",
-          "cls": "Fighter",
-          "winRate": 75,
-          "score": 54.9,
-          "sharedKw": [],
-          "lift": 25.5,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "velith",
-          "name": "Velith",
-          "role": "Damage",
-          "cls": "Rogue",
-          "winRate": 50,
-          "score": 45.3,
           "sharedKw": [
-            "sneak_attack",
-            "cunning_action"
+            "action_surge"
           ],
-          "lift": 15.9,
-          "why": "Double Sneak Attack / Cunning Action dive shreds enemy backlines before summoners or healers can cast."
-        },
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 25,
-          "score": 35.3,
-          "sharedKw": [],
-          "lift": 5.9,
-          "why": "Strong Damage/Support role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
+          "score": 33.3,
           "winRate": 0,
-          "score": 31.1,
+          "lift": -21.6,
+          "why": "Shared action surge Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [
+            "action_surge"
+          ],
+          "score": 16.5,
+          "winRate": 0,
+          "lift": -33.6,
+          "why": "Shared action surge Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
           "sharedKw": [],
-          "lift": 1.7,
-          "why": "Strong Damage/Tank role synergy balancing frontline survivability with live burst tempo."
+          "score": 14.2,
+          "winRate": 0,
+          "lift": -33.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 11.7,
+          "winRate": 0,
+          "lift": -38.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         }
       ],
       "bestItems": [
         {
-          "item": "dwarven_plate",
-          "name": "Dwarven Plate",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 75,
-          "score": 66.9,
-          "lift": 23.7,
-          "valPerGold": 3.39
+          "item": "flame_tongue",
+          "name": "Flame Tongue",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 25.3,
+          "lift": 2.3,
+          "valPerGold": 0.46
         },
         {
           "item": "boots_speed",
           "name": "Boots of Speed",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 100,
-          "score": 66.3,
-          "lift": 23.1,
-          "valPerGold": 4.62
+          "winRate": 0,
+          "score": 22.6,
+          "lift": -0.4,
+          "valPerGold": -0.1
         },
         {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
-          "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 100,
-          "score": 65.3,
-          "lift": 22.1,
-          "valPerGold": 4.42
-        },
-        {
-          "item": "dagger_venom",
-          "name": "Dagger of Venom",
-          "rarity": 2,
+          "item": "weapon_warning",
+          "name": "Weapon of Warning",
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
-          "winRate": 100,
-          "score": 63.9,
-          "lift": 20.7,
-          "valPerGold": 4.14
+          "winRate": 0,
+          "score": 17.9,
+          "lift": -5.1,
+          "valPerGold": -1.02
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 19.1,
+          "lift": -3.9,
+          "valPerGold": -0.97
         }
       ],
       "bestValueItems": [
         {
+          "item": "flame_tongue",
+          "name": "Flame Tongue",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 25.3,
+          "lift": 2.3,
+          "valPerGold": 0.46
+        },
+        {
           "item": "boots_speed",
           "name": "Boots of Speed",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 100,
-          "score": 66.3,
-          "lift": 23.1,
-          "valPerGold": 4.62
+          "winRate": 0,
+          "score": 22.6,
+          "lift": -0.4,
+          "valPerGold": -0.1
         },
         {
-          "item": "cloak_elvenkind",
-          "name": "Cloak of Elvenkind",
-          "rarity": 1,
-          "cost": 3,
-          "kwMatch": true,
-          "winRate": 50,
-          "score": 56.7,
-          "lift": 13.5,
-          "valPerGold": 4.5
-        },
-        {
-          "item": "amulet_health",
-          "name": "Amulet of Health",
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 100,
-          "score": 65.3,
-          "lift": 22.1,
-          "valPerGold": 4.42
+          "winRate": 0,
+          "score": 19.1,
+          "lift": -3.9,
+          "valPerGold": -0.97
         }
       ]
     },
     "saint": {
       "key": "saint",
       "name": "Saint",
-      "cls": "Cleric",
       "role": "Support",
-      "reach": "Ranged",
-      "pack": 6,
-      "packKey": "surprise",
-      "nMid": 68,
-      "nLate": 40,
-      "midWR": 19.1,
-      "lateWR": 5,
-      "avgWR": 12.1,
-      "midScore": 35,
-      "lateScore": 24.8,
-      "avgScore": 29.9,
-      "avgTime": 19.6,
-      "avgDmg": 294,
-      "avgHeal": 62,
+      "cls": "Cleric",
+      "avgScore": 47.2,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 147,
+      "avgHeal": 0,
       "avgWard": 0,
-      "avgTaken": 290,
       "avgGold": 0,
-      "survPct": 13,
-      "liveRank": 23,
-      "baseRank": 22,
-      "rankDelta": -1,
-      "baseScore": 53.3,
-      "baseWR": 46.8,
-      "scoreDelta": -23.4,
-      "wrDelta": -34.7,
+      "survPct": 40,
+      "avgTime": 20.8,
+      "liveRank": 21,
+      "baseRank": 23,
+      "rankDelta": 2,
+      "baseScore": 29.9,
+      "scoreDelta": 17.3,
       "changeStatus": "rebal",
-      "archetype": "Anti-Heal Necrosis Bell & Duplicity Disruptor",
-      "useCase": "A tactical counter-pick specialist against healing/summoner encounters (Raiders, Necromancer, Brood Mother). Buffed HP (108), faster Bell attacks, and heavier Necrosis stacks ([4, 10, 16, 22]) let Saint shut down enemy recovery while Illusory Double absorbs lethal boss hits. Pair with Sir Dane or Velith and boost Charge with Staff of Power or Horn of Valhalla.",
+      "archetype": "Necrosis Anti-Heal Cleric & Illusory Double Trickster",
+      "useCase": "Tactical counter-pick against heavy healing/Ward bosses (Keraptis, Gynosphinx, Asmodeus). Toll the Dead stacks Necrosis kill thresholds while Illusory Double absorbs lethal boss bursts and triggers `Channel Divinity` utility.",
       "changes": [
         {
-          "type": "buff",
-          "text": "Base HP buffed 96 → 108; Bell of Passing flat dmg 1 → 2 and faster interval 1.4s → 1.35s."
+          "type": "rebal",
+          "text": "Unified under `Channel Divinity` with crisp Necrosis pressure and Illusory Double decoy survivability."
         },
         {
-          "type": "buff",
-          "text": "Toll the Dead Necrosis stacks buffed [0, 6, 12, 16] → [4, 10, 16, 22]."
-        },
-        {
-          "type": "fix",
-          "text": "Fixed double-scaled `u.dm²` heal bug on Nat 20 party heal (added `{ raw: 1 }`)."
+          "type": "rebal",
+          "text": "Clean 1-line Specializations (`Bell of Passing` / `Trickster’s Veil`) and opt-in Quest."
         }
       ],
       "paths": {
         "key": "saint",
-        "name": "Saint",
         "p0": {
           "k": "two_faced",
           "n": "Two-Faced",
-          "wr": 10,
-          "score": 30
+          "score": 43.2,
+          "wr": 40
         },
         "p1": {
           "k": "smoke_mirrors",
           "n": "Smoke & Mirrors",
-          "wr": 10,
-          "score": 28.2
+          "score": 44.6,
+          "wr": 40
         },
-        "diff": 1.8,
-        "winner": "Two-Faced"
+        "winner": "Smoke & Mirrors"
       },
       "bestPartners": [
         {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 48.3,
-          "sharedKw": [],
-          "lift": 21.9,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "velith",
-          "name": "Velith",
-          "role": "Damage",
-          "cls": "Rogue",
+          "partner": "jamison",
+          "name": "Brother Jamison",
+          "sharedKw": [
+            "channel_divinity"
+          ],
+          "score": 18.3,
           "winRate": 0,
-          "score": 32.7,
-          "sharedKw": [],
-          "lift": 6.3,
-          "why": "Strong Support/Damage role synergy balancing frontline survivability with live burst tempo."
+          "lift": -36.8,
+          "why": "Shared channel divinity Class Keyword engine chains triggers across both kits."
         },
         {
-          "partner": "mother_laurel",
-          "name": "Mother Laurel",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 25,
-          "score": 31,
-          "sharedKw": [],
-          "lift": 4.6,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "kaska",
-          "name": "Kaska",
-          "role": "Support",
-          "cls": "Druid",
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [
+            "channel_divinity"
+          ],
+          "score": 13.7,
           "winRate": 0,
-          "score": 28.5,
+          "lift": -36.7,
+          "why": "Shared channel divinity Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
           "sharedKw": [],
-          "lift": 2.1,
-          "why": "High-tempo Support duo whose kits cover each other’s scaling curves through Act 3."
+          "score": 14.9,
+          "winRate": 0,
+          "lift": -35.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 10.1,
+          "winRate": 0,
+          "lift": -37.9,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         }
       ],
       "bestItems": [
         {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
+          "item": "staff_healing",
+          "name": "Staff of Healing",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
           "winRate": 0,
-          "score": 29.2,
-          "lift": 8.4,
-          "valPerGold": 1.2
+          "score": 14.7,
+          "lift": 6.8,
+          "valPerGold": 1.36
         },
         {
-          "item": "horn_valhalla",
-          "name": "Horn of Valhalla",
+          "item": "stone_good_luck",
+          "name": "Stone of Good Luck",
           "rarity": 2,
-          "cost": 5,
-          "kwMatch": false,
-          "winRate": 25,
-          "score": 28.4,
-          "lift": 7.6,
-          "valPerGold": 1.52
-        },
-        {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
           "winRate": 0,
-          "score": 26,
-          "lift": 5.2,
-          "valPerGold": 1.04
+          "score": 15.1,
+          "lift": 7.2,
+          "valPerGold": 1.8
+        },
+        {
+          "item": "amulet_devout",
+          "name": "Amulet of the Devout",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 12.9,
+          "lift": 5,
+          "valPerGold": 1
         },
         {
           "item": "cloak_displacement",
           "name": "Cloak of Displacement",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
           "winRate": 0,
-          "score": 25.9,
-          "lift": 5.1,
-          "valPerGold": 1.02
+          "score": 14.6,
+          "lift": 6.7,
+          "valPerGold": 1.68
         }
       ],
       "bestValueItems": [
         {
-          "item": "horn_valhalla",
-          "name": "Horn of Valhalla",
+          "item": "stone_good_luck",
+          "name": "Stone of Good Luck",
           "rarity": 2,
-          "cost": 5,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 25,
-          "score": 28.4,
-          "lift": 7.6,
-          "valPerGold": 1.52
+          "winRate": 0,
+          "score": 15.1,
+          "lift": 7.2,
+          "valPerGold": 1.8
         },
         {
-          "item": "amulet_devout",
-          "name": "Amulet of the Devout",
-          "rarity": 1,
-          "cost": 3,
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 14.6,
+          "lift": 6.7,
+          "valPerGold": 1.68
+        },
+        {
+          "item": "staff_healing",
+          "name": "Staff of Healing",
+          "rarity": 5,
+          "cost": 5,
           "kwMatch": true,
           "winRate": 0,
-          "score": 24.8,
-          "lift": 4,
-          "valPerGold": 1.33
+          "score": 14.7,
+          "lift": 6.8,
+          "valPerGold": 1.36
+        }
+      ]
+    },
+    "rosalind": {
+      "key": "rosalind",
+      "name": "Rosalind",
+      "role": "Support",
+      "cls": "Bard",
+      "avgScore": 45.8,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 76,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 20,
+      "avgTime": 24.3,
+      "liveRank": 22,
+      "baseRank": 19,
+      "rankDelta": -3,
+      "baseScore": 32.8,
+      "scoreDelta": 13,
+      "changeStatus": "buff",
+      "archetype": "Spatial Closest-Ally Buffer & Bardic Inspiration Engine",
+      "useCase": "Positioning matters! Rosalind’s Bardic Inspiration targets her **closest ally** (previewed with dashed gold lines during Tactical Deployment), granting Inspired Flourish (+Damage & +Haste) and d20 roll boosts right onto your chosen hyper-carry.",
+      "changes": [
+        {
+          "type": "buff",
+          "text": "Spatial targeting (`closest_ally`): position Rosalind beside your chosen carry with live deployment preview lines."
         },
         {
-          "item": "staff_power",
-          "name": "Staff of Power",
-          "rarity": 3,
-          "cost": 7,
+          "type": "rebal",
+          "text": "Clean 1-line Specializations (`Pass the Round` vs `Cutting Words`) and Bardic Inspiration keyword hooks."
+        }
+      ],
+      "paths": {
+        "key": "rosalind",
+        "p0": {
+          "k": "pass_round",
+          "n": "Pass the Round",
+          "score": 45.7,
+          "wr": 40
+        },
+        "p1": {
+          "k": "encore",
+          "n": "Encore",
+          "score": 41,
+          "wr": 40
+        },
+        "winner": "Pass the Round"
+      },
+      "bestPartners": [
+        {
+          "partner": "bram",
+          "name": "Bram",
+          "sharedKw": [],
+          "score": 12.8,
+          "winRate": 0,
+          "lift": -36.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 12.6,
+          "winRate": 0,
+          "lift": -36.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 9.7,
+          "winRate": 0,
+          "lift": -37.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "toot",
+          "name": "Toot",
+          "sharedKw": [
+            "bardic_inspiration"
+          ],
+          "score": 7.2,
+          "winRate": 0,
+          "lift": -35.3,
+          "why": "Shared bardic inspiration Class Keyword engine chains triggers across both kits."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "pipes_haunting",
+          "name": "Pipes of Haunting",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 21,
+          "lift": 13.1,
+          "valPerGold": 2.62
+        },
+        {
+          "item": "bag_holding",
+          "name": "Bag of Holding",
+          "rarity": 2,
+          "cost": 4,
           "kwMatch": false,
           "winRate": 0,
-          "score": 29.2,
-          "lift": 8.4,
-          "valPerGold": 1.2
+          "score": 21.9,
+          "lift": 14,
+          "valPerGold": 3.5
+        },
+        {
+          "item": "horn_valhalla",
+          "name": "Horn of Valhalla",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 18.9,
+          "lift": 11,
+          "valPerGold": 2.2
+        },
+        {
+          "item": "glamoured_leather",
+          "name": "Glamoured Studded Leather",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.9,
+          "lift": 11,
+          "valPerGold": 2.75
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "bag_holding",
+          "name": "Bag of Holding",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 21.9,
+          "lift": 14,
+          "valPerGold": 3.5
+        },
+        {
+          "item": "glamoured_leather",
+          "name": "Glamoured Studded Leather",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.9,
+          "lift": 11,
+          "valPerGold": 2.75
+        },
+        {
+          "item": "pipes_haunting",
+          "name": "Pipes of Haunting",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 21,
+          "lift": 13.1,
+          "valPerGold": 2.62
+        }
+      ]
+    },
+    "pillar": {
+      "key": "pillar",
+      "name": "Pillar",
+      "role": "Tank",
+      "cls": "Barbarian",
+      "avgScore": 42.6,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 110,
+      "avgHeal": 0,
+      "avgWard": 0,
+      "avgGold": 0,
+      "survPct": 20,
+      "avgTime": 22.2,
+      "liveRank": 23,
+      "baseRank": 17,
+      "rankDelta": -6,
+      "baseScore": 33,
+      "scoreDelta": 9.6,
+      "changeStatus": "rebal",
+      "archetype": "Stone-Colossus Meatshield & Anti-Spike Tank",
+      "useCase": "Immovable Goliath tank whose Stone’s Endurance shaves flat damage off heavy Act 2–3 boss blows, and whose opt-in Quest transforms him into a Large 2×2 Living Colossus that shields your entire backline.",
+      "changes": [
+        {
+          "type": "rebal",
+          "text": "Unified under `Rage` / Stone’s Endurance with Cubed AC/SR synergy; armor & HP gear scale dramatically on him."
+        },
+        {
+          "type": "rebal",
+          "text": "1-line Specializations (`Stone Bulwark` / `Earthshaker`) and opt-in 2×2 Colossus Quest."
+        }
+      ],
+      "paths": {
+        "key": "pillar",
+        "p0": {
+          "k": "unstoppable_faith",
+          "n": "Unstoppable Faith",
+          "score": 41.6,
+          "wr": 40
+        },
+        "p1": {
+          "k": "living_beacon",
+          "n": "Living Beacon",
+          "score": 38.9,
+          "wr": 40
+        },
+        "winner": "Unstoppable Faith"
+      },
+      "bestPartners": [
+        {
+          "partner": "faelan",
+          "name": "Faelan",
+          "sharedKw": [],
+          "score": 27.5,
+          "winRate": 0,
+          "lift": -31.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "zark",
+          "name": "Zark",
+          "sharedKw": [
+            "rage"
+          ],
+          "score": 14,
+          "winRate": 0,
+          "lift": -31.1,
+          "why": "Shared rage Class Keyword engine chains triggers across both kits."
+        },
+        {
+          "partner": "arthur",
+          "name": "Arthur",
+          "sharedKw": [],
+          "score": 13.6,
+          "winRate": 0,
+          "lift": -34.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 9.6,
+          "winRate": 0,
+          "lift": -36.1,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        }
+      ],
+      "bestItems": [
+        {
+          "item": "sword_sharpness",
+          "name": "Sword of Sharpness",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.6,
+          "lift": -0.8,
+          "valPerGold": -0.2
+        },
+        {
+          "item": "periapt_wound_closure",
+          "name": "Periapt of Wound Closure",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 16.5,
+          "lift": -2.9,
+          "valPerGold": -0.58
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16.7,
+          "lift": -2.7,
+          "valPerGold": -0.68
+        },
+        {
+          "item": "boots_speed",
+          "name": "Boots of Speed",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16,
+          "lift": -3.4,
+          "valPerGold": -0.85
+        }
+      ],
+      "bestValueItems": [
+        {
+          "item": "sword_sharpness",
+          "name": "Sword of Sharpness",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 18.6,
+          "lift": -0.8,
+          "valPerGold": -0.2
+        },
+        {
+          "item": "periapt_wound_closure",
+          "name": "Periapt of Wound Closure",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 16.5,
+          "lift": -2.9,
+          "valPerGold": -0.58
+        },
+        {
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
+          "kwMatch": false,
+          "winRate": 0,
+          "score": 16.7,
+          "lift": -2.7,
+          "valPerGold": -0.68
         }
       ]
     },
     "toot": {
       "key": "toot",
       "name": "Toot",
-      "cls": "Bard",
       "role": "Support",
-      "reach": "Ranged",
-      "pack": 5,
-      "packKey": "market",
-      "nMid": 52,
-      "nLate": 54,
-      "midWR": 19.2,
-      "lateWR": 7.4,
-      "avgWR": 13.3,
-      "midScore": 34,
-      "lateScore": 24.4,
-      "avgScore": 29.2,
-      "avgTime": 18,
-      "avgDmg": 155,
+      "cls": "Bard",
+      "avgScore": 39.3,
+      "avgWR": 40,
+      "midWR": 100,
+      "lateWR": 0,
+      "avgDmg": 4,
       "avgHeal": 0,
       "avgWard": 0,
-      "avgTaken": 294,
-      "avgGold": 5.94,
-      "survPct": 7.5,
+      "avgGold": 0.9,
+      "survPct": 40,
+      "avgTime": 22.8,
       "liveRank": 24,
-      "baseRank": 23,
-      "rankDelta": -1,
-      "baseScore": 51.3,
-      "baseWR": 46.4,
-      "scoreDelta": -22.1,
-      "wrDelta": -33.1,
+      "baseRank": 24,
+      "rankDelta": 0,
+      "baseScore": 29.2,
+      "scoreDelta": 10.1,
       "changeStatus": "rebal",
-      "archetype": "Economy Engine & Inspired Flourish Bard",
-      "useCase": "Toot is a pure economy-and-tempo investment, not a raw combat stat-stick (lowest solo score at 29.2, yet drives the 80% WR Pack 5 Market Cartel full-run strat!). Early Tip Jar + Mote gold buys extra Tier upgrades and Very Rare items by Act 3, while spending Motes now triggers Inspired Flourish (+25% dmg & Haste). Pair with Gilthrax, Sir Dane, or Zoe.",
+      "archetype": "Stationary Musician (`0 ft`), Bounty Mote Bard & Economy Engine",
+      "useCase": "Reworked in v0.23 into a **stationary (`ft: 0`), 0-damage musician** who plants in the backline, plays closest-ally Bardic Inspiration Motes (previewed during Deployment!), and generates combat bounty gold to fund Curio Uniques and Tier IV upgrades.",
       "changes": [
         {
-          "type": "buff",
-          "text": "Benefits from new Inspired Flourish mechanic (+25% Damage & +25% Haste for 4.5s whenever an ally spends a Bardic Mote)."
+          "type": "rebal",
+          "text": "Reworked to stationary (`ft: 0`), 0-damage Brass Solo musician targeting closest ally with bounty Motes."
         },
         {
-          "type": "nerf",
-          "text": "Combat Gold cap tightened 14g → 6g per fight so Pack 5 Greed stays strong without breaking the shop economy."
+          "type": "rebal",
+          "text": "Drives Pack 5 economy synergy cleanly alongside Gilthrax & Gains without infinite gold exploits."
         }
       ],
       "paths": {
         "key": "toot",
-        "name": "Toot",
         "p0": {
           "k": "busker",
           "n": "Busker’s Rhythm",
-          "wr": 30,
-          "score": 43.4
+          "score": 35.3,
+          "wr": 40
         },
         "p1": {
           "k": "street_performer",
           "n": "Street Performer",
-          "wr": 20,
-          "score": 38.1
+          "score": 38,
+          "wr": 40
         },
-        "diff": 5.3,
-        "winner": "Busker’s Rhythm"
+        "winner": "Street Performer"
       },
       "bestPartners": [
         {
-          "partner": "gilthrax",
-          "name": "Gilthrax",
-          "role": "Tank",
-          "cls": "Fighter",
-          "winRate": 50,
-          "score": 53.3,
-          "sharedKw": [],
-          "lift": 24.7,
-          "why": "Pack 5 economy duo: Toot’s gold + Motes (Inspired Flourish) buy extra items that directly scale Gilthrax’s Hoard Scales."
+          "partner": "rosalind",
+          "name": "Rosalind",
+          "sharedKw": [
+            "bardic_inspiration"
+          ],
+          "score": 7.7,
+          "winRate": 0,
+          "lift": -34.8,
+          "why": "Shared bardic inspiration Class Keyword engine chains triggers across both kits."
         },
         {
-          "partner": "dane",
-          "name": "Sir Dane",
-          "role": "Tank",
-          "cls": "Paladin",
-          "winRate": 50,
-          "score": 42.2,
+          "partner": "bram",
+          "name": "Bram",
           "sharedKw": [],
-          "lift": 13.7,
-          "why": "Strong Support/Tank role synergy balancing frontline survivability with live burst tempo."
-        },
-        {
-          "partner": "zoe",
-          "name": "Zoe",
-          "role": "Support",
-          "cls": "Fighter",
-          "winRate": 25,
-          "score": 37.9,
-          "sharedKw": [],
-          "lift": 9.3,
-          "why": "High-tempo Support duo whose kits cover each other’s scaling curves through Act 3."
+          "score": 8.9,
+          "winRate": 0,
+          "lift": -37.5,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         },
         {
           "partner": "arthur",
           "name": "Arthur",
-          "role": "Damage",
-          "cls": "Fighter",
-          "winRate": 25,
-          "score": 37.6,
           "sharedKw": [],
-          "lift": 9.1,
-          "why": "Strong Support/Damage role synergy balancing frontline survivability with live burst tempo."
+          "score": 8.4,
+          "winRate": 0,
+          "lift": -37.7,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
+        },
+        {
+          "partner": "wallaby",
+          "name": "Wallaby",
+          "sharedKw": [],
+          "score": 8.2,
+          "winRate": 0,
+          "lift": -35.8,
+          "why": "Complementary frontline/backline tempo pairing tested across Act 2–3 bosses."
         }
       ],
       "bestItems": [
         {
-          "item": "robe_stars",
-          "name": "Robe of Stars",
-          "rarity": 3,
-          "cost": 7,
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 25,
-          "score": 38.5,
-          "lift": 7.8,
-          "valPerGold": 1.11
+          "winRate": 0,
+          "score": 11.7,
+          "lift": 3.5,
+          "valPerGold": 0.88
         },
         {
           "item": "horn_valhalla",
           "name": "Horn of Valhalla",
-          "rarity": 2,
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
-          "winRate": 25,
-          "score": 35.9,
-          "lift": 5.2,
-          "valPerGold": 1.04
+          "winRate": 0,
+          "score": 9,
+          "lift": 0.8,
+          "valPerGold": 0.16
         },
         {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 25,
-          "score": 35.2,
-          "lift": 4.5,
-          "valPerGold": 0.64
-        },
-        {
-          "item": "headband",
-          "name": "Headband of Intellect",
-          "rarity": 2,
+          "item": "pipes_haunting",
+          "name": "Pipes of Haunting",
+          "rarity": 5,
           "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 8,
+          "lift": -0.2,
+          "valPerGold": -0.04
+        },
+        {
+          "item": "glamoured_leather",
+          "name": "Glamoured Studded Leather",
+          "rarity": 2,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 25,
-          "score": 33.8,
-          "lift": 3.1,
-          "valPerGold": 0.62
+          "winRate": 0,
+          "score": 7.6,
+          "lift": -0.6,
+          "valPerGold": -0.15
         }
       ],
       "bestValueItems": [
         {
-          "item": "robe_stars",
-          "name": "Robe of Stars",
-          "rarity": 3,
-          "cost": 7,
+          "item": "cloak_displacement",
+          "name": "Cloak of Displacement",
+          "rarity": 2,
+          "cost": 4,
           "kwMatch": false,
-          "winRate": 25,
-          "score": 38.5,
-          "lift": 7.8,
-          "valPerGold": 1.11
+          "winRate": 0,
+          "score": 11.7,
+          "lift": 3.5,
+          "valPerGold": 0.88
         },
         {
           "item": "horn_valhalla",
           "name": "Horn of Valhalla",
-          "rarity": 2,
+          "rarity": 5,
           "cost": 5,
           "kwMatch": true,
-          "winRate": 25,
-          "score": 35.9,
-          "lift": 5.2,
-          "valPerGold": 1.04
+          "winRate": 0,
+          "score": 9,
+          "lift": 0.8,
+          "valPerGold": 0.16
         },
         {
-          "item": "ring_regeneration",
-          "name": "Ring of Regeneration",
-          "rarity": 3,
-          "cost": 7,
-          "kwMatch": false,
-          "winRate": 25,
-          "score": 35.2,
-          "lift": 4.5,
-          "valPerGold": 0.64
+          "item": "pipes_haunting",
+          "name": "Pipes of Haunting",
+          "rarity": 5,
+          "cost": 5,
+          "kwMatch": true,
+          "winRate": 0,
+          "score": 8,
+          "lift": -0.2,
+          "valPerGold": -0.04
         }
       ]
     }
   },
   "items": [
     {
-      "key": "bracers_archery",
-      "name": "Bracers of Archery",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "hunters_mark"
-      ],
-      "bestDelta": 0.287,
-      "valPerGold": 0.0956,
-      "topCarriers": [
-        {
-          "hero": "lorcan",
-          "name": "Lorcan",
-          "lift": 14.7,
-          "kwMatch": true
-        },
-        {
-          "hero": "corvin",
-          "name": "Corvin",
-          "lift": 11.2,
-          "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "pearl_power",
-      "name": "Pearl of Power",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "arcane_recovery"
-      ],
-      "bestDelta": 0.28,
-      "valPerGold": 0.0932,
-      "topCarriers": [
-        {
-          "hero": "gains",
-          "name": "Gains",
-          "lift": 21.8,
-          "kwMatch": true
-        },
-        {
-          "hero": "faelan",
-          "name": "Faelan",
-          "lift": 18.8,
-          "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "longsword_p1",
-      "name": "+1 Longsword",
-      "rarity": "Common",
+      "key": "stone_str",
+      "name": "Stone of Strength",
       "r": 0,
+      "rarity": "Common",
       "price": 2,
       "kwHooks": [],
-      "bestDelta": 0.175,
-      "valPerGold": 0.0874,
-      "topCarriers": []
-    },
-    {
-      "key": "wand_war_mage",
-      "name": "Wand of the War Mage",
-      "rarity": "Common",
-      "r": 0,
-      "price": 2,
-      "kwHooks": [],
-      "bestDelta": 0.163,
-      "valPerGold": 0.0817,
-      "topCarriers": []
-    },
-    {
-      "key": "leather_armor",
-      "name": "Leather Armor",
-      "rarity": "Common",
-      "r": 0,
-      "price": 2,
-      "kwHooks": [],
-      "bestDelta": 0.153,
-      "valPerGold": 0.0765,
-      "topCarriers": []
-    },
-    {
-      "key": "bloodwell_vial",
-      "name": "Bloodwell Vial",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "sorcery_points",
-        "metamagic"
-      ],
-      "bestDelta": 0.223,
-      "valPerGold": 0.0744,
+      "clsLock": null,
+      "bestDelta": 0.035,
+      "valPerGold": 0.018,
       "topCarriers": [
         {
-          "hero": "cinder",
-          "name": "Cinder",
-          "lift": 8.3,
-          "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "cloak_elvenkind",
-      "name": "Cloak of Elvenkind",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "cunning_action",
-        "sneak_attack"
-      ],
-      "bestDelta": 0.219,
-      "valPerGold": 0.073,
-      "topCarriers": [
-        {
-          "hero": "wallaby",
-          "name": "Wallaby",
-          "lift": 13.5,
-          "kwMatch": true
-        },
-        {
-          "hero": "velith",
-          "name": "Velith",
-          "lift": 3.1,
-          "kwMatch": true
-        },
-        {
-          "hero": "corvin",
-          "name": "Corvin",
-          "lift": 16.5,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 3.5,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "rapier_p1",
-      "name": "+1 Rapier",
-      "rarity": "Common",
+      "key": "stone_dex",
+      "name": "Stone of Dexterity",
       "r": 0,
+      "rarity": "Common",
       "price": 2,
       "kwHooks": [],
-      "bestDelta": 0.131,
-      "valPerGold": 0.0655,
-      "topCarriers": []
-    },
-    {
-      "key": "moon_sickle",
-      "name": "Moon Sickle",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "wild_shape"
-      ],
-      "bestDelta": 0.188,
-      "valPerGold": 0.0628,
+      "clsLock": null,
+      "bestDelta": 0.001,
+      "valPerGold": 0.001,
       "topCarriers": [
         {
-          "hero": "kaska",
-          "name": "Kaska",
-          "lift": 30.3,
-          "kwMatch": true
-        },
-        {
-          "hero": "juniper",
-          "name": "Juniper",
-          "lift": 18.4,
-          "kwMatch": true
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 0.1,
+          "kwMatch": false
         }
       ]
     },
     {
-      "key": "weapon_warning",
-      "name": "Weapon of Warning",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "action_surge"
-      ],
-      "bestDelta": 0.179,
-      "valPerGold": 0.0597,
+      "key": "stone_con",
+      "name": "Stone of Constitution",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.113,
+      "valPerGold": 0.057,
       "topCarriers": [
         {
-          "hero": "zoe",
-          "name": "Zoe",
-          "lift": 22.6,
-          "kwMatch": true
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 11.3,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "stone_int",
+      "name": "Stone of Intelligence",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.47,
+      "valPerGold": 0.235,
+      "topCarriers": [
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 47,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "stone_wis",
+      "name": "Stone of Wisdom",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.087,
+      "valPerGold": 0.043,
+      "topCarriers": [
+        {
+          "hero": "bram",
+          "name": "Bram",
+          "lift": 8.7,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "stone_cha",
+      "name": "Stone of Charisma",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.056,
+      "valPerGold": 0.028,
+      "topCarriers": [
+        {
+          "hero": "dane",
+          "name": "Sir Dane",
+          "lift": 5.6,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "weapon_p1",
+      "name": "+1 Weapon",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": -0.013,
+      "valPerGold": -0.007,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": -1.3,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "gloves_quickness",
+      "name": "Gloves of Quickness",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.011,
+      "valPerGold": 0.006,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 1.1,
+          "kwMatch": false
         }
       ]
     },
     {
       "key": "shield",
       "name": "Shield",
-      "rarity": "Common",
       "r": 0,
+      "rarity": "Common",
       "price": 2,
       "kwHooks": [],
-      "bestDelta": 0.118,
-      "valPerGold": 0.0591,
-      "topCarriers": []
-    },
-    {
-      "key": "staff_withering",
-      "name": "Staff of Withering",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [
-        "hex",
-        "pact_boon"
-      ],
-      "bestDelta": 0.261,
-      "valPerGold": 0.0522,
+      "clsLock": null,
+      "bestDelta": 0.01,
+      "valPerGold": 0.005,
       "topCarriers": [
         {
-          "hero": "nettle",
-          "name": "Nettle",
-          "lift": 9.7,
-          "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "amulet_devout",
-      "name": "Amulet of the Devout",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "channel_divinity"
-      ],
-      "bestDelta": 0.148,
-      "valPerGold": 0.0495,
-      "topCarriers": [
-        {
-          "hero": "saint",
-          "name": "Saint",
-          "lift": 4,
-          "kwMatch": true
-        },
-        {
-          "hero": "lumen",
-          "name": "Lumen",
-          "lift": 0.6,
-          "kwMatch": true
-        },
-        {
-          "hero": "kaska",
-          "name": "Kaska",
-          "lift": 20.8,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 1,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "headband",
-      "name": "Headband of Intellect",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
+      "key": "cloak_protection",
+      "name": "Cloak of Protection",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
       "kwHooks": [],
-      "bestDelta": 0.236,
-      "valPerGold": 0.0472,
+      "clsLock": null,
+      "bestDelta": -0.002,
+      "valPerGold": -0.001,
       "topCarriers": [
         {
-          "hero": "faelan",
-          "name": "Faelan",
-          "lift": 40.1,
-          "kwMatch": false
-        },
-        {
-          "hero": "zoe",
-          "name": "Zoe",
-          "lift": 28.7,
-          "kwMatch": false
-        },
-        {
-          "hero": "kaska",
-          "name": "Kaska",
-          "lift": 15.7,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": -0.2,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "sentinel_shield",
-      "name": "Sentinel Shield",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "aura",
-        "smite"
-      ],
-      "bestDelta": 0.137,
-      "valPerGold": 0.0457,
+      "key": "leather_armor",
+      "name": "Leather Armor",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": -0.005,
+      "valPerGold": -0.003,
       "topCarriers": [
         {
-          "hero": "dane",
-          "name": "Sir Dane",
-          "lift": 4.1,
-          "kwMatch": true
-        },
-        {
-          "hero": "pillar",
-          "name": "Pillar",
-          "lift": 5.7,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": -0.5,
           "kwMatch": false
-        },
+        }
+      ]
+    },
+    {
+      "key": "ring_warmth",
+      "name": "Ring of Warmth",
+      "r": 0,
+      "rarity": "Common",
+      "price": 2,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": -0.015,
+      "valPerGold": -0.007,
+      "topCarriers": [
         {
-          "hero": "gilthrax",
-          "name": "Gilthrax",
-          "lift": 1.7,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": -1.5,
           "kwMatch": false
         }
       ]
@@ -4956,225 +4366,327 @@ window.WIKI_META = {
     {
       "key": "breastplate",
       "name": "Breastplate",
-      "rarity": "Uncommon",
       "r": 1,
+      "rarity": "Uncommon",
       "price": 3,
       "kwHooks": [],
-      "bestDelta": 0.124,
-      "valPerGold": 0.0412,
-      "topCarriers": []
-    },
-    {
-      "key": "longbow_p1",
-      "name": "+1 Longbow",
-      "rarity": "Common",
-      "r": 0,
-      "price": 2,
-      "kwHooks": [],
-      "bestDelta": 0.08,
-      "valPerGold": 0.04,
-      "topCarriers": []
-    },
-    {
-      "key": "dagger_venom",
-      "name": "Dagger of Venom",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [
-        "sneak_attack"
-      ],
-      "bestDelta": 0.199,
-      "valPerGold": 0.0399,
+      "clsLock": null,
+      "bestDelta": 0.02,
+      "valPerGold": 0.007,
       "topCarriers": [
         {
-          "hero": "wallaby",
-          "name": "Wallaby",
-          "lift": 20.7,
-          "kwMatch": true
-        },
-        {
-          "hero": "velith",
-          "name": "Velith",
-          "lift": 9.3,
-          "kwMatch": true
-        },
-        {
-          "hero": "corvin",
-          "name": "Corvin",
-          "lift": 23.4,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 2,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "luckstone",
-      "name": "Stone of Good Luck",
-      "rarity": "Uncommon",
+      "key": "mantle_spell_resistance",
+      "name": "Mantle of Spell Resistance",
       "r": 1,
+      "rarity": "Uncommon",
       "price": 3,
       "kwHooks": [],
-      "bestDelta": 0.116,
-      "valPerGold": 0.0386,
-      "topCarriers": []
-    },
-    {
-      "key": "staff_power",
-      "name": "Staff of Power",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [
-        "arcane_recovery"
-      ],
-      "bestDelta": 0.254,
-      "valPerGold": 0.0362,
+      "clsLock": null,
+      "bestDelta": -0.009,
+      "valPerGold": -0.003,
       "topCarriers": [
         {
-          "hero": "faelan",
-          "name": "Faelan",
-          "lift": 50.2,
-          "kwMatch": true
-        },
-        {
-          "hero": "gains",
-          "name": "Gains",
-          "lift": 14.5,
-          "kwMatch": true
-        },
-        {
-          "hero": "kaska",
-          "name": "Kaska",
-          "lift": 34.5,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": -0.9,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "bag_holding",
-      "name": "Bag of Holding",
-      "rarity": "Uncommon",
+      "key": "gauntlets_ogre",
+      "name": "Gauntlets of Ogre Power",
       "r": 1,
+      "rarity": "Uncommon",
       "price": 3,
       "kwHooks": [],
-      "bestDelta": 0.106,
-      "valPerGold": 0.0353,
-      "topCarriers": []
-    },
-    {
-      "key": "staff_woodlands",
-      "name": "Staff of the Woodlands",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [
-        "wild_shape"
-      ],
-      "bestDelta": 0.235,
-      "valPerGold": 0.0336,
+      "clsLock": null,
+      "bestDelta": 0.043,
+      "valPerGold": 0.014,
       "topCarriers": [
         {
-          "hero": "kaska",
-          "name": "Kaska",
-          "lift": 44.2,
-          "kwMatch": true
-        },
-        {
-          "hero": "juniper",
-          "name": "Juniper",
-          "lift": 17.9,
-          "kwMatch": true
-        },
-        {
-          "hero": "faelan",
-          "name": "Faelan",
-          "lift": 46.1,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 4.3,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "dragonhide_belt",
-      "name": "Dragonhide Belt",
-      "rarity": "Uncommon",
+      "key": "boots_striding",
+      "name": "Boots of Striding",
       "r": 1,
+      "rarity": "Uncommon",
       "price": 3,
-      "kwHooks": [
-        "ki",
-        "ki_ability"
-      ],
-      "bestDelta": 0.097,
-      "valPerGold": 0.0324,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.04,
+      "valPerGold": 0.013,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 4,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "boots_elvenkind",
+      "name": "Boots of Elvenkind",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": -0.011,
+      "valPerGold": -0.004,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": -1.1,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "gloves_thievery",
+      "name": "Gloves of Thievery",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.019,
+      "valPerGold": 0.006,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 1.9,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "belt_dwarvenkind",
+      "name": "Belt of Dwarvenkind",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.115,
+      "valPerGold": 0.038,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 11.5,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "ring_protection",
+      "name": "Ring of Protection",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.026,
+      "valPerGold": 0.009,
       "topCarriers": [
         {
           "hero": "naill",
           "name": "Naill",
-          "lift": 9.7,
-          "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "oathbow",
-      "name": "Oathbow",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [
-        "hunters_mark"
-      ],
-      "bestDelta": 0.157,
-      "valPerGold": 0.0314,
-      "topCarriers": [
-        {
-          "hero": "lorcan",
-          "name": "Lorcan",
-          "lift": 25.8,
-          "kwMatch": true
+          "lift": 2.6,
+          "kwMatch": false
         },
         {
-          "hero": "corvin",
-          "name": "Corvin",
-          "lift": 3.9,
-          "kwMatch": true
+          "hero": "wallaby",
+          "name": "Wallaby",
+          "lift": -0.2,
+          "kwMatch": false
         },
         {
-          "hero": "gains",
-          "name": "Gains",
-          "lift": 18.1,
+          "hero": "velith",
+          "name": "Velith",
+          "lift": -3.8,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "wand_fireballs",
-      "name": "Wand of Fireballs",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [
-        "metamagic",
-        "sorcery_points"
-      ],
-      "bestDelta": 0.153,
-      "valPerGold": 0.0307,
+      "key": "wand_magic_missiles",
+      "name": "Wand of Magic Missiles",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.065,
+      "valPerGold": 0.022,
       "topCarriers": [
         {
-          "hero": "cinder",
-          "name": "Cinder",
-          "lift": 2.5,
-          "kwMatch": true
-        },
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 6.5,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "ring_mind_shielding",
+      "name": "Ring of Mind Shielding",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.19,
+      "valPerGold": 0.063,
+      "topCarriers": [
         {
-          "hero": "gains",
-          "name": "Gains",
-          "lift": 21.6,
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 19,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "goggles_night",
+      "name": "Goggles of Night",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.084,
+      "valPerGold": 0.028,
+      "topCarriers": [
+        {
+          "hero": "bram",
+          "name": "Bram",
+          "lift": 8.4,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "gem_brightness",
+      "name": "Gem of Brightness",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.042,
+      "valPerGold": 0.014,
+      "topCarriers": [
+        {
+          "hero": "bram",
+          "name": "Bram",
+          "lift": 4.2,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "brooch_shielding",
+      "name": "Brooch of Shielding",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.007,
+      "valPerGold": 0.002,
+      "topCarriers": [
+        {
+          "hero": "dane",
+          "name": "Sir Dane",
+          "lift": 0.7,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "circlet_blasting",
+      "name": "Circlet of Blasting",
+      "r": 1,
+      "rarity": "Uncommon",
+      "price": 3,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.012,
+      "valPerGold": 0.004,
+      "topCarriers": [
+        {
+          "hero": "dane",
+          "name": "Sir Dane",
+          "lift": 1.2,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "plate_armor",
+      "name": "Plate Armor",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.017,
+      "valPerGold": 0.004,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 1.7,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "sword_sharpness",
+      "name": "Sword of Sharpness",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.083,
+      "valPerGold": 0.021,
+      "topCarriers": [
+        {
+          "hero": "gilthrax",
+          "name": "Gilthrax",
+          "lift": 8.3,
           "kwMatch": false
         },
         {
-          "hero": "lumen",
-          "name": "Lumen",
-          "lift": 17.8,
+          "hero": "mother_laurel",
+          "name": "Mother Laurel",
+          "lift": 6.5,
+          "kwMatch": false
+        },
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 4.3,
           "kwMatch": false
         }
       ]
@@ -5182,51 +4694,838 @@ window.WIKI_META = {
     {
       "key": "boots_speed",
       "name": "Boots of Speed",
-      "rarity": "Rare",
       "r": 2,
-      "price": 5,
+      "rarity": "Rare",
+      "price": 4,
       "kwHooks": [],
-      "bestDelta": 0.153,
-      "valPerGold": 0.0305,
+      "clsLock": null,
+      "bestDelta": 0.166,
+      "valPerGold": 0.042,
       "topCarriers": [
         {
-          "hero": "gains",
-          "name": "Gains",
-          "lift": 27.4,
+          "hero": "juniper",
+          "name": "Juniper",
+          "lift": 16.6,
           "kwMatch": false
         },
         {
-          "hero": "wallaby",
-          "name": "Wallaby",
-          "lift": 23.1,
+          "hero": "gilthrax",
+          "name": "Gilthrax",
+          "lift": 9.9,
           "kwMatch": false
         },
         {
-          "hero": "corvin",
-          "name": "Corvin",
-          "lift": 19.7,
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 5.7,
           "kwMatch": false
         }
       ]
     },
     {
-      "key": "staff_healing",
-      "name": "Staff of Healing",
-      "rarity": "Rare",
+      "key": "vicious_bow",
+      "name": "Vicious Bow",
       "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.037,
+      "valPerGold": 0.009,
+      "topCarriers": [
+        {
+          "hero": "lorcan",
+          "name": "Lorcan",
+          "lift": 3.7,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "cloak_displacement",
+      "name": "Cloak of Displacement",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.282,
+      "valPerGold": 0.07,
+      "topCarriers": [
+        {
+          "hero": "gilthrax",
+          "name": "Gilthrax",
+          "lift": 28.2,
+          "kwMatch": false
+        },
+        {
+          "hero": "juniper",
+          "name": "Juniper",
+          "lift": 18.7,
+          "kwMatch": false
+        },
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 16.6,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "amulet_health",
+      "name": "Amulet of Health",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.103,
+      "valPerGold": 0.026,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 10.3,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "potion_healing",
+      "name": "Potion of Greater Healing",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.107,
+      "valPerGold": 0.027,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 10.7,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "ring_spell_storing",
+      "name": "Ring of Spell Storing",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.389,
+      "valPerGold": 0.097,
+      "topCarriers": [
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 38.9,
+          "kwMatch": false
+        },
+        {
+          "hero": "gains",
+          "name": "Gains",
+          "lift": 2.3,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "wand_web",
+      "name": "Wand of Web",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.16,
+      "valPerGold": 0.04,
+      "topCarriers": [
+        {
+          "hero": "juniper",
+          "name": "Juniper",
+          "lift": 16,
+          "kwMatch": false
+        },
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 10,
+          "kwMatch": false
+        },
+        {
+          "hero": "gains",
+          "name": "Gains",
+          "lift": 0.7,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "stone_good_luck",
+      "name": "Stone of Good Luck",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.072,
+      "valPerGold": 0.018,
+      "topCarriers": [
+        {
+          "hero": "saint",
+          "name": "Saint",
+          "lift": 7.2,
+          "kwMatch": false
+        },
+        {
+          "hero": "juniper",
+          "name": "Juniper",
+          "lift": 2.9,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "glamoured_leather",
+      "name": "Glamoured Studded Leather",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.11,
+      "valPerGold": 0.028,
+      "topCarriers": [
+        {
+          "hero": "rosalind",
+          "name": "Rosalind",
+          "lift": 11,
+          "kwMatch": false
+        },
+        {
+          "hero": "lumen",
+          "name": "Lumen",
+          "lift": 1.4,
+          "kwMatch": false
+        },
+        {
+          "hero": "toot",
+          "name": "Toot",
+          "lift": -0.6,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "bag_holding",
+      "name": "Bag of Holding",
+      "r": 2,
+      "rarity": "Rare",
+      "price": 4,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.14,
+      "valPerGold": 0.035,
+      "topCarriers": [
+        {
+          "hero": "rosalind",
+          "name": "Rosalind",
+          "lift": 14,
+          "kwMatch": false
+        },
+        {
+          "hero": "lumen",
+          "name": "Lumen",
+          "lift": 7,
+          "kwMatch": false
+        },
+        {
+          "hero": "cinder",
+          "name": "Cinder",
+          "lift": 1.1,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "dwarven_plate",
+      "name": "Dwarven Plate",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.139,
+      "valPerGold": 0.023,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 13.9,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "ring_regeneration",
+      "name": "Ring of Regeneration",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.159,
+      "valPerGold": 0.026,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 15.9,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "belt_fire_giant",
+      "name": "Belt of Fire Giant Strength",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.101,
+      "valPerGold": 0.017,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 10.1,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "frost_brand",
+      "name": "Frost Brand",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.153,
+      "valPerGold": 0.026,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 15.3,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "scimitar_speed",
+      "name": "Scimitar of Speed",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.041,
+      "valPerGold": 0.007,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 4.1,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "ring_evasion",
+      "name": "Ring of Evasion",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.022,
+      "valPerGold": 0.004,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 2.2,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "staff_power",
+      "name": "Staff of Power",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.41,
+      "valPerGold": 0.068,
+      "topCarriers": [
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 41,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "headband_intellect",
+      "name": "Headband of Intellect",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.484,
+      "valPerGold": 0.081,
+      "topCarriers": [
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 48.4,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "tome_understanding",
+      "name": "Tome of Understanding",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.063,
+      "valPerGold": 0.01,
+      "topCarriers": [
+        {
+          "hero": "bram",
+          "name": "Bram",
+          "lift": 6.3,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "cloak_arachnida",
+      "name": "Cloak of Arachnida",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": -0.023,
+      "valPerGold": -0.004,
+      "topCarriers": [
+        {
+          "hero": "bram",
+          "name": "Bram",
+          "lift": -2.3,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "robe_stars",
+      "name": "Robe of Stars",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.152,
+      "valPerGold": 0.025,
+      "topCarriers": [
+        {
+          "hero": "dane",
+          "name": "Sir Dane",
+          "lift": 15.2,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "staff_fire",
+      "name": "Staff of Fire",
+      "r": 3,
+      "rarity": "Very Rare",
+      "price": 6,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.058,
+      "valPerGold": 0.01,
+      "topCarriers": [
+        {
+          "hero": "rosalind",
+          "name": "Rosalind",
+          "lift": 5.8,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "belt_storm_giant",
+      "name": "Belt of Storm Giant Strength",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.294,
+      "valPerGold": 0.029,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 29.4,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "vorpal_sword",
+      "name": "Vorpal Sword",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.117,
+      "valPerGold": 0.012,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 11.7,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "armor_invulnerability",
+      "name": "Armor of Invulnerability",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.122,
+      "valPerGold": 0.012,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 12.2,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "blackrazor",
+      "name": "Blackrazor",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.571,
+      "valPerGold": 0.057,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 57.1,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "staff_magi",
+      "name": "Staff of the Magi",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.641,
+      "valPerGold": 0.064,
+      "topCarriers": [
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 64.1,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "robe_archmagi",
+      "name": "Robe of the Archmagi",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.532,
+      "valPerGold": 0.053,
+      "topCarriers": [
+        {
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 53.2,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "luck_blade",
+      "name": "Luck Blade",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.041,
+      "valPerGold": 0.004,
+      "topCarriers": [
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 4.1,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "holy_avenger",
+      "name": "Holy Avenger",
+      "r": 4,
+      "rarity": "Legendary",
+      "price": 10,
+      "kwHooks": [],
+      "clsLock": null,
+      "bestDelta": 0.118,
+      "valPerGold": 0.012,
+      "topCarriers": [
+        {
+          "hero": "dane",
+          "name": "Sir Dane",
+          "lift": 11.8,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "weapon_warning",
+      "name": "Weapon of Warning",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "action_surge"
+      ],
+      "clsLock": "Fighter",
+      "bestDelta": 0.11,
+      "valPerGold": 0.022,
+      "topCarriers": [
+        {
+          "hero": "gilthrax",
+          "name": "Gilthrax",
+          "lift": 11,
+          "kwMatch": true
+        },
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 2.6,
+          "kwMatch": true
+        },
+        {
+          "hero": "zoe",
+          "name": "Zoe",
+          "lift": -5.1,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "flame_tongue",
+      "name": "Flame Tongue",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "action_surge"
+      ],
+      "clsLock": "Fighter",
+      "bestDelta": 0.103,
+      "valPerGold": 0.021,
+      "topCarriers": [
+        {
+          "hero": "gilthrax",
+          "name": "Gilthrax",
+          "lift": 10.3,
+          "kwMatch": true
+        },
+        {
+          "hero": "arthur",
+          "name": "Arthur",
+          "lift": 4.3,
+          "kwMatch": true
+        },
+        {
+          "hero": "zoe",
+          "name": "Zoe",
+          "lift": 2.3,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "periapt_wound_closure",
+      "name": "Periapt of Wound Closure",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "rage"
+      ],
+      "clsLock": "Barbarian",
+      "bestDelta": 0.021,
+      "valPerGold": 0.004,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": 2.1,
+          "kwMatch": true
+        },
+        {
+          "hero": "pillar",
+          "name": "Pillar",
+          "lift": -2.9,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "berserker_axe",
+      "name": "Berserker Axe",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "rage"
+      ],
+      "clsLock": "Barbarian",
+      "bestDelta": -0.008,
+      "valPerGold": -0.002,
+      "topCarriers": [
+        {
+          "hero": "zark",
+          "name": "Zark",
+          "lift": -0.8,
+          "kwMatch": true
+        },
+        {
+          "hero": "pillar",
+          "name": "Pillar",
+          "lift": -8.7,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "holy_symbol_ravenkind",
+      "name": "Holy Symbol of Ravenkind",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "smite"
+      ],
+      "clsLock": "Paladin",
+      "bestDelta": 0.081,
+      "valPerGold": 0.016,
+      "topCarriers": [
+        {
+          "hero": "dane",
+          "name": "Sir Dane",
+          "lift": 8.1,
+          "kwMatch": true
+        },
+        {
+          "hero": "mother_laurel",
+          "name": "Mother Laurel",
+          "lift": -2.3,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "sun_blade",
+      "name": "Sun Blade",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "smite"
+      ],
+      "clsLock": "Paladin",
+      "bestDelta": -0.018,
+      "valPerGold": -0.004,
+      "topCarriers": [
+        {
+          "hero": "mother_laurel",
+          "name": "Mother Laurel",
+          "lift": -1.8,
+          "kwMatch": true
+        },
+        {
+          "hero": "dane",
+          "name": "Sir Dane",
+          "lift": -1.9,
+          "kwMatch": true
+        },
+        {
+          "hero": "corvin",
+          "name": "Corvin",
+          "lift": -8.6,
+          "kwMatch": false
+        }
+      ]
+    },
+    {
+      "key": "amulet_devout",
+      "name": "Amulet of the Devout",
+      "r": 5,
+      "rarity": "Unique",
       "price": 5,
       "kwHooks": [
         "channel_divinity"
       ],
-      "bestDelta": 0.142,
-      "valPerGold": 0.0285,
+      "clsLock": "Cleric",
+      "bestDelta": 0.05,
+      "valPerGold": 0.01,
       "topCarriers": [
-        {
-          "hero": "lumen",
-          "name": "Lumen",
-          "lift": 13.7,
-          "kwMatch": true
-        },
         {
           "hero": "saint",
           "name": "Saint",
@@ -5236,369 +5535,271 @@ window.WIKI_META = {
         {
           "hero": "bram",
           "name": "Bram",
-          "lift": 1.7,
+          "lift": -2.5,
+          "kwMatch": true
+        },
+        {
+          "hero": "jamison",
+          "name": "Brother Jamison",
+          "lift": -4,
           "kwMatch": true
         }
       ]
     },
     {
-      "key": "amulet_health",
-      "name": "Amulet of Health",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [],
-      "bestDelta": 0.131,
-      "valPerGold": 0.0262,
-      "topCarriers": [
-        {
-          "hero": "wallaby",
-          "name": "Wallaby",
-          "lift": 22.1,
-          "kwMatch": false
-        },
-        {
-          "hero": "gilthrax",
-          "name": "Gilthrax",
-          "lift": 12.2,
-          "kwMatch": false
-        },
-        {
-          "hero": "mother_laurel",
-          "name": "Mother Laurel",
-          "lift": 10.6,
-          "kwMatch": false
-        }
-      ]
-    },
-    {
-      "key": "berserker_axe",
-      "name": "Berserker Axe",
-      "rarity": "Rare",
-      "r": 2,
+      "key": "staff_healing",
+      "name": "Staff of Healing",
+      "r": 5,
+      "rarity": "Unique",
       "price": 5,
       "kwHooks": [
-        "rage"
+        "channel_divinity"
       ],
-      "bestDelta": 0.129,
-      "valPerGold": 0.0258,
+      "clsLock": "Cleric",
+      "bestDelta": 0.068,
+      "valPerGold": 0.014,
       "topCarriers": [
-        {
-          "hero": "zark",
-          "name": "Zark",
-          "lift": 5.6,
-          "kwMatch": true
-        },
         {
           "hero": "bram",
           "name": "Bram",
           "lift": 6.8,
-          "kwMatch": false
+          "kwMatch": true
         },
         {
-          "hero": "mother_laurel",
-          "name": "Mother Laurel",
-          "lift": 2.3,
-          "kwMatch": false
+          "hero": "saint",
+          "name": "Saint",
+          "lift": 6.8,
+          "kwMatch": true
+        },
+        {
+          "hero": "jamison",
+          "name": "Brother Jamison",
+          "lift": 6.1,
+          "kwMatch": true
         }
       ]
     },
     {
-      "key": "plate_armor",
-      "name": "Plate Armor",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [],
-      "bestDelta": 0.129,
-      "valPerGold": 0.0257,
-      "topCarriers": [
-        {
-          "hero": "pillar",
-          "name": "Pillar",
-          "lift": 9.5,
-          "kwMatch": false
-        },
-        {
-          "hero": "gilthrax",
-          "name": "Gilthrax",
-          "lift": 4.5,
-          "kwMatch": false
-        }
-      ]
-    },
-    {
-      "key": "flametongue",
-      "name": "Flame Tongue",
-      "rarity": "Rare",
-      "r": 2,
+      "key": "pearl_power",
+      "name": "Pearl of Power",
+      "r": 5,
+      "rarity": "Unique",
       "price": 5,
       "kwHooks": [
-        "action_surge"
+        "arcane_recovery"
       ],
-      "bestDelta": 0.126,
-      "valPerGold": 0.0252,
-      "topCarriers": [
-        {
-          "hero": "zoe",
-          "name": "Zoe",
-          "lift": 13.2,
-          "kwMatch": true
-        },
-        {
-          "hero": "arthur",
-          "name": "Arthur",
-          "lift": 5.4,
-          "kwMatch": true
-        },
-        {
-          "hero": "gilthrax",
-          "name": "Gilthrax",
-          "lift": 3.2,
-          "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "cloak_displacement",
-      "name": "Cloak of Displacement",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [],
-      "bestDelta": 0.116,
-      "valPerGold": 0.0232,
-      "topCarriers": [
-        {
-          "hero": "corvin",
-          "name": "Corvin",
-          "lift": 20.5,
-          "kwMatch": false
-        },
-        {
-          "hero": "wallaby",
-          "name": "Wallaby",
-          "lift": 15.8,
-          "kwMatch": false
-        },
-        {
-          "hero": "bram",
-          "name": "Bram",
-          "lift": 14.1,
-          "kwMatch": false
-        }
-      ]
-    },
-    {
-      "key": "sunblade",
-      "name": "Sun Blade",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [
-        "smite",
-        "aura"
-      ],
-      "bestDelta": 0.157,
-      "valPerGold": 0.0225,
-      "topCarriers": [
-        {
-          "hero": "dane",
-          "name": "Sir Dane",
-          "lift": 20,
-          "kwMatch": true
-        },
-        {
-          "hero": "mother_laurel",
-          "name": "Mother Laurel",
-          "lift": 10.3,
-          "kwMatch": true
-        },
-        {
-          "hero": "lorcan",
-          "name": "Lorcan",
-          "lift": 24.1,
-          "kwMatch": false
-        }
-      ]
-    },
-    {
-      "key": "robe_stars",
-      "name": "Robe of Stars",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [],
-      "bestDelta": 0.152,
-      "valPerGold": 0.0217,
+      "clsLock": "Wizard",
+      "bestDelta": 0.138,
+      "valPerGold": 0.028,
       "topCarriers": [
         {
           "hero": "faelan",
           "name": "Faelan",
-          "lift": 42.5,
-          "kwMatch": false
+          "lift": 13.8,
+          "kwMatch": true
         },
         {
           "hero": "gains",
           "name": "Gains",
-          "lift": 22.4,
-          "kwMatch": false
-        },
-        {
-          "hero": "kaska",
-          "name": "Kaska",
-          "lift": 15.7,
-          "kwMatch": false
+          "lift": -0.1,
+          "kwMatch": true
         }
       ]
     },
     {
-      "key": "frost_brand",
-      "name": "Frost Brand",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [],
-      "bestDelta": 0.148,
-      "valPerGold": 0.0211,
+      "key": "arcane_grimoire",
+      "name": "Arcane Grimoire",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "arcane_recovery"
+      ],
+      "clsLock": "Wizard",
+      "bestDelta": 0.262,
+      "valPerGold": 0.052,
       "topCarriers": [
         {
-          "hero": "arthur",
-          "name": "Arthur",
-          "lift": 23,
-          "kwMatch": false
+          "hero": "faelan",
+          "name": "Faelan",
+          "lift": 26.2,
+          "kwMatch": true
         },
         {
           "hero": "gains",
           "name": "Gains",
-          "lift": 16.1,
-          "kwMatch": false
+          "lift": 2.7,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "bracers_archery",
+      "name": "Bracers of Archery",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "hunters_mark"
+      ],
+      "clsLock": "Ranger",
+      "bestDelta": 0.034,
+      "valPerGold": 0.007,
+      "topCarriers": [
+        {
+          "hero": "lorcan",
+          "name": "Lorcan",
+          "lift": 3.4,
+          "kwMatch": true
         },
+        {
+          "hero": "corvin",
+          "name": "Corvin",
+          "lift": 1.2,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "oathbow",
+      "name": "Oathbow",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "hunters_mark"
+      ],
+      "clsLock": "Ranger",
+      "bestDelta": 0.051,
+      "valPerGold": 0.01,
+      "topCarriers": [
+        {
+          "hero": "lorcan",
+          "name": "Lorcan",
+          "lift": 5.1,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "cloak_elvenkind",
+      "name": "Cloak of Elvenkind",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "sneak_attack"
+      ],
+      "clsLock": "Rogue",
+      "bestDelta": 0.013,
+      "valPerGold": 0.003,
+      "topCarriers": [
         {
           "hero": "wallaby",
           "name": "Wallaby",
-          "lift": 14.3,
-          "kwMatch": false
+          "lift": 1.3,
+          "kwMatch": true
+        },
+        {
+          "hero": "velith",
+          "name": "Velith",
+          "lift": -1.2,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "dagger_venom",
+      "name": "Dagger of Venom",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "sneak_attack"
+      ],
+      "clsLock": "Rogue",
+      "bestDelta": 0.069,
+      "valPerGold": 0.014,
+      "topCarriers": [
+        {
+          "hero": "wallaby",
+          "name": "Wallaby",
+          "lift": 6.9,
+          "kwMatch": true
+        },
+        {
+          "hero": "velith",
+          "name": "Velith",
+          "lift": 5,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "dragonhide_belt",
+      "name": "Dragonhide Belt",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "ki"
+      ],
+      "clsLock": "Monk",
+      "bestDelta": 0.039,
+      "valPerGold": 0.008,
+      "topCarriers": [
+        {
+          "hero": "naill",
+          "name": "Naill",
+          "lift": 3.9,
+          "kwMatch": true
         }
       ]
     },
     {
       "key": "staff_striking",
       "name": "Staff of Striking",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
       "kwHooks": [
-        "ki",
-        "ki_ability"
+        "ki"
       ],
-      "bestDelta": 0.143,
-      "valPerGold": 0.0204,
+      "clsLock": "Monk",
+      "bestDelta": 0.053,
+      "valPerGold": 0.011,
       "topCarriers": [
         {
           "hero": "naill",
           "name": "Naill",
-          "lift": 12.2,
+          "lift": 5.3,
           "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "ring_spell_storing",
-      "name": "Ring of Spell Storing",
-      "rarity": "Rare",
-      "r": 2,
-      "price": 5,
-      "kwHooks": [],
-      "bestDelta": 0.096,
-      "valPerGold": 0.0193,
-      "topCarriers": [
-        {
-          "hero": "faelan",
-          "name": "Faelan",
-          "lift": 46.7,
-          "kwMatch": false
-        },
-        {
-          "hero": "zoe",
-          "name": "Zoe",
-          "lift": 31.6,
-          "kwMatch": false
-        },
-        {
-          "hero": "kaska",
-          "name": "Kaska",
-          "lift": 29.9,
-          "kwMatch": false
-        }
-      ]
-    },
-    {
-      "key": "periapt_wound_closure",
-      "name": "Periapt of Wound Closure",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
-      "kwHooks": [
-        "rage"
-      ],
-      "bestDelta": 0.051,
-      "valPerGold": 0.0169,
-      "topCarriers": [
-        {
-          "hero": "zark",
-          "name": "Zark",
-          "lift": 5.7,
-          "kwMatch": true
-        }
-      ]
-    },
-    {
-      "key": "dwarven_plate",
-      "name": "Dwarven Plate",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [],
-      "bestDelta": 0.092,
-      "valPerGold": 0.0131,
-      "topCarriers": [
-        {
-          "hero": "wallaby",
-          "name": "Wallaby",
-          "lift": 23.7,
-          "kwMatch": false
-        },
-        {
-          "hero": "gilthrax",
-          "name": "Gilthrax",
-          "lift": 15.7,
-          "kwMatch": false
-        },
-        {
-          "hero": "bram",
-          "name": "Bram",
-          "lift": 10.1,
-          "kwMatch": false
         }
       ]
     },
     {
       "key": "pipes_haunting",
       "name": "Pipes of Haunting",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
       "kwHooks": [
         "bardic_inspiration"
       ],
-      "bestDelta": 0.032,
-      "valPerGold": 0.0105,
+      "clsLock": "Bard",
+      "bestDelta": 0.131,
+      "valPerGold": 0.026,
       "topCarriers": [
         {
           "hero": "rosalind",
           "name": "Rosalind",
-          "lift": 16.1,
+          "lift": 13.1,
+          "kwMatch": true
+        },
+        {
+          "hero": "toot",
+          "name": "Toot",
+          "lift": -0.2,
           "kwMatch": true
         }
       ]
@@ -5606,806 +5807,515 @@ window.WIKI_META = {
     {
       "key": "horn_valhalla",
       "name": "Horn of Valhalla",
-      "rarity": "Rare",
-      "r": 2,
+      "r": 5,
+      "rarity": "Unique",
       "price": 5,
       "kwHooks": [
         "bardic_inspiration"
       ],
-      "bestDelta": 0.03,
-      "valPerGold": 0.006,
+      "clsLock": "Bard",
+      "bestDelta": 0.11,
+      "valPerGold": 0.022,
       "topCarriers": [
         {
           "hero": "rosalind",
           "name": "Rosalind",
-          "lift": 16.6,
+          "lift": 11,
           "kwMatch": true
         },
         {
           "hero": "toot",
           "name": "Toot",
-          "lift": 5.2,
+          "lift": 0.8,
           "kwMatch": true
-        },
-        {
-          "hero": "zoe",
-          "name": "Zoe",
-          "lift": 18,
-          "kwMatch": false
         }
       ]
     },
     {
-      "key": "scimitar_speed",
-      "name": "Scimitar of Speed",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [],
-      "bestDelta": 0.034,
-      "valPerGold": 0.0048,
-      "topCarriers": [
-        {
-          "hero": "gains",
-          "name": "Gains",
-          "lift": 28.5,
-          "kwMatch": false
-        },
-        {
-          "hero": "lumen",
-          "name": "Lumen",
-          "lift": 18.3,
-          "kwMatch": false
-        },
-        {
-          "hero": "lorcan",
-          "name": "Lorcan",
-          "lift": 11.9,
-          "kwMatch": false
-        }
-      ]
-    },
-    {
-      "key": "potion_healing",
-      "name": "Potion of Healing",
-      "rarity": "Common",
-      "r": 0,
-      "price": 2,
-      "kwHooks": [],
-      "bestDelta": 0.009,
-      "valPerGold": 0.0047,
-      "topCarriers": [
-        {
-          "hero": "mother_laurel",
-          "name": "Mother Laurel",
-          "lift": 7.2,
-          "kwMatch": false
-        },
-        {
-          "hero": "pillar",
-          "name": "Pillar",
-          "lift": 6.3,
-          "kwMatch": false
-        },
-        {
-          "hero": "gilthrax",
-          "name": "Gilthrax",
-          "lift": 1.3,
-          "kwMatch": false
-        }
-      ]
-    },
-    {
-      "key": "ring_regeneration",
-      "name": "Ring of Regeneration",
-      "rarity": "Very Rare",
-      "r": 3,
-      "price": 7,
-      "kwHooks": [],
-      "bestDelta": 0.024,
-      "valPerGold": 0.0034,
+      "key": "moon_sickle",
+      "name": "Moon Sickle",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "wild_shape"
+      ],
+      "clsLock": "Druid",
+      "bestDelta": 0,
+      "valPerGold": 0,
       "topCarriers": [
         {
           "hero": "kaska",
           "name": "Kaska",
-          "lift": 34.7,
-          "kwMatch": false
+          "lift": 0,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "staff_woodlands",
+      "name": "Staff of the Woodlands",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "wild_shape"
+      ],
+      "clsLock": "Druid",
+      "bestDelta": 0.225,
+      "valPerGold": 0.045,
+      "topCarriers": [
+        {
+          "hero": "juniper",
+          "name": "Juniper",
+          "lift": 22.5,
+          "kwMatch": true
         },
         {
-          "hero": "gilthrax",
-          "name": "Gilthrax",
-          "lift": 31,
-          "kwMatch": false
-        },
+          "hero": "kaska",
+          "name": "Kaska",
+          "lift": 3.5,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "bloodwell_vial",
+      "name": "Bloodwell Vial",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "metamagic"
+      ],
+      "clsLock": "Sorcerer",
+      "bestDelta": 0.037,
+      "valPerGold": 0.007,
+      "topCarriers": [
         {
-          "hero": "faelan",
-          "name": "Faelan",
-          "lift": 29.6,
-          "kwMatch": false
+          "hero": "cinder",
+          "name": "Cinder",
+          "lift": 3.7,
+          "kwMatch": true
+        }
+      ]
+    },
+    {
+      "key": "wand_fireballs",
+      "name": "Wand of Fireballs",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "metamagic"
+      ],
+      "clsLock": "Sorcerer",
+      "bestDelta": 0.08,
+      "valPerGold": 0.016,
+      "topCarriers": [
+        {
+          "hero": "cinder",
+          "name": "Cinder",
+          "lift": 8,
+          "kwMatch": true
         }
       ]
     },
     {
       "key": "rod_pact_keeper",
       "name": "Rod of the Pact Keeper",
-      "rarity": "Uncommon",
-      "r": 1,
-      "price": 3,
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
       "kwHooks": [
-        "hex",
-        "pact_boon"
+        "hex"
       ],
-      "bestDelta": 0.006,
-      "valPerGold": 0.0019,
+      "clsLock": "Warlock",
+      "bestDelta": 0.035,
+      "valPerGold": 0.007,
       "topCarriers": [
         {
           "hero": "nettle",
           "name": "Nettle",
-          "lift": 0.7,
+          "lift": 3.5,
+          "kwMatch": true
+        },
+        {
+          "hero": "lumen",
+          "name": "Lumen",
+          "lift": 2.9,
           "kwMatch": true
         }
       ]
     },
     {
-      "key": "clockwork_amulet",
-      "name": "Clockwork Amulet",
-      "rarity": "Common",
-      "r": 0,
-      "price": 2,
-      "kwHooks": [],
-      "bestDelta": -0.003,
-      "valPerGold": -0.0015,
-      "topCarriers": []
+      "key": "staff_withering",
+      "name": "Staff of Withering",
+      "r": 5,
+      "rarity": "Unique",
+      "price": 5,
+      "kwHooks": [
+        "hex"
+      ],
+      "clsLock": "Warlock",
+      "bestDelta": 0.064,
+      "valPerGold": 0.013,
+      "topCarriers": [
+        {
+          "hero": "lumen",
+          "name": "Lumen",
+          "lift": 6.4,
+          "kwMatch": true
+        },
+        {
+          "hero": "nettle",
+          "name": "Nettle",
+          "lift": -4.8,
+          "kwMatch": true
+        }
+      ]
     }
   ],
   "comps": [
     {
-      "id": "wild_shape_pack",
+      "name": "Arcane Recovery Battery",
+      "heroes": [
+        "gilthrax",
+        "faelan",
+        "gains",
+        "zoe"
+      ],
+      "avgScore": 65.4,
+      "winRate": 66.7,
+      "avgTime": 43.6,
+      "avgGold": 9.7
+    },
+    {
       "name": "Wild Shape Moon & Land",
       "heroes": [
         "mother_laurel",
         "kaska",
         "juniper",
-        "corvin"
+        "velith"
       ],
-      "paths": {
-        "mother_laurel": "bountiful_vines",
-        "kaska": "pack_hunt",
-        "juniper": "land",
-        "corvin": "stalker_flurry"
-      },
-      "items": {
-        "mother_laurel": [
-          "sunblade"
-        ],
-        "kaska": [
-          "moon_sickle"
-        ],
-        "juniper": [
-          "staff_woodlands"
-        ],
-        "corvin": [
-          "bracers_archery"
-        ]
-      },
-      "winRate": 100,
-      "avgScore": 93.9,
-      "avgTime": 21.2,
+      "avgScore": 50.2,
+      "winRate": 66.7,
+      "avgTime": 28.9,
       "avgGold": 0
     },
     {
-      "id": "arcane_battery",
-      "name": "Arcane Recovery Battery",
+      "name": "Anti-Heal Necrosis Control",
       "heroes": [
-        "gilthrax",
-        "gains",
-        "faelan",
-        "zoe"
+        "pillar",
+        "saint",
+        "nettle",
+        "juniper"
       ],
-      "paths": {
-        "gilthrax": "gilded_hoard",
-        "gains": "liquid_assets",
-        "faelan": "battery",
-        "zoe": "rune_carver"
-      },
-      "items": {
-        "gilthrax": [
-          "plate_armor"
-        ],
-        "gains": [
-          "staff_power"
-        ],
-        "faelan": [
-          "pearl_power"
-        ],
-        "zoe": [
-          "headband"
-        ]
-      },
-      "winRate": 91.7,
-      "avgScore": 88,
-      "avgTime": 32.4,
-      "avgGold": 6.6
+      "avgScore": 29.5,
+      "winRate": 33.3,
+      "avgTime": 25.9,
+      "avgGold": 0
     },
     {
-      "id": "action_surge_blitz",
-      "name": "Action Surge Blitz",
+      "name": "Action Surge Armory",
       "heroes": [
         "gilthrax",
         "arthur",
         "zoe",
-        "faelan"
-      ],
-      "paths": {
-        "gilthrax": "bodyguard_fee",
-        "arthur": "initiative",
-        "zoe": "just_the_thing",
-        "faelan": "battery"
-      },
-      "items": {
-        "gilthrax": [
-          "weapon_warning"
-        ],
-        "arthur": [
-          "flametongue",
-          "boots_speed"
-        ],
-        "zoe": [
-          "ring_spell_storing"
-        ],
-        "faelan": [
-          "pearl_power"
-        ]
-      },
-      "winRate": 66.7,
-      "avgScore": 64.1,
-      "avgTime": 28,
-      "avgGold": 2.3
-    },
-    {
-      "id": "campfire_bonds",
-      "name": "Pack 2 Campfire Bonds",
-      "heroes": [
-        "dane",
-        "lorcan",
-        "juniper",
         "rosalind"
       ],
-      "paths": {
-        "dane": "devotion",
-        "lorcan": "colossus",
-        "juniper": "overgrowth",
-        "rosalind": "passround"
-      },
-      "items": {
-        "dane": [
-          "sentinel_shield"
-        ],
-        "lorcan": [
-          "oathbow"
-        ],
-        "juniper": [
-          "staff_woodlands"
-        ],
-        "rosalind": [
-          "horn_valhalla"
-        ]
-      },
-      "winRate": 33.3,
-      "avgScore": 42.7,
-      "avgTime": 22.1,
+      "avgScore": 28.7,
+      "winRate": 0,
+      "avgTime": 31.8,
       "avgGold": 0
     },
     {
-      "id": "shadow_ambush",
-      "name": "Surprise Round Ambush",
-      "heroes": [
-        "kaska",
-        "velith",
-        "wallaby",
-        "saint"
-      ],
-      "paths": {
-        "kaska": "pack_hunt",
-        "velith": "deaths_ledger",
-        "wallaby": "slippery",
-        "saint": "smoke_mirrors"
-      },
-      "items": {
-        "kaska": [
-          "moon_sickle"
-        ],
-        "velith": [
-          "dagger_venom",
-          "cloak_elvenkind"
-        ],
-        "wallaby": [
-          "boots_speed"
-        ],
-        "saint": [
-          "amulet_devout"
-        ]
-      },
-      "winRate": 25,
-      "avgScore": 42.5,
-      "avgTime": 21.8,
-      "avgGold": 0
-    },
-    {
-      "id": "poison_root_control",
-      "name": "Poison & Root Control",
-      "heroes": [
-        "mother_laurel",
-        "velith",
-        "juniper",
-        "nettle"
-      ],
-      "paths": {
-        "mother_laurel": "bountiful_vines",
-        "velith": "nightshade",
-        "juniper": "overgrowth",
-        "nettle": "fineprint"
-      },
-      "items": {
-        "mother_laurel": [
-          "sentinel_shield"
-        ],
-        "velith": [
-          "dagger_venom"
-        ],
-        "juniper": [
-          "staff_woodlands"
-        ],
-        "nettle": [
-          "staff_withering"
-        ]
-      },
-      "winRate": 33.3,
-      "avgScore": 42.1,
-      "avgTime": 12.9,
-      "avgGold": 0
-    },
-    {
-      "id": "gold_greed",
       "name": "Pack 5 Market Cartel",
       "heroes": [
         "gilthrax",
-        "gains",
         "zoe",
-        "toot"
+        "toot",
+        "gains"
       ],
-      "paths": {
-        "gilthrax": "gilded_hoard",
-        "gains": "compound_interest",
-        "zoe": "rune_carver",
-        "toot": "busker"
-      },
-      "items": {
-        "gilthrax": [
-          "plate_armor"
-        ],
-        "gains": [
-          "staff_power"
-        ],
-        "zoe": [
-          "bag_holding"
-        ],
-        "toot": [
-          "horn_valhalla"
-        ]
-      },
-      "winRate": 16.7,
-      "avgScore": 34.6,
-      "avgTime": 20.2,
-      "avgGold": 9.1
+      "avgScore": 22,
+      "winRate": 0,
+      "avgTime": 27.3,
+      "avgGold": 4.3
     },
     {
-      "id": "cinder_wildfire",
-      "name": "Wildfire Burn Engine",
+      "name": "Radiant Smite & Vines",
       "heroes": [
-        "zark",
-        "cinder",
+        "dane",
+        "mother_laurel",
         "lumen",
-        "rosalind"
+        "bram"
       ],
-      "paths": {
-        "zark": "totemroar",
-        "cinder": "wildfire",
-        "lumen": "purifying",
-        "rosalind": "encore"
-      },
-      "items": {
-        "zark": [
-          "periapt_wound_closure"
-        ],
-        "cinder": [
-          "bloodwell_vial",
-          "wand_fireballs"
-        ],
-        "lumen": [
-          "amulet_devout"
-        ],
-        "rosalind": [
-          "pipes_haunting"
-        ]
-      },
-      "winRate": 16.7,
-      "avgScore": 34.2,
-      "avgTime": 12.9,
+      "avgScore": 19.3,
+      "winRate": 0,
+      "avgTime": 30.5,
       "avgGold": 0
     },
     {
-      "id": "hex_necrosis",
-      "name": "Hex & Necrosis Rot",
+      "name": "Infernal Hex & Burn",
       "heroes": [
-        "pillar",
-        "velith",
-        "saint",
+        "dane",
+        "cinder",
+        "lumen",
         "nettle"
       ],
-      "paths": {
-        "pillar": "beacon",
-        "velith": "nightshade",
-        "saint": "two_faced",
-        "nettle": "bargain"
-      },
-      "items": {
-        "pillar": [
-          "dwarven_plate"
-        ],
-        "velith": [
-          "dagger_venom"
-        ],
-        "saint": [
-          "amulet_devout"
-        ],
-        "nettle": [
-          "rod_pact_keeper",
-          "staff_withering"
-        ]
-      },
-      "winRate": 16.7,
-      "avgScore": 31.7,
+      "avgScore": 19.3,
+      "winRate": 0,
       "avgTime": 16.9,
       "avgGold": 0
     },
     {
-      "id": "hunters_volley",
-      "name": "Hunter’s Mark Volley",
+      "name": "Bonded Frontline Aura",
       "heroes": [
         "dane",
-        "lorcan",
-        "corvin",
-        "rosalind"
+        "zark",
+        "jamison",
+        "bram"
       ],
-      "paths": {
-        "dane": "calltoarms",
-        "lorcan": "trophies",
-        "corvin": "first_strike",
-        "rosalind": "passround"
-      },
-      "items": {
-        "dane": [
-          "sentinel_shield"
-        ],
-        "lorcan": [
-          "oathbow",
-          "bracers_archery"
-        ],
-        "corvin": [
-          "cloak_elvenkind"
-        ],
-        "rosalind": [
-          "horn_valhalla"
-        ]
-      },
-      "winRate": 16.7,
-      "avgScore": 30.5,
-      "avgTime": 13,
+      "avgScore": 17.8,
+      "winRate": 0,
+      "avgTime": 41,
       "avgGold": 0
     },
     {
-      "id": "bardic_inspire",
-      "name": "Double Bard Inspiration",
+      "name": "Colossus & Artillery",
       "heroes": [
-        "dane",
+        "pillar",
         "cinder",
         "rosalind",
-        "toot"
+        "gains"
       ],
-      "paths": {
-        "dane": "devotion",
-        "cinder": "wildfire",
-        "rosalind": "passround",
-        "toot": "street_performer"
-      },
-      "items": {
-        "dane": [
-          "sunblade"
-        ],
-        "cinder": [
-          "wand_fireballs"
-        ],
-        "rosalind": [
-          "pipes_haunting"
-        ],
-        "toot": [
-          "horn_valhalla"
-        ]
-      },
-      "winRate": 8.3,
-      "avgScore": 23.2,
-      "avgTime": 11.9,
-      "avgGold": 6
-    },
-    {
-      "id": "beaten_path",
-      "name": "Pack 3 Off the Beaten Path",
-      "heroes": [
-        "zark",
-        "cinder",
-        "naill",
-        "nettle"
-      ],
-      "paths": {
-        "zark": "relentless",
-        "cinder": "draconic",
-        "naill": "openhand",
-        "nettle": "fineprint"
-      },
-      "items": {
-        "zark": [
-          "berserker_axe"
-        ],
-        "cinder": [
-          "bloodwell_vial"
-        ],
-        "naill": [
-          "dragonhide_belt"
-        ],
-        "nettle": [
-          "rod_pact_keeper"
-        ]
-      },
+      "avgScore": 16.8,
       "winRate": 0,
-      "avgScore": 20.7,
-      "avgTime": 10.9,
-      "avgGold": 0
+      "avgTime": 17.1,
+      "avgGold": 3.7
     },
     {
-      "id": "tavern_starters",
-      "name": "Pack 1 Tavern Classics",
+      "name": "Backline Dive & Evasion",
       "heroes": [
-        "bram",
         "arthur",
         "wallaby",
-        "faelan"
+        "velith",
+        "naill"
       ],
-      "paths": {
-        "bram": "disciple",
-        "arthur": "vigilance",
-        "wallaby": "slippery",
-        "faelan": "projected"
-      },
-      "items": {
-        "bram": [
-          "plate_armor"
-        ],
-        "arthur": [
-          "flametongue"
-        ],
-        "wallaby": [
-          "cloak_elvenkind"
-        ],
-        "faelan": [
-          "pearl_power"
-        ]
-      },
+      "avgScore": 16.4,
       "winRate": 0,
-      "avgScore": 19.2,
-      "avgTime": 23,
-      "avgGold": 0.2
-    },
-    {
-      "id": "ki_flurry",
-      "name": "Ki On-Hit Flurry",
-      "heroes": [
-        "dane",
-        "naill",
-        "lorcan",
-        "rosalind"
-      ],
-      "paths": {
-        "dane": "calltoarms",
-        "naill": "openhand",
-        "lorcan": "colossus",
-        "rosalind": "encore"
-      },
-      "items": {
-        "dane": [
-          "sentinel_shield"
-        ],
-        "naill": [
-          "dragonhide_belt",
-          "staff_striking"
-        ],
-        "lorcan": [
-          "oathbow"
-        ],
-        "rosalind": [
-          "pipes_haunting"
-        ]
-      },
-      "winRate": 0,
-      "avgScore": 17.2,
-      "avgTime": 10.9,
+      "avgTime": 21,
       "avgGold": 0
     },
     {
-      "id": "rage_bruisers",
-      "name": "Double Rage Bruisers",
-      "heroes": [
-        "zark",
-        "pillar",
-        "arthur",
-        "jamison"
-      ],
-      "paths": {
-        "zark": "relentless",
-        "pillar": "unstoppable",
-        "arthur": "vigilance",
-        "jamison": "good_vibes"
-      },
-      "items": {
-        "zark": [
-          "berserker_axe",
-          "periapt_wound_closure"
-        ],
-        "pillar": [
-          "amulet_health"
-        ],
-        "arthur": [
-          "flametongue"
-        ],
-        "jamison": [
-          "staff_healing"
-        ]
-      },
-      "winRate": 0,
-      "avgScore": 16.8,
-      "avgTime": 17,
-      "avgGold": 0
-    },
-    {
-      "id": "divine_radiance",
-      "name": "Divine Channel Radiance",
+      "name": "Tavern Classic Core",
       "heroes": [
         "bram",
-        "mother_laurel",
-        "lumen",
-        "jamison"
+        "arthur",
+        "faelan",
+        "wallaby"
       ],
-      "paths": {
-        "bram": "disciple",
-        "mother_laurel": "ancients_ward",
-        "lumen": "judgement",
-        "jamison": "peace_radiance"
-      },
-      "items": {
-        "bram": [
-          "plate_armor"
-        ],
-        "mother_laurel": [
-          "sentinel_shield"
-        ],
-        "lumen": [
-          "amulet_devout"
-        ],
-        "jamison": [
-          "staff_healing"
-        ]
-      },
+      "avgScore": 14.4,
       "winRate": 0,
-      "avgScore": 14.5,
-      "avgTime": 15.1,
+      "avgTime": 41,
+      "avgGold": 0.7
+    },
+    {
+      "name": "Hunter’s Mark Ambush",
+      "heroes": [
+        "zark",
+        "corvin",
+        "lorcan",
+        "naill"
+      ],
+      "avgScore": 11.5,
+      "winRate": 0,
+      "avgTime": 21.4,
       "avgGold": 0
     }
   ],
   "bots": [
     {
-      "id": "casual",
-      "label": "Casual / Naive (Random)",
-      "beforeWR": 68,
-      "liveWR": 8,
-      "piggyBreak": 96,
-      "avgGold": 107,
-      "avgWins": 9.2
+      "id": "zero_item",
+      "label": "Zero-Item / Naive (0 Items Bought)",
+      "target": "< 15% WR",
+      "liveWR": 12,
+      "act1Clear": 96,
+      "act2Clear": 52,
+      "piggyBreak": 92,
+      "avgGold": 110.6,
+      "avgFights": 10.8
     },
     {
-      "id": "noitems",
-      "label": "Tier-Only (Zero Items Ever)",
-      "beforeWR": 68,
-      "liveWR": 8,
-      "piggyBreak": 96,
-      "avgGold": 100,
-      "avgWins": 10.2
+      "id": "casual",
+      "label": "Casual Player (Random Path & ~45% Items)",
+      "target": "25–45% WR",
+      "liveWR": 32,
+      "act1Clear": 96,
+      "act2Clear": 68,
+      "piggyBreak": 80,
+      "avgGold": 138.6,
+      "avgFights": 11.7
     },
     {
       "id": "competent",
-      "label": "Competent (Tiers + Smart Items)",
-      "beforeWR": 92,
-      "liveWR": 56,
-      "piggyBreak": 52,
-      "avgGold": 136,
-      "avgWins": 10.9
+      "label": "Competent Tactician (Balanced & Geared)",
+      "target": "55–70% WR (40–65% Piggy)",
+      "liveWR": 52,
+      "act1Clear": 100,
+      "act2Clear": 96,
+      "piggyBreak": 68,
+      "avgGold": 132.6,
+      "avgFights": 12.7
     },
     {
       "id": "synergy",
-      "label": "Synergy & Keyword Optimizer",
-      "beforeWR": 100,
-      "liveWR": 52,
-      "piggyBreak": 68,
-      "avgGold": 138,
-      "avgWins": 11
+      "label": "Synergy Drafter (Keyword + Role Focus)",
+      "target": "55–70% WR (40–65% Piggy)",
+      "liveWR": 44,
+      "act1Clear": 88,
+      "act2Clear": 80,
+      "piggyBreak": 72,
+      "avgGold": 125,
+      "avgFights": 11.2
     },
     {
       "id": "greed",
-      "label": "Pack 5 Economy / Greed",
-      "beforeWR": 100,
-      "liveWR": 80,
-      "piggyBreak": 40,
-      "avgGold": 164,
-      "avgWins": 11.6
+      "label": "Pack 5 Market Greed (Zoe/Toot/Gilthrax/Gains)",
+      "target": "≤ 70% WR",
+      "liveWR": 56,
+      "act1Clear": 84,
+      "act2Clear": 72,
+      "piggyBreak": 64,
+      "avgGold": 135.6,
+      "avgFights": 11
+    }
+  ],
+  "bosses": [
+    {
+      "act": 1,
+      "key": "glasstaff",
+      "won": 46,
+      "fought": 48,
+      "winRate": 95.8
+    },
+    {
+      "act": 1,
+      "key": "nezznar",
+      "won": 39,
+      "fought": 45,
+      "winRate": 86.7
+    },
+    {
+      "act": 1,
+      "key": "venomfang",
+      "won": 31,
+      "fought": 37,
+      "winRate": 83.8
+    },
+    {
+      "act": 2,
+      "key": "blackrazor_boss",
+      "won": 25,
+      "fought": 35,
+      "winRate": 71.4
+    },
+    {
+      "act": 2,
+      "key": "giant_crab",
+      "won": 19,
+      "fought": 22,
+      "winRate": 86.4
+    },
+    {
+      "act": 2,
+      "key": "gynosphinx",
+      "won": 20,
+      "fought": 21,
+      "winRate": 95.2
+    },
+    {
+      "act": 2,
+      "key": "keraptis",
+      "won": 28,
+      "fought": 31,
+      "winRate": 90.3
+    },
+    {
+      "act": 3,
+      "key": "asmodeus",
+      "won": 10,
+      "fought": 23,
+      "winRate": 43.5
+    },
+    {
+      "act": 3,
+      "key": "orcus",
+      "won": 17,
+      "fought": 25,
+      "winRate": 68
+    },
+    {
+      "act": 3,
+      "key": "tiamat",
+      "won": 22,
+      "fought": 31,
+      "winRate": 71
     }
   ],
   "globalChanges": {
     "combat": [
       {
-        "type": "buff",
-        "tag": "Damage +12%",
-        "text": "All Damage-role heroes receive +12% base damage scaling (`u.dm × 1.12`) so offensive carries compete with sustain."
+        "type": "rebal",
+        "tag": "Cubed AC/SR",
+        "text": "Defense mitigation now follows `1 / (1 + (Eff / 14)^3)` — AC 10 blocks 26.7%, AC 14 blocks 50.0%, AC 20 blocks 74.5%, countered by Armor Pen & Spell Pen."
       },
       {
         "type": "buff",
-        "tag": "Hunter’s Mark",
-        "text": "Marked enemies now take +22% damage from the entire party, and Ranger bonus damage buffed 1d6+WIS → 1d10+WIS."
+        "tag": "Radiant True Dmg",
+        "text": "Radiant damage (Sir Dane Smite, Lumen Celestial bolts, Sun Blade, Holy Avenger) bypasses both AC and SR completely."
       },
       {
         "type": "buff",
-        "tag": "Inspired Flourish",
-        "text": "Spending Bardic Inspiration (Rosalind or Toot) now grants +25% Damage & +25% Haste for 4.5s (CHA-scaled)."
+        "tag": "Universal Evasion",
+        "text": "All Evasion sources combine multiplicatively (`1 - Π(1 - e_i)`) and trigger Arthur’s Action Surge counter-strikes."
       },
       {
-        "type": "buff",
-        "tag": "Sneak Attack & Fire",
-        "text": "Passive Sneak Attack gains +1 bonus d6; Fire element Burn accumulation boosted 45% → 55%."
+        "type": "rebal",
+        "tag": "9 Epic Boons",
+        "text": "Tier IV replaces per-path upgrades with a universal 1-of-3 **Epic Boon** picker (Combat Prowess, Fortitude, Irresistible Offense, Recovery, Spell Recall, Fate, Speed, Truesight, Energy Resistance)."
       },
       {
-        "type": "nerf",
-        "tag": "Overtime 28s",
-        "text": "Overtime begins at 28s (was 40s), stepping every 5s: Heal & Ward effectiveness decay −15% per stack (up to −60%) to end infinite stall comps."
+        "type": "rebal",
+        "tag": "12 Multiclass Dips",
+        "text": "Single-class named shrines (`✧`, no repeats per run) grant a hero a secondary Class Keyword and unlock Curio Uniques for that class."
       },
       {
         "type": "fix",
-        "tag": "7 Heal Bugfixes",
-        "text": "Fixed 7 double-scaled `u.dm²` heals missing `{ raw: 1 }` (Mother Laurel, Kaska, Jamison, Saint, Lumen, Pillar, Zoe) plus Faelan’s duplicate Ward counter."
+        "tag": "Lethal Priority",
+        "text": "Strict lethal-hit rescue order: `Zealot → Relentless Endurance (1 HP) → Cleric MC (25%) → Boon of Recovery (50%)`."
       }
     ],
     "enemy": [
       {
         "type": "buff",
-        "tag": "Enemy Curve",
-        "text": "Scaling buffed across all 3 Acts: `CURVE.grow` 1.21 → 1.225, `CURVE.dmgGrow` 1.22 → 1.28, `ease` [0.56..1.24] → [0.95..1.46], opening fight `d=1` eased penalty removed (.75/.70 → .96/.95)."
+        "tag": "3 Full Acts",
+        "text": "Act 1 **Phandalin** (Klarg Miniboss, 3 bosses), Act 2 **White Plume Mountain** (Dungeon Hazards + Vault Loot, 4 bosses), Act 3 **The Hells** (Wandering Pit Fiend + Devil’s Bargains, 3 Final Bosses: Orcus, Asmodeus, Tiamat)."
+      },
+      {
+        "type": "rebal",
+        "tag": "9-Row DAG Map",
+        "text": "Constricting non-crossing 9-row DAG (`3→3→3→3→3→2→2→2→1`) with Camp Shop Flow Flip, Act Boss Reminder, and Whole-Shop Freeze."
       },
       {
         "type": "buff",
-        "tag": "Bosses & Elites",
-        "text": "Act Boss depths raised [7.5, 12.0, 15.8] → [8.2, 13.0, 17.5]; Elites raised +1.3 depth & 1.26× scaling; War Band (`orcs`) threat mult buffed 0.81 → 0.96, Owlbear 0.80 → 0.87, Brood Mother 0.73 → 0.78."
+        "tag": "82 Six-Tier Items",
+        "text": "58 Universal Standard Shop items (`Common 2g → Legendary 10g`) with exact 6-attribute parity (`+1/+2/+3/+4/+6`), plus 24 **Unique (5g)** Class-Keyword relics at the Curio Merchant (`⚖`)."
       },
       {
-        "type": "nerf",
-        "tag": "Shop Economy",
-        "text": "Win gold tightened `6+d/4 → 5+d/5`, Hero prices `[3,5,8,12] → [3,6,9,13]`, Elite bonus 4g → 3g, Campfire Forage 6g → 4g, and Pack 5 combat gold caps tightened (6g–8g)."
+        "type": "rebal",
+        "tag": "Strict Disclosure",
+        "text": "Tier I hero cards hide Specializations, Quests, Boons, and Multiclass boxes until unlocked; all 48 Specializations are strictly 1-line rules."
       }
     ]
   }

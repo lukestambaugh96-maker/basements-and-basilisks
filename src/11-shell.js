@@ -246,7 +246,7 @@ function renderMap() {
   const M = A.map;
   const actMod = currentActModule(RUN);
   const next = new Set(nextNodes(RUN));
-  const W = 780, Hh = 740, y = r => Hh - 46 - r * ((Hh - 96) / ADV.bossRow), x = n => 56 + n.x * (W - 112);
+  const W = 780, Hh = 740, y = r => Hh - 64 - r * ((Hh - 128) / ADV.bossRow), x = n => 64 + n.x * (W - 128);
   const visited = new Set((A.path || []).map(p => p.r + ',' + p.i));
   if (A.pos) visited.add(A.pos.r + ',' + A.pos.i);
 

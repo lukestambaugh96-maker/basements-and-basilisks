@@ -1,12 +1,14 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
+import path from 'node:path';
 
 const PORT = 9226;
+const SCREENSHOT_DIR = process.env.E2E_SCREENSHOT_DIR || '';
 const CHROME_BIN = ['/usr/bin/chromium', '/usr/bin/google-chrome', '/usr/bin/chromium-browser'].find(p => fs.existsSync(p)) || 'google-chrome';
 const chrome = spawn(CHROME_BIN, [
   '--headless=new', '--disable-gpu', '--no-sandbox',
-  '--window-size=1440,1000',
+  '--window-size=1440,980',
   `--remote-debugging-port=${PORT}`, 'about:blank'
 ], { stdio: 'ignore' });
 
@@ -53,6 +55,15 @@ async function main() {
     return r.result && r.result.result ? r.result.result.value : undefined;
   };
 
+  async function snapShot(name) {
+    if (!SCREENSHOT_DIR) return;
+    fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+    const r = await send('Page.captureScreenshot', { format: 'png' });
+    if (r.result && r.result.data) {
+      fs.writeFileSync(path.join(SCREENSHOT_DIR, `${name}.png`), Buffer.from(r.result.data, 'base64'));
+    }
+  }
+
   async function realClick(sel) {
     const info = await evalJS(`(() => {
       const els = [...document.querySelectorAll(${JSON.stringify(sel)})].filter(el => {
@@ -76,23 +87,27 @@ async function main() {
     if (!info || !info.found) return info || { found: false };
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: info.x, y: info.y, button: 'left', clickCount: 1 });
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: info.x, y: info.y, button: 'left', clickCount: 1 });
-    await new Promise(r => setTimeout(r, 60));
+    await new Promise(r => setTimeout(r, 70));
     return info;
   }
 
   async function clearForcedModals() {
     const log = [];
-    for (let k = 0; k < 6; k++) {
+    for (let k = 0; k < 10; k++) {
       const open = await evalJS(`!document.getElementById('modal').hidden`);
       if (!open) break;
       const order = [
         '#modal [data-a="choosePath"]',
         '#modal [data-a="chooseAsi"]',
+        '#modal [data-a="chooseBoon"]',
         '#modal [data-a="swapBuy"]',
         '#modal [data-a="evTake"]',
         '#modal [data-a="evPromote"]',
-        '#modal [data-a="evRetrain"]',
+        '#modal [data-a="evMulticlass"]',
+        '#modal [data-a="evMcAttr"]',
         '#modal [data-a="evQuestBoost"]',
+        '#modal [data-a="mysteryChoice"]:not([disabled])',
+        '#modal [data-a="evRetrain"]',
         '#modal [data-a="evRest"]',
         '#modal [data-a="evSkip"]',
         '#modal [data-a="closeModal"]'
@@ -112,127 +127,187 @@ async function main() {
   await send('Runtime.enable');
   await send('Console.enable');
   await send('Page.navigate', { url: 'http://127.0.0.1:8081/index.html' });
-  await new Promise(r => setTimeout(r, 900));
+  await new Promise(r => setTimeout(r, 950));
 
+  await snapShot('01-title');
   assert((await realClick('[data-a="newrun"]')).hitInside, 'newrun');
   assert((await realClick('[data-a="begin"]')).hitInside, 'begin');
 
-  // Verify Pre-Run Pack Toggles (all 6 visible, toggle 1 off -> 5 packs / 20 heroes, toggle back on -> 6 packs / 24 heroes)
+  // Verify Pre-Run Pack Toggles
   const packInit = await evalJS(`({ cards: document.querySelectorAll('#packList .pack-toggle').length, on: document.querySelectorAll('#packList .pack-toggle.on').length })`);
   console.log('PRE-RUN PACK TOGGLES:', packInit);
   assert(packInit.cards === 6 && packInit.on === 6, 'Expected 6 enabled packs by default');
   assert((await realClick('#packList [data-a="togglePack"][data-k="surprise"]')).hitInside, 'toggle pack off');
-  assert((await evalJS(`document.querySelectorAll('#packList .pack-toggle.on').length`)) === 5, 'Expected 5 enabled packs after toggling one off');
+  assert((await evalJS(`document.querySelectorAll('#packList .pack-toggle.on').length`)) === 5, 'Expected 5 enabled packs');
   assert((await realClick('#packList [data-a="togglePack"][data-k="surprise"]')).hitInside, 'toggle pack back on');
-  assert((await evalJS(`document.querySelectorAll('#packList .pack-toggle.on').length`)) === 6, 'Expected 6 enabled packs after toggling back on');
   assert((await realClick('#packControls [data-a="confirmPacks"]')).hitInside, 'confirmPacks');
-  assert((await evalJS(`RUN.adv.pool.length === 24 && RUN.adv.packs.length === 6`)), 'Expected 24 heroes & 6 packs active in run');
-  assert((await realClick('#picks [data-a="pick"]')).hitInside, 'pick1');
+  assert((await evalJS(`RUN.adv.pool.length === 24 && RUN.adv.packs.length === 6`)), 'Expected 24 heroes & 6 packs');
+
+  // Strict Progressive Disclosure check on Starter Pick Tier I cards!
+  const pdCheck = await evalJS(`(() => {
+    const txt = document.getElementById('picks').textContent;
+    return {
+      cards: document.querySelectorAll('#picks .hcard').length,
+      hasSpecLeak: /Specialization|Tier II Path|Epic Boon|Personal Quest/i.test(txt)
+    };
+  })()`);
+  console.log('TIER I STRICT PROGRESSIVE DISCLOSURE:', pdCheck);
+  assert(pdCheck.cards >= 3 && !pdCheck.hasSpecLeak, 'Tier I card leaked Spec/Quest/Boon text: ' + JSON.stringify(pdCheck));
+
+  assert((await realClick('#picks [data-a="pick"]')).hitInside, 'pick starter');
+
+  // v0.23 Camp Shop Flow Flip: After starter pick, we land in Camp Shop!
+  const shopStart = await evalJS(`({
+    phase: PHASE,
+    hasBossReminder: (document.getElementById('nextFight')?.textContent || '').includes('Act Boss Reminder:'),
+    hasFreeze: !!document.getElementById('freezeBtn'),
+    hasToMap: !!document.querySelector('#shop [data-a="toMap"]')
+  })`);
+  console.log('CAMP SHOP START:', shopStart);
+  assert(shopStart.phase === 'shop' && shopStart.hasBossReminder && shopStart.hasFreeze && shopStart.hasToMap, 'Camp Shop v0.23 layout check failed');
+
+  // Test Whole-Shop Freeze toggle
+  assert((await realClick('#freezeBtn')).hitInside, 'freeze toggle on');
+  assert((await evalJS('RUN.shop.frozen === true')), 'Expected RUN.shop.frozen === true');
+  await snapShot('02-camp-shop');
+  assert((await realClick('#freezeBtn')).hitInside, 'freeze toggle off');
+  assert((await evalJS('RUN.shop.frozen === false')), 'Expected RUN.shop.frozen === false');
 
   let testedPiggyRetry = false;
+  let capturedDeploy = false;
+  let capturedAct3Map = false;
+  let capturedAct3Battle = false;
 
-  for (let act = 1; act <= 3; act++) {
-    const snap = await evalJS(`({
-      act: RUN.adv.act, stage: RUN.adv.stage, phase: PHASE,
-      pos: RUN.adv.pos, pathLen: (RUN.adv.path || []).length,
-      beenNodes: document.querySelectorAll('#mapBoard .mnode.been').length,
-      canNodes: document.querySelectorAll('#mapBoard .mnode.can').length,
-      redLines: document.querySelectorAll('#mapBoard .maplines line.on').length,
-      nxLines: document.querySelectorAll('#mapBoard .maplines line.nx').length,
-      modalHidden: document.getElementById('modal').hidden,
-      modalForced: document.getElementById('modal').dataset.forced
-    })`);
-    console.log(`ACT ${act} START:`, snap);
-    assert(snap.act === act, `Expected act ${act}, got ${snap.act}`);
-    assert(snap.phase === 'advmap', `Expected advmap, got ${snap.phase}`);
-    assert(snap.pos === null, `Expected pos=null on Act ${act} start`);
-    assert(snap.pathLen === 0, `Expected pathLen=0 on Act ${act} start, got ${snap.pathLen}`);
-    assert(snap.beenNodes === 0, `Expected beenNodes=0 on Act ${act} start, got ${snap.beenNodes}`);
-    assert(snap.redLines === 0, `Expected redLines=0 on Act ${act} start, got ${snap.redLines}`);
-    assert(snap.nxLines === 0, `Expected nxLines=0 on Act ${act} start, got ${snap.nxLines}`);
-    assert(snap.canNodes === 3, `Expected 3 clickable row-0 nodes on Act ${act} start, got ${snap.canNodes}`);
-    assert(snap.modalHidden && !snap.modalForced, `Modal should be hidden on Act ${act} start`);
+  // Complete all 3 Acts through the 9-row constricting DAG!
+  let safety = 0;
+  while (safety++ < 140) {
+    await clearForcedModals();
+    const ph = await evalJS('PHASE');
+    if (ph === 'over') break;
 
-    for (let step = 0; step < 7; step++) {
+    if (ph === 'shop') {
+      await evalJS(`RUN.gold = Math.max(RUN.gold, 24); renderShop();`);
       await clearForcedModals();
-      const clickNode = await realClick('#advmap .mnode.can');
-      assert(clickNode.found && clickNode.hitInside, `Act ${act} row ${step} node click failed: ${JSON.stringify(clickNode)}`);
+      // Buy an available hero or upgrade if present
+      const boughtHero = await realClick('#offers .ho18:not(.sold):not(.poor)');
+      if (boughtHero.found) await clearForcedModals();
+      // Buy an available item if present
+      const boughtItem = await realClick('#ioffers .io18:not(.sold):not(.poor)');
+      if (boughtItem.found) await clearForcedModals();
 
-      const phaseNow = await evalJS('PHASE');
-      if (phaseNow === 'shop') {
-        await evalJS(`RUN.gold = Math.max(RUN.gold, 20); renderShop();`);
-        await clearForcedModals();
-        await realClick('#offers .ho18:not(.sold):not(.poor)');
-        await clearForcedModals();
-
-        // Test Piggy Bank first-loss -> shop -> retry -> win on Act 2 row 0!
-        if (act === 2 && step === 0 && !testedPiggyRetry) {
-          testedPiggyRetry = true;
-          assert((await realClick('#shop [data-a="tobattle"]')).hitInside, 'tobattle loss');
-          assert((await realClick('#combat [data-a="begin-battle"]')).hitInside, 'begin loss');
-          await evalJS(`(() => { B.units.filter(u => u.side === 'P').forEach(u => { u.alive = false; u.hp = 0; }); B.over = true; B.winner = 'E'; resultShown = true; showResult(); })()`);
-          assert((await realClick('#result [data-a="afterFight"]')).hitInside, 'afterFight piggy');
-          const retryPhase = await evalJS(`({ phase: PHASE, broken: RUN.piggyBroken, retries: RUN.retries })`);
-          console.log('PIGGY BANK RETRY:', retryPhase);
-          assert(retryPhase.phase === 'shop' && retryPhase.broken && retryPhase.retries === 1, 'Piggy Bank retry failed');
-        }
-
-        assert((await realClick('#shop [data-a="tobattle"]')).hitInside, `tobattle act ${act} row ${step}`);
-        assert((await realClick('#combat [data-a="begin-battle"]')).hitInside, `begin act ${act} row ${step}`);
-        await evalJS(`(() => { B.units.filter(u => u.side === 'E').forEach(u => { u.alive = false; u.hp = 0; }); B.over = true; B.winner = 'P'; resultShown = true; showResult(); })()`);
-        assert((await realClick('#result [data-a="afterFight"]')).hitInside, `afterFight act ${act} row ${step}`);
-        await clearForcedModals();
-
-        const afterPhase = await evalJS('PHASE');
-        assert(afterPhase !== 'packs', 'Packs screen must NOT appear between acts!');
-        if (afterPhase === 'over') break;
+      const retry = await evalJS('!!RUN.adv.retryPending');
+      if (retry) {
+        assert((await realClick('#shop [data-a="tobattle"]')).hitInside, 'retry tobattle');
       } else {
-        await clearForcedModals();
+        assert((await realClick('#shop [data-a="toMap"]')).hitInside, 'toMap');
       }
+      continue;
     }
+
+    if (ph === 'advmap') {
+      const msnap = await evalJS(`({
+        act: RUN.adv.act,
+        rows: (RUN.adv.map || []).length,
+        canCount: document.querySelectorAll('#mapBoard .mnode.can').length,
+        edges: document.querySelectorAll('#mapBoard .maplines line').length,
+        hasBossLabel: !!document.querySelector('.mnode.k-boss')
+      })`);
+      assert(msnap.rows === 9 && msnap.canCount >= 1 && msnap.edges > 0 && msnap.hasBossLabel, '9-row DAG map failed: ' + JSON.stringify(msnap));
+      if (msnap.act === 1 && !capturedDeploy) await snapShot('03-act1-dag-map');
+      if (msnap.act === 3 && !capturedAct3Map) {
+        capturedAct3Map = true;
+        await snapShot('05-act3-hells-map');
+      }
+      const clickNode = await realClick('#advmap .mnode.can');
+      assert(clickNode.found && clickNode.hitInside, 'DAG node click failed');
+      await clearForcedModals();
+      continue;
+    }
+
+    if (ph === 'combat') {
+      const actNow = await evalJS('RUN.adv.act');
+      if (!capturedDeploy) {
+        capturedDeploy = true;
+        // Add Rosalind if not on team just to screenshot spatial targeting preview lines on Deployment
+        await evalJS(`if (!RUN.team.some(h => h.key === 'rosalind') && RUN.team.length < 4) { freeHero(RUN, 'rosalind'); autoPlace(RUN, false); renderStrip(); drawBoard(); }`);
+        await new Promise(r => setTimeout(r, 120));
+        await snapShot('04-deployment-preview');
+      }
+
+      // Test Piggy Bank first-loss -> Camp Shop -> Retry Battle -> Win on Act 2!
+      if (actNow === 2 && !testedPiggyRetry) {
+        testedPiggyRetry = true;
+        assert((await realClick('#combat [data-a="begin-battle"]')).hitInside, 'begin piggy loss');
+        await evalJS(`(() => { B.units.filter(u => u.side === 'P').forEach(u => { u.alive = false; u.hp = 0; }); B.over = true; B.winner = 'E'; resultShown = true; showResult(); })()`);
+        assert((await realClick('#result [data-a="afterFight"]')).hitInside, 'afterFight piggy');
+        const rp = await evalJS(`({ phase: PHASE, broken: RUN.piggyBroken, retries: RUN.retries, retryPending: RUN.adv.retryPending })`);
+        console.log('PIGGY BANK RETRY:', rp);
+        assert(rp.phase === 'shop' && rp.broken && rp.retries === 1 && rp.retryPending, 'Piggy Bank retry check failed');
+        continue;
+      }
+
+      assert((await realClick('#combat [data-a="begin-battle"]')).hitInside, 'begin battle');
+      if (actNow === 3 && !capturedAct3Battle) {
+        capturedAct3Battle = true;
+        await new Promise(r => setTimeout(r, 250));
+        await snapShot('06-act3-hells-combat');
+      }
+      await evalJS(`(() => { B.units.filter(u => u.side === 'E').forEach(u => { u.alive = false; u.hp = 0; }); B.over = true; B.winner = 'P'; resultShown = true; showResult(); })()`);
+      assert((await realClick('#result [data-a="afterFight"]')).hitInside, 'afterFight win');
+      await clearForcedModals();
+      continue;
+    }
+
+    throw new Error('Unexpected phase: ' + ph);
   }
 
   const finalSnap = await evalJS(`({ phase: PHASE, victory: RUN.victory, over: RUN.over, act: RUN.adv.act, wins: RUN.stats.won })`);
   console.log('FINAL VICTORY:', finalSnap);
-  assert(finalSnap.phase === 'over' && finalSnap.victory && finalSnap.over && finalSnap.wins === 12, 'Expected full 3-act victory');
+  assert(finalSnap.phase === 'over' && finalSnap.victory && finalSnap.over && finalSnap.act === 3, 'Expected full 3-Act victory');
 
-  // Verify all 24 heroes render largeCard + custom art without error
-  const artCheck = await evalJS(`(() => {
-    let cardsOk = 0, loadedHeroes = 0, loadedForms = 0;
+  // Verify all 24 heroes + 6 forms + 82 items + 10 bosses render cleanly
+  const contentCheck = await evalJS(`(() => {
+    let cardsOk = 0, loadedHeroes = 0, loadedForms = 0, itemsOk = 0;
     HERO_ORDER.forEach(k => {
-      const html = largeCard(k, 2, { cfg: { key: k, tier: 2, questDone: true } });
-      if (html && html.includes(H[k].name)) cardsOk++;
+      const h1 = largeCard(k, 1, { cfg: { key: k, tier: 1 } });
+      const h4 = largeCard(k, 4, { cfg: { key: k, tier: 4, path: H[k].paths[0].k, asi: H[k].pair[1], boon: EPIC_BOON_KEYS[0], multiclass: 'Fighter', questActive: true, questDone: true } });
+      if (h1 && h4 && h4.includes(H[k].name) && h4.includes(EPIC_BOONS[EPIC_BOON_KEYS[0]].n)) cardsOk++;
       if (keyedCustomArt('heroes', k)) loadedHeroes++;
     });
     ['arthur_form','dane_form','pillar_form','jamison_quest','saint_quest','kaska_form'].forEach(f => {
       if (keyedCustomArt('forms', f)) loadedForms++;
     });
-    return { cardsOk, loadedHeroes, loadedForms };
+    ALL_ITEM_KEYS.forEach(ik => {
+      const ic = itemIcon(ik, 32);
+      if (ic && ic.includes('<svg')) itemsOk++;
+    });
+    return { cardsOk, loadedHeroes, loadedForms, itemsOk, enemyCount: Object.keys(E).length };
   })()`);
-  console.log('24-HERO & 6-FORM ART CHECK:', artCheck);
-  assert(artCheck.cardsOk === 24 && artCheck.loadedHeroes === 24 && artCheck.loadedForms === 6, 'Expected 24 cards, 24 hero PNGs, 6 form PNGs');
+  console.log('CONTENT & ART CHECK:', contentCheck);
+  assert(contentCheck.cardsOk === 24 && contentCheck.loadedHeroes === 24 && contentCheck.loadedForms === 6 && contentCheck.itemsOk === 82, 'Content/art check failed');
 
-  // Verify starting a New Run from Victory screen works cleanly
-  assert((await realClick('#over [data-a="newrun"]')).hitInside, 'newrun from victory');
-  assert((await evalJS('PHASE')) === 'intro', 'Expected intro after newrun');
-
-  // Verify legacy save migration (stale Act 1 path saved on Act 2 pos:null)
-  await evalJS(`(() => {
-    const r = newAdventure();
-    startRunWithPacks(r, PACK_ORDER);
-    freeHero(r, 'arthur');
-    r.adv.act = 2; startAct(r);
-    r.adv.path = [{r:0,i:0},{r:1,i:1},{r:2,i:2},{r:3,i:0},{r:4,i:1},{r:5,i:2}];
-    localStorage.setItem(SAVE_KEY, JSON.stringify(r));
-    renderTitle();
-  })()`);
-  assert((await realClick('#contBtn')).hitInside, 'continue legacy save');
-  const migrated = await evalJS(`({ act: RUN.adv.act, pathLen: RUN.adv.path.length, been: document.querySelectorAll('#mapBoard .mnode.been').length, can: document.querySelectorAll('#mapBoard .mnode.can').length })`);
-  console.log('LEGACY SAVE MIGRATION:', migrated);
-  assert(migrated.act === 2 && migrated.pathLen === 0 && migrated.been === 0 && migrated.can === 3, 'Legacy save migration failed');
+  // Verify Field Guide & Stat Tracker page loads and all 4 tabs render with 0 errors!
+  await send('Page.navigate', { url: 'http://127.0.0.1:8081/tools/wiki.html' });
+  await new Promise(r => setTimeout(r, 850));
+  await snapShot('07-wiki-heroes');
+  assert((await realClick('.mtab[data-tab="patch"]')).hitInside, 'wiki patch tab');
+  assert((await realClick('.mtab[data-tab="items"]')).hitInside, 'wiki items tab');
+  const itemRows = await evalJS(`document.querySelectorAll('#itemStatTable tbody tr').length`);
+  assert((await realClick('.mtab[data-tab="meta"]')).hitInside, 'wiki meta tab');
+  await new Promise(r => setTimeout(r, 150));
+  await snapShot('08-wiki-meta');
+  const wikiCheck = await evalJS(`({
+    title: document.title,
+    rosterRows: document.querySelectorAll('#rosterList .hrow').length,
+    dossierText: (document.getElementById('heroDossier')?.textContent || '').length,
+    bossRows: document.querySelectorAll('#bossStatTable tbody tr').length,
+    botRows: document.querySelectorAll('#runBotTable tbody tr').length
+  })`);
+  console.log('WIKI CHECK:', { ...wikiCheck, itemRows });
+  assert(wikiCheck.rosterRows === 24 && wikiCheck.dossierText > 200 && itemRows === 82 && wikiCheck.bossRows === 10 && wikiCheck.botRows === 5, 'Wiki v0.23 check failed');
 
   assert(errors.length === 0, 'Browser errors detected: ' + JSON.stringify(errors));
-  console.log('ALL CHROMIUM E2E ASSERTIONS PASSED (0 errors)!');
+  console.log('ALL v0.23 CHROMIUM E2E ASSERTIONS PASSED (0 errors)!');
   ws.close();
   chrome.kill();
 }

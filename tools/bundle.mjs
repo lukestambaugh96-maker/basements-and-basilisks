@@ -1,7 +1,7 @@
 /**
- * bundle.mjs — Bundles the modular Basements & Basilisks v0.22 codebase AND all mapped
+ * bundle.mjs — Bundles the modular Basements & Basilisks v0.23 codebase AND all mapped
  * custom art assets from assets/manifest.json into a single truly self-contained offline
- * HTML prototype at dist/Basements_&_Basilisks_0.22.html.
+ * HTML prototype at dist/Basements_&_Basilisks_0.23.html.
  */
 
 import fs from 'node:fs';
@@ -41,7 +41,7 @@ function buildEmbeddedManifest() {
     }
   }
 
-  const out = { version: raw.version || '0.22', baseUrl: '', heroes: {}, forms: {}, enemies: {}, items: {}, maps: {} };
+  const out = { version: raw.version || '0.23', baseUrl: '', heroes: {}, forms: {}, enemies: {}, items: {}, maps: {} };
   // Preserve any direct URL/data entries already in manifest.json
   for (const cat of cats) {
     for (const [key, val] of Object.entries(raw[cat] || {})) {
@@ -99,11 +99,8 @@ let out = html.replace(
   `<style>\n${css}\n</style>`
 );
 
-// Hide relative Asset Studio link in standalone single-file bundle
-out = out.replace(
-  '<a class="btn" id="assetStudioLink" href="tools/asset-studio.html" style="text-decoration:none">Asset Studio</a>',
-  ''
-);
+// Hide relative Asset Studio & Field Guide links in standalone single-file bundle
+out = out.replace(/<a class="btn" id="(assetStudioLink|wikiLink)"[^>]*>.*?<\/a>/g, '');
 
 const firstTag = `<script src="${scriptOrder[0]}"></script>`;
 const lastTag = `<script src="${scriptOrder[scriptOrder.length - 1]}"></script>`;
@@ -116,7 +113,7 @@ if (startIdx < 0 || endIdx <= startIdx) {
 
 out = out.slice(0, startIdx) + `<script>\n${bundledJs}\n</script>` + out.slice(endIdx);
 
-const distPath = path.join(root, 'dist', 'Basements_&_Basilisks_0.22.html');
+const distPath = path.join(root, 'dist', 'Basements_&_Basilisks_0.23.html');
 fs.mkdirSync(path.dirname(distPath), { recursive: true });
 fs.writeFileSync(distPath, out, 'utf8');
 console.log(`Bundled single-file HTML -> ${distPath} (${(out.length / 1024).toFixed(1)} KB, ${assetCount} embedded assets via ${assetMode})`);

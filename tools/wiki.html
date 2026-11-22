@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Field Guide &amp; Live Stat Tracker · Basements &amp; Basilisks 0.22</title>
-  <meta name="description" content="Interactive character wiki, live balance changelog, simulation stat tracker, best partner heroes, and best item pairings for Basements & Basilisks v0.22." />
+  <title>Field Guide &amp; Live Stat Tracker · Basements &amp; Basilisks 0.23</title>
+  <meta name="description" content="Interactive character wiki, v0.23 rework changelog, live simulation stat tracker, 82 six-tier D&D items, 10 Act bosses, 9 Epic Boons, and 12 Multiclass dips for Basements & Basilisks v0.23." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
@@ -380,7 +380,7 @@
   <header class="topbar">
     <div class="brand">
       <h1>Field Guide &amp; Live Stat Tracker</h1>
-      <div class="subline" id="metaSubline">Basements &amp; Basilisks · v0.22 Live Balance Build · 24 Heroes · 46 Canonical D&amp;D Items</div>
+      <div class="subline" id="metaSubline">Basements &amp; Basilisks · v0.23 Live Build · 24 Reworked Heroes · 82 Canonical D&amp;D Items · 3 Acts · 10 Bosses</div>
     </div>
     <nav class="nav-actions" aria-label="Tool navigation">
       <a class="btn primary" href="../index.html">← Play Game</a>
@@ -390,9 +390,9 @@
 
   <div class="main-tabs" role="tablist" aria-label="Wiki sections">
     <button class="mtab on" data-tab="heroes" role="tab" aria-selected="true">Heroes &amp; Stat Tracker <span class="cnt">24</span></button>
-    <button class="mtab" data-tab="patch" role="tab" aria-selected="false">Live Balance Changes <span class="cnt">v0.22 → Live</span></button>
-    <button class="mtab" data-tab="items" role="tab" aria-selected="false">Items &amp; Best Carriers <span class="cnt">46</span></button>
-    <button class="mtab" data-tab="meta" role="tab" aria-selected="false">Meta &amp; Difficulty Overview <span class="cnt">16 Comps</span></button>
+    <button class="mtab" data-tab="patch" role="tab" aria-selected="false">v0.23 Rework &amp; Changelog <span class="cnt">v0.22 → v0.23</span></button>
+    <button class="mtab" data-tab="items" role="tab" aria-selected="false">Items &amp; Best Carriers <span class="cnt">82</span></button>
+    <button class="mtab" data-tab="meta" role="tab" aria-selected="false">Meta, Bosses &amp; Boons <span class="cnt">3 Acts · 10 Bosses</span></button>
   </div>
 
   <!-- TAB 1: HEROES & STAT TRACKER -->
@@ -416,11 +416,10 @@
           <option value="Support">Support</option>
         </select>
         <select id="filterChange" aria-label="Filter by balance status">
-          <option value="all">All Balance Changes</option>
+          <option value="all">All v0.23 Statuses</option>
           <option value="buff">Buffed</option>
+          <option value="rebal">Reworked / Rebalanced</option>
           <option value="nerf">Nerfed</option>
-          <option value="rebal">Rebalanced / Bugfixed</option>
-          <option value="global">Global Scaling Only</option>
         </select>
       </div>
       <div class="controls-right">
@@ -450,53 +449,54 @@
     </div>
   </section>
 
-  <!-- TAB 2: LIVE BALANCE CHANGES -->
+  <!-- TAB 2: v0.23 REWORK & CHANGELOG -->
   <section id="tab-patch" hidden>
     <div class="panel-box">
-      <h2>Global Combat, Enemy &amp; Economy Overhaul (v0.22 → Live)</h2>
+      <h2>v0.23 Systems, Combat Math, Items &amp; 3-Act Overhaul (v0.22 → v0.23)</h2>
       <div class="two-col" id="globalChangesBox"></div>
     </div>
     <div class="panel-box">
-      <h2>Individual Character Changes (All 24 Heroes)</h2>
+      <h2>Individual Character Reworks (All 24 Heroes)</h2>
       <div class="controls" style="margin-bottom:14px;box-shadow:none">
         <div class="controls-left">
           <select id="patchFilter">
             <option value="all">Show: All 24 Heroes</option>
-            <option value="direct">Direct Hero Kit Changes Only</option>
             <option value="buff">Buffed Heroes</option>
+            <option value="rebal">Reworked / Rebalanced</option>
             <option value="nerf">Nerfed Heroes</option>
-            <option value="rebal">Rebalanced / Bugfixed</option>
           </select>
         </div>
-        <div class="controls-right sans mute" style="font-size:.84rem">Click any character header to open their full Live Dossier.</div>
+        <div class="controls-right sans mute" style="font-size:.84rem">Click any character header to open their full v0.23 Live Dossier.</div>
       </div>
       <div class="patch-grid" id="patchHeroGrid"></div>
     </div>
   </section>
 
-  <!-- TAB 3: ITEMS & BEST CARRIERS -->
+  <!-- TAB 3: 82 ITEMS & BEST CARRIERS -->
   <section id="tab-items" hidden>
     <div class="controls">
       <div class="controls-left">
-        <input type="text" id="itemSearch" placeholder="Search item name, keyword, effect..." aria-label="Search items" />
+        <input type="text" id="itemSearch" placeholder="Search item name, class, keyword, effect..." aria-label="Search items" />
         <select id="itemRarity">
-          <option value="all">All Rarities</option>
+          <option value="all">All 6 Tiers</option>
           <option value="0">Common (2g)</option>
           <option value="1">Uncommon (3g)</option>
-          <option value="2">Rare (5g)</option>
-          <option value="3">Very Rare (7g)</option>
+          <option value="2">Rare (4g)</option>
+          <option value="3">Very Rare (6g)</option>
+          <option value="4">Legendary (10g)</option>
+          <option value="5">Unique · Curio (5g)</option>
         </select>
         <select id="itemKwOnly">
-          <option value="all">All 46 Items</option>
-          <option value="kw">Class-Keyword Items Only (24)</option>
-          <option value="core">Universal / Core Items Only (22)</option>
+          <option value="all">All 82 Items</option>
+          <option value="kw">Curio Unique Items (24)</option>
+          <option value="core">Standard Shop Items (58)</option>
         </select>
       </div>
       <div class="controls-right">
         <select id="itemSort">
           <option value="bestDelta">Sort: Best Synergy Impact</option>
           <option value="valPerGold">Sort: Best Value per Gold</option>
-          <option value="rarity">Sort: Rarity &amp; Cost</option>
+          <option value="rarity">Sort: Tier &amp; Cost</option>
           <option value="name">Sort: Name</option>
         </select>
       </div>
@@ -506,24 +506,38 @@
     </div>
   </section>
 
-  <!-- TAB 4: META & DIFFICULTY OVERVIEW -->
+  <!-- TAB 4: META, BOSSES & BOONS OVERVIEW -->
   <section id="tab-meta" hidden>
     <div class="two-col">
       <div class="panel-box">
-        <h2>Full 3-Act Run Difficulty (Before vs. Live)</h2>
-        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">120 full 3-Act runs across 5 player profiles comparing pre-balance v0.22 against the live build.</p>
+        <h2>v0.23 3-Act Campaign Calibration (5 Player Personas)</h2>
+        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">Full 3-Act campaign runs across Phandalin, White Plume Mountain, and The Hells against the v0.23 §6 calibration gates.</p>
         <div class="tbl-wrap" style="border:1px solid var(--line);box-shadow:none">
           <table class="stat-tbl" id="runBotTable"></table>
         </div>
       </div>
       <div class="panel-box">
+        <h2>10 Rotating Act Bosses · Live Win Rates</h2>
+        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">Encounter win rates across all 5 campaign personas in Acts 1, 2, and 3.</p>
+        <div class="tbl-wrap" style="border:1px solid var(--line);box-shadow:none">
+          <table class="stat-tbl" id="bossStatTable"></table>
+        </div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel-box">
         <h2>Live Role Balance &amp; Pack Power</h2>
-        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">Average live performance across Midgame (Tier II) and Lategame (Tier III + ASI + 1 item) benchmarks.</p>
+        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">Average v0.23 benchmark across Tier II (Act 2) and Tier III (Act 3) encounters.</p>
         <div id="rolePackSummary"></div>
+      </div>
+      <div class="panel-box">
+        <h2>9 Tier IV Epic Boons &amp; 12 Multiclass Shrines</h2>
+        <p class="mute sans" style="margin:0 0 10px;font-size:.86rem">Universal Tier IV 1-of-3 Epic Boons and single-class named Multiclass dips (no repeats per run).</p>
+        <div id="boonsMcBox"></div>
       </div>
     </div>
     <div class="panel-box">
-      <h2>Live Archetype Compositions (16 Tested Squads · Act 3 Depth 13.8)</h2>
+      <h2>Signature v0.23 Archetype Squads (12 Tested Comps · Act 2–3 Bosses)</h2>
       <p class="mute sans" style="margin:0 0 12px;font-size:.86rem">Click any hero chip in a comp to inspect their individual dossier, partners, and items.</p>
       <div class="comp-grid" id="compGrid"></div>
     </div>
@@ -552,7 +566,7 @@
   const META = window.WIKI_META || { heroes: {}, globalChanges: {}, items: [], comps: [], bots: {} };
   const ATTR_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
   const ATTR_LBL = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
-  const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'];
+  const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Unique'];
 
   let state = {
     tab: 'heroes',
@@ -757,7 +771,7 @@
       const itemObj = ITEMS[it.item];
       if (!itemObj) return '';
       const svg = typeof itemIcon === 'function' ? itemIcon(it.item, 40) : '';
-      const desc = itemObj.one || itemObj.x || '';
+      const desc = typeof itemText === 'function' ? itemText(it.item) : (itemObj.one || itemObj.x || '');
       return `
         <div class="item-card-row${it.kwMatch ? ' kw-hit' : ''}">
           <div style="display:grid;place-items:center">${svg}</div>
@@ -777,6 +791,11 @@
     }).join('');
 
     const bestVal = (m.bestValueItems || []).slice(0, 3).map(v => `<b>${esc(v.name)}</b> (${v.cost}g, ${fmtDelta(v.lift)} / ${v.valPerGold.toFixed(2)} per g)`).join(' &nbsp;·&nbsp; ');
+    const ckwNotes = (h.ckw || []).map(e => `<p style="margin:0 0 6px"><b>Class Keyword — ${esc(kwLabel(e.k))}${e.sub ? ' (' + esc(e.sub) + ')' : ''}:</b> ${typeof glossarize === 'function' ? glossarize(e.x || '') : esc(e.x || '')}</p>`).join('');
+    const passiveLine = h.passive && h.passive.n ? `<p style="margin:0 0 6px"><b>Passive — ${esc(h.passive.n)}:</b> ${typeof glossarize === 'function' ? glossarize(h.passive.x || '') : esc(h.passive.x || '')}</p>` : '';
+    const atkSummary = h.atk && h.atk.d && h.atk.d[0] > 0
+      ? `${h.atk.d[0]}d${h.atk.d[1]}${h.atk.flat ? ' + ' + h.atk.flat : ''} ${esc(h.atk.ty)} (${h.atk.iv}s base interval)`
+      : `0 damage support cadence (${h.atk ? h.atk.iv : 1.5}s base interval)`;
 
     $('heroDossier').innerHTML = `
       <div class="dos-head">
@@ -791,7 +810,7 @@
             </div>
           </div>
           <div class="sans mute" style="font-size:.86rem;font-weight:700;margin-top:2px">
-            ${esc(h.title || h.cls)} &nbsp;·&nbsp; Pack ${pack.num}: ${esc(pack.name)} &nbsp;·&nbsp; HP ${h.hp} · AC ${h.ac} · SR ${h.sr}
+            ${esc(h.title || h.cls)} &nbsp;·&nbsp; Pack ${pack.num}: ${esc(pack.name)} &nbsp;·&nbsp; HP ${h.hp} · AC ${h.ac} · SR ${h.sr} · ${h.ft > 0 ? h.ft + ' ft' : 'Stationary'}
           </div>
           <p class="dos-bio">“${esc(h.bio)}”</p>
           <div class="dos-tags">
@@ -805,7 +824,7 @@
         <div class="kpi">
           <div class="kl">Live Rank &amp; Score</div>
           <div class="kv">#${m.liveRank} ${fmtRankDelta(m.rankDelta)} <span style="font-size:.95rem;color:var(--mute)">(${m.avgScore.toFixed(1)})</span></div>
-          <div class="ks">Was #${m.baseRank} (${m.baseScore != null ? m.baseScore.toFixed(1) : '—'}) pre-patch</div>
+          <div class="ks">v0.22 rank #${m.baseRank} (${m.baseScore != null ? m.baseScore.toFixed(1) : '—'})</div>
         </div>
         <div class="kpi">
           <div class="kl">Live Win Rate</div>
@@ -831,7 +850,7 @@
 
       <div class="dsec">
         <div class="dsec-h">
-          <h3>Live Use Case &amp; Draft Identity</h3>
+          <h3>v0.23 Use Case &amp; Draft Identity</h3>
           <span class="hint">${esc(m.archetype || '')}</span>
         </div>
         <div class="usecase-box">
@@ -842,7 +861,7 @@
 
       <div class="dsec">
         <div class="dsec-h">
-          <h3>Individual Changes (v0.22 → Live)</h3>
+          <h3>v0.23 Rework Notes (v0.22 → v0.23)</h3>
           <span class="hint">Meta rank shift: #${m.baseRank} → #${m.liveRank} (${fmtRankDelta(m.rankDelta)})</span>
         </div>
         <ul class="change-list">${changesHtml}</ul>
@@ -851,7 +870,7 @@
       <div class="dsec">
         <div class="dsec-h">
           <h3>Best Partner Heroes</h3>
-          <span class="hint">Paired T3 benchmark (click a partner to jump)</span>
+          <span class="hint">Paired Act 2–3 Boss benchmark (click a partner to jump)</span>
         </div>
         <div class="pair-grid">${partnersHtml}</div>
       </div>
@@ -859,7 +878,7 @@
       <div class="dsec">
         <div class="dsec-h">
           <h3>Best Items on ${esc(h.name)}</h3>
-          <span class="hint">Paired A/B lift over naked hero</span>
+          <span class="hint">Paired A/B lift across Standard &amp; Curio Unique relics</span>
         </div>
         <div class="pair-grid">${itemsHtml}</div>
         ${bestVal ? `<div class="sans mute" style="font-size:.8rem;margin-top:8px">Top Gold Efficiency: ${bestVal}</div>` : ''}
@@ -867,8 +886,8 @@
 
       <div class="dsec">
         <div class="dsec-h">
-          <h3>Tier II Path Comparison (Live Head-to-Head)</h3>
-          <span class="hint">Stronger live path: <b>${esc(pm.winner || 'Even')}</b></span>
+          <h3>Tier II Specialization Comparison (1-Line Rules)</h3>
+          <span class="hint">Stronger live spec: <b>${esc(pm.winner || 'Even')}</b> · Tier IV picks 1 of 3 Universal Epic Boons</span>
         </div>
         <div class="path-grid">
           <div class="pcard${p0Win ? ' win' : ''}">
@@ -876,25 +895,24 @@
               <span class="pcard-name">1. ${esc(p0.n)}</span>
               <span class="pcard-score">${(pm.p0.score ?? 0).toFixed(1)} pts · ${(pm.p0.wr ?? 0).toFixed(0)}% WR</span>
             </div>
-            <div class="pcard-desc">${typeof glossarize === 'function' ? glossarize(p0.full || p0.x) : esc(p0.full || p0.x)}</div>
-            <div class="pcard-t4"><b>Tier IV:</b> ${esc(p0.t4x || '')}</div>
+            <div class="pcard-desc">${typeof glossarize === 'function' ? glossarize(p0.x || '') : esc(p0.x || '')}</div>
           </div>
           <div class="pcard${p1Win ? ' win' : ''}">
             <div class="pcard-top">
               <span class="pcard-name">2. ${esc(p1.n)}</span>
               <span class="pcard-score">${(pm.p1.score ?? 0).toFixed(1)} pts · ${(pm.p1.wr ?? 0).toFixed(0)}% WR</span>
             </div>
-            <div class="pcard-desc">${typeof glossarize === 'function' ? glossarize(p1.full || p1.x) : esc(p1.full || p1.x)}</div>
-            <div class="pcard-t4"><b>Tier IV:</b> ${esc(p1.t4x || '')}</div>
+            <div class="pcard-desc">${typeof glossarize === 'function' ? glossarize(p1.x || '') : esc(p1.x || '')}</div>
           </div>
         </div>
       </div>
 
       <details class="kit-ref">
-        <summary>Full Live Kit Reference — Attack, Ability Bands, Passive &amp; Personal Hero Quest</summary>
+        <summary>Full v0.23 Kit Reference — Attack, Class Keywords, Ability Bands &amp; Opt-In Hero Quest</summary>
         <div class="kit-body">
-          <p style="margin:0 0 6px"><b>Basic Attack — ${esc(h.atk.n)}:</b> ${h.atk.d[0]}d${h.atk.d[1]}${h.atk.flat ? ' + ' + h.atk.flat : ''} ${esc(h.atk.ty)} (${h.atk.iv}s base interval).</p>
-          <p style="margin:0 0 6px"><b>Passive — ${esc(h.passive.n)}:</b> ${typeof glossarize === 'function' ? glossarize(h.passive.x) : esc(h.passive.x)}</p>
+          <p style="margin:0 0 6px"><b>Basic Attack — ${esc(h.atk.n)}:</b> ${atkSummary}.</p>
+          ${ckwNotes}
+          ${passiveLine}
           <p style="margin:0 0 4px"><b>Ability — ${esc(h.abil.n)}:</b> ${typeof glossarize === 'function' ? glossarize(h.abil.one) : esc(h.abil.one)}</p>
           <ul class="kit-bands">
             <li><b>Low:</b> ${esc(h.abil.b[0])}</li>
@@ -902,7 +920,7 @@
             <li><b>High:</b> ${esc(h.abil.b[2])}</li>
             <li><b>Nat 20:</b> ${esc(h.abil.b[3])}</li>
           </ul>
-          ${h.quest ? `<p style="margin:0"><b>Personal Quest — ${esc(h.quest.n)}:</b> ${esc(h.quest.goal)} → <i>${esc(h.quest.reward)}</i></p>` : ''}
+          ${h.quest ? `<p style="margin:0"><b>Opt-In Quest (Quest Board ❖) — ${esc(h.quest.rewardName)}:</b> ${esc(h.quest.label)} → <i>${esc(h.quest.rewardDesc)}</i></p>` : ''}
         </div>
       </details>
     `;
@@ -1032,10 +1050,11 @@
       const obj = ITEMS[it.key];
       if (!obj) return false;
       if (state.itemRarity !== 'all' && String(it.r) !== state.itemRarity) return false;
-      if (state.itemKwOnly === 'kw' && !(it.kwHooks && it.kwHooks.length)) return false;
-      if (state.itemKwOnly === 'core' && it.kwHooks && it.kwHooks.length) return false;
+      if (state.itemKwOnly === 'kw' && it.r !== 5) return false;
+      if (state.itemKwOnly === 'core' && it.r === 5) return false;
       if (q) {
-        const hay = [it.key, it.name, (it.kwHooks || []).map(kwLabel).join(' '), obj.one || obj.x || '', (it.topCarriers || []).map(c => c.name).join(' ')].join(' ').toLowerCase();
+        const txt = typeof itemText === 'function' ? itemText(it.key) : (obj.one || obj.x || '');
+        const hay = [it.key, it.name, obj.cls || '', (it.kwHooks || []).map(kwLabel).join(' '), txt, (it.topCarriers || []).map(c => c.name).join(' ')].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -1053,9 +1072,9 @@
       <thead>
         <tr>
           <th>Item</th>
-          <th>Rarity / Cost</th>
-          <th>Keyword Hooks</th>
-          <th>Effect</th>
+          <th>Tier / Cost</th>
+          <th>Class / Keyword</th>
+          <th>Stats &amp; Effect</th>
           <th>Best Lift</th>
           <th>Val / Gold</th>
           <th>Top Live Carriers</th>
@@ -1065,15 +1084,19 @@
         ${list.map(it => {
           const obj = ITEMS[it.key] || {};
           const svg = typeof itemIcon === 'function' ? itemIcon(it.key, 32) : '';
+          const txt = typeof itemText === 'function' ? itemText(it.key) : (obj.one || obj.x || '');
           const carriers = (it.topCarriers || []).slice(0, 3).map(c =>
             `<span class="comp-chip" data-jump="${c.hero}"><img src="${heroImgSrc(c.hero)}" alt="" />${esc(c.name)}</span>`
           ).join(' ');
+          const tagHtml = obj.cls
+            ? `<span class="pill st-rebal">${esc(obj.cls)} Only</span> ` + (it.kwHooks || []).map(kw => `<span class="kw-pill">${esc(kwLabel(kw))}</span>`).join(' ')
+            : ((it.kwHooks || []).length ? it.kwHooks.map(kw => `<span class="kw-pill">${esc(kwLabel(kw))}</span>`).join(' ') : '<span class="mute">Universal</span>');
           return `
             <tr>
               <td><div class="td-hero">${svg}<b>${esc(it.name)}</b></div></td>
               <td>${esc(RARITY_NAMES[it.r] || '')} · <b>${it.price}g</b></td>
-              <td>${(it.kwHooks || []).length ? it.kwHooks.map(kw => `<span class="kw-pill">${esc(kwLabel(kw))}</span>`).join(' ') : '<span class="mute">Universal</span>'}</td>
-              <td style="max-width:340px;font-family:'EB Garamond',Georgia,serif;font-size:.94rem">${typeof glossarize === 'function' ? glossarize(obj.one || obj.x || '') : esc(obj.one || obj.x || '')}</td>
+              <td>${tagHtml}</td>
+              <td style="max-width:360px;font-family:'EB Garamond',Georgia,serif;font-size:.94rem">${typeof glossarize === 'function' ? glossarize(txt) : esc(txt)}</td>
               <td>${fmtDelta((it.bestDelta || 0) * 100)}</td>
               <td><b>${((it.valPerGold || 0) * 100).toFixed(1)}</b>/g</td>
               <td><div style="display:flex;gap:4px;flex-wrap:wrap">${carriers || '<span class="mute">—</span>'}</div></td>
@@ -1089,11 +1112,11 @@
     $('runBotTable').innerHTML = `
       <thead>
         <tr>
-          <th>Player Profile (25 Runs Each)</th>
-          <th>Pre-Patch WR</th>
-          <th>Live WR</th>
-          <th>Δ WR</th>
-          <th>Live Piggy Break</th>
+          <th>Player Persona</th>
+          <th>v0.23 Target</th>
+          <th>3-Act WR</th>
+          <th>Act 1 / Act 2</th>
+          <th>Piggy Break</th>
           <th>Avg Gold</th>
         </tr>
       </thead>
@@ -1101,9 +1124,9 @@
         ${bots.map(b => `
           <tr>
             <td><b>${esc(b.label)}</b></td>
-            <td class="mute">${b.beforeWR}%</td>
+            <td class="mute">${esc(b.target || '—')}</td>
             <td><b>${b.liveWR}%</b></td>
-            <td>${fmtDelta(b.liveWR - b.beforeWR, '%')}</td>
+            <td class="mute">${b.act1Clear ?? '—'}% / ${b.act2Clear ?? '—'}%</td>
             <td>${b.piggyBreak}%</td>
             <td>${b.avgGold}g</td>
           </tr>
@@ -1111,38 +1134,83 @@
       </tbody>
     `;
 
+    const bosses = META.bosses || [];
+    $('bossStatTable').innerHTML = `
+      <thead>
+        <tr>
+          <th>Act</th>
+          <th>Rotating Act Boss</th>
+          <th>Player Wins</th>
+          <th>Win Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${bosses.map(b => {
+          const enc = typeof ENC !== 'undefined' && ENC[b.key];
+          const bName = enc ? enc.n : b.key;
+          return `
+            <tr>
+              <td><b>Act ${b.act}</b></td>
+              <td><b>${esc(bName)}</b></td>
+              <td class="mute">${b.won} / ${b.fought}</td>
+              <td><b>${b.winRate.toFixed(1)}%</b></td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    `;
+
     // Role & Pack live averages
     const roles = ['Tank', 'Damage', 'Support'].map(r => {
-      const hs = HERO_ORDER.filter(k => H[k].role === r).map(k => META.heroes[k]);
-      const avgSc = hs.reduce((a, x) => a + x.avgScore, 0) / hs.length;
-      const avgWR = hs.reduce((a, x) => a + x.avgWR, 0) / hs.length;
-      const avgD = hs.reduce((a, x) => a + (x.scoreDelta || 0), 0) / hs.length;
-      return { r, n: hs.length, avgSc, avgWR, avgD };
+      const hs = HERO_ORDER.filter(k => H[k].role === r).map(k => META.heroes[k]).filter(Boolean);
+      const avgSc = hs.reduce((a, x) => a + x.avgScore, 0) / Math.max(1, hs.length);
+      const avgWR = hs.reduce((a, x) => a + x.avgWR, 0) / Math.max(1, hs.length);
+      return { r, n: hs.length, avgSc, avgWR };
     });
     const packs = PACK_ORDER.map((pk, idx) => {
-      const hs = PACKS[pk].heroes.map(k => META.heroes[k]);
-      const avgSc = hs.reduce((a, x) => a + x.avgScore, 0) / hs.length;
-      const avgWR = hs.reduce((a, x) => a + x.avgWR, 0) / hs.length;
+      const hs = PACKS[pk].heroes.map(k => META.heroes[k]).filter(Boolean);
+      const avgSc = hs.reduce((a, x) => a + x.avgScore, 0) / Math.max(1, hs.length);
+      const avgWR = hs.reduce((a, x) => a + x.avgWR, 0) / Math.max(1, hs.length);
       return { num: idx + 1, name: PACKS[pk].n, avgSc, avgWR };
     });
 
     $('rolePackSummary').innerHTML = `
       <div class="tbl-wrap" style="border:1px solid var(--line);box-shadow:none;margin-bottom:12px">
         <table class="stat-tbl">
-          <thead><tr><th>Role</th><th>Heroes</th><th>Avg Live Score</th><th>Δ vs v0.22</th><th>Avg WR</th></tr></thead>
+          <thead><tr><th>Role</th><th>Heroes</th><th>Avg Score</th><th>Avg WR</th></tr></thead>
           <tbody>
-            ${roles.map(x => `<tr><td><span class="pill role-${x.r}">${x.r}</span></td><td>${x.n}</td><td><b>${x.avgSc.toFixed(1)}</b></td><td>${fmtDelta(x.avgD)}</td><td>${x.avgWR.toFixed(1)}%</td></tr>`).join('')}
+            ${roles.map(x => `<tr><td><span class="pill role-${x.r}">${x.r}</span></td><td>${x.n}</td><td><b>${x.avgSc.toFixed(1)}</b></td><td>${x.avgWR.toFixed(1)}%</td></tr>`).join('')}
           </tbody>
         </table>
       </div>
       <div class="tbl-wrap" style="border:1px solid var(--line);box-shadow:none">
         <table class="stat-tbl">
-          <thead><tr><th>Hero Pack</th><th>Avg Live Score</th><th>Avg Live WR</th></tr></thead>
+          <thead><tr><th>Hero Pack</th><th>Avg Score</th><th>Avg WR</th></tr></thead>
           <tbody>
             ${packs.map(p => `<tr><td><b>Pack ${p.num} · ${esc(p.name)}</b></td><td><b>${p.avgSc.toFixed(1)}</b></td><td>${p.avgWR.toFixed(1)}%</td></tr>`).join('')}
           </tbody>
         </table>
       </div>
+    `;
+
+    // 9 Epic Boons & 12 Multiclass Shrines reference
+    const boonRows = (typeof EPIC_BOON_KEYS !== 'undefined' ? EPIC_BOON_KEYS : []).map(bk => {
+      const b0 = EPIC_BOONS[bk];
+      return `<li><b>${esc(b0.n)}:</b> ${esc(b0.x)}</li>`;
+    }).join('');
+    const mcRows = (typeof MULTICLASS_KEYS !== 'undefined' ? MULTICLASS_KEYS : []).map(mk => {
+      const m0 = MULTICLASS[mk];
+      return `<li><b>${esc(m0.node)} (${esc(m0.cls)}):</b> ${esc(m0.x)}</li>`;
+    }).join('');
+    $('boonsMcBox').innerHTML = `
+      <details class="kit-ref" open style="margin-bottom:10px">
+        <summary>★ 9 Tier IV Universal Epic Boons (Pick 1 of 3)</summary>
+        <ul class="change-list" style="margin-top:8px;font-size:.88rem">${boonRows}</ul>
+      </details>
+      <details class="kit-ref">
+        <summary>✧ 12 Single-Class Named Multiclass Shrines</summary>
+        <ul class="change-list" style="margin-top:8px;font-size:.88rem">${mcRows}</ul>
+      </details>
     `;
 
     $('compGrid').innerHTML = (META.comps || []).map(c => `
@@ -1205,7 +1273,7 @@
   // Init
   if (typeof glossaryInit === 'function') glossaryInit();
   if (META.generatedAt) {
-    $('metaSubline').textContent = `Basements & Basilisks · v0.22 Live Balance Build · 24 Heroes · 46 Items · Sim Verified ${META.generatedAt}`;
+    $('metaSubline').textContent = `Basements & Basilisks · v0.23 Live Build · 24 Reworked Heroes · 82 Canonical D&D Items · 3 Acts · 10 Bosses · Sim Verified ${META.generatedAt}`;
   }
   const initialList = filteredHeroes();
   if (initialList.length) state.selectedHero = initialList[0].key;
