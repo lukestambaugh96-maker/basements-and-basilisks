@@ -276,7 +276,7 @@ function mkHero(cfg, side = 'P') {
   return u;
 }
 
-const ESC = { hp: 2.36, dmg: 1.66 };
+const ESC = { hp: 2.24, dmg: 1.58 };
 function mkEnemy(k, c, r, tier, enc) {
   const d = E[k];
   const es = (enc && enc.sc) || {};
@@ -915,11 +915,12 @@ function bonusFor(src, o) {
 }
 
 function mitigate(b, src, t, amt, o) {
-  if (isRadiant(o) || o.dot) return amt;
+  if (isRadiant(o)) return amt;
   if (src && src.boon === 'irresistible_offense') return amt;
-  let base = o.kind === 'magic' ? curSR(b, t) : curAC(b, t);
-  let pen = (o.pen || 0) + (src ? (o.kind === 'magic' ? src.spen : src.pen) : 0);
-  if (src && o.kind !== 'magic' && src.it && src.it.markPenPct && t.st.mark) pen += Math.round(base * src.it.markPenPct);
+  const isMag = o.kind === 'magic' || o.dot;
+  let base = o.dot ? curSR(b, t) * 0.5 : (o.kind === 'magic' ? curSR(b, t) : curAC(b, t));
+  let pen = (o.pen || 0) + (src ? (isMag ? src.spen : src.pen) : 0);
+  if (src && !isMag && src.it && src.it.markPenPct && t.st.mark) pen += Math.round(base * src.it.markPenPct);
   if (pen > 0) base = Math.max(Math.min(base, 6), base - pen);
   base = Math.max(5, base);
   const k3 = MITIGATE_K * MITIGATE_K * MITIGATE_K;
@@ -1030,8 +1031,8 @@ function hit(b, src, t, amt, o = {}) {
     raw *= mul;
   }
 
-  if (o.dot && o.ty === 'poison' && t.st.root > 0 && alive(b, 'P').some(x => x.f.overgrowth)) raw *= 2;
-  if (o.dot && o.ty === 'fire' && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.f.finePrint)) raw *= 2;
+  if (o.dot && o.ty === 'poison' && t.st.root > 0 && alive(b, 'P').some(x => x.f.overgrowth)) raw *= 1.5;
+  if (o.dot && o.ty === 'fire' && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.f.finePrint)) raw *= 1.5;
 
   let dmg = Math.max(amt > 0 ? 1 : 0, Math.round(mitigate(b, src, t, raw, o)));
 
@@ -1310,7 +1311,7 @@ function applyElement(b, src, t, el, dealt, o) {
   if (!el || !t.alive) return;
   const s = t.st;
   if (el === 'fire') {
-    s.burn += dealt * .55;
+    s.burn += dealt * .30;
     s.burnT = s.burnT || .5;
     if (src) s.burnBy = src;
     if (src && src.key === 'cinder') src.stats.burnCredit = (src.stats.burnCredit || 0) + 1;
@@ -2366,7 +2367,7 @@ function tick(b, dt) {
     if (u.f.enrage && b.time >= (u._enr || (u._enr = u.f.enrage))) { u._enr += u.f.enrage; u.dm *= 1.15; status(b, u, 'ENRAGED', '#ff9c94'); }
 
     // Burn ticks (every 0.5s) — feeds Cinder Spec 1 Draconic Surge!
-    if (s.burn >= .5) {
+    if (s.burn >= 1) {
       s.burnT -= dt;
       if (s.burnT <= 0) {
         s.burnT = .5;
@@ -2385,16 +2386,21 @@ function tick(b, dt) {
       }
     } else s.burn = 0;
 
-    // Poison ticks (steady, never fades)
-    if (s.poison > 0) {
+    // Poison ticks (every 0.5s with gentle -12%/s decay so stacks ramp instead of scaling infinitely)
+    if (s.poison >= .25) {
       s.poisonAcc += s.poison * dt * Math.max(.3, 1 - .1 * Math.max(0, u.con));
-      if (s.poisonAcc >= 1) {
-        const v = Math.floor(s.poisonAcc);
-        s.poisonAcc -= v;
-        hit(b, s.poisonBy || null, u, v, { dot: 1, ty: 'poison' });
-        if (!u.alive) continue;
+      s.poison *= Math.pow(.88, dt);
+      s.poisonT = (s.poisonT || .5) - dt;
+      if (s.poisonT <= 0) {
+        s.poisonT = .5;
+        if (s.poisonAcc >= 1) {
+          const v = Math.floor(s.poisonAcc);
+          s.poisonAcc -= v;
+          hit(b, s.poisonBy || null, u, v, { dot: 1, ty: 'poison' });
+          if (!u.alive) continue;
+        }
       }
-    }
+    } else { s.poison = 0; s.poisonAcc = 0; s.poisonT = 0; }
 
     // Cleric Channel Divinity auto-triggers (Bram Preserve Life <45%, Jamison Balm of Peace <50%)
     if (u.side === 'P' && !u._cdUsed && u.st.stun <= 0) {

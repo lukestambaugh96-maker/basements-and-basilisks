@@ -1069,7 +1069,7 @@ const ENC = {
   },
   asmodeus: {
     n: 'Asmodeus, Lord of the Ninth', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .88, dmg: .74 }, note: 'Final Boss: Twin Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
+    q: 'Act 3 Final Boss', sc: { hp: .96, dmg: .84 }, note: 'Final Boss: Twin Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['spined_devil', 2, 1], ['spined_devil', 7, 1]]
   },

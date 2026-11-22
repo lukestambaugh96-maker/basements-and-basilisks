@@ -1982,7 +1982,7 @@ const ENC = {
   },
   asmodeus: {
     n: 'Asmodeus, Lord of the Ninth', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .88, dmg: .74 }, note: 'Final Boss: Twin Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
+    q: 'Act 3 Final Boss', sc: { hp: .96, dmg: .84 }, note: 'Final Boss: Twin Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['spined_devil', 2, 1], ['spined_devil', 7, 1]]
   },
@@ -2115,7 +2115,7 @@ const TAGDEF = {
   ambush:  { n: 'Ambush',       c: '#3a3a3a', x: 'Uses Stealth or sudden backline burst.' },
   marked:  { n: 'Marked',       c: '#3f7a2c', x: 'Stacking Hunter’s Mark adding +1d4 bonus damage to every hit.' },
   control: { n: 'Control',      c: '#8a6a1c', x: 'Roots, Stuns, Staggers, or Taunts enemies.' },
-  poison:  { n: 'Poison',       c: '#4a8a2c', x: 'Stacking damage over time that never fades.' },
+  poison:  { n: 'Poison',       c: '#4a8a2c', x: 'Stacking damage over time that slowly fades and pierces half SR.' },
   d20:     { n: 'd20',          c: '#a83a7a', x: 'Manipulates ability d20 rolls, Inspiration dice, or Nat 20s.' },
   burn:    { n: 'Burn',         c: '#c4441c', x: 'Fire damage over time that can be fed and detonated.' },
   rage:    { n: 'Rage',         c: '#a82a1c', x: 'Barbarian Rage state driving durability, speed, or immortality.' },
@@ -2616,7 +2616,7 @@ hero('juniper', {
     }
   },
   paths: [
-    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Entangle applies Poison; Rooted foes take double Poison damage.', f: { overgrowth: 1 } },
+    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Entangle applies Poison; Rooted foes take +50% Poison damage.', f: { overgrowth: 1 } },
     { k: 'circle_land', n: 'Circle of the Land', attr: 'wis', tags: ['control', 'heal'], x: 'Whenever Juniper Roots a foe, heal the lowest-HP ally.', f: { circleLand: 1 } }
   ],
   quest: {
@@ -2902,7 +2902,7 @@ hero('nettle', {
     }
   },
   paths: [
-    { k: 'fine_print', n: 'Fine Print', attr: 'cha', tags: ['hex', 'burn'], x: 'Hexed foes take double Burn damage.', f: { finePrint: 1 } },
+    { k: 'fine_print', n: 'Fine Print', attr: 'cha', tags: ['hex', 'burn'], x: 'Hexed foes take +50% Burn damage.', f: { finePrint: 1 } },
     { k: 'dark_bargain', n: 'Dark One’s Blessing', attr: 'cha', tags: ['hex', 'ward'], x: 'Killing a Hexed foe grants the killer a Ward.', f: { darkBargain: 1 } }
   ],
   quest: {
@@ -4536,7 +4536,7 @@ function mkHero(cfg, side = 'P') {
   return u;
 }
 
-const ESC = { hp: 2.36, dmg: 1.66 };
+const ESC = { hp: 2.24, dmg: 1.58 };
 function mkEnemy(k, c, r, tier, enc) {
   const d = E[k];
   const es = (enc && enc.sc) || {};
@@ -5175,11 +5175,12 @@ function bonusFor(src, o) {
 }
 
 function mitigate(b, src, t, amt, o) {
-  if (isRadiant(o) || o.dot) return amt;
+  if (isRadiant(o)) return amt;
   if (src && src.boon === 'irresistible_offense') return amt;
-  let base = o.kind === 'magic' ? curSR(b, t) : curAC(b, t);
-  let pen = (o.pen || 0) + (src ? (o.kind === 'magic' ? src.spen : src.pen) : 0);
-  if (src && o.kind !== 'magic' && src.it && src.it.markPenPct && t.st.mark) pen += Math.round(base * src.it.markPenPct);
+  const isMag = o.kind === 'magic' || o.dot;
+  let base = o.dot ? curSR(b, t) * 0.5 : (o.kind === 'magic' ? curSR(b, t) : curAC(b, t));
+  let pen = (o.pen || 0) + (src ? (isMag ? src.spen : src.pen) : 0);
+  if (src && !isMag && src.it && src.it.markPenPct && t.st.mark) pen += Math.round(base * src.it.markPenPct);
   if (pen > 0) base = Math.max(Math.min(base, 6), base - pen);
   base = Math.max(5, base);
   const k3 = MITIGATE_K * MITIGATE_K * MITIGATE_K;
@@ -5290,8 +5291,8 @@ function hit(b, src, t, amt, o = {}) {
     raw *= mul;
   }
 
-  if (o.dot && o.ty === 'poison' && t.st.root > 0 && alive(b, 'P').some(x => x.f.overgrowth)) raw *= 2;
-  if (o.dot && o.ty === 'fire' && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.f.finePrint)) raw *= 2;
+  if (o.dot && o.ty === 'poison' && t.st.root > 0 && alive(b, 'P').some(x => x.f.overgrowth)) raw *= 1.5;
+  if (o.dot && o.ty === 'fire' && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.f.finePrint)) raw *= 1.5;
 
   let dmg = Math.max(amt > 0 ? 1 : 0, Math.round(mitigate(b, src, t, raw, o)));
 
@@ -5570,7 +5571,7 @@ function applyElement(b, src, t, el, dealt, o) {
   if (!el || !t.alive) return;
   const s = t.st;
   if (el === 'fire') {
-    s.burn += dealt * .55;
+    s.burn += dealt * .30;
     s.burnT = s.burnT || .5;
     if (src) s.burnBy = src;
     if (src && src.key === 'cinder') src.stats.burnCredit = (src.stats.burnCredit || 0) + 1;
@@ -6626,7 +6627,7 @@ function tick(b, dt) {
     if (u.f.enrage && b.time >= (u._enr || (u._enr = u.f.enrage))) { u._enr += u.f.enrage; u.dm *= 1.15; status(b, u, 'ENRAGED', '#ff9c94'); }
 
     // Burn ticks (every 0.5s) — feeds Cinder Spec 1 Draconic Surge!
-    if (s.burn >= .5) {
+    if (s.burn >= 1) {
       s.burnT -= dt;
       if (s.burnT <= 0) {
         s.burnT = .5;
@@ -6645,16 +6646,21 @@ function tick(b, dt) {
       }
     } else s.burn = 0;
 
-    // Poison ticks (steady, never fades)
-    if (s.poison > 0) {
+    // Poison ticks (every 0.5s with gentle -12%/s decay so stacks ramp instead of scaling infinitely)
+    if (s.poison >= .25) {
       s.poisonAcc += s.poison * dt * Math.max(.3, 1 - .1 * Math.max(0, u.con));
-      if (s.poisonAcc >= 1) {
-        const v = Math.floor(s.poisonAcc);
-        s.poisonAcc -= v;
-        hit(b, s.poisonBy || null, u, v, { dot: 1, ty: 'poison' });
-        if (!u.alive) continue;
+      s.poison *= Math.pow(.88, dt);
+      s.poisonT = (s.poisonT || .5) - dt;
+      if (s.poisonT <= 0) {
+        s.poisonT = .5;
+        if (s.poisonAcc >= 1) {
+          const v = Math.floor(s.poisonAcc);
+          s.poisonAcc -= v;
+          hit(b, s.poisonBy || null, u, v, { dot: 1, ty: 'poison' });
+          if (!u.alive) continue;
+        }
       }
-    }
+    } else { s.poison = 0; s.poisonAcc = 0; s.poisonT = 0; }
 
     // Cleric Channel Divinity auto-triggers (Bram Preserve Life <45%, Jamison Balm of Peace <50%)
     if (u.side === 'P' && !u._cdUsed && u.st.stun <= 0) {
@@ -6889,8 +6895,8 @@ const HAZARD_KEYS = Object.keys(HAZARDS);
 
 const ADV = {
   acts: 3, rows: 9, bossRow: 8,
-  depth: (act, r) => [1, 5.9, 10.0][act - 1] + r * [.62, .52, .50][act - 1],
-  bossDepth: act => [6.2, 10.4, 14.0][act - 1],
+  depth: (act, r) => [1, 5.7, 9.0][act - 1] + r * [.62, .50, .42][act - 1],
+  bossDepth: act => [6.2, 10.0, 12.2][act - 1],
   eliteDepth: 0.95, eliteK: 1.18, eliteGold: 5,
   minibossDepth: 1.10, minibossK: 1.18,
   startGold: 8
@@ -8245,8 +8251,8 @@ const GLOSS = [
   { k: "radiant", n: "Radiant damage", re: /\bRadiant\b/, d: "Rare sacred damage that ignores both AC and SR and stops undead from rising." },
   { k: "ward", n: "Ward", re: /\bWards?\b/, d: "A temporary shield of extra HP. Damage and Necrosis hit Ward before health." },
   { k: "necrosis", n: "Necrosis", re: /\bnecrosis\b/i, d: "Grows from the left edge of the health bar as a kill threshold. Cannot be healed; a unit executes immediately when HP drops to the Necrosis line." },
-  { k: "burn", n: "Burn", re: /\b(Burn|burns|burning)\b/, d: "Fire damage over time that ticks every 0.5s and fades unless fed or detonated." },
-  { k: "poison", n: "Poison", re: /\bpoison(ed|s)?\b/i, d: "Steady damage over time that stacks and never fades. CON resists it." },
+  { k: "burn", n: "Burn", re: /\b(Burn|burns|burning)\b/, d: "Fire damage over time (pierces half SR) that ticks every 0.5s and fades unless fed or detonated." },
+  { k: "poison", n: "Poison", re: /\bpoison(ed|s)?\b/i, d: "Stacking damage over time (pierces half SR) that ticks every 0.5s and slowly fades (-12%/s). CON resists it." },
   { k: "taunt", n: "Taunt", re: /\btaunt(s|ed|ing)?\b/i, d: "Forces affected foes to attack this hero." },
   { k: "stun", n: "Stun", re: /\bstun(s|ned)?\b/i, d: "Cannot move, attack, or charge abilities." },
   { k: "root", n: "Root", re: /\broot(s|ed)?\b/i, d: "Cannot move, but can still attack and cast." },

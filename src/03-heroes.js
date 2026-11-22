@@ -110,7 +110,7 @@ const TAGDEF = {
   ambush:  { n: 'Ambush',       c: '#3a3a3a', x: 'Uses Stealth or sudden backline burst.' },
   marked:  { n: 'Marked',       c: '#3f7a2c', x: 'Stacking Hunter’s Mark adding +1d4 bonus damage to every hit.' },
   control: { n: 'Control',      c: '#8a6a1c', x: 'Roots, Stuns, Staggers, or Taunts enemies.' },
-  poison:  { n: 'Poison',       c: '#4a8a2c', x: 'Stacking damage over time that never fades.' },
+  poison:  { n: 'Poison',       c: '#4a8a2c', x: 'Stacking damage over time that slowly fades and pierces half SR.' },
   d20:     { n: 'd20',          c: '#a83a7a', x: 'Manipulates ability d20 rolls, Inspiration dice, or Nat 20s.' },
   burn:    { n: 'Burn',         c: '#c4441c', x: 'Fire damage over time that can be fed and detonated.' },
   rage:    { n: 'Rage',         c: '#a82a1c', x: 'Barbarian Rage state driving durability, speed, or immortality.' },
@@ -611,7 +611,7 @@ hero('juniper', {
     }
   },
   paths: [
-    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Entangle applies Poison; Rooted foes take double Poison damage.', f: { overgrowth: 1 } },
+    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Entangle applies Poison; Rooted foes take +50% Poison damage.', f: { overgrowth: 1 } },
     { k: 'circle_land', n: 'Circle of the Land', attr: 'wis', tags: ['control', 'heal'], x: 'Whenever Juniper Roots a foe, heal the lowest-HP ally.', f: { circleLand: 1 } }
   ],
   quest: {
@@ -897,7 +897,7 @@ hero('nettle', {
     }
   },
   paths: [
-    { k: 'fine_print', n: 'Fine Print', attr: 'cha', tags: ['hex', 'burn'], x: 'Hexed foes take double Burn damage.', f: { finePrint: 1 } },
+    { k: 'fine_print', n: 'Fine Print', attr: 'cha', tags: ['hex', 'burn'], x: 'Hexed foes take +50% Burn damage.', f: { finePrint: 1 } },
     { k: 'dark_bargain', n: 'Dark One’s Blessing', attr: 'cha', tags: ['hex', 'ward'], x: 'Killing a Hexed foe grants the killer a Ward.', f: { darkBargain: 1 } }
   ],
   quest: {

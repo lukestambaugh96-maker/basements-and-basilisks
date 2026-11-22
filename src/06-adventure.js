@@ -127,8 +127,8 @@ const HAZARD_KEYS = Object.keys(HAZARDS);
 
 const ADV = {
   acts: 3, rows: 9, bossRow: 8,
-  depth: (act, r) => [1, 5.9, 10.0][act - 1] + r * [.62, .52, .50][act - 1],
-  bossDepth: act => [6.2, 10.4, 14.0][act - 1],
+  depth: (act, r) => [1, 5.7, 9.0][act - 1] + r * [.62, .50, .42][act - 1],
+  bossDepth: act => [6.2, 10.0, 12.2][act - 1],
   eliteDepth: 0.95, eliteK: 1.18, eliteGold: 5,
   minibossDepth: 1.10, minibossK: 1.18,
   startGold: 8
