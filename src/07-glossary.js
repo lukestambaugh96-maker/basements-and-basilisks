@@ -1,12 +1,12 @@
-/* ================= 0.22 KEYWORD GLOSSARY, STAT ICONS & ITEM ICONS ================= */
+/* ================= 0.23 KEYWORD GLOSSARY, STAT ICONS & ITEM ICONS ================= */
 const GLOSS = [
   { k: "nat20", n: "Natural 20", re: /\bnatural 20s?\b|\bNat 20s?\b/i, d: "A board-bending critical ability roll that breaks action economy or empowers the whole party." },
   { k: "fizzle", n: "Fizzle", re: /\bfizzles?\b/i, d: "An ability roll of 1. Nothing happens, and half the Charge comes back. WIS raises your minimum natural roll floor to eliminate fizzles." },
   { k: "band", n: "Low, Mid and High", re: /\b(Low|Mid|High) (band|rolls?)\b/, d: "Low/Mid give the baseline effect; High triggers the hero’s signature state change or recursion firework; Nat 20 is the tabletop cheer moment." },
   { k: "advantage", n: "Advantage", re: /\bAdvantage\b/, d: "Roll two d20s for the next ability roll and keep the higher result." },
-  { k: "alert", n: "Alert", re: /\bAlert\b/, d: "Dodges the next attack directed at this hero (ignored if Exposed)." },
+  { k: "evasion", n: "Evasion", re: /\bEvasion\b|\bevades?\b|\bevading\b/i, d: "Universal multiplicative % chance to take 0 damage from enemy basic attacks (spells and abilities still connect; Exposed suppresses Evasion)." },
   { k: "ability", n: "Ability Charge", re: /\bCharg(e|es|ed|ing)\b/, d: "Abilities charge over time and from triggers, sped up by INT. No hero ability can fire more than once per second." },
-  { k: "holy", n: "Holy damage", re: /\bHoly\b/, d: "Radiant damage that ignores both AC and SR and stops undead from rising." },
+  { k: "radiant", n: "Radiant damage", re: /\bRadiant\b/, d: "Rare sacred damage that ignores both AC and SR and stops undead from rising." },
   { k: "ward", n: "Ward", re: /\bWards?\b/, d: "A temporary shield of extra HP. Damage and Necrosis hit Ward before health." },
   { k: "necrosis", n: "Necrosis", re: /\bnecrosis\b/i, d: "Grows from the left edge of the health bar as a kill threshold. Cannot be healed; a unit executes immediately when HP drops to the Necrosis line." },
   { k: "burn", n: "Burn", re: /\b(Burn|burns|burning)\b/, d: "Fire damage over time that ticks every 0.5s and fades unless fed or detonated." },
@@ -15,10 +15,10 @@ const GLOSS = [
   { k: "stun", n: "Stun", re: /\bstun(s|ned)?\b/i, d: "Cannot move, attack, or charge abilities." },
   { k: "root", n: "Root", re: /\broot(s|ed)?\b/i, d: "Cannot move, but can still attack and cast." },
   { k: "staggered", n: "Staggered", re: /\bStagger(s|ed|ing)?\b/, d: "Attacks and moves 30% slower." },
-  { k: "exposed", n: "Exposed", re: /\bExposed\b/, d: "−2 AC and −2 SR, and cannot hide or dodge." },
+  { k: "exposed", n: "Exposed", re: /\bExposed\b/, d: "−2 AC and −2 SR, and suppresses Stealth and Evasion." },
   { k: "onhit", n: "On-hit", re: /\bon[- ]hit\b/i, d: "Effects that trigger on every strike or multi-arrow hit." },
-  { k: "AC", n: "AC (Armor Class)", re: /\bAC\b/, d: "Reduces physical damage: hit × 10 ÷ AC. Melee STR grants flat Armor Penetration." },
-  { k: "SR", n: "SR (Spell Resistance)", re: /\bSR\b/, d: "Reduces magic damage: hit × 10 ÷ SR. Raised by WIS." },
+  { k: "AC", n: "AC (Armor Class)", re: /\bAC\b/, d: "Cubed physical mitigation: DR = AC³ / (AC³ + 14³). AC 14 blocks 50%; AC 20 blocks 74.5%. Melee STR and Armor Pen reduce effective AC." },
+  { k: "SR", n: "SR (Spell Resistance)", re: /\bSR\b/, d: "Cubed magic mitigation: DR = SR³ / (SR³ + 14³). Raised by WIS; pierced by Spell Pen." },
   { k: "HP", n: "HP", re: /\bHP\b/, d: "Hit points, scaled linearly by CON and hero tier." },
   { k: "attr-str", n: "Strength (STR)", re: /\bStrength\b|\bSTR\b/, d: "Melee weapon damage + flat Armor Penetration (+1 AC ignored per STR). At +3, melee heroes Intercept chargers." },
   { k: "attr-dex", n: "Dexterity (DEX)", re: /\bDexterity\b|\bDEX\b/, d: "Linear Attack Speed (+6%/DEX for DEX weapons, +4%/DEX otherwise), DEX weapon damage, and +1 AC per point." },
@@ -27,33 +27,32 @@ const GLOSS = [
   { k: "attr-wis", n: "Wisdom (WIS)", re: /\bWisdom\b|\bWIS\b/, d: "+1 Spell Resistance per point and raises the minimum natural d20 roll floor (1 + WIS) for combo consistency." },
   { k: "attr-cha", n: "Charisma (CHA)", re: /\bCharisma\b|\bCHA\b/, d: "Commanding Presence: +8% potency and duration per point on buffs, debuffs, Inspiration, and Wards." },
   { k: "key-attr", n: "Key Attribute", re: /\bkey attribute\b/i, d: "Added to the hero’s ability d20 roll, shifts the High roll threshold, and scales ability/heal/Ward potency." },
-  { k: "tier2", n: "Tier II Path", re: /\bTier (II|2) (path|choice)s?\b/i, d: "Path 1 (Vertical) fuels the hero’s own firework; Path 2 (Splash) wires it into teammates. Retrain freely at Campfires." },
-  { k: "tier", n: "Tier", re: /\b[Tt]ier\b/, d: "Upgrading raises HP (×1.45) and damage/healing (×1.3), unlocks Tier II Paths, Tier III ASI (+2), and Tier IV payoffs." },
-  { k: "action_surge", n: "Action Surge (Fighter)", re: /\bAction Surges?\b/, d: "Fighter Class Keyword. Fires an immediate burst of extra action economy (bonus strike, follow-up, or refresh) when its condition is met." },
-  { k: "channel_divinity", n: "Channel Divinity (Cleric)", re: /\bChannel Divinity\b/, d: "Cleric Class Keyword. Once-per-fight signature divine miracle; can be reset by Nat 20s, items, or Cleric synergies." },
-  { k: "smite", n: "Smite (Paladin)", re: /\b(Divine |Verdant )?Smites?\b/, d: "Paladin Class Keyword. Empowers a strike or ability with a radiant or nature burst that triggers Smite synergies." },
-  { k: "aura", n: "Aura (Paladin)", re: /\bAuras?\b/, d: "Paladin Class Keyword. Persistent protective or empowering zone radiating to nearby allies." },
+  { k: "spec", n: "Tier II Specialization", re: /\bSpecializations?\b/i, d: "Chosen at Tier II: one clean rule that sharpens this hero’s engine or wires it into the party. Retrain freely at Campfires." },
+  { k: "boon", n: "Tier IV Epic Boon", re: /\bEpic Boons?\b/i, d: "Unlocked at Tier IV: pick 1 of 3 universal endgame boons drawn from a shared 9-card deck." },
+  { k: "multiclass", n: "Multiclass Dip", re: /\bMulticlass\b/i, d: "Single-class map shrines granting 1 hero a 1-line passive and extra Class Keyword tag (max 1 per hero)." },
+  { k: "curio", n: "Curio Merchant", re: /\bCurio Merchant\b/i, d: "Map node selling 3 Unique Class-Keyword items (5g) tailored to your party’s keywords." },
+  { k: "tier", n: "Tier", re: /\b[Tt]ier\b/, d: "Upgrading raises HP (×1.45) and damage/healing (×1.3), unlocks Tier II Specializations, Tier III ASI (+2), and Tier IV Epic Boons." },
+  { k: "action_surge", n: "Action Surge (Fighter)", re: /\bAction Surges?\b/, d: "Fighter Class Keyword. Fires an immediate burst of extra combat action when its trigger fires." },
+  { k: "channel_divinity", n: "Channel Divinity (Cleric)", re: /\bChannel Divinity\b/, d: "Cleric Class Keyword. Once-per-fight divine miracle; can be reset by Nat 20s or Cleric items." },
+  { k: "smite", n: "Smite (Paladin)", re: /\b(Divine |Verdant )?Smites?\b/, d: "Paladin Class Keyword. Empowers strikes with Radiant or Nature bursts." },
+  { k: "aura", n: "Aura (Paladin)", re: /\bAuras?\b/, d: "Paladin Class Keyword. Persistent protective or healing zone radiating to nearby allies." },
   { k: "arcane_recovery", n: "Arcane Recovery (Wizard)", re: /\bArcane Recovery\b/, d: "Wizard Class Keyword. Recovers ability Charge whenever this Wizard’s signature condition occurs." },
   { k: "rage", n: "Rage (Barbarian)", re: /\b(Bear |Zealot )?Rage\b/, d: "Barbarian Class Keyword. Fierce combat state driving durability, speed, or immortality." },
-  { k: "bardic_inspiration", n: "Bardic Inspiration (Bard)", re: /\b(Bardic )?Inspiration\b|\bInspired\b/, d: "Bard Class Keyword. Grants an ally a bonus d20 die or Advantage Mote that triggers effects when spent." },
-  { k: "wild_shape", n: "Wild Shape (Druid)", re: /\bWild Shape\b/, d: "Druid Class Keyword. Channels a primal beast form or living nature aspect to transform combat presence." },
-  { k: "hunters_mark", n: "Hunter’s Mark (Ranger)", re: /\bHunter’s Mark\b|\bMarked\b/, d: "Ranger Class Keyword. Designates a quarry for bonus WIS-scaled Ranger damage and team focus-fire payoffs." },
-  { k: "sneak_attack", n: "Sneak Attack (Rogue)", re: /\bSneak Attacks?\b/, d: "Rogue Class Keyword. Bonus precision damage against flanked, impaired, or ambushed foes." },
-  { k: "cunning_action", n: "Cunning Action (Rogue)", re: /\bCunning Action\b/, d: "Rogue Class Keyword. Agile tumble, Stealth, or trickery maneuver triggering ambush payoffs." },
-  { k: "ki_ability", n: "Ki Ability (Monk)", re: /\bKi Abilit(y|ies)\b|\bKi Strikes?\b/, d: "Monk Class Keyword (Payoff). Signature martial technique automatically fired whenever the Ki bar fills." },
-  { k: "ki", n: "Ki (Monk)", re: /\bKi\b/, d: "Monk Class Keyword (Resource). 4-pip bar filled by attacking and taking hits; fires a Ki Ability when full." },
-  { k: "sorcery_points", n: "Sorcery Points (Sorcerer)", re: /\bSorcery Points?\b/, d: "Sorcerer Class Keyword (Resource). 4-pip bar built by casts and elemental triggers; fires Metamagic when full." },
-  { k: "metamagic", n: "Metamagic (Sorcerer)", re: /\bMetamagic\b|\bTwins?\b/, d: "Sorcerer Class Keyword (Payoff). Spell-warping effect automatically fired when Sorcery Points fill." },
-  { k: "hex", n: "Hex (Warlock)", re: /\bHex(es|ed)?\b/, d: "Warlock Class Keyword. Curses a foe to take bonus necrotic damage on every hit; transfers on death." },
-  { k: "pact_boon", n: "Pact Boon (Warlock)", re: /\bPact Boons?\b/, d: "Warlock Class Keyword. Patron payoff triggered whenever a Hexed foe dies." },
+  { k: "bardic_inspiration", n: "Bardic Inspiration (Bard)", re: /\b(Bardic )?Inspiration\b|\bInspired\b|\bMote of Potential\b/, d: "Bard Class Keyword. Grants an ally a bonus d20 Inspiration Die or bounty Mote of Potential." },
+  { k: "wild_shape", n: "Wild Shape (Druid)", re: /\bWild Shape\b/, d: "Druid Class Keyword. Channels a primal beast form or living nature aspect." },
+  { k: "hunters_mark", n: "Hunter’s Mark (Ranger)", re: /\bHunter’s Mark\b|\bMarked\b/, d: "Ranger Class Keyword. Marked foes take +1d4 bonus damage from every hit (stacks)." },
+  { k: "sneak_attack", n: "Sneak Attack (Rogue)", re: /\bSneak Attacks?\b/, d: "Rogue Class Keyword. Bonus precision damage against flanked, poisoned, or ambushed foes (1/s)." },
+  { k: "ki", n: "Ki (Monk)", re: /\bKi\b/, d: "Monk Class Keyword. 4-pip bar filled by attacking and taking hits; fires an Open Hand Strike when full." },
+  { k: "metamagic", n: "Metamagic (Sorcerer)", re: /\bMetamagic\b|\bSorcery\b|\bTwinned\b/, d: "Sorcerer Class Keyword. 4-pip Sorcery bar filled by casts; fires a free Twinned Fireball when full." },
+  { k: "hex", n: "Hex (Warlock)", re: /\b(Infernal |Radiant )?Hex(es|ed)?\b/, d: "Warlock Class Keyword. Patron curse amplifying hits, attack speed, or fiery Hellfire explosions on death." },
   { k: "trig-struck", n: "Struck", re: /\bStruck\b/, d: "Gains Charge when taking damage." },
   { k: "trig-striking", n: "Striking", re: /\bStriking\b/, d: "Gains Charge each time an attack lands." },
   { k: "trig-watchful", n: "Watchful", re: /\bWatchful\b/, d: "Gains Charge when allies in range take damage or are healed." },
   { k: "melee", n: "Melee and Ranged", re: /\b(Melee|Ranged)\b/, d: "Melee heroes close in to fight; ranged heroes hold distance." },
   { k: "speed", n: "Speed", re: /\b\d+ ft\b/, d: "Movement speed in feet." },
-  { k: "regen", n: "Regeneration", re: /\bregenerat\w*\b/i, d: "Passive HP regained per second from CON." },
-  { k: "physical", n: "Physical damage", re: /\bphysical\b|\b(slashing|piercing|bludgeoning)\b/, d: "Reduced by AC (and pierced by melee STR)." },
-  { k: "magic", n: "Magic damage", re: /\bmagic\b/, d: "Reduced by SR." },
+  { k: "regen", n: "Regeneration", re: /\bregenerat\w*\b/i, d: "Passive HP regained per second from CON and items." },
+  { k: "physical", n: "Physical damage", re: /\bphysical\b|\b(slashing|piercing|bludgeoning)\b/, d: "Reduced by AC (and pierced by melee STR and Armor Pen)." },
+  { k: "magic", n: "Magic damage", re: /\bmagic\b/, d: "Reduced by SR (and pierced by Spell Pen)." },
   { k: "square", n: "Square", re: /\bsquares?\b/, d: "One tile on the 10×10 battle grid." }
 ];
 const GLOSS_BY = Object.fromEntries(GLOSS.map(g => [g.k, g]));
@@ -117,6 +116,7 @@ const ICONS={
  range:{n:'Range',kw:'square',p:'<circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2.6"/><circle cx="8" cy="8" r=".6" fill="currentColor"/>'},
  speed:{n:'Speed',kw:'speed',p:'<path d="M5 2.5h3v6l4 2v2.8H3.2V10z" fill="currentColor" fill-opacity=".18"/><path d="M1.5 6h2M1 8.5h2"/>'},
  regen:{n:'Regeneration',kw:'regen',p:'<path d="M8 2.2S4 7 4 9.6a4 4 0 0 0 8 0C12 7 8 2.2 8 2.2z" fill="currentColor" fill-opacity=".16"/><path d="M8 7.6v4M6 9.6h4"/>'},
+ evasion:{n:'Evasion',kw:'evasion',p:'<path d="M2.2 8.2c2.4-3.4 8-3.4 11.4 0-3.4 3.4-9 3.4-11.4 0z" fill="currentColor" fill-opacity=".14"/><path d="M5 5.4l6 5.4M11 5.4l-6 5.4"/>'},
 };
 function icon(k,size=16){const I=ICONS[k];if(!I)return'';return`<svg class="ico" width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${I.p}</svg>`}
 
@@ -161,6 +161,7 @@ const ITEM_GLYPHS={
  hammer:'<path d="M3 13.6l6.2-6.2"/><path d="M7 5.2l3.2-3.2 3.8 3.8-3.2 3.2z" class="f"/>',
  spear:'<path d="M2.6 13.4l8.8-8.8"/><path d="M10.2 3.6l3.6-1.4-1.4 3.6-1.6.4z" class="f"/><path d="M4.4 10.2l1.4 1.4"/>',
  scythe:'<path d="M4 14L10 2"/><path d="M10 2c3 0 4.6 2 4 4.6C12.6 5 11 4.6 9.2 5z" class="f"/>',
+ sickle:'<path d="M4 13.6l2.4-2.8"/><path d="M6.4 10.8C9.8 11.4 13 8.8 12.6 5.2 12.2 2.6 9.8 1.8 7 2.4c2.4.8 3.6 2.6 3.2 4.8-.3 1.8-1.8 3-3.8 3.6z" class="f"/>',
  bow:'<path d="M4.4 2.4c5.4 1.6 5.4 9.6 0 11.2"/><path d="M4.4 2.4v11.2M2.2 8h11"/><path d="M11.4 6.4L13.6 8l-2.2 1.6" class="f"/>',
  staff:'<path d="M3.8 14.2l7-9.4"/><circle cx="12" cy="3.6" r="2" class="f"/><path d="M9.6 2.2l-.8-.8M14.6 5.8l.8.6"/>',
  staff2:'<path d="M4 14.2l7-9.4"/><path d="M10.4 2.2h3v2.4h-3z" class="f"/><path d="M11.9 1v4.8M9.6 3.4h4.6"/>',
@@ -185,17 +186,21 @@ const ITEM_GLYPHS={
  vial:'<path d="M6.4 2.2h3.2M7 2.2v3.6L4 11.4c-.7 1.4.3 2.4 1.8 2.4h4.4c1.5 0 2.5-1 1.8-2.4L9 5.8V2.2"/><path d="M4.8 10h6.4l.8 1.4c.7 1.4-.3 2.4-1.8 2.4H5.8c-1.5 0-2.5-1-1.8-2.4z" class="f"/>',
  holy:'<circle cx="8" cy="8" r="2.6" class="f"/><path d="M8 1.6v2.2M8 12.2v2.2M1.6 8h2.2M12.2 8h2.2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M12.5 3.5L11 5M5 11l-1.5 1.5"/>',
  lute:'<circle cx="6.4" cy="10" r="3.6" class="f"/><circle cx="6.4" cy="10" r="1"/><path d="M8.9 7.5l4.4-4.4M12.2 2l2 2"/>',
+ horn:'<path d="M3 12.4C6 12 9.8 9.2 12.8 3.2c1 1.8.8 4.2-.6 6.2-1.8 2.6-5.2 4-9.2 3z" class="f"/><path d="M11 5.2l2.4 1.6"/>',
+ book:'<path d="M3.2 2.6h8.2c1 0 1.6.6 1.6 1.6v9.2H4.8c-1 0-1.6-.6-1.6-1.6z" class="f"/><path d="M4.8 2.6v10.8M6.6 5.6h4.2M6.6 8h4.2"/>',
+ goggles:'<circle cx="5.2" cy="8.4" r="2.6" class="f"/><circle cx="10.8" cy="8.4" r="2.6" class="f"/><path d="M7.8 8.4h.4M2.6 8.4H1.4M13.4 8.4h1.2"/>',
+ bag:'<path d="M5.6 4.4h4.8l2.6 7.4c.4 1.2-.5 2-1.8 2H4.8c-1.3 0-2.2-.8-1.8-2z" class="f"/><path d="M5.6 4.4L4.4 2.4h7.2l-1.2 2M5.6 6.4h4.8"/>',
  quiver:'<path d="M5 5.4l4.6 8.8 2.4-1.2-4.6-8.8z" class="f"/><path d="M6 5L4 1.6M7.2 4.4l-.6-3.2M8.4 3.8L9.2.8"/>',
  bracers:'<path d="M3.6 5.2l7.4-1.6 1.6 7.6-7.4 1.6z" class="f"/><path d="M5.4 7.2l6-1.3M6 10l6-1.3"/>',
  scarab:'<ellipse cx="8" cy="9.2" rx="3.6" ry="4.4" class="f"/><circle cx="8" cy="3.8" r="1.5"/><path d="M8 5.2v8.4M4.4 7.6l-2-1M11.6 7.6l2-1M4.4 10.8l-2 1M11.6 10.8l2 1"/>',
  bands:'<circle cx="6" cy="8" r="3.6" class="f"/><circle cx="10" cy="8" r="3.6"/>',
 };
-const EL_COL={fire:'#c4501b',cold:'#2f86b4',lightning:'#6a4fc4',thunder:'#4b3a8a',acid:'#6f9a1f',poison:'#2f7d3a',nec:'#24321c',holy:'#b8923a',force:'#5a6a86'};
+const EL_COL={fire:'#c4501b',cold:'#2f86b4',lightning:'#6a4fc4',thunder:'#4b3a8a',acid:'#6f9a1f',poison:'#2f7d3a',nec:'#24321c',holy:'#b8923a',radiant:'#b8923a',force:'#5a6a86'};
 const ATTR_COL={str:'#8f1d14',dex:'#2d6a3a',con:'#a85a14',int:'#2f5a8f',wis:'#7a6a1a',cha:'#a83a6a'};
 const ATTR_L={str:'S',dex:'D',con:'C',int:'I',wis:'W',cha:'Ch'};
 /* the badge: an element if the item carries one, otherwise its largest attribute */
 function itemBadge(k){const it=ITEMS[k];const s=it.s||{};
-  const e=(s.onHit||[]).map(x=>x.kind==='holy'?'holy':x.el||(x.ty==='force'?'force':null)).find(Boolean);
+  const e=(s.onHit||[]).map(x=>(x.kind==='holy'||x.kind==='radiant')?'radiant':x.el||(x.ty==='force'?'force':null)).find(Boolean);
   if(e)return {col:EL_COL[e],t:''};if(s.abilNec)return {col:EL_COL.nec,t:''};
   const a=Object.entries(it.a||{}).sort((x,y)=>y[1]-x[1])[0];if(a)return {col:ATTR_COL[a[0]],t:ATTR_L[a[0]]};return null}
 function itemIcon(k,size=40){const it=ITEMS[k];if(!it)return'';const R=RARITY[it.r];const u=(typeof assetURL==='function')?assetURL('items',k):'';

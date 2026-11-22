@@ -1,20 +1,24 @@
-/* ================= 0.22 ITEMS: 46 CANONICAL D&D ITEMS =================
-   Structured across 4 rarity tiers (Common -> Uncommon -> Rare -> Very Rare):
-     - 8 Common staples (obvious generic D&D gear & +1 weapons, Shield, Leather Armor, Potion, Clockwork Amulet)
-     - 24 Class-Keyword items (exactly 2 per class across all 12 classes; implicit keyword interaction, no explicit class labels)
-     - 14 Armor Ladder & Archetype Rider items (Breastplate, Plate Armor, Dwarven Plate, plus iconic Rare & Very Rare riders)
-   Exact 6-attribute parity: 7 items / +10 modifier (+20 score) each for STR, DEX, CON, INT, WIS, CHA.
-   Direct combat stats (Damage, Attack Speed, AC, HP, SR) offered both independently and in disparate pairings.
-   All items are always available in the shop & treasure pool regardless of enabled/disabled Hero Packs.
-   Attribute bonuses use score deltas (+2 score = +1 modifier).
+/* ================= 0.23 ITEMS: 82 CANONICAL D&D ITEMS ACROSS 6 TIERS =================
+   - 58 Universal Standard Playstyle Items (Standard Shop & Treasure):
+       r=0 Common    (12 items,  2g): 1 minor stat, 0 effect text (also Zoe's Rummage pool)
+       r=1 Uncommon  (14 items,  3g): 2 different stats, 0 effect text
+       r=2 Rare      (12 items,  4g): Larger stat + 1 concise minor effect (max 1d4 on-hit)
+       r=3 Very Rare (12 items,  6g): Upper-end stats + 1 crisp endgame build-enabler
+       r=4 Legendary  (8 items, 10g): Top stats + 1 iconic gamebreaking artifact effect
+     EXACT Per-Tier 6-Attribute Parity (score deltas; +2 score = +1 modifier):
+       Common +1 | Uncommon +2 | Rare +3 | Very Rare +4 | Legendary +6  =>  +16 each!
+   - 24 Unique Class-Keyword Items (r=5, 5g, Curio Merchant map node only):
+       Exact 2 per class across all 12 classes (1 Trigger/Resource + 1 Modifier).
+   All 58 Standard items are always unlocked regardless of enabled/disabled Hero Packs.
 */
 
 const RARITY = [
-  { n: 'Common',    col: '#4d483d' },
-  { n: 'Uncommon',  col: '#226d3a' },
-  { n: 'Rare',      col: '#12477d' },
-  { n: 'Very Rare', col: '#4b127d' },
-  { n: 'Legendary', col: '#8a4a0e', reserved: 1 }
+  { n: 'Common',    col: '#4d483d', cost: 2 },
+  { n: 'Uncommon',  col: '#226d3a', cost: 3 },
+  { n: 'Rare',      col: '#12477d', cost: 4 },
+  { n: 'Very Rare', col: '#4b127d', cost: 6 },
+  { n: 'Legendary', col: '#8a4a0e', cost: 10 },
+  { n: 'Unique',    col: '#1b7a78', cost: 5, curioOnly: 1 }
 ];
 
 const SOLVE = {
@@ -24,363 +28,556 @@ const SOLVE = {
 };
 
 const ITEMS = {
-  /* ---------- 1. COMMON STAPLES (2g — Obvious D&D Gear) ---------- */
-  longsword_p1: {
-    n: '+1 Longsword', r: 0, ic: 'sword', t: 'melee',
-    a: { str: 2 },
+  /* ==========================================================================
+     A. COMMON TIER — 12 ITEMS (2g, 1 Minor Stat, Zero Effect Text)
+        Attribute Parity: STR +1 · DEX +1 · CON +1 · INT +1 · WIS +1 · CHA +1
+     ========================================================================== */
+  stone_str: {
+    n: 'Stone of Strength', r: 0, ic: 'stone',
+    a: { str: 2 }, s: {}
+  },
+  stone_dex: {
+    n: 'Stone of Dexterity', r: 0, ic: 'stone',
+    a: { dex: 2 }, s: {}
+  },
+  stone_con: {
+    n: 'Stone of Constitution', r: 0, ic: 'stone',
+    a: { con: 2 }, s: {}
+  },
+  stone_int: {
+    n: 'Stone of Intelligence', r: 0, ic: 'stone',
+    a: { int: 2 }, s: {}
+  },
+  stone_wis: {
+    n: 'Stone of Wisdom', r: 0, ic: 'stone',
+    a: { wis: 2 }, s: {}
+  },
+  stone_cha: {
+    n: 'Stone of Charisma', r: 0, ic: 'stone',
+    a: { cha: 2 }, s: {}
+  },
+  weapon_p1: {
+    n: '+1 Weapon', r: 0, ic: 'sword',
     s: { dmg: 2 }
   },
-  rapier_p1: {
-    n: '+1 Rapier', r: 0, ic: 'dagger_fork', t: 'melee',
-    a: { dex: 2 },
+  gloves_quickness: {
+    n: 'Gloves of Quickness', r: 0, ic: 'gloves',
     s: { haste: 12 }
-  },
-  longbow_p1: {
-    n: '+1 Longbow', r: 0, ic: 'bow', t: 'ranged',
-    s: { dmg: 3, haste: 8 }
-  },
-  wand_war_mage: {
-    n: 'Wand of the War Mage', r: 0, ic: 'wand', t: 'ranged',
-    a: { int: 2 },
-    s: { dmg: 2 }
   },
   shield: {
     n: 'Shield', r: 0, ic: 'shield',
     s: { ac: 1 }
   },
+  cloak_protection: {
+    n: 'Cloak of Protection', r: 0, ic: 'cloak',
+    s: { sr: 1 }
+  },
   leather_armor: {
     n: 'Leather Armor', r: 0, ic: 'armor_studs',
-    s: { ac: 1, hp: 20 }
+    s: { hp: 25 }
   },
-  potion_healing: {
-    n: 'Potion of Healing', r: 0, ic: 'vial',
-    s: { potionHeal: 1 },
-    x: 'Automatically drunk the first time holder drops below 50% HP each fight (refills next fight; scales by Act: 2d4+2 / 4d4+4 / 8d4+8 / 10d4+20)'
-  },
-  clockwork_amulet: {
-    n: 'Clockwork Amulet', r: 0, ic: 'amulet',
-    s: { clockworkFloor: 1 },
-    x: 'Once per fight, first ability roll cannot roll below 10 (never Fizzles or rolls Low)'
+  ring_warmth: {
+    n: 'Ring of Warmth', r: 0, ic: 'ring_flame',
+    s: { regen: 1.5 }
   },
 
-  /* ---------- 2. UNCOMMON (3g — 12 Class-Keyword Items + Armor & Utility) ---------- */
-  weapon_warning: {
-    n: 'Weapon of Warning', r: 1, ic: 'defender', t: 'melee',
-    kwHooks: ['action_surge'],
-    a: { str: 2 },
-    s: { haste: 10, openingSurge: 1 },
-    x: 'Opens each fight with an immediate strike that triggers Action Surge'
-  },
-  periapt_wound_closure: {
-    n: 'Periapt of Wound Closure', r: 1, ic: 'amulet_heart',
-    kwHooks: ['rage'],
-    a: { con: 2 },
-    s: { hp: 25, woundRage: 1 },
-    x: 'First time holder drops below 50% HP, gains +2 Rage and double Regeneration for 4s'
-  },
-  sentinel_shield: {
-    n: 'Sentinel Shield', r: 1, ic: 'shield_eye',
-    kwHooks: ['aura', 'smite'],
-    s: { ac: 2, hp: 15, sentinelAura: 1 },
-    x: 'Radiates an Aura granting adjacent allies +1 AC and +1 SR (widens existing Auras by +1 square)'
-  },
-  amulet_devout: {
-    n: 'Amulet of the Devout', r: 1, ic: 'holy',
-    kwHooks: ['channel_divinity'],
-    a: { wis: 2 },
-    s: { hp: 15, cdBoost: 0.35, healHolyPulse: 1 },
-    x: 'Boosts Channel Divinity potency by +35%; heals and Wards pulse 1d6 Holy damage to the nearest foe'
-  },
-  bracers_archery: {
-    n: 'Bracers of Archery', r: 1, ic: 'bracers',
-    kwHooks: ['hunters_mark'],
-    a: { dex: 2 },
-    s: { haste: 10, markPoison: 1 },
-    x: 'Attacks against Hunter’s Mark targets apply 1 stack of Poison'
-  },
-  cloak_elvenkind: {
-    n: 'Cloak of Elvenkind', r: 1, ic: 'cloak',
-    kwHooks: ['cunning_action', 'sneak_attack'],
-    a: { dex: 2 },
-    s: { ac: 1, startStealth: 3, stealthExpose: 1, cloakSneak: 1 },
-    x: 'Triggers Cunning Action (Stealth 3s) at fight start; opening attack Exposes and triggers a 1d6 Sneak Attack'
-  },
-  dragonhide_belt: {
-    n: 'Dragonhide Belt', r: 1, ic: 'belt',
-    kwHooks: ['ki', 'ki_ability'],
-    a: { wis: 2 },
-    s: { haste: 12, kw_ki: 1, kw_ki_ability: 1, highKi: 1 },
-    x: 'Grants a 4-pip Ki bar firing a Staggering Ki Ability when full (+1 Ki on High rolls)'
-  },
-  pipes_haunting: {
-    n: 'Pipes of Haunting', r: 1, ic: 'lute',
-    kwHooks: ['bardic_inspiration'],
-    a: { cha: 2 },
-    s: { haste: 12, startInsp: 1, inspCharge: 15 },
-    x: 'Grants the nearest ally Bardic Inspiration (d6) at fight start; spending Inspiration grants +15% Charge'
-  },
-  moon_sickle: {
-    n: 'Moon Sickle', r: 1, ic: 'scythe', t: 'melee',
-    kwHooks: ['wild_shape'],
-    a: { wis: 2 },
-    s: { hp: 20, moonSickle: 1 },
-    x: 'Healing an ally or entering Wild Shape grants +25% Attack Speed and +2 Damage for 4s'
-  },
-  pearl_power: {
-    n: 'Pearl of Power', r: 1, ic: 'orb',
-    kwHooks: ['arcane_recovery'],
-    a: { int: 2 },
-    s: { haste: 12, firstCastRec: 25, arcRecBoost: 0.40 },
-    x: 'Triggers Arcane Recovery (+25 Charge) after first cast and boosts Arcane Recovery by +40%'
-  },
-  bloodwell_vial: {
-    n: 'Bloodwell Vial', r: 1, ic: 'vial',
-    kwHooks: ['sorcery_points', 'metamagic'],
-    a: { cha: 2, int: 2 },
-    s: { quickenFirst: 1, startSorcery: 2 },
-    x: 'Starts each fight with +2 Sorcery Points and triggers Metamagic (first cast charges at 2× speed)'
-  },
-  rod_pact_keeper: {
-    n: 'Rod of the Pact Keeper', r: 1, ic: 'rod',
-    kwHooks: ['hex', 'pact_boon'],
-    a: { cha: 2 },
-    s: { hp: 20, startHex: 1, pactRestore: 1 },
-    x: 'Applies Hex to the farthest foe at fight start; Pact Boon restores 15% HP and +15 Charge'
-  },
+  /* ==========================================================================
+     B. UNCOMMON TIER — 14 ITEMS (3g, 2 Different Stats, Zero Effect Text)
+        Attribute Parity: STR +2 · DEX +2 · CON +2 · INT +2 · WIS +2 · CHA +2
+     ========================================================================== */
   breastplate: {
-    n: 'Breastplate', r: 1, ic: 'armor_shine',
-    s: { ac: 2, hp: 40 }
+    n: 'Breastplate', r: 1, ic: 'armor',
+    s: { ac: 2, hp: 35 }
   },
-  bag_holding: {
-    n: 'Bag of Holding', r: 1, ic: 'brooch',
-    s: { winBonusGold: 1, sellBonus: 1 },
-    x: 'Winning a fight grants +1 bonus Gold; while carried, sold stash items refund 150% value'
+  mantle_spell_resistance: {
+    n: 'Mantle of Spell Resistance', r: 1, ic: 'cloak_star',
+    s: { sr: 2, hp: 30 }
   },
-  luckstone: {
-    n: 'Stone of Good Luck', r: 1, ic: 'stone',
-    a: { wis: 2 },
-    s: { rerollLowOnce: 1 },
-    x: 'Rerolls the holder’s first Low ability roll each fight'
+  gauntlets_ogre: {
+    n: 'Gauntlets of Ogre Power', r: 1, ic: 'gloves',
+    a: { str: 2 }, s: { pen: 2 }
+  },
+  boots_striding: {
+    n: 'Boots of Striding', r: 1, ic: 'boots',
+    a: { str: 2 }, s: { haste: 15 }
+  },
+  boots_elvenkind: {
+    n: 'Boots of Elvenkind', r: 1, ic: 'boots_wing',
+    a: { dex: 2 }, s: { evasion: 0.10 }
+  },
+  gloves_thievery: {
+    n: 'Gloves of Thievery', r: 1, ic: 'gloves',
+    a: { dex: 2 }, s: { dmg: 2 }
+  },
+  belt_dwarvenkind: {
+    n: 'Belt of Dwarvenkind', r: 1, ic: 'belt',
+    a: { con: 2 }, s: { regen: 2 }
+  },
+  ring_protection: {
+    n: 'Ring of Protection', r: 1, ic: 'ring',
+    a: { con: 2 }, s: { ac: 1 }
+  },
+  wand_magic_missiles: {
+    n: 'Wand of Magic Missiles', r: 1, ic: 'wand', t: 'ranged',
+    a: { int: 2 }, s: { spen: 2 }
+  },
+  ring_mind_shielding: {
+    n: 'Ring of Mind Shielding', r: 1, ic: 'ring_wing',
+    a: { int: 2 }, s: { haste: 15 }
+  },
+  goggles_night: {
+    n: 'Goggles of Night', r: 1, ic: 'goggles',
+    a: { wis: 2 }, s: { pen: 2 }
+  },
+  gem_brightness: {
+    n: 'Gem of Brightness', r: 1, ic: 'gem',
+    a: { wis: 2 }, s: { crPct: 15 }
+  },
+  brooch_shielding: {
+    n: 'Brooch of Shielding', r: 1, ic: 'brooch',
+    a: { cha: 2 }, s: { crPct: 15 }
+  },
+  circlet_blasting: {
+    n: 'Circlet of Blasting', r: 1, ic: 'circlet',
+    a: { cha: 2 }, s: { spen: 2 }
   },
 
-  /* ---------- 3. RARE (5g — 8 Class-Keyword Items + Plate & Archetype Riders) ---------- */
-  flametongue: {
-    n: 'Flame Tongue', r: 2, ic: 'sword_flame', t: 'melee',
-    kwHooks: ['action_surge'],
-    a: { str: 4 },
-    s: { dmg: 3, flameEvery2: 1, flameKwBurn: 1 },
-    x: 'Every 2nd strike applies Burn; triggering Action Surge spreads Burn to an adjacent foe'
-  },
-  berserker_axe: {
-    n: 'Berserker Axe', r: 2, ic: 'axe', t: 'melee',
-    kwHooks: ['rage'],
-    a: { str: 4 },
-    s: { dmg: 4, rageDmg: 2, killRage: 1 },
-    x: 'Each Rage stack adds +2 flat Damage; killing a foe grants +1 Rage'
-  },
-  staff_healing: {
-    n: 'Staff of Healing', r: 2, ic: 'staff2',
-    kwHooks: ['channel_divinity'],
-    a: { wis: 4 },
-    s: { hp: 25, staffCdHeal: 1 },
-    x: 'First time an ally drops below 40% HP each fight, triggers a Channel Divinity heal pulse (2d8 + WIS)'
-  },
-  oathbow: {
-    n: 'Oathbow', r: 2, ic: 'bow', t: 'ranged',
-    kwHooks: ['hunters_mark'],
-    a: { dex: 4 },
-    s: { dmg: 3, markPenPct: 0.30, markCharge: 8, highMarks: 1 },
-    x: 'Attacks vs. Hunter’s Mark foes ignore 30% AC and build +8 Charge; High rolls apply Hunter’s Mark'
-  },
-  dagger_venom: {
-    n: 'Dagger of Venom', r: 2, ic: 'dagger_drip', t: 'melee',
-    kwHooks: ['sneak_attack'],
-    a: { dex: 2 },
-    s: { haste: 20, sneakVenom: 1 },
-    x: 'Sneak Attack hits apply 2 stacks of Poison and shred −2 AC for 3s'
-  },
-  horn_valhalla: {
-    n: 'Horn of Valhalla', r: 2, ic: 'crown',
-    kwHooks: ['bardic_inspiration'],
-    a: { cha: 4, con: 2 },
-    s: { hp: 30, inspWardHaste: 1 },
-    x: 'Whenever an ally spends Bardic Inspiration, they gain an 18 HP Ward and +20% Attack Speed for 3s'
-  },
-  wand_fireballs: {
-    n: 'Wand of Fireballs', r: 2, ic: 'ring_flame', t: 'ranged',
-    kwHooks: ['metamagic', 'sorcery_points'],
-    a: { cha: 4 },
-    s: { dmg: 3, metaFireball: 1 },
-    x: 'Every Metamagic trigger (or every 2nd cast) detonates a 1-square Fireball applying Burn'
-  },
-  staff_withering: {
-    n: 'Staff of Withering', r: 2, ic: 'staff_skull',
-    kwHooks: ['hex', 'pact_boon'],
-    a: { int: 4 },
-    s: { hp: 30, hexNecrosis: 6, pactSpreadHex: 1 },
-    x: 'Attacks against Hex targets apply 6 Necrosis; Pact Boon spreads Hex to two enemies'
-  },
+  /* ==========================================================================
+     C. RARE TIER — 12 ITEMS (4g, Larger Stat + 1 Concise Minor Effect)
+        Attribute Parity: STR +3 · DEX +3 · CON +3 · INT +3 · WIS +3 · CHA +3
+     ========================================================================== */
   plate_armor: {
     n: 'Plate Armor', r: 2, ic: 'armor_plate',
-    s: { ac: 3, hp: 75 }
+    s: { ac: 2, hp: 60, pushRes: 1 },
+    x: 'Immune to push and knockback.'
   },
-  cloak_displacement: {
-    n: 'Cloak of Displacement', r: 2, ic: 'cloak_double',
-    a: { dex: 4 },
-    s: { ac: 2, displaceAlert: 6 },
-    x: 'Starts each fight with Alert and refreshes Alert every 6s'
-  },
-  amulet_health: {
-    n: 'Amulet of Health', r: 2, ic: 'gem',
-    a: { con: 4 },
-    s: { hp: 45, heavyHitRecover: 0.30 },
-    x: 'Taking a hit of 15% or more Max HP heals back 30% of that damage over 2s'
-  },
-  headband: {
-    n: 'Headband of Intellect', r: 2, ic: 'circlet',
-    a: { int: 4 },
-    s: { haste: 15, capToRoll: 1 },
-    x: 'When hitting the 1-cast/second cap, excess Charge speed converts into +1 to ability d20 rolls'
+  sword_sharpness: {
+    n: 'Sword of Sharpness', r: 2, ic: 'sword', t: 'melee',
+    a: { str: 4 },
+    s: { pen: 2, onHit: [{ t: 'bonus', d: [1, 4], kind: 'phys', ty: 'slashing' }] },
+    x: 'Basic attacks deal +1d4 bonus slashing damage.'
   },
   boots_speed: {
     n: 'Boots of Speed', r: 2, ic: 'boots_wing',
     a: { str: 2 },
-    s: { haste: 25, ft: 15, openingDouble: 1 },
-    x: 'First attack each fight strikes twice'
+    s: { haste: 20, openingDouble: 1 },
+    x: 'First basic attack each fight strikes twice.'
+  },
+  vicious_bow: {
+    n: 'Vicious Bow', r: 2, ic: 'bow', t: 'ranged',
+    a: { dex: 4 },
+    s: { dmg: 2, onHit: [{ t: 'bonus', d: [1, 4], kind: 'phys', ty: 'piercing' }] },
+    x: 'Basic attacks deal +1d4 bonus piercing damage.'
+  },
+  cloak_displacement: {
+    n: 'Cloak of Displacement', r: 2, ic: 'cloak_double',
+    a: { dex: 2 },
+    s: { evasion: 0.15, evadeCharge: 10 },
+    x: 'Evading an attack grants +10 Charge (1s CD).'
+  },
+  amulet_health: {
+    n: 'Amulet of Health', r: 2, ic: 'amulet_heart',
+    a: { con: 4 },
+    s: { hp: 40, lowDoubleRegen: 1 },
+    x: 'While below 50% HP, double your HP Regen.'
+  },
+  potion_healing: {
+    n: 'Potion of Greater Healing', r: 2, ic: 'vial',
+    a: { con: 2 },
+    s: { hp: 20, potionHeal: 1 },
+    x: 'Auto-drinks below 50% HP each fight to heal 25% Max HP and cleanse Burn/Poison.'
   },
   ring_spell_storing: {
     n: 'Ring of Spell Storing', r: 2, ic: 'ring',
-    a: { int: 2 },
-    s: { sr: 2, startCharge: 45 },
-    x: 'Starts each fight with 45% ability Charge'
+    a: { int: 4 },
+    s: { crPct: 10, startCharge: 30 },
+    x: 'Start every fight with +30 Charge.'
+  },
+  wand_web: {
+    n: 'Wand of Web', r: 2, ic: 'wand_web', t: 'ranged',
+    a: { int: 2, wis: 2 },
+    s: { firstCastRoot: 2 },
+    x: 'First ability cast each fight Roots the target for 2s.'
+  },
+  stone_good_luck: {
+    n: 'Stone of Good Luck', r: 2, ic: 'stone',
+    a: { wis: 4 },
+    s: { sr: 1, rerollLowOnce: 1 },
+    x: 'Reroll your first Low ability roll each fight.'
+  },
+  glamoured_leather: {
+    n: 'Glamoured Studded Leather', r: 2, ic: 'armor_shine',
+    a: { cha: 4 },
+    s: { ac: 1, startEvasion: 0.20, startEvasionDur: 4 },
+    x: 'Start every fight with +20% Evasion for 4s.'
+  },
+  bag_holding: {
+    n: 'Bag of Holding', r: 2, ic: 'bag',
+    a: { cha: 2 },
+    s: { hp: 25, bagGold: 1, sellMult: 1.25 },
+    x: 'Winning grants +1 Gold (max 1); sold stash items refund 125%.'
   },
 
-  /* ---------- 4. VERY RARE (7g — 4 Class-Keyword Centerpieces + Iconic Archetype Riders) ---------- */
-  sunblade: {
-    n: 'Sun Blade', r: 3, ic: 'greatsword', t: 'melee',
-    kwHooks: ['smite', 'aura'],
-    a: { str: 2, cha: 2 },
-    s: { dmg: 3, holyAttacks: 1, kwHolyHeal: 1 },
-    x: 'Attacks deal Holy damage (ignoring AC and SR); triggering Smite pulses a heal to allies in your Aura'
-  },
-  staff_striking: {
-    n: 'Staff of Striking', r: 3, ic: 'spear', t: 'melee',
-    kwHooks: ['ki', 'ki_ability'],
-    a: { wis: 4 },
-    s: { haste: 20, kiDoubleStrike: 1 },
-    x: 'Every Ki Ability strikes twice and refunds 1 Ki pip'
-  },
-  staff_woodlands: {
-    n: 'Staff of the Woodlands', r: 3, ic: 'ring_leaf',
-    kwHooks: ['wild_shape'],
-    a: { wis: 4, con: 4 },
-    s: { woodlandPulse: 4 },
-    x: 'While in Wild Shape (or after first cast), Roots a nearby foe every 4s and heals adjacent allies +15 HP'
-  },
-  staff_power: {
-    n: 'Staff of Power', r: 3, ic: 'staff', t: 'ranged',
-    kwHooks: ['arcane_recovery'],
-    a: { int: 4 },
-    s: { ac: 2, wardOnCast: 16, doubleArcaneRec: 1, nat20Refund: 30 },
-    x: 'Casting grants a 16 HP Ward; doubles Arcane Recovery Charge and Nat 20s refund 30% Charge'
-  },
+  /* ==========================================================================
+     D. VERY RARE TIER — 12 ITEMS (6g, Upper-End Stats + 1 Endgame Enabler)
+        Attribute Parity: STR +4 · DEX +4 · CON +4 · INT +4 · WIS +4 · CHA +4
+     ========================================================================== */
   dwarven_plate: {
     n: 'Dwarven Plate', r: 3, ic: 'armor_spikes',
-    a: { con: 2 },
-    s: { ac: 4, hp: 110, pushRes: 1, meleeReflect: 0.15 },
-    x: 'Immune to push and knockback; reflects 15% of melee damage taken back at the attacker'
+    a: { con: 4 },
+    s: { ac: 3, hp: 90, meleeReflect: 0.20 },
+    x: 'Reflects 20% of melee damage taken back at the attacker.'
+  },
+  ring_regeneration: {
+    n: 'Ring of Regeneration', r: 3, ic: 'ring_leaf',
+    a: { con: 4 },
+    s: { hp: 50, regen: 4, cleanseEvery: 2 },
+    x: 'Cleanses 1 Burn or Poison stack every 2s.'
+  },
+  belt_fire_giant: {
+    n: 'Belt of Fire Giant Strength', r: 3, ic: 'belt',
+    a: { str: 4 },
+    s: { pen: 4, dmg: 3, meleeCleave: 0.30 },
+    x: 'Melee basic attacks cleave 30% damage to adjacent foes.'
+  },
+  frost_brand: {
+    n: 'Frost Brand', r: 3, ic: 'sword_frost', t: 'melee',
+    a: { str: 4 },
+    s: { sr: 3, dmg: 3, staggerOnHit: 1 },
+    x: 'Basic attacks Stagger targets (−30% Attack Speed, 2s).'
   },
   scimitar_speed: {
     n: 'Scimitar of Speed', r: 3, ic: 'scimitar', t: 'melee',
     a: { dex: 4 },
     s: { haste: 30, every3Strike: 1 },
-    x: 'Every 3rd attack triggers an immediate bonus strike'
+    x: 'Every 3rd basic attack strikes twice.'
   },
-  frost_brand: {
-    n: 'Frost Brand', r: 3, ic: 'sword_frost', t: 'melee',
-    a: { str: 4, con: 2 },
-    s: { dmg: 4, sr: 2, chillOnHit: 1 },
-    x: 'Attacks Chill targets (−15% Attack Speed for 2s)'
+  ring_evasion: {
+    n: 'Ring of Evasion', r: 3, ic: 'ring_wing',
+    a: { dex: 4 },
+    s: { evasion: 0.20, firstAbilHalf: 1 },
+    x: 'First enemy ability that hits you each fight deals 50% less damage.'
+  },
+  staff_power: {
+    n: 'Staff of Power', r: 3, ic: 'staff', t: 'ranged',
+    a: { int: 4 },
+    s: { spen: 3, wardOnCastPct: 0.15 },
+    x: 'Casting an ability grants a Ward equal to 15% Max HP (1s CD).'
+  },
+  headband_intellect: {
+    n: 'Headband of Intellect', r: 3, ic: 'circlet',
+    a: { int: 4 },
+    s: { crPct: 20, haste: 15, capToRoll: 1 },
+    x: 'Excess Charge past 1 cast/sec adds +1 to your next ability d20 roll.'
+  },
+  tome_understanding: {
+    n: 'Tome of Understanding', r: 3, ic: 'book',
+    a: { wis: 4 },
+    s: { sr: 2, hp: 30, shareD20Floor: 1 },
+    x: 'Adjacent allies inherit your minimum natural d20 roll floor.'
+  },
+  cloak_arachnida: {
+    n: 'Cloak of Arachnida', r: 3, ic: 'cloak',
+    a: { wis: 4 },
+    s: { haste: 15, poisonOnHit: 2 },
+    x: 'Basic attacks apply 2 Poison (1s CD).'
   },
   robe_stars: {
     n: 'Robe of Stars', r: 3, ic: 'cloak_star',
     a: { cha: 4 },
-    s: { hp: 40, sr: 2, starBolt: 1 },
-    x: 'High and Nat 20 ability rolls fire a 2d6 Holy star bolt at the lowest-HP foe'
+    s: { sr: 2, hp: 35, starBolt: 1 },
+    x: 'High and Nat 20 rolls fire a 2d6 Radiant bolt at the lowest-HP foe.'
   },
-  ring_regeneration: {
-    n: 'Ring of Regeneration', r: 3, ic: 'bands',
-    a: { con: 4 },
-    s: { hp: 40, pctRegen: 0.04, cleanseEvery: 2 },
-    x: 'Regenerates 4% Max HP per second and cleanses 1 Burn or Poison stack every 2s'
+  staff_fire: {
+    n: 'Staff of Fire', r: 3, ic: 'staff2', t: 'ranged',
+    a: { cha: 4 },
+    s: { spen: 3, staffFireBurn: 1 },
+    x: 'Ability hits apply 4 Burn (1s CD).'
+  },
+
+  /* ==========================================================================
+     E. LEGENDARY TIER — 8 ITEMS (10g, Borderline-Gamebreaking Artifacts)
+        Attribute Parity: STR +6 · DEX +6 · CON +6 · INT +6 · WIS +6 · CHA +6
+     ========================================================================== */
+  belt_storm_giant: {
+    n: 'Belt of Storm Giant Strength', r: 4, ic: 'belt',
+    a: { str: 8 },
+    s: { dmg: 6, pen: 5, stormCleave: 1 },
+    x: 'Melee attacks cleave adjacent foes and Stun for 0.5s (1.5s CD).'
+  },
+  vorpal_sword: {
+    n: 'Vorpal Sword', r: 4, ic: 'greatsword', t: 'melee',
+    a: { dex: 6 },
+    s: { haste: 30, pen: 4, vorpalExec: 0.20 },
+    x: 'Basic attacks execute enemies below 20% HP.'
+  },
+  armor_invulnerability: {
+    n: 'Armor of Invulnerability', r: 4, ic: 'armor_plate',
+    a: { con: 6 },
+    s: { ac: 3, sr: 3, hp: 120, invulnSec: 4 },
+    x: 'Take 0 damage for the first 4 seconds of combat.'
+  },
+  blackrazor: {
+    n: 'Blackrazor', r: 4, ic: 'sword_drop', t: 'melee',
+    a: { str: 4, con: 6 },
+    s: { dmg: 4, blackrazorKill: 1 },
+    x: 'Kills grant 35% Max HP as Ward and +25% Attack Speed for the fight.'
+  },
+  staff_magi: {
+    n: 'Staff of the Magi', r: 4, ic: 'staff', t: 'ranged',
+    a: { int: 6, wis: 6 },
+    s: { spen: 4, castChargeRefund: 40 },
+    x: 'Ability casts refund 40% Charge.'
+  },
+  robe_archmagi: {
+    n: 'Robe of the Archmagi', r: 4, ic: 'cloak_star',
+    a: { int: 6, cha: 6 },
+    s: { sr: 3, evasion: 0.15, permAdvantage: 1 },
+    x: 'Your ability d20 rolls have permanent Advantage.'
+  },
+  luck_blade: {
+    n: 'Luck Blade', r: 4, ic: 'sword_twin', t: 'melee',
+    a: { dex: 6, wis: 6 },
+    s: { evasion: 0.20, critThreshold: 18 },
+    x: 'Natural 18–20 all count as Nat 20s.'
+  },
+  holy_avenger: {
+    n: 'Holy Avenger', r: 4, ic: 'shield_star', t: 'melee',
+    a: { cha: 6 },
+    s: { dmg: 4, ac: 2, sr: 2, holyAvenger: 1 },
+    x: 'All attacks and abilities add +2d6 Radiant and heal adjacent allies (1s CD).'
+  },
+
+  /* ==========================================================================
+     F. UNIQUE TIER — 24 CLASS-KEYWORD ITEMS (5g, Curio Merchant Map Node Only)
+        Exact 2 per class (1 Trigger/Resource Gain + 1 Modifier)
+     ========================================================================== */
+  // Fighter · Action Surge
+  weapon_warning: {
+    n: 'Weapon of Warning', r: 5, ic: 'defender', t: 'melee',
+    kwHooks: ['action_surge'], cls: 'Fighter', uKind: 'Trigger',
+    a: { str: 2 }, s: { haste: 12, every5Surge: 1 },
+    x: 'Every 5th basic attack triggers Action Surge.'
+  },
+  flame_tongue: {
+    n: 'Flame Tongue', r: 5, ic: 'sword_flame', t: 'melee',
+    kwHooks: ['action_surge'], cls: 'Fighter', uKind: 'Modifier',
+    a: { str: 4 }, s: { dmg: 2, surgeFire: 1 },
+    x: 'Your Action Surge also deals +2d6 Fire and applies Burn.'
+  },
+  // Barbarian · Rage
+  periapt_wound_closure: {
+    n: 'Periapt of Wound Closure', r: 5, ic: 'amulet_heart',
+    kwHooks: ['rage'], cls: 'Barbarian', uKind: 'Trigger',
+    a: { con: 2 }, s: { regen: 2, woundRage: 1 },
+    x: 'First time dropping below 50% HP, trigger Rage.'
+  },
+  berserker_axe: {
+    n: 'Berserker Axe', r: 5, ic: 'axe', t: 'melee',
+    kwHooks: ['rage'], cls: 'Barbarian', uKind: 'Modifier',
+    a: { str: 4 }, s: { dmg: 3, rageCleave: 0.40 },
+    x: 'While Raging, melee attacks cleave 40% damage to adjacent foes.'
+  },
+  // Paladin · Smite
+  holy_symbol_ravenkind: {
+    n: 'Holy Symbol of Ravenkind', r: 5, ic: 'holy',
+    kwHooks: ['smite'], cls: 'Paladin', uKind: 'Trigger',
+    a: { str: 2, cha: 2 }, s: { highSmite: 1 },
+    x: 'High ability rolls trigger a free Smite on your target.'
+  },
+  sun_blade: {
+    n: 'Sun Blade', r: 5, ic: 'sword_flame', t: 'melee',
+    kwHooks: ['smite'], cls: 'Paladin', uKind: 'Modifier',
+    a: { str: 2, wis: 2 }, s: { dmg: 3, smiteSun: 1 },
+    x: 'Holder’s Smites deal +1d8 Radiant and heal adjacent allies (1s CD).'
+  },
+  // Cleric · Channel Divinity
+  amulet_devout: {
+    n: 'Amulet of the Devout', r: 5, ic: 'amulet',
+    kwHooks: ['channel_divinity'], cls: 'Cleric', uKind: 'Trigger',
+    a: { wis: 2 }, s: { sr: 1, firstHighResetCD: 1 },
+    x: 'Your first High roll each fight resets Channel Divinity.'
+  },
+  staff_healing: {
+    n: 'Staff of Healing', r: 5, ic: 'staff2',
+    kwHooks: ['channel_divinity'], cls: 'Cleric', uKind: 'Modifier',
+    a: { wis: 4 }, s: { hp: 25, cdWardPct: 0.20 },
+    x: 'Your Channel Divinity also grants affected allies a 20% Max HP Ward.'
+  },
+  // Wizard · Arcane Recovery
+  pearl_power: {
+    n: 'Pearl of Power', r: 5, ic: 'orb',
+    kwHooks: ['arcane_recovery'], cls: 'Wizard', uKind: 'Trigger',
+    a: { int: 2 }, s: { haste: 12, every3ArcRec: 12 },
+    x: 'Every 3rd basic attack triggers Arcane Recovery (+12 Charge).'
+  },
+  arcane_grimoire: {
+    n: 'Arcane Grimoire', r: 5, ic: 'book',
+    kwHooks: ['arcane_recovery'], cls: 'Wizard', uKind: 'Modifier',
+    a: { int: 4 }, s: { spen: 2, arcRecRoll: 1 },
+    x: 'Your Arcane Recovery also grants +1 to your next ability d20 roll (1s CD).'
+  },
+  // Ranger · Hunter's Mark
+  bracers_archery: {
+    n: 'Bracers of Archery', r: 5, ic: 'bracers',
+    kwHooks: ['hunters_mark'], cls: 'Ranger', uKind: 'Trigger',
+    a: { dex: 2 }, s: { haste: 12, every3Mark: 1 },
+    x: 'Every 3rd basic attack applies a stack of Hunter’s Mark.'
+  },
+  oathbow: {
+    n: 'Oathbow', r: 5, ic: 'bow', t: 'ranged',
+    kwHooks: ['hunters_mark'], cls: 'Ranger', uKind: 'Modifier',
+    a: { dex: 4 }, s: { pen: 2, oathbowMod: 1 },
+    x: 'Your Hunter’s Mark also applies Exposed (2s) and grants +5 Charge on hit (1s CD).'
+  },
+  // Rogue · Sneak Attack
+  cloak_elvenkind: {
+    n: 'Cloak of Elvenkind', r: 5, ic: 'cloak',
+    kwHooks: ['sneak_attack'], cls: 'Rogue', uKind: 'Trigger',
+    a: { dex: 2 }, s: { evasion: 0.10, every3Sneak: 1 },
+    x: 'Every 3rd basic attack triggers Sneak Attack even without flanking.'
+  },
+  dagger_venom: {
+    n: 'Dagger of Venom', r: 5, ic: 'dagger_drip', t: 'melee',
+    kwHooks: ['sneak_attack'], cls: 'Rogue', uKind: 'Modifier',
+    a: { dex: 4 }, s: { haste: 15, sneakVenom: 1 },
+    x: 'Your Sneak Attacks also apply 2 Poison and Exposed (3s).'
+  },
+  // Monk · Ki
+  dragonhide_belt: {
+    n: 'Dragonhide Belt', r: 5, ic: 'belt',
+    kwHooks: ['ki'], cls: 'Monk', uKind: 'Trigger',
+    a: { dex: 2, wis: 2 }, s: { evadeKi: 1 },
+    x: 'Gain +1 Ki whenever you evade an attack or roll High (1s CD).'
+  },
+  staff_striking: {
+    n: 'Staff of Striking', r: 5, ic: 'spear', t: 'melee',
+    kwHooks: ['ki'], cls: 'Monk', uKind: 'Modifier',
+    a: { wis: 2 }, s: { haste: 20, kiDoubleStrike: 1 },
+    x: 'Your Ki strikes hit twice.'
+  },
+  // Bard · Bardic Inspiration
+  pipes_haunting: {
+    n: 'Pipes of Haunting', r: 5, ic: 'lute',
+    kwHooks: ['bardic_inspiration'], cls: 'Bard', uKind: 'Trigger',
+    a: { cha: 2 }, s: { crPct: 12, startInsp: 1 },
+    x: 'Start combat granting the closest ally Bardic Inspiration.'
+  },
+  horn_valhalla: {
+    n: 'Horn of Valhalla', r: 5, ic: 'horn',
+    kwHooks: ['bardic_inspiration'], cls: 'Bard', uKind: 'Modifier',
+    a: { cha: 4 }, s: { hp: 30, inspWardPct: 0.20 },
+    x: 'Allies spending your Bardic Inspiration gain a 20% Max HP Ward.'
+  },
+  // Druid · Wild Shape
+  moon_sickle: {
+    n: 'Moon Sickle', r: 5, ic: 'sickle', t: 'melee',
+    kwHooks: ['wild_shape'], cls: 'Druid', uKind: 'Trigger',
+    a: { wis: 2 }, s: { hp: 25, lowWildShape: 1 },
+    x: 'First time dropping below 60% HP, trigger Wild Shape.'
+  },
+  staff_woodlands: {
+    n: 'Staff of the Woodlands', r: 5, ic: 'staff',
+    kwHooks: ['wild_shape'], cls: 'Druid', uKind: 'Modifier',
+    a: { con: 4, wis: 2 }, s: { woodlandRoot: 1 },
+    x: 'While in Wild Shape, Root a nearby enemy every 3s.'
+  },
+  // Sorcerer · Metamagic
+  bloodwell_vial: {
+    n: 'Bloodwell Vial', r: 5, ic: 'vial',
+    kwHooks: ['metamagic'], cls: 'Sorcerer', uKind: 'Trigger',
+    a: { cha: 2, int: 2 }, s: { startSorcery: 2, highSorcery: 1 },
+    x: 'Start combat with 2 Sorcery Points; High rolls grant +1 extra.'
+  },
+  wand_fireballs: {
+    n: 'Wand of Fireballs', r: 5, ic: 'wand', t: 'ranged',
+    kwHooks: ['metamagic'], cls: 'Sorcerer', uKind: 'Modifier',
+    a: { cha: 4 }, s: { spen: 2, metaExpose: 4 },
+    x: 'Triggering Metamagic also applies Exposed (4s) to hit foes.'
+  },
+  // Warlock · Hex
+  rod_pact_keeper: {
+    n: 'Rod of the Pact Keeper', r: 5, ic: 'rod',
+    kwHooks: ['hex'], cls: 'Warlock', uKind: 'Trigger',
+    a: { cha: 2 }, s: { spen: 2, every4Hex: 1 },
+    x: 'Every 4th attack applies your Hex to the target.'
+  },
+  staff_withering: {
+    n: 'Staff of Withering', r: 5, ic: 'staff_skull',
+    kwHooks: ['hex'], cls: 'Warlock', uKind: 'Modifier',
+    a: { int: 4 }, s: { hp: 25, hexSpellAmp: 0.20 },
+    x: 'Enemies with your Hex take +20% damage from spells and Radiant hits.'
   }
 };
 
-/* All items are always in the global shop & treasure pool regardless of enabled Hero Packs */
-const CORE_ITEM_KEYS = Object.keys(ITEMS);
-const ITEM_ORDER = Object.keys(ITEMS).sort((a, b) => ITEMS[a].r - ITEMS[b].r);
-const itemKwHooks = k => (ITEMS[k] && ITEMS[k].kwHooks) || [];
-const favFor = () => false; // Replaced by implicit Class Keyword hooks (no explicit Favoured Class tags)
+const ALL_ITEM_KEYS = Object.keys(ITEMS);
+const COMMON_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r === 0);
+const STANDARD_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r <= 4);
+const UNIQUE_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r === 5);
 
-/* Item text with attributes, direct combat stats (Damage, Attack Speed, AC, HP, SR, Speed), and rider */
-function itemText(k) {
-  const it = ITEMS[k];
-  if (!it) return '';
-  const stats = [];
-  Object.entries(it.a || {}).forEach(([s, v]) => stats.push(`+${v / 2} ${ATTR_N[s]}`));
-  const st = it.s || {};
-  if (st.dmg) stats.push(`+${st.dmg} Damage`);
-  if (st.haste) stats.push(`+${st.haste}% Attack Speed`);
-  if (st.ac) stats.push(`+${st.ac} AC`);
-  if (st.hp) stats.push(`+${st.hp} HP`);
-  if (st.sr) stats.push(`+${st.sr} SR`);
-  if (st.ft) stats.push(`+${st.ft} ft Speed`);
-  const parts = [];
-  if (stats.length) parts.push(stats.join(', '));
-  if (it.x) parts.push(it.x);
-  const pre = it.t === 'melee' ? 'Melee weapon. ' : it.t === 'ranged' ? 'Ranged weapon. ' : '';
-  const body = parts.join('; ');
-  return pre + body + (body && !/[.]$/.test(body) ? '.' : '');
+const ITEM_BY_R = [0, 1, 2, 3, 4, 5].map(r => ALL_ITEM_KEYS.filter(k => ITEMS[k].r === r));
+
+function uniqueItemsForParty(party, ownedSet) {
+  const kwSet = new Set();
+  (party || []).forEach(h => heroKeywords(h).forEach(k => kwSet.add(k)));
+  const matched = UNIQUE_ITEM_KEYS.filter(k => {
+    const it = ITEMS[k];
+    return (!ownedSet || !ownedSet.has(k)) && (it.kwHooks || []).some(w => kwSet.has(w));
+  });
+  return matched;
 }
 
-/* Carrying items: 1 slot per tier up to 4 (+1 slot for Wallaby's quest or Zoe's Tier IV Just the Thing!) */
-const MAX_ITEMS = 4;
-const slotsOf = (tOrHero) => {
-  if (typeof tOrHero === 'object' && tOrHero) {
-    const base = Math.max(1, Math.min(MAX_ITEMS, tOrHero.tier || 1));
-    const bonus = ((tOrHero.key === 'wallaby' && tOrHero.questDone) || (tOrHero.key === 'zoe' && tOrHero.path === 'just_the_thing' && (tOrHero.tier || 1) >= 4)) ? 1 : 0;
-    return Math.min(MAX_ITEMS + 1, base + bonus);
-  }
-  return Math.max(1, Math.min(MAX_ITEMS, tOrHero || 1));
-};
-
-const itemType = k => ITEMS[k] && ITEMS[k].t;
 function canCarry(heroOrKey, k) {
-  const t = itemType(k);
-  if (!t) return true;
-  if (typeof heroOrKey === 'object' && heroOrKey) {
-    if (heroOrKey.key === 'wallaby' && heroOrKey.questDone) return true; // Use Magic Device!
-    const r = H[heroOrKey.key].rng;
-    return t === 'melee' ? r <= 2 : r >= 3;
-  }
-  const r = H[heroOrKey].rng;
-  return t === 'melee' ? r <= 2 : r >= 3;
+  const it = ITEMS[k];
+  if (!it || !it.t) return true;
+  if (typeof heroOrKey === 'object' && heroOrKey && heroOrKey.key === 'wallaby' && heroOrKey.questDone) return true;
+  const hKey = typeof heroOrKey === 'string' ? heroOrKey : (heroOrKey && heroOrKey.key);
+  const d = H[hKey];
+  if (!d) return true;
+  return it.t === (d.reach === 'Melee' ? 'melee' : 'ranged');
+}
+
+function itemStatsText(it) {
+  if (!it) return '';
+  const bits = [];
+  if (it.a) Object.entries(it.a).forEach(([k, v]) => bits.push(`+${v / 2} ${k.toUpperCase()}`));
+  const s = it.s || {};
+  if (s.dmg) bits.push(`+${s.dmg} Dmg`);
+  if (s.haste) bits.push(`+${s.haste}% Atk Spd`);
+  if (s.crPct) bits.push(`+${s.crPct}% Charge`);
+  if (s.ac) bits.push(`+${s.ac} AC`);
+  if (s.sr) bits.push(`+${s.sr} SR`);
+  if (s.hp) bits.push(`+${s.hp} HP`);
+  if (s.regen) bits.push(`+${s.regen} HP/s Regen`);
+  if (s.pen) bits.push(`+${s.pen} Armor Pen`);
+  if (s.spen) bits.push(`+${s.spen} Spell Pen`);
+  if (s.evasion) bits.push(`+${Math.round(s.evasion * 100)}% Evasion`);
+  return bits.join(' · ');
+}
+
+function itemDesc(it) {
+  if (!it) return '';
+  const st = itemStatsText(it);
+  if (it.x) return st ? `${st}. ${it.x}` : it.x;
+  return st || '';
 }
 
 const ITEM_MAX = new Set([
-  'pushRes', 'freeAct', 'burnImm', 'deathWard', 'displace', 'bigArea',
-  'holyAttacks', 'quickenFirst', 'rerollLowOnce', 'clockworkFloor', 'clockworkHigh', 'capToRoll',
-  'flameEvery2', 'flameSpread', 'flameKwBurn', 'highMarks', 'surgeArrow',
-  'doubleArcaneRec', 'highSorcery', 'pactHeal', 'highPulseHeal', 'kwHolyHeal',
-  'potionHeal', 'highBurnBurst', 'healHolyPulse', 'sellBonus',
-  'stealthExpose', 'startStealth', 'cloakSneak', 'highKi',
-  'openingSurge', 'woundRage', 'sentinelAura', 'startInsp', 'moonSickle',
-  'startHex', 'pactRestore', 'killRage', 'staffCdHeal', 'sneakVenom',
-  'inspWardHaste', 'metaFireball', 'pactSpreadHex', 'displaceAlert',
-  'openingDouble', 'kiDoubleStrike', 'woodlandPulse', 'every3Strike',
-  'chillOnHit', 'starBolt', 'cleanseEvery'
+  'pushRes', 'potionHeal', 'woundRage', 'lowDoubleRegen', 'firstCastRoot',
+  'rerollLowOnce', 'startEvasionDur', 'bagGold', 'sellMult', 'meleeReflect',
+  'meleeCleave', 'staggerOnHit', 'every3Strike', 'firstAbilHalf', 'wardOnCastPct',
+  'capToRoll', 'shareD20Floor', 'poisonOnHit', 'starBolt', 'staffFireBurn',
+  'stormCleave', 'vorpalExec', 'invulnSec', 'blackrazorKill', 'castChargeRefund',
+  'permAdvantage', 'holyAvenger', 'every5Surge', 'surgeFire', 'rageCleave',
+  'highSmite', 'smiteSun', 'firstHighResetCD', 'cdWardPct', 'every3ArcRec',
+  'arcRecRoll', 'every3Mark', 'oathbowMod', 'every3Sneak', 'sneakVenom',
+  'evadeKi', 'kiDoubleStrike', 'startInsp', 'inspWardPct', 'lowWildShape',
+  'woodlandRoot', 'highSorcery', 'metaExpose', 'every4Hex', 'hexSpellAmp',
+  'openingDouble', 'cleanseEvery', 'evadeCharge'
 ]);
+const ITEM_MIN = new Set(['critThreshold']);
 const ITEM_MUL = new Set(['poisonX']);
+const ITEM_EVASION = new Set(['evasion', 'startEvasion']);
 
 function combineItems(keys) {
   const list = (keys || []).map(k => ITEMS[k]).filter(Boolean);
@@ -396,7 +593,9 @@ function combineItems(keys) {
         const o = s[k] ? { ...s[k] } : {};
         Object.entries(v).forEach(([f, x]) => o[f] = f === 'r' ? Math.max(o[f] || 0, x) : (o[f] || 0) + x);
         s[k] = o;
-      } else if (ITEM_MUL.has(k)) s[k] = (s[k] || 1) * v;
+      } else if (ITEM_EVASION.has(k)) s[k] = 1 - (1 - (s[k] || 0)) * (1 - v);
+      else if (ITEM_MIN.has(k)) s[k] = s[k] == null ? v : Math.min(s[k], v);
+      else if (ITEM_MUL.has(k)) s[k] = (s[k] || 1) * v;
       else if (ITEM_MAX.has(k)) s[k] = Math.max(s[k] || 0, v);
       else s[k] = (s[k] || 0) + v;
     });
