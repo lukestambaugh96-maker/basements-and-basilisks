@@ -15,12 +15,18 @@
 const TIERX = { hp: 1.45, dmg: 1.3 };
 const MITIGATE_K = 14; // Cubed AC/SR mitigation midpoint: DR(x) = x^3 / (x^3 + 14^3)
 const ROLL_SHIFT = 3;
-const COMBAT_TEMPO = 1.4; // ~1.4x slower baseline tempo so combat reads clearly and DEX/INT speed scaling shines
+const COMBAT_TEMPO = 1.4; // Baseline hero movement/attack tempo so combat reads clearly and DEX/INT scaling shines
+const ENEMY_TEMPO = 1.08; // Faster enemy attack & cast tempo to keep frontline pressure & sustain honest
 const OT_START = 28, OT_STEP = 5, TIME_LIMIT = 110;
 const CHARGE_TAKEN = 60;
 const MIN_CAST_INTERVAL = 1.0; // Global 1-cast/second cap
 const LARGE_AREA = 1.25, LARGE_HP = 1.5;
 var KI_MAX = 4;
+
+// Hero tier scaling via D&D Cantrip dice (1x / 2x / 3x / 4x base dice) instead of hidden u.dm multiplier
+const diceMult = u => (u && u.side === 'P' && !u.minion ? Math.max(1, u.tier || 1) : 1);
+const tierRoll = (u, n, s) => roll(n * diceMult(u), s);
+const tierScale = u => (u && u.side === 'P' && !u.minion ? 1 + 0.55 * Math.max(0, (u.tier || 1) - 1) : (u ? u.dm : 1));
 
 const isRadiant = o => !!(o && (o.kind === 'radiant' || o.kind === 'holy'));
 const combineEvasion = (...vals) => {
@@ -80,7 +86,7 @@ function heroStats(cfg) {
   const s = (it && it.s) || {};
   const f = { ...(d.f || {}), ...(path ? path.f : {}) };
   const hpx = Math.pow(TIERX.hp, tier - 1);
-  const dm = Math.pow(TIERX.dmg, tier - 1);
+  const dm = 1; // Heroes scale visibly via tier dice (1x/2x/3x/4x), not a hidden u.dm multiplier
   const isLarge = (cfg.key === 'dane' || cfg.key === 'pillar') && cfg.questDone;
 
   // 1. STR: Melee Armor Penetration (+1 AC ignored per positive STR)
@@ -155,7 +161,7 @@ function heroStats(cfg) {
     : AB;
 
   const chgMult = 1 + (intChargePct + (s.crPct || 0) + (boon === 'speed' ? 25 : 0)) / 100;
-  st.cr = (sty.cr || 1) * AB.cr * chgMult / COMBAT_TEMPO;
+  st.cr = (sty.cr || 1) * AB.cr * chgMult;
   st.chgX = chgMult;
   st.trig = (path && path.trig) || d.trig || TRIG_ROLE[st.role] || 'striking';
 
@@ -270,7 +276,7 @@ function mkHero(cfg, side = 'P') {
   return u;
 }
 
-const ESC = { hp: 2.25, dmg: 1.76 };
+const ESC = { hp: 2.38, dmg: 1.92 };
 function mkEnemy(k, c, r, tier, enc) {
   const d = E[k];
   const es = (enc && enc.sc) || {};
@@ -281,7 +287,7 @@ function mkEnemy(k, c, r, tier, enc) {
     maxHp: Math.round(d.hp * hpx), hp: Math.round(d.hp * hpx),
     ac: d.ac, sr: d.sr, regen: 0, ward: 0, nec: 0,
     rng: d.rng, ft: d.ft, atk: d.atk, abil: d.abil || null, onHit: d.atk.onHit || [],
-    it: {}, iv: +(d.atk.iv * COMBAT_TEMPO).toFixed(2), cr: d.abil ? d.abil.cr / COMBAT_TEMPO : 0, pa: d.abil ? 5 : 0,
+    it: {}, iv: +(d.atk.iv * ENEMY_TEMPO).toFixed(2), cr: d.abil ? d.abil.cr / ENEMY_TEMPO : 0, pa: d.abil ? 5 : 0,
     charge: 0, t: Math.random() * .5, mt: 0, _lastCastT: -99,
     f: { ...(d.f || {}), webwalk: WEBFREE.has(k) }, die: 'd20',
     bands: d.abil ? { low: d.abil.cut[0], hi: d.abil.cut[1] + 1 } : null,
@@ -327,7 +333,7 @@ function settleLarge(units) {
 
 function threatOf(x) {
   const a = x.atk;
-  const avg = (a.d[0] * (a.d[1] + 1) / 2 + (a.flat || 0)) * (a.hits || 1);
+  const avg = (a.d[0] * diceMult(x) * (a.d[1] + 1) / 2 + (a.flat || 0)) * (a.hits || 1);
   return avg * x.dm / x.iv * (x.boss ? 1.6 : x.elite ? 1.3 : 1) + (x.abil ? 3 : 0);
 }
 const curAC = (b, t) => (t.st.exp > 0 ? -2 : 0) + t.ac + (t.st.acBT > 0 ? t.st.acB : 0) + t.st.acS - t.st.acid + (t.auraAC || 0);
@@ -445,7 +451,7 @@ function gilthraxItemValue(u) {
 function gilthraxWardAmount(u, P) {
   const val = gilthraxItemValue(u);
   const base = [24, 38, 60, 82][P] + val * [3, 4, 6, 7][P] + Math.max(0, u.m.con) * 4;
-  return Math.round(base * u.dm * chaK(u));
+  return Math.round(base * tierScale(u) * chaK(u));
 }
 
 function triggerGilthraxBreath(b, u, storedDmg, wide = false) {
@@ -454,7 +460,7 @@ function triggerGilthraxBreath(b, u, storedDmg, wide = false) {
   const fs = foes(b, u).filter(x => !x.hidden && hd(x, u) <= rad);
   const list = fs.length ? fs : foes(b, u).filter(x => !x.hidden).sort((a, c) => hd(a, u) - hd(c, u)).slice(0, 2);
   if (!list.length) return;
-  const dmg = Math.max(Math.round(14 * u.dm), Math.round(storedDmg * (wide ? 1.15 : 0.9)));
+  const dmg = Math.max(Math.round(14 * tierScale(u)), Math.round(storedDmg * (wide ? 1.15 : 0.9)));
   b.events.push({ k: 'area', id: u.id, tid: list[0].id, shape: 'cone', r: rad, ty: 'fire', ids: list.map(x => x.id) });
   callout(b, u, 'GOLD DRAGON BREATH!', '#ff9c4a');
   list.forEach(x => {
@@ -521,7 +527,7 @@ function triggerJamisonCD(b, u) {
     // Bonds 1 closest unbonded ally + heals entire party
     const unb = fr.filter(a => a !== u && a.bonded !== u).sort((a, c) => hd(a, u) - hd(c, u))[0];
     if (unb) { unb.bonded = u; status(b, unb, 'BONDED', '#ffe9a0'); }
-    fr.forEach(a => heal(b, u, a, (16 + Math.max(0, u.m.cha) * 3) * u.dm, { raw: 1, bondShare: 1 }));
+    fr.forEach(a => heal(b, u, a, tierRoll(u, 3, 8) + Math.max(0, u.m.cha) * 3, { raw: 1, bondShare: 1 }));
     u.stats.bondedCasts = (u.stats.bondedCasts || 0) + 1;
     return fr;
   });
@@ -670,7 +676,7 @@ function triggerSneakAttack(b, u, target, opts = {}) {
   if (!u || !u.alive || !target) return;
   u.stats.sneaks = (u.stats.sneaks || 0) + 1;
   if (!opts.ability && target.alive) {
-    hit(b, u, target, roll(1, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
+    hit(b, u, target, tierRoll(u, 1, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
     if (opts.venom && target.alive) applyStatus(b, u, target, 'poison', 2 * chaK(u));
   }
   emitClassKw(b, u, 'sneak_attack', { target, ...opts });
@@ -682,7 +688,7 @@ function fireNaillKiStrike(b, u, t) {
   u.stats.kiStrikes = (u.stats.kiStrikes || 0) + 1;
   callout(b, u, 'KI · OPEN HAND!', '#8fd8d8');
   b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: u.f.flowingLeaves ? 1 : 0.6, ty: 'thunder', ids: [t.id] });
-  const got = hit(b, u, t, roll(2, 8) + Math.max(0, u.m.wis) * 2, { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1 });
+  const got = hit(b, u, t, tierRoll(u, 2, 8) + Math.max(0, u.m.wis) * 2, { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1 });
   if (t.alive) {
     stagger(b, t, 2);
     onHit(b, u, t, got);
@@ -730,7 +736,7 @@ function triggerPactBoon(b, hexer, victim, killer) {
     if (near.length) {
       b.events.push({ k: 'area', id: hexer.id, tid: victim.id, shape: 'splash', r: 2, ty: 'fire', ids: near.map(x => x.id) });
       near.forEach(x => {
-        hit(b, hexer, x, roll(2, 8), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, noBonus: 1 });
+        hit(b, hexer, x, tierRoll(hexer, 2, 8), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, noBonus: 1 });
         if (x.alive) applyStatus(b, hexer, x, 'burn', 4 * chaK(hexer));
       });
     }
@@ -761,7 +767,7 @@ function applyRoot(b, src, t, dur) {
   if (src && src.key === 'juniper' && src.f.circleLand && b.time >= (src._clT || 0)) {
     src._clT = b.time + 1.0;
     const low = friends(b, src).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
-    if (low) heal(b, src, low, (10 + Math.max(0, src.m.wis) * 2) * src.dm, { raw: 1 });
+    if (low) heal(b, src, low, tierRoll(src, 2, 8) + Math.max(0, src.m.wis) * 2, { raw: 1 });
   }
 }
 
@@ -882,6 +888,10 @@ function onUnitEvade(b, dodger, attacker) {
   if (!dodger || dodger.side !== 'P') return;
   dodger.stats.evades = (dodger.stats.evades || 0) + 1;
   dodger.stats.alertDodges = (dodger.stats.alertDodges || 0) + 1;
+  // Prevent Evasion from starving Struck Tanks of ability Charge
+  if (dodger.abil && dodger.trig === 'struck') {
+    giveCharge(b, dodger, 4 * (dodger.chgX || 1), 1);
+  }
   // Arthur Action Surge: evading triggers an immediate free Longsword strike
   if (dodger.f.arthurSurge) {
     triggerActionSurge(b, dodger, { target: attacker, label: 'ACTION SURGE!' });
@@ -1039,13 +1049,19 @@ function hit(b, src, t, amt, o = {}) {
   }
 
   if (t.abil && pre > 0 && (t.side === 'E' || t.trig === 'struck')) {
-    giveCharge(b, t, pre / t.maxHp * (t.side === 'E' ? CHARGE_TAKEN : CHG.struck * (t.chgX || 1)), 1);
+    if (t.side === 'E') {
+      giveCharge(b, t, pre / t.maxHp * CHARGE_TAKEN, 1);
+    } else {
+      const chgRef = Math.max(pre, raw * 0.45);
+      giveCharge(b, t, Math.max(4, chgRef / t.maxHp * CHG.struck) * (t.chgX || 1), 1);
+    }
   }
   if (t.side === 'P' && pre > 0) {
     const sh = watchShare(b, t);
+    const watchRef = Math.max(pre, raw * 0.40);
     for (const a of b.units) {
       if (a.alive && a.side === 'P' && a.trig === 'watchful' && hd(a, t) <= a.rng + 1) {
-        giveCharge(b, a, pre / t.maxHp * CHG.watchful * (a === t ? 2.5 : sh) * (a.chgX || 1), 1);
+        giveCharge(b, a, watchRef / t.maxHp * CHG.watchful * (a === t ? 2.5 : sh) * (a.chgX || 1), 1);
       }
     }
   }
@@ -1058,7 +1074,7 @@ function hit(b, src, t, amt, o = {}) {
     friends(b, src).filter(a => a !== src && !a.minion && hd(a, src) <= 1).forEach(a => heal(b, src, a, allyH, { raw: 1 }));
   }
 
-  // Toot Mote of Potential: ability damage triggers +1d8 bonus damage & +2g bounty on kill
+  // Toot Mote of Potential: ability damage triggers +1d8 (×tier) bonus damage & +2g bounty on kill
   if (pre > 0 && o.ab && !o.dot && !o.moteProc && src && src.side === 'P' && src._activeMote) {
     const mote = src._activeMote;
     if (b.time >= (src._moteCdT || 0)) {
@@ -1066,7 +1082,7 @@ function hit(b, src, t, amt, o = {}) {
       later(b, 0, () => {
         if (!t.alive) return;
         const wasAlive = t.alive;
-        hit(b, src, t, roll(1, 8), { kind: 'magic', ty: 'thunder', noBonus: 1, moteProc: 1, onhit: 1 });
+        hit(b, src, t, tierRoll(mote.giver || src, 1, 8), { kind: 'magic', ty: 'thunder', noBonus: 1, moteProc: 1, onhit: 1 });
         if (wasAlive && !t.alive && mote.giver && mote.giver.alive && !mote.bountyPaid) {
           mote.bountyPaid = 1;
           gainGold(b, mote.giver, 2, 'BOUNTY +2g');
@@ -1160,10 +1176,10 @@ function hit(b, src, t, amt, o = {}) {
     // Sir Dane Spec 1 Oath of Devotion: taking hits from his Taunted foe retaliates with a Smite (1s CD)
     if (t.f.oathDevotion && src.st.tauntBy === t && b.time >= (t._devotionT || 0)) {
       t._devotionT = b.time + 1.0;
-      later(b, 0, () => { if (src.alive && t.alive) triggerSmite(b, t, src, roll(1, 8), { thorn: 1 }); });
+      later(b, 0, () => { if (src.alive && t.alive) triggerSmite(b, t, src, tierRoll(t, 1, 8), { thorn: 1 }); });
     }
     if (t.vineThornsT > 0 && hd(src, t) <= 1) {
-      later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, 5 * t.dm, { kind: 'magic', ty: 'poison', noBonus: 1, thorn: 1 }); });
+      later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, Math.round(5 * tierScale(t)), { kind: 'magic', ty: 'poison', noBonus: 1, thorn: 1 }); });
     }
   }
 
@@ -1183,19 +1199,19 @@ function hit(b, src, t, amt, o = {}) {
     }
   }
 
-  // Warlock Patron Hex: Infernal Hex (+1d6 Fire) / Warlock Multiclass Hex (+1d4 Necrotic) on every hit
+  // Warlock Patron Hex: Infernal Hex (+1d6 Fire, scales w/ tier) / Warlock Multiclass Hex (+1d4 Necrotic) on every hit
   if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.alive && t.st.hex && !o.dot && !o.hexProc) {
     const hexer = t.st.hex;
     const isInfernal = t.st.hexType === 'infernal';
     const dieS = isInfernal ? 6 : 4;
     const ty = isInfernal ? 'fire' : 'necrotic';
-    const bonus = roll(1, dieS);
+    const bonus = isInfernal ? roll(Math.max(1, Math.ceil((hexer.tier || 1) * 0.75)), dieS) : roll(1, dieS);
     later(b, 0, () => { if (t.alive) hit(b, hexer, t, bonus, { kind: 'magic', ty, noBonus: 1, hexProc: 1 }); });
   }
   // Sir Dane Nat 20 Crusade Aura: allies attacking his Taunted foe trigger a bonus 1d8 Smite + 10 Charge!
   if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.st.duelCrusade > 0 && !o.dot && !o.crusadeProc && !o.onhit) {
     giveCharge(b, src, 10, 1);
-    later(b, 0, () => { if (t.alive && src.alive) triggerSmite(b, src, t, roll(1, 8), { onhit: 1 }); });
+    later(b, 0, () => { if (t.alive && src.alive) triggerSmite(b, src, t, tierRoll(src, 1, 8), { onhit: 1 }); });
   }
 
   // Boon of Combat Prowess: basic attacks heal holder for 30% of damage dealt
@@ -1204,7 +1220,7 @@ function hit(b, src, t, amt, o = {}) {
   }
   // Druid Multiclass Primal Ward Thorns: reflects thorns to melee attackers while Primal Ward holds
   if (pre > 0 && t.alive && src && src.alive && src.side !== t.side && !o.dot && !o.thorn && t._primalWard && t.ward > 0 && hd(src, t) <= 1) {
-    later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, Math.round(6 * t.dm), { kind: 'magic', ty: 'poison', noBonus: 1, thorn: 1 }); });
+    later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, Math.round(6 * tierScale(t)), { kind: 'magic', ty: 'poison', noBonus: 1, thorn: 1 }); });
   }
   if (t._primalWard && t.ward <= 0) t._primalWard = 0;
 
@@ -1258,7 +1274,7 @@ function applyElement(b, src, t, el, dealt, o) {
 function applyStatus(b, src, t, el, v, max) {
   if (!t || !t.alive) return;
   const s = t.st;
-  const k = src ? src.dm : 1;
+  const k = src ? tierScale(src) : 1;
   if (el === 'burn') {
     s.burn += v * k;
     s.burnT = s.burnT || .5;
@@ -1276,7 +1292,7 @@ function applyStatus(b, src, t, el, v, max) {
 
 function addNec(b, src, t, amt) {
   if (!t || !t.alive) return;
-  let v = amt * (src ? src.dm : 1);
+  let v = amt * (src ? tierScale(src) : 1);
   if (t.boss) v /= 2;
   if (t.ward > 0) { const a = Math.min(t.ward, v); t.ward -= a; v -= a; if (a >= 1) b.events.push({ k: 'ward', id: t.id, v: Math.round(a) }); }
   if (v <= 0) return;
@@ -1457,7 +1473,7 @@ function heal(b, src, t, amt, o = {}) {
       if (jm.f.radiantLink && b.time >= (jm._rlCd || 0)) {
         jm._rlCd = b.time + 1.0;
         const near = foes(b, jm).filter(x => !x.hidden).sort((a, c) => hd(a, jm) - hd(c, jm))[0];
-        if (near) later(b, 0, () => { if (jm.alive && near.alive) hit(b, jm, near, roll(1, 6), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 }); });
+        if (near) later(b, 0, () => { if (jm.alive && near.alive) hit(b, jm, near, tierRoll(jm, 1, 6), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 }); });
       }
     }
   }
@@ -1893,7 +1909,8 @@ function doAttack(b, u) {
 
 function strike(b, u, t, m) {
   const a = u.atk;
-  const got = hit(b, u, t, roll(a.d[0], a.d[1]) + (a.flat || 0), { kind: a.kind, el: a.el, ty: a.ty, melee: u.rng <= 2, nec: a.nec || 0, mul: (a.mul || 1) * (m || 1), strike: 1 });
+  const dmgRoll = a.d[0] > 0 ? tierRoll(u, a.d[0], a.d[1]) : 0;
+  const got = hit(b, u, t, dmgRoll + (a.flat || 0), { kind: a.kind, el: a.el, ty: a.ty, melee: u.rng <= 2, nec: a.nec || 0, mul: (a.mul || 1) * (m || 1), strike: 1 });
   if (t.alive || got > 0) {
     onHit(b, u, t, got);
   }
@@ -1929,15 +1946,15 @@ function onHit(b, u, t, got) {
     u._arachCd = b.time + 1.0;
     applyStatus(b, u, t, 'poison', u.it.poisonOnHit);
   }
-  // Bram Spec 2 Divine Strike: Bram & adjacent allies add +1d6 Radiant to melee attacks
+  // Bram Spec 2 Divine Strike: Bram & adjacent allies add +1d6 (×Bram tier) Radiant to melee attacks
   if (u.side === 'P' && u.rng <= 2 && t.alive) {
     const bram = alive(b, 'P').find(x => x.f.divineStrike && hd(x, u) <= 1);
-    if (bram) hit(b, u, t, roll(1, 6), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 });
+    if (bram) hit(b, u, t, tierRoll(bram, 1, 6), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 });
   }
-  // Pillar Spec 2 Living Beacon: empowered next strike adds +1d6 Radiant
+  // Pillar Spec 2 Living Beacon: empowered next strike adds +1d6 (×tier) Radiant
   if (u._beaconHoly && t.alive) {
     u._beaconHoly = 0;
-    hit(b, u, t, roll(1, 6), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 });
+    hit(b, u, t, tierRoll(u, 1, 6), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 });
   }
   // Holy Avenger (v0.23 Legendary): attacks add +2d6 Radiant & heal adjacent allies (1s CD)
   if (u.it && u.it.holyAvenger && t.alive && b.time >= (u._haCd || 0)) {
@@ -2007,23 +2024,23 @@ function postStrikeHooks(b, u, t, got) {
     }
   }
 
-  // Sir Dane Divine Smite: every 3rd melee attack unleashes 1d8 Radiant Smite
+  // Sir Dane Divine Smite: every 3rd melee attack unleashes 1d8 (×tier) Radiant Smite
   if (u.f.smitePeriodic && t.alive) {
     u._smCnt = (u._smCnt || 0) + 1;
     if (u._smCnt % 3 === 0) {
-      triggerSmite(b, u, t, roll(1, 8), { label: 'DIVINE SMITE', onhit: 1 });
+      triggerSmite(b, u, t, tierRoll(u, 1, 8), { label: 'DIVINE SMITE', onhit: 1 });
     }
   }
   // Mother Laurel Cleave, Verdant Smite (Nature Magic vs Rooted), Quest Root & Verdant Aura drain
   if (u.f.verdantCleave && got > 0) {
     foes(b, u).filter(x => x !== t && hd(x, u) <= 1).forEach(x => {
-      const cg = hit(b, u, x, roll(u.atk.d[0], u.atk.d[1]) + (u.atk.flat || 0), { kind: 'phys', ty: 'slashing', melee: 1, onhit: 1 });
-      if (x.alive && x.st.root > 0) triggerSmite(b, u, x, roll(1, 4), { kind: 'magic', ty: 'poison', label: 'VERDANT SMITE', onhit: 1 });
+      const cg = hit(b, u, x, tierRoll(u, u.atk.d[0], u.atk.d[1]) + (u.atk.flat || 0), { kind: 'phys', ty: 'slashing', melee: 1, onhit: 1 });
+      if (x.alive && x.st.root > 0) triggerSmite(b, u, x, tierRoll(u, 1, 4), { kind: 'magic', ty: 'poison', label: 'VERDANT SMITE', onhit: 1 });
     });
   }
   if (u.key === 'mother_laurel' && u.questDone && t.alive) applyRoot(b, u, t, 1.0);
   if (t.alive && t.st.root > 0 && u.side === 'P' && (u.f.verdantSmite || alive(b, 'P').some(x => x.f.bountifulVines))) {
-    triggerSmite(b, u, t, roll(1, 4), { kind: 'magic', ty: 'poison', label: 'VERDANT SMITE', onhit: 1 });
+    triggerSmite(b, u, t, tierRoll(u, 1, 4), { kind: 'magic', ty: 'poison', label: 'VERDANT SMITE', onhit: 1 });
   }
   // Lumen Radiant Hex on basic attacks + Healing Light spec
   if (u.f.radiantHex && t.alive) {
@@ -2044,10 +2061,10 @@ function postStrikeHooks(b, u, t, got) {
   if (u.f.goldBolt && Math.random() < 0.25) {
     gainGold(b, u, 1, 'ALCHEMY');
   }
-  // Corvin Spec 1 Stalker's Flurry: every 3rd basic attack spawns +1d6 shadow slash
+  // Corvin Spec 1 Stalker's Flurry: every 3rd basic attack spawns +1d6 (×tier) shadow slash
   if (u.f.stalkerFlurry && t.alive) {
     u._sfCnt = (u._sfCnt || 0) + 1;
-    if (u._sfCnt % 3 === 0) hit(b, u, t, roll(1, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
+    if (u._sfCnt % 3 === 0) hit(b, u, t, tierRoll(u, 1, 6), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
   }
   // Kaska Quest Moon's Favour: while in Panther Form, melee attacks cleave adjacent foes
   if (u.key === 'kaska' && u.questDone && u.beast && u.beast.hp > 0 && got > 0) {
@@ -2055,11 +2072,11 @@ function postStrikeHooks(b, u, t, got) {
       hit(b, u, x, Math.max(1, Math.round(got * .6)), { kind: 'phys', ty: 'slashing', noBonus: 1, onhit: 1 });
     });
   }
-  // Lorcan Spec 1 Colossus Slayer: every 3rd attack vs Marked foe deals +2d8 bonus damage
+  // Lorcan Spec 1 Colossus Slayer: every 3rd attack vs Marked foe deals +2d8 (×tier) bonus damage
   if (u.f.colossusSlayer && t.alive && t.st.mark) {
     u._colCnt = (u._colCnt || 0) + 1;
     if (u._colCnt % 3 === 0) {
-      hit(b, u, t, roll(2, 8), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
+      hit(b, u, t, tierRoll(u, 2, 8), { kind: 'phys', ty: 'piercing', noBonus: 1, onhit: 1 });
       status(b, t, 'COLOSSUS SLAYER', '#9fd86a');
     }
   }
@@ -2136,7 +2153,7 @@ function newBattle(encKey, party, eTier) {
     if (u.key === 'dane' && u.questDone) {
       const fs = alive(b, 'E').sort((a, c) => hd(a, u) - hd(c, u));
       if (fs.length) {
-        fs.slice(0, 3).forEach(e => { push(b, u, e, 2, { stun: .8 }); triggerSmite(b, u, e, roll(1, 8), { label: 'CHARGE SMITE' }); });
+        fs.slice(0, 3).forEach(e => { push(b, u, e, 2, { stun: .8 }); triggerSmite(b, u, e, tierRoll(u, 1, 8), { label: 'CHARGE SMITE' }); });
         callout(b, u, 'CAVALRY CHARGE!', '#ffe9a0');
       }
     }

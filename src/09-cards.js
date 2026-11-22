@@ -162,7 +162,8 @@ function numbers(k, t, cfg) {
   const d = H[k]; if (!d) return null;
   const st = heroStats(cfg || { key: k, tier: t, die: 'd20', path: t >= 2 ? pathOf(k) : undefined });
   const A = st.atk || d.atk; const hits = A.hits || 1, ab = atkBonus(st, d);
-  const avg = ((A.d[1] + 1) / 2 * A.d[0] + (A.flat || 0) + ab) * st.dm * (A.mul || 1) * (A.heals ? 1 : st.atM || 1);
+  const nDice = A.d[0] * (st.tier || 1);
+  const avg = ((A.d[1] + 1) / 2 * nDice + (A.flat || 0) + ab) * (A.mul || 1) * (A.heals ? 1 : st.atM || 1);
   const rawEvery = 100 / (st.cr + (st.trig === 'striking' ? st.pa * (st.chgX || 1) / st.iv : 0));
   const every = Math.max(MIN_CAST_INTERVAL, rawEvery);
   return { d, st, hits, avg, every, odds: bandOdds(d, st) };
@@ -220,14 +221,27 @@ function mathSpan(txt, attr, title, tip) { return `<span class="kw amath" style=
 function atkMath(d, st) {
   const A = st.atk || d.atk;
   if (A.d[0] === 0) return mathSpan('0 dmg', st.k, A.n, 'Performs in place for a chance to pop +1 Gold.');
-  const bon = atkBonus(st, d), fl = A.flat || 0, k = st.dm * (st.atM || 1) * (A.mul || 1);
+  const bon = atkBonus(st, d), fl = A.flat || 0, tier = st.tier || 1;
+  const nDice = A.d[0] * tier;
   const a = st.w;
-  return mathSpan(`${A.d[0]}d${A.d[1]}${fl + bon ? sgn(fl + bon) : ''}${k !== 1 ? `<small> ×${fx2(k)}</small>` : ''}`, a, `${A.n}`, `Scales linearly with ${ATTR_N[a]} (${sgn(bon)}) and Tier (×${fx2(k)}).`);
+  const k = (st.atM || 1) * (A.mul || 1);
+  return mathSpan(
+    `${nDice}d${A.d[1]}${fl + bon ? sgn(fl + bon) : ''}${k !== 1 ? `<small> ×${fx2(k)}</small>` : ''}`,
+    a, `${A.n}`,
+    `Base ${A.d[0]}d${A.d[1]} × ${TIER_NAME[tier]} (${nDice}d${A.d[1]}) + ${ATTR_N[a]} & items (${sgn(bon)})${fl ? ` + weapon (+${fl})` : ''}.`
+  );
 }
 function annotateDice(html, d, st) {
-  return html.replace(/(\d+)d(\d+)(\s+(Radiant|Holy|fire|necrotic|radiant|thunder|cold|lightning|force|poison))?/g, (m, n, f, _t, ty) => {
+  const tier = st.tier || 1;
+  return html.replace(/(\d+)d(\d+)(\s+(Radiant|Holy|fire|necrotic|radiant|thunder|cold|lightning|force|poison|piercing|slashing|bludgeoning|Nature|Arcane|Ward))?/g, (m, n, f, _t, ty) => {
+    if (f === '20') return m;
+    const scaled = Number(n) * tier;
     const rad = ty === 'Radiant' || ty === 'Holy' || ty === 'radiant';
-    return mathSpan(`${n}d${f}${ty ? ' ' + ty : ''}`, rad ? null : st.k, `${st.abil.n}`, rad ? 'Radiant ignores AC and SR.' : `Scales with ${ATTR_N[st.k]} (${sgn(st.mk)}) and Tier.`);
+    const label = `${scaled}d${f}${ty ? ' ' + ty : ''}`;
+    const tip = rad
+      ? `Base ${n}d${f} × ${TIER_NAME[tier]} (${scaled}d${f}). Radiant ignores AC and SR.`
+      : `Base ${n}d${f} × ${TIER_NAME[tier]} (${scaled}d${f}), plus ${ATTR_N[st.k]} (${sgn(st.mk)}).`;
+    return mathSpan(label, rad ? null : st.k, `${st.abil.n}`, tip);
   });
 }
 

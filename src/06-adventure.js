@@ -102,8 +102,8 @@ function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0, minR = 0
 /* ---------- Difficulty Curve & Hazards ---------- */
 const CURVE = {
   share: [.50, .65, .80, .92, 1],
-  grow: 1.141,
-  dmgGrow: 1.151,
+  grow: 1.158,
+  dmgGrow: 1.168,
   ease: [0.88, 1.00, 1.10, 1.19, 1.28],
   retry: .88
 };

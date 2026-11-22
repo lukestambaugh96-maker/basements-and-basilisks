@@ -983,13 +983,13 @@ const ENC = {
   },
   gynosphinx: {
     n: 'Gynosphinx', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: 1.06, dmg: 1.04 }, note: 'Boss (2×2): Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
+    q: 'Act 2 Boss', sc: { hp: 1.14, dmg: 1.12 }, note: 'Boss (2×2): Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
     u: [['gynosphinx', 4, 1], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['manticore', 5, 0]]
   },
   giant_crab: {
     n: 'Giant Crab of the Bubble', place: 'Boiling Bubble Chamber', theme: 'cave', mapKey: 'boiling_bubble',
-    q: 'Act 2 Boss', sc: { hp: 1.20, dmg: 1.16 }, note: 'Boss (2×2): High-AC carapace, Crushing Claw Root, and Boiling Splash fire AoE.',
+    q: 'Act 2 Boss', sc: { hp: 1.26, dmg: 1.22 }, note: 'Boss (2×2): High-AC carapace, Crushing Claw Root, and Boiling Splash fire AoE.',
     map: BATTLE_MAPS.boiling_bubble.grid,
     u: [['giant_crab', 4, 2], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['kelpie', 5, 0], ['steam_mephit', 1, 1]]
   },
@@ -1063,19 +1063,19 @@ const ENC = {
   },
   orcus: {
     n: 'Orcus, Prince of Undeath', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .92, dmg: .88 }, note: 'Final Boss (2×2): Wand of Orcus deals massive Necrosis waves and raises relentless undead.',
+    q: 'Act 3 Final Boss', sc: { hp: 1.04, dmg: 1.00 }, note: 'Final Boss (2×2): Wand of Orcus deals massive Necrosis waves and raises relentless undead.',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['orcus', 4, 1], ['wight', 2, 3], ['wight', 7, 3], ['bone_devil', 5, 3]]
   },
   asmodeus: {
     n: 'Asmodeus, Lord of the Ninth', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .98, dmg: .94 }, note: 'Final Boss: Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
+    q: 'Act 3 Final Boss', sc: { hp: .90, dmg: .86 }, note: 'Final Boss: Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['erinyes', 2, 1], ['spined_devil', 7, 1]]
   },
   tiamat: {
     n: 'Tiamat, Queen of Dragons', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .96, dmg: .92 }, note: 'Final Boss (2×2): Cycles all Five Chromatic Breath Weapons (Fire, Poison, Lightning, Cold, Acid)!',
+    q: 'Act 3 Final Boss', sc: { hp: 1.10, dmg: 1.06 }, note: 'Final Boss (2×2): Cycles all Five Chromatic Breath Weapons (Fire, Poison, Lightning, Cold, Acid)!',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['tiamat', 4, 1], ['cambion', 2, 0], ['cambion', 7, 0], ['bearded_devil', 3, 4], ['bearded_devil', 6, 4]]
   }
