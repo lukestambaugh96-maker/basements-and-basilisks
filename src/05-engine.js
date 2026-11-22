@@ -13,7 +13,7 @@
 */
 
 const TIERX = { hp: 1.45, dmg: 1.3 };
-const MITIGATE_K = 14; // Cubed AC/SR mitigation midpoint: DR(x) = x^3 / (x^3 + 14^3)
+const MITIGATE_K = 16; // Cubed AC/SR mitigation midpoint: DR(x) = x^3 / (x^3 + 16^3)
 const ROLL_SHIFT = 3;
 const COMBAT_TEMPO = 1.4; // Baseline hero movement/attack tempo so combat reads clearly and DEX/INT scaling shines
 const ENEMY_TEMPO = 1.08; // Faster enemy attack & cast tempo to keep frontline pressure & sustain honest
@@ -276,7 +276,7 @@ function mkHero(cfg, side = 'P') {
   return u;
 }
 
-const ESC = { hp: 2.38, dmg: 1.92 };
+const ESC = { hp: 2.36, dmg: 1.66 };
 function mkEnemy(k, c, r, tier, enc) {
   const d = E[k];
   const es = (enc && enc.sc) || {};
@@ -287,11 +287,11 @@ function mkEnemy(k, c, r, tier, enc) {
     maxHp: Math.round(d.hp * hpx), hp: Math.round(d.hp * hpx),
     ac: d.ac, sr: d.sr, regen: 0, ward: 0, nec: 0,
     rng: d.rng, ft: d.ft, atk: d.atk, abil: d.abil || null, onHit: d.atk.onHit || [],
-    it: {}, iv: +(d.atk.iv * ENEMY_TEMPO).toFixed(2), cr: d.abil ? d.abil.cr / ENEMY_TEMPO : 0, pa: d.abil ? 5 : 0,
+    it: {}, iv: +(d.atk.iv * ENEMY_TEMPO).toFixed(2), cr: d.abil ? d.abil.cr / ENEMY_TEMPO : 0, pa: d.abil ? (d.boss ? 9 : d.elite ? 7 : 5) : 0,
     charge: 0, t: Math.random() * .5, mt: 0, _lastCastT: -99,
     f: { ...(d.f || {}), webwalk: WEBFREE.has(k) }, die: 'd20',
     bands: d.abil ? { low: d.abil.cut[0], hi: d.abil.cut[1] + 1 } : null,
-    dm, pen: 0, spen: 0, d20Floor: 1, chaPotency: 1, poisonX: 1, bon: null,
+    dm, pen: d.pen || 0, spen: d.spen || 0, d20Floor: 1, chaPotency: 1, poisonX: 1, bon: null,
     cha: 0, con: 0, str: 0, m: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
     haste: 0, tempHaste: 0, tempHasteT: 0, rollBonus: 0, nextBonus: 0, advantage: 0,
     elite: d.elite, boss: d.boss, sz: d.large ? 2 : 1, alive: true, st: freshSt(),
@@ -313,7 +313,7 @@ function callout(b, u, txt, col) { b.events.push({ k: 'callout', id: u ? u.id : 
 function otLevel(b) { return b.time >= OT_START ? 1 + Math.floor((b.time - OT_START) / OT_STEP) : 0; }
 const chaK = u => (u && u.chaPotency) || (1 + 0.08 * Math.max(0, (u && u.cha) || 0));
 const adjAllies = (b, u) => alive(b, u.side).filter(a => a !== u && hd(a, u) <= 1).length;
-const isQuarry = t => !!(t && t.st && (t.st.mark || t.st.hex || t.st.vow));
+const isQuarry = t => !!(t && t.st && (t.st.mark || t.st.hex || t.st.radHex > 0 || t.st.vow));
 const auraR = u => (u.f && u.f.divineStrike ? 1 : u.f && u.f.encore ? 1 : 0);
 
 function settleLarge(units) {
@@ -527,17 +527,50 @@ function triggerJamisonCD(b, u) {
     // Bonds 1 closest unbonded ally + heals entire party
     const unb = fr.filter(a => a !== u && a.bonded !== u).sort((a, c) => hd(a, u) - hd(c, u))[0];
     if (unb) { unb.bonded = u; status(b, unb, 'BONDED', '#ffe9a0'); }
-    fr.forEach(a => heal(b, u, a, tierRoll(u, 3, 8) + Math.max(0, u.m.cha) * 3, { raw: 1, bondShare: 1 }));
+    fr.forEach(a => heal(b, u, a, tierRoll(u, 2, 6) + Math.max(0, u.m.cha) * 2, { raw: 1, bondShare: 1 }));
     u.stats.bondedCasts = (u.stats.bondedCasts || 0) + 1;
     return fr;
   });
 }
 
+function spawnSaintDouble(b, u) {
+  const maxD = u.questDone ? 2 : 1;
+  const cur = b.units.filter(x => x.alive && x.isDouble && x.owner === u);
+  if (cur.length >= maxD) return cur[0];
+  // Prefer an empty square 1-2 tiles forward/adjacent toward enemies so the double can draw aggro & echo
+  const cands = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const h = { c, r };
+    if (passable(h) && !occupied(b, h, null)) {
+      const distU = hd(h, u);
+      const fwdBias = Math.abs((u.r - 1) - r) * 0.6 + (r <= u.r ? 0 : 1.5);
+      cands.push({ c, r, score: distU + fwdBias + (distU < 1 || distU > 3 ? 6 : 0) });
+    }
+  }
+  cands.sort((a, z) => a.score - z.score);
+  const spot = cands[0];
+  if (!spot) return null;
+  const dbl = {
+    id: UID++, key: 'saint', side: 'P', role: 'Support', name: 'Illusory Double',
+    c: spot.c, r: spot.r, maxHp: 1, hp: 1, ac: 10, sr: 10, evasion: 0,
+    regen: 0, ward: 0, nec: 0, rng: u.rng, ft: 0, atk: null, abil: null, onHit: [],
+    it: {}, iv: 99, cr: 0, pa: 0, charge: 0, t: 0, mt: 0, _lastCastT: -99,
+    f: { illusoryDecoy: 1 }, die: 'd20', bands: null, dm: 1, pen: 0, spen: 0,
+    d20Floor: 1, chaPotency: 1, poisonX: 1, bon: null,
+    cha: 0, con: 0, str: 0, m: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
+    haste: 0, tempHaste: 0, tempHasteT: 0, rollBonus: 0, nextBonus: 0, advantage: 0,
+    minion: 1, isDouble: 1, owner: u, sz: 1, alive: true, st: freshSt(),
+    stats: { dmg: 0, heal: 0, ward: 0, nec: 0, taken: 0, rolls: [0, 0, 0, 0, 0] }, tier: u.tier
+  };
+  b.units.push(dbl);
+  status(b, dbl, 'ILLUSORY DOUBLE', '#c48fe6');
+  return dbl;
+}
+
 function triggerSaintCD(b, u) {
   return triggerChannelDivinity(b, u, 'CD · INVOKE DUPLICITY', () => {
-    const maxD = u.questDone ? 2 : 1;
-    u.illusoryDouble = Math.min(maxD, (u.illusoryDouble || 0) + 1);
-    return [u];
+    const dbl = spawnSaintDouble(b, u);
+    return dbl ? [u, dbl] : [u];
   });
 }
 
@@ -687,12 +720,20 @@ function fireNaillKiStrike(b, u, t) {
   u.ki = 0;
   u.stats.kiStrikes = (u.stats.kiStrikes || 0) + 1;
   callout(b, u, 'KI · OPEN HAND!', '#8fd8d8');
-  b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: u.f.flowingLeaves ? 1 : 0.6, ty: 'thunder', ids: [t.id] });
+  const adj = u.f.flowingLeaves ? foes(b, u).filter(x => x.alive && hd(x, t) <= 1) : [t];
+  b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: u.f.flowingLeaves ? 1 : 0.6, ty: 'thunder', ids: adj.map(x => x.id) });
   const got = hit(b, u, t, tierRoll(u, 2, 8) + Math.max(0, u.m.wis) * 2, { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1 });
   if (t.alive) {
     stagger(b, t, 2);
     onHit(b, u, t, got);
     if (u.f.naillOpenHand && t.alive) onHit(b, u, t, got);
+  }
+  if (u.f.flowingLeaves) {
+    adj.forEach(x => {
+      if (!x.alive) return;
+      stagger(b, x, 2 * chaK(u));
+      expose(b, x, 3 * chaK(u));
+    });
   }
   if (u.key === 'naill' && u.questDone) u.advantage = 1;
   emitClassKw(b, u, 'ki', { target: t });
@@ -767,7 +808,7 @@ function applyRoot(b, src, t, dur) {
   if (src && src.key === 'juniper' && src.f.circleLand && b.time >= (src._clT || 0)) {
     src._clT = b.time + 1.0;
     const low = friends(b, src).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
-    if (low) heal(b, src, low, tierRoll(src, 2, 8) + Math.max(0, src.m.wis) * 2, { raw: 1 });
+    if (low) heal(b, src, low, tierRoll(src, 2, 6) + Math.max(0, src.m.wis) * 2, { raw: 1 });
   }
 }
 
@@ -812,10 +853,12 @@ function gainGold(b, u, v, why) {
 /* ---------- Damage, Mitigation, Evasion & Temporary Rummage Items ---------- */
 function curEvasion(b, t) {
   if (!t) return 0;
+  const smokeAura = (b && t.side === 'P' && !t.minion && alive(b, 'P').some(x => x.f.smokeMirrors)) ? 0.10 : 0;
   return combineEvasion(
     t.evasion || 0,
     (t.tempEvasionT > 0 ? t.tempEvasion : 0),
-    (t.partyEvasionT > 0 ? t.partyEvasion : 0)
+    (t.partyEvasionT > 0 ? t.partyEvasion : 0),
+    smokeAura
   );
 }
 
@@ -959,11 +1002,15 @@ function hit(b, src, t, amt, o = {}) {
       return 0;
     }
   }
-  if (src && !o.dot && amt > 0 && (t.illusoryDouble || 0) > 0) {
-    t.illusoryDouble--;
-    status(b, t, 'ILLUSORY DOUBLE!', '#c48fe6');
-    if (t.f.twoFaced && src.alive) {
-      addNec(b, t, src, 12);
+  if (t.isDouble && amt > 0) {
+    t.alive = false; t.hp = 0;
+    b.events.push({ k: 'die', id: t.id });
+    b.units.forEach(x => { if (x.target === t) x.target = null; });
+    status(b, t, 'ILLUSION EVADED!', '#c48fe6');
+    const owner = t.owner;
+    if (owner && owner.alive) {
+      onUnitEvade(b, owner, src);
+      if (owner.f.twoFaced && src && src.alive) addNec(b, owner, src, 12);
     }
     return 0;
   }
@@ -984,7 +1031,7 @@ function hit(b, src, t, amt, o = {}) {
   }
 
   if (o.dot && o.ty === 'poison' && t.st.root > 0 && alive(b, 'P').some(x => x.f.overgrowth)) raw *= 2;
-  if (o.dot && o.ty === 'fire' && t.st.hex && alive(b, 'P').some(x => x.f.finePrint)) raw *= 2;
+  if (o.dot && o.ty === 'fire' && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.f.finePrint)) raw *= 2;
 
   let dmg = Math.max(amt > 0 ? 1 : 0, Math.round(mitigate(b, src, t, raw, o)));
 
@@ -1007,7 +1054,6 @@ function hit(b, src, t, amt, o = {}) {
     t.stats.wardAbs = (t.stats.wardAbs || 0) + a;
     if (t._wardBy && t._wardBy.stats) t._wardBy.stats.wardAbsorbed = (t._wardBy.stats.wardAbsorbed || 0) + a;
     if (hadWard && t.ward <= 0) {
-      const giver = t._wardBy;
       t._wardBy = null;
       // Gilthrax Ward-Break: blasts cone of Fire equal to absorbed Ward!
       if (t.alive && t.f.gilthraxWard && (t.wardStored || 0) > 0) {
@@ -1015,11 +1061,15 @@ function hit(b, src, t, amt, o = {}) {
         t.wardStored = 0;
         later(b, .02, () => { if (t.alive) triggerGilthraxBreath(b, t, stored, false); });
       }
-      if (giver && giver.alive && giver.f.abjurer) {
-        triggerArcaneRecovery(b, giver, 15, 'WARD BREAK');
-        if (giver.f.spellBattery) {
-          giveCharge(b, t, 25);
-        }
+      // Faelan Ward Siphon & Spell Battery: trigger when ANY allied Ward breaks (0.5s ICD)
+      if (t.side === 'P' && !t.minion) {
+        alive(b, 'P').filter(x => x.f.abjurer && b.time >= (x._wsCd || 0)).forEach(abj => {
+          abj._wsCd = b.time + 0.5;
+          triggerArcaneRecovery(b, abj, 15, 'WARD BREAK');
+          if (abj.f.spellBattery) {
+            giveCharge(b, t, 25);
+          }
+        });
       }
     }
   }
@@ -1338,7 +1388,11 @@ function kill(b, t, src, o) {
   const wasTauntedBy = t.st.tauntBy;
   t.alive = false; t.hp = Math.max(0, t.hp);
   b.events.push({ k: 'die', id: t.id });
-  b.units.forEach(x => { if (x.target === t) x.target = null; if (x.st.tauntBy === t) { x.st.taunt = 0; x.st.tauntBy = null; } });
+  b.units.forEach(x => {
+    if (x.target === t) x.target = null;
+    if (x.st.tauntBy === t) { x.st.taunt = 0; x.st.tauntBy = null; }
+    if (x.isDouble && x.owner === t && x.alive) { x.alive = false; x.hp = 0; b.events.push({ k: 'die', id: x.id }); }
+  });
 
   if (t.side === 'E') {
     const K = src && src.minion && src.owner ? src.owner : src;
@@ -1869,7 +1923,8 @@ function charge(b, u) {
 /* ---------- Attacks & On-Hit ---------- */
 function attackIv(b, u) {
   const rageHaste = (u.bearRage || 0) * 10 + (u.mcRage ? 20 : 0);
-  const radHexHaste = (u.key === 'lumen' && u.target && u.target.st && u.target.st.radHex > 0) ? Math.min(120, u.target.st.radHex * 12) : 0;
+  const hexStacks = (u.key === 'lumen' && u.target && u.target.st) ? ((u.target.st.radHex || 0) + (u.target.st.hex ? 2 : 0)) : 0;
+  const radHexHaste = hexStacks > 0 ? Math.min(120, hexStacks * 12) : 0;
   const h = u.haste + (u.permHaste || 0) + (u.auraHaste || 0) + (u.tempHasteT > 0 ? u.tempHaste : 0) + rageHaste + radHexHaste;
   const slow = (u.st.stag > 0 ? 1.3 : 1) * (u.st.hexSlow > 0 ? 1.25 : 1) * (u.st.chillT > 0 ? 1.15 : 1);
   return u.iv / Math.max(.4, 1 + h / 100) * (1 + Math.min(50, u.st.frz / 2) / 100) * slow / (1 + .2 * otLevel(b));
@@ -2372,7 +2427,7 @@ function tick(b, dt) {
   for (const u of b.units) if (u.hidden && (b.time >= u.hideT || !u.alive)) u.hidden = 0;
 
   for (const u of b.units) {
-    if (!u.alive || u.st.stun > 0) continue;
+    if (!u.alive || u.st.stun > 0 || u.isDouble) continue;
     u.target = pickTarget(b, u);
 
     if (u.abil && !(u.st.charm > 0) && !(u.st.fear > 0)) {
@@ -2416,7 +2471,7 @@ function tick(b, dt) {
 }
 
 function checkOver(b) {
-  const p = alive(b, 'P').length, e = alive(b, 'E').length;
+  const p = alive(b, 'P').filter(x => !x.isDouble).length, e = alive(b, 'E').length;
   if (!e) { b.over = true; b.winner = 'P'; }
   else if (!p) { b.over = true; b.winner = 'E'; }
   else if (b.time >= TIME_LIMIT) { b.over = true; b.winner = 'E'; b.timeout = 1; }

@@ -488,7 +488,8 @@ function renderShop() {
   const R = RUN;
   if (SHOP_SEL_ITEM != null && !R.stash[SHOP_SEL_ITEM]) SHOP_SEL_ITEM = null;
   const actMod = currentActModule(R);
-  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div>${goldHub(R.gold)}<div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div>`;
+  const intVal = goldInterest(R);
+  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div>${goldHub(R.gold)}<div class="stat" title="Interest: +1g per ${ECON.interestStep}g held on combat win (max +${ECON.interestCap}g)"><b>+${intVal}g</b><span>Interest</span></div><div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div>`;
 
   // v0.23 Camp Shop Flow Flip: Act Boss Reminder banner (NO combat spoiler!) — except Piggy Bank Retry!
   if (R.adv && R.adv.retryPending && R.next) {
@@ -990,10 +991,11 @@ function showResult() {
   const P = B.units.filter(u => u.side === 'P' && !u.minion);
   const rows = P.map(u => `<tr><td>${esc(H[u.key].name)} ${u.alive ? '' : '<span class="fell">fell</span>'}${highlights(u)}</td><td>${Math.round(u.stats.dmg)}</td><td>${Math.round(u.stats.heal + u.stats.ward)}</td><td>${Math.round(u.stats.taken)}</td></tr>`).join('');
   const madeTxt = res.made ? `<div class="small" style="text-align:center">Looted ${gold(res.made)} during the fight.</div>` : '';
-  const actBonusTxt = res.actBonus ? ` (+${res.actBonus}g Act Clear)` : '';
+  const intTxt = res.interest ? ` (+${res.interest}g Interest)` : '';
+  const actBonusTxt = res.actBonus ? ` (+${res.actBonus}g Intact Piggy)` : '';
   let msg;
   if (won) {
-    msg = `+${gold(res.gold + res.made + (res.elite || 0) + (res.minibossGold || 0) + (res.actBonus || 0))}${actBonusTxt} · ${RUN.gold} gold · Piggy Bank ${RUN.piggyBroken ? 'broken' : `holds ${RUN.piggy}g`}`;
+    msg = `+${gold(res.gold + res.made + (res.elite || 0) + (res.minibossGold || 0) + (res.actBonus || 0))}${intTxt}${actBonusTxt} · ${RUN.gold} gold · Piggy Bank ${RUN.piggyBroken ? 'broken' : `holds ${RUN.piggy}g`}`;
   } else if (!RUN.over) {
     msg = `Piggy Bank broke! Paid out +${gold(res.piggy)} — visit the Camp Shop and retry this fight!`;
   } else {

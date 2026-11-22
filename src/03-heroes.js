@@ -286,17 +286,17 @@ hero('bram', {
     n: 'Cure Wounds', cr: 11.5, pa: 8, cut: [5, 13], self: 1,
     one: 'Heals closest injured ally; High turns excess healing into Ward, Nat 20 heals adjacent allies & resets Cleric Channel Divinity.',
     b: [
-      'Heals the closest injured ally (2d6 + WIS).',
-      'Heals the closest injured ally (3d6 + WIS).',
-      'Heals the closest injured ally (4d8 + WIS); excess healing becomes Ward.',
-      'Heals all adjacent allies (4d8 + WIS) and resets Channel Divinity for all Clerics!'
+      'Heals the closest injured ally (2d4 + WIS).',
+      'Heals the closest injured ally (3d4 + WIS).',
+      'Heals the closest injured ally (4d6 + WIS); excess healing becomes Ward.',
+      'Heals all adjacent allies (4d6 + WIS) and resets Channel Divinity for all Clerics!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
       const injured = fr.slice().sort((a, c) => (hpPct(a) < .98 ? 0 : 1) - (hpPct(c) < .98 ? 0 : 1) || hd(a, u) - hd(c, u) || hpPct(a) - hpPct(c));
       const t = injured[0] || u;
-      const dice = [[2, 6], [3, 6], [4, 8], [4, 8]][P];
-      const baseAmt = tierRoll(u, dice[0], dice[1]) + Math.max(0, u.m.wis) * 3;
+      const dice = [[2, 4], [3, 4], [4, 6], [4, 6]][P];
+      const baseAmt = tierRoll(u, dice[0], dice[1]) + Math.max(0, u.m.wis) * 2;
       const doHeal = a => {
         let amt = baseAmt;
         if (u.f.discipleLife && hpPct(a) < .5) amt *= 1.4;
@@ -340,7 +340,7 @@ hero('faelan', {
   hp: 86, ac: 11, sr: 14,
   kw: { arcane_recovery: 1 },
   ckw: [
-    { k: 'arcane_recovery', sub: 'Ward Siphon', x: 'Whenever a Ward Faelan placed breaks, she gains +15 Charge.' }
+    { k: 'arcane_recovery', sub: 'Ward Siphon', x: 'Whenever any allied Ward breaks, she gains +15 Charge.' }
   ],
   f: { abjurer: 1 },
   atk: { n: 'Ray of Frost', d: [1, 8], flat: 1, kind: 'magic', ty: 'cold', iv: 1.5 },
@@ -348,16 +348,16 @@ hero('faelan', {
     n: 'Arcane Ward', cr: 10.0, pa: 6, cut: [5, 13], self: 1,
     one: 'Places an INT-scaled Ward on the most-threatened ally; High Wards 2 allies, Nat 20 Wards everyone & recasts.',
     b: [
-      'Places a 3d8 Arcane Ward on the most-threatened ally.',
-      'Places a 4d8 Arcane Ward on the most-threatened ally.',
-      'Places 5d8 Arcane Wards on the 2 most-threatened allies.',
-      'Wards the entire party (6d8) and immediately casts a second Ward on the lowest-HP ally!'
+      'Places a 3d6 Arcane Ward on the most-threatened ally.',
+      'Places a 4d6 Arcane Ward on the most-threatened ally.',
+      'Places 5d6 Arcane Wards on the 2 most-threatened allies.',
+      'Wards the entire party (6d6) and immediately casts a second Ward on the lowest-HP ally!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
       const threat = a => (hpPct(a) * 100) + a.ward * .4 - (a.role === 'Tank' ? 14 : 0);
       const ord = fr.slice().sort((a, c) => threat(a) - threat(c));
-      const base = tierRoll(u, [3, 4, 5, 6][P], 8) + Math.max(0, u.m.int) * [2, 3, 4, 5][P];
+      const base = tierRoll(u, [3, 4, 5, 6][P], 6) + Math.max(0, u.m.int) * [2, 3, 4, 5][P];
       const val = Math.round(base * chaK(u) * (u.f.projWard ? 1.20 : 1));
       const cap = a => a.maxHp * .48;
       if (P === 3) {
@@ -375,7 +375,7 @@ hero('faelan', {
   },
   paths: [
     { k: 'proj_ward', n: 'Projected Ward', attr: 'int', tags: ['ward'], x: 'Arcane Wards are 20% stronger.', f: { projWard: 1 } },
-    { k: 'spell_battery', n: 'Spell Battery', attr: 'int', tags: ['ward', 'charge'], x: 'When Faelan’s Ward breaks, that ally gains +25 Charge.', f: { spellBattery: 1 } }
+    { k: 'spell_battery', n: 'Spell Battery', attr: 'int', tags: ['ward', 'charge'], x: 'When any allied Ward breaks, that ally gains +25 Charge.', f: { spellBattery: 1 } }
   ],
   quest: {
     id: 'faelan_q', statKey: 'wardAbsorbed', goal: 600,
@@ -464,7 +464,7 @@ hero('dane', {
     b: [
       'Taunts his target (3s) and deals a 1d8 Radiant Smite.',
       'Taunts his target (4s) and deals a 2d8 Radiant Smite.',
-      'Taunts his target (4s), deals a 2d8 Radiant Smite, and gains a 6d8 Ward.',
+      'Taunts his target (4s), deals a 2d8 Radiant Smite, and gains a 4d6 Ward.',
       'Taunts his target (5s), deals a 3d8 Radiant Smite, and allies hitting it unleash bonus 1d8 Radiant Smites!'
     ],
     fx(b, u, P) {
@@ -478,7 +478,7 @@ hero('dane', {
       const dice = [1, 2, 2, 3][P];
       triggerSmite(b, u, t, tierRoll(u, dice, 8), { ab: 1, label: 'COMPELLED DUEL' });
       if (P >= 2) {
-        const w = Math.round((tierRoll(u, 6, 8) + Math.max(0, u.m.cha) * 6) * chaK(u));
+        const w = Math.round((tierRoll(u, 4, 6) + Math.max(0, u.m.cha) * 4) * chaK(u));
         addWard(b, u, w, u.maxHp * .6, u);
       }
       if (P === 3 && t.alive) {
@@ -596,7 +596,7 @@ hero('juniper', {
       hitFoes.forEach(x => {
         hit(b, u, x, tierRoll(u, dice, 6), { kind: 'magic', ty: 'poison', area: 1, ab: 1 });
         if (x.alive) applyRoot(b, u, x, dur);
-        if (P >= 2 && x.alive) applyStatus(b, u, x, 'poison', (P === 3 ? 4 : 3) * chaK(u));
+        if (x.alive && (P >= 2 || u.f.overgrowth)) applyStatus(b, u, x, 'poison', (P === 3 ? 4 : P === 2 ? 3 : 2) * chaK(u));
       });
       if (P >= 2) triggerWildShape(b, u, { form: 'Bramble Aspect', dur: 5, thorns: 1 });
       if (P === 3) {
@@ -610,7 +610,7 @@ hero('juniper', {
     }
   },
   paths: [
-    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Rooted foes take double Poison damage.', f: { overgrowth: 1 } },
+    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Entangle applies Poison; Rooted foes take double Poison damage.', f: { overgrowth: 1 } },
     { k: 'circle_land', n: 'Circle of the Land', attr: 'wis', tags: ['control', 'heal'], x: 'Whenever Juniper Roots a foe, heal the lowest-HP ally.', f: { circleLand: 1 } }
   ],
   quest: {
@@ -809,7 +809,7 @@ hero('naill', {
   ckw: [
     { k: 'ki', sub: 'Open Hand Strike', x: '4-pip Ki bar filled by attacking and taking hits; at 4 pips, unleashes a heavy Staggering blow (triggers on-hit).' }
   ],
-  f: { monkNaill: 1 },
+  f: { monkNaill: 1, baseEvasion: 0.15 },
   atk: { n: 'Unarmed Strike', d: [1, 6], flat: 2, kind: 'phys', ty: 'bludgeoning', iv: 0.95 },
   abil: {
     n: 'Flurry of Blows', cr: 9.5, pa: 8, cut: [6, 13], self: 1,
@@ -844,7 +844,7 @@ hero('naill', {
   },
   paths: [
     { k: 'open_hand', n: 'Open Hand', attr: 'dex', tags: ['onhit'], x: 'Open Hand Strike triggers on-hit effects twice.', f: { naillOpenHand: 1 } },
-    { k: 'flowing_leaves', n: 'Flowing Leaves', attr: 'wis', tags: ['control'], x: 'Open Hand Strike also Staggers adjacent foes.', f: { flowingLeaves: 1 } }
+    { k: 'flowing_leaves', n: 'Flowing Leaves', attr: 'wis', tags: ['control', 'ambush'], x: 'Open Hand Strike also Staggers and Exposes adjacent foes.', f: { flowingLeaves: 1 } }
   ],
   quest: {
     id: 'naill_q', statKey: 'kiStrikes', goal: 15,
@@ -870,10 +870,10 @@ hero('nettle', {
   atk: { n: 'Eldritch Blast', d: [1, 10], flat: 1, kind: 'magic', ty: 'force', iv: 1.45 },
   abil: {
     n: 'Infernal Hex', cr: 13.0, pa: 8, cut: [5, 13], self: 1,
-    one: 'Blasts & curses target with Infernal Hex; High adds heavy Burn, Nat 20 curses 3 foes with Hex & Burn.',
+    one: 'Blasts & curses target with Infernal Hex & Burn; High adds heavy Burn, Nat 20 curses 3 foes with Hex & Burn.',
     b: [
-      'Blasts target (2d8 fire) and applies Infernal Hex.',
-      'Blasts target (3d8 fire) and applies Infernal Hex.',
+      'Blasts target (2d8 fire), Infernal Hex, and Burn.',
+      'Blasts target (3d8 fire), Infernal Hex, and Burn.',
       'Blasts target (3d8 fire), applies Infernal Hex, and inflicts heavy Burn.',
       'Blasts and curses 3 foes with Infernal Hex and heavy Burn!'
     ],
@@ -888,7 +888,7 @@ hero('nettle', {
         hit(b, u, t, tierRoll(u, dice, 8), { kind: 'magic', el: 'fire', ty: 'fire', ab: 1 });
         if (t.alive) {
           applyNettleHex(b, u, t, true);
-          if (P >= 2) applyStatus(b, u, t, 'burn', (P === 3 ? 10 : 8) * chaK(u));
+          applyStatus(b, u, t, 'burn', [3, 4, 8, 10][P] * chaK(u));
         }
       });
       if (P === 3) callout(b, u, 'INFERNAL CLAUSE!', '#ff7b4a');
@@ -1108,10 +1108,10 @@ hero('jamison', {
     n: 'Emboldening Bond', cr: 13.0, pa: 8, cut: [5, 13], self: 1,
     one: 'Bonds closest unbonded ally & heals bonded allies (30% Heal/Ward share); High bonds 2, Nat 20 bonds entire party.',
     b: [
-      'Bonds the closest unbonded ally and heals all bonded allies (3d6 + CHA).',
-      'Bonds the closest unbonded ally and heals all bonded allies (4d6 + CHA).',
-      'Bonds the 2 closest unbonded allies and heals all bonded allies (5d6 + CHA).',
-      'Bonds the entire party and heals everyone (7d6 + CHA)!'
+      'Bonds the closest unbonded ally and heals all bonded allies (2d4 + CHA).',
+      'Bonds the closest unbonded ally and heals all bonded allies (3d4 + CHA).',
+      'Bonds the 2 closest unbonded allies and heals all bonded allies (4d4 + CHA).',
+      'Bonds the entire party and heals everyone (6d4 + CHA)!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
@@ -1120,7 +1120,7 @@ hero('jamison', {
       const toBond = P === 3 ? unb : unb.slice(0, P === 2 ? 2 : 1);
       toBond.forEach(a => { a.bonded = u; status(b, a, 'BONDED', '#ffe9a0'); });
       const bonded = fr.filter(a => a.bonded === u);
-      const amt = tierRoll(u, [3, 4, 5, 7][P], 6) + Math.max(0, u.m.cha) * 3;
+      const amt = tierRoll(u, [2, 3, 4, 6][P], 4) + Math.max(0, u.m.cha) * 2;
       b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 4, ty: 'radiant', ids: bonded.map(x => x.id) });
       bonded.forEach(a => heal(b, u, a, amt, { raw: 1, bondShare: 1 }));
       u.stats.bondedCasts = (u.stats.bondedCasts || 0) + Math.max(1, toBond.length);
@@ -1485,7 +1485,7 @@ hero('saint', {
   hp: 94, ac: 12, sr: 14,
   kw: { channel_divinity: 1 },
   ckw: [
-    { k: 'channel_divinity', sub: 'Invoke Duplicity', x: 'Once per fight, summons an Illusory Double that absorbs 1 hit and echoes Saint’s next Toll the Dead.' }
+    { k: 'channel_divinity', sub: 'Invoke Duplicity', x: 'Once per fight, summons an Illusory Double on an empty square that evades 1 hit and echoes Saint’s Toll the Dead.' }
   ],
   f: {},
   atk: { n: 'Bell of Passing', d: [1, 8], flat: 1, kind: 'magic', ty: 'necrotic', iv: 1.45 },
@@ -1501,22 +1501,30 @@ hero('saint', {
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
       if (!fs.length) return;
-      const ringOn = t => {
+      const ringOn = (t, srcUnit = u) => {
         if (!t || !t.alive) return;
         const wounded = t.hp < t.maxHp * .99;
         const dieS = wounded ? 12 : 8;
         const dice = [2, 3, 3, 4][P];
         const nec = [10, 14, 18, 22][P] + Math.max(0, u.m.wis) * 2;
-        b.events.push({ k: 'proj', s: u.id, t: t.id, ty: 'necrotic' });
+        b.events.push({ k: 'proj', s: srcUnit.id, t: t.id, ty: 'necrotic' });
         hit(b, u, t, tierRoll(u, dice, dieS), { kind: 'magic', ty: 'necrotic', nec, ab: 1 });
       };
       const t = fs.slice().sort((a, c) => hpPct(a) - hpPct(c))[0];
-      ringOn(t);
+      ringOn(t, u);
       u.stats.saintCasts = (u.stats.saintCasts || 0) + 1;
-      // If Invoke Duplicity hasn't been used yet, activate it; if a Double is active, it echoes!
-      if (u.illusoryDouble > 0) {
-        const echoT = fs.filter(x => x !== t && x.alive)[0] || t;
-        later(b, .18, () => { if (u.alive && echoT.alive) { status(b, u, 'DOUBLE ECHO', '#c48fe6'); ringOn(echoT); } });
+      // Living Illusory Double(s) on the map echo Toll the Dead from their own square!
+      const doubles = b.units.filter(x => x.alive && x.isDouble && x.owner === u);
+      if (doubles.length > 0) {
+        doubles.forEach((dbl, idx) => {
+          const echoT = fs.filter(x => x !== t && x.alive)[idx % Math.max(1, fs.length - 1)] || t;
+          later(b, .18 + idx * .10, () => {
+            if (u.alive && dbl.alive && echoT && echoT.alive) {
+              status(b, dbl, 'DOUBLE ECHO', '#c48fe6');
+              ringOn(echoT, dbl);
+            }
+          });
+        });
       } else if (!u._cdUsed) {
         triggerSaintCD(b, u);
       }
@@ -1536,7 +1544,7 @@ hero('saint', {
   },
   paths: [
     { k: 'two_faced', n: 'Two-Faced', attr: 'wis', tags: ['necrosis'], x: 'When Saint’s Illusory Double breaks, it inflicts 12 Necrosis on the attacker.', f: { twoFaced: 1 } },
-    { k: 'smoke_mirrors', n: 'Smoke & Mirrors', attr: 'cha', tags: ['evasion', 'heal'], x: 'Whenever an ally evades an attack, heal them for 10% max HP.', f: { smokeMirrors: 1 } }
+    { k: 'smoke_mirrors', n: 'Smoke & Mirrors', attr: 'cha', tags: ['evasion', 'heal'], x: 'Allies gain +10% Evasion and heal 10% max HP on evade.', f: { smokeMirrors: 1 } }
   ],
   quest: {
     id: 'saint_q', statKey: 'saintCasts', goal: 12,
@@ -1562,12 +1570,12 @@ hero('kaska', {
   atk: { n: 'Panther Claws / Thorn Whip', d: [1, 8], flat: 2, kind: 'phys', ty: 'slashing', iv: 1.3 },
   abil: {
     n: 'Moonlit Pounce', cr: 12.5, pa: 9, cut: [6, 13], self: 1,
-    one: 'Leaps onto a foe dealing slashing damage & Exposed; High re-shifts Panther Form, Nat 20 Stuns, re-shifts & heals party.',
+    one: 'Leaps onto a foe dealing slashing damage & Exposed; High adds Root & re-shifts Panther Form, Nat 20 Stuns, re-shifts & heals party.',
     b: [
       'Pounces target for 2d8 slashing and applies Exposed (3s).',
       'Pounces target for 3d8 slashing and applies Exposed (4s).',
-      'Pounces for 3d8 + Exposed and re-shifts into Panther Form (fresh Beast HP).',
-      'Stuns target (2s), re-shifts into Panther Form, and heals the entire party (4d8 + WIS)!'
+      'Pounces for 3d8 + Exposed + Root and re-shifts into Panther Form.',
+      'Stuns target (2s), re-shifts into Panther Form, and heals the entire party (3d6 + WIS)!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -1577,7 +1585,10 @@ hero('kaska', {
       if (spot && hd(u, t) > 1) { u.c = spot.c; u.r = spot.r; u.target = t; b.events.push({ k: 'leap', id: u.id }); }
       b.events.push({ k: 'area', id: u.id, tid: t.id, shape: P === 3 ? 'nova' : 'splash', r: P === 3 ? 2 : 1, ty: 'cold', ids: [t.id] });
       hit(b, u, t, tierRoll(u, P === 0 ? 2 : 3, 8), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
-      if (t.alive) expose(b, t, (P === 0 ? 3 : 4) * chaK(u));
+      if (t.alive) {
+        expose(b, t, (P === 0 ? 3 : 4) * chaK(u));
+        if (P >= 2) applyRoot(b, u, t, 3 * chaK(u));
+      }
       u.stats.pounces = (u.stats.pounces || 0) + 1;
       if (P >= 2) {
         const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .45 : .32));
@@ -1587,7 +1598,7 @@ hero('kaska', {
       if (P === 3) {
         if (t.alive) stun(b, t, 2);
         friends(b, u).filter(a => !a.minion).forEach(a => {
-          heal(b, u, a, tierRoll(u, 4, 8) + Math.max(0, u.m.wis) * 3, { raw: 1 });
+          heal(b, u, a, tierRoll(u, 3, 6) + Math.max(0, u.m.wis) * 2, { raw: 1 });
         });
         callout(b, u, 'MOONLIT HUNT!', '#8fd0ff');
       }

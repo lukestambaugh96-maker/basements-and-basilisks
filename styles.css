@@ -481,7 +481,8 @@ body.dd-hero #slots,body.dd-hero #bench,body.dd-stash .htile,body.dd-equip .htil
 .maplines .rowlbl{font:italic 12px Georgia,serif;fill:#8a7350}
 /* ================= 0.18: the shop ================= */
 .shop18{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;margin-top:14px}
-.sh-offers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sh-offers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:1160px){.sh-offers{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ho18{display:grid;grid-template-rows:auto 1fr auto;border:3px solid var(--tc);background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 22%,#fbf3e2),#fbf3e2 55%);cursor:pointer;transition:transform .12s,box-shadow .12s;position:relative;min-height:330px}
 .ho18:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(60,40,10,.25)}
 .ho18.poor{filter:saturate(.55)}.ho18.poor .price{color:#a33}

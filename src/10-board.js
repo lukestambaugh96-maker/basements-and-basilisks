@@ -407,11 +407,11 @@ function drawUnitToken(u,now,ghost,dt=0){
   const p={x:cp.x,y:cp.y+tokenYOff(u,ghost)};
   const rad=unitRad(u);
   const veil=typeof B!=='undefined'&&B&&u.alive&&typeof inBrush==='function'&&inBrush(u)&&B.time>=(u._shown||0);
-  const deadA=(u.alive===false?.22:1)*(u.hidden?.45:veil?.6:1);
+  const deadA=(u.alive===false?.22:1)*(u.isDouble?.64:u.hidden?.45:veil?.6:1);
   ctx.save();ctx.globalAlpha=deadA*(ghost?.55:1);
   const isP=u.side==='P';const d=isP?H[u.key]:null;
-  const ring1=u.minion?'#5d9a52':isP?ROLE_COL[u.role||d.role]:'#c0504a';
-  const hovered=!ghost&&((isP&&HOVER_HERO&&HOVER_HERO===u.key)||(!isP&&HOVER_ENEMY!=null&&(B?HOVER_ENEMY===u.id:HOVER_ENEMY===u.idx)));
+  const ring1=u.isDouble?'#c48fe6':u.minion?'#5d9a52':isP?ROLE_COL[u.role||d.role]:'#c0504a';
+  const hovered=!ghost&&!u.isDouble&&((isP&&HOVER_HERO&&HOVER_HERO===u.key)||(!isP&&HOVER_ENEMY!=null&&(B?HOVER_ENEMY===u.id:HOVER_ENEMY===u.idx)));
   // Highlight beacon when hovered from side wing roster
   if(hovered&&u.alive!==false){
     const pulse=.5+.5*Math.sin(now*8);
@@ -429,21 +429,23 @@ function drawUnitToken(u,now,ghost,dt=0){
     ctx.beginPath();ctx.arc(p.x,p.y,rad+4.5+pt*3.5,0,Math.PI*2);ctx.stroke();ctx.restore();
   }
   if(u.flash&&now-u.flash<.12){ctx.shadowColor='#fff';ctx.shadowBlur=16}
+  if(u.isDouble&&u.alive!==false){ctx.shadowColor='#c48fe6';ctx.shadowBlur=12}
   const rimW=Math.max(2.2,T*.034);
   ctx.beginPath();ctx.arc(p.x,p.y,rad+rimW,0,Math.PI*2);ctx.fillStyle=ring1;ctx.fill();ctx.shadowBlur=0;
   {const img=portraitFor(u);ctx.save();ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.clip();if(u.alive===false)ctx.filter='grayscale(1)';ctx.drawImage(img,p.x-rad,p.y-rad,rad*2,rad*2);ctx.restore();
    if(u.flash&&now-u.flash<.12){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.42)';ctx.fill()}
    if(!isP){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(120,20,20,.1)';ctx.fill()}
-   if(u.minion){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(60,140,60,.25)';ctx.fill()}}
+   if(u.isDouble){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(176,120,230,.32)';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,rad+rimW+2.2,0,Math.PI*2);ctx.strokeStyle='#e2c6ff';ctx.setLineDash([4,3]);ctx.lineWidth=1.4;ctx.stroke();ctx.setLineDash([])}
+   else if(u.minion){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(60,140,60,.25)';ctx.fill()}}
   if(isP&&!B&&u.tier>1){ctx.font=`800 ${Math.max(10,Math.round(T*.18))}px 'Alegreya Sans',sans-serif`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.85)';const tx='T'+u.tier;ctx.strokeText(tx,p.x+rad*.8,p.y-rad*.68);ctx.fillStyle=TIER_COL[u.tier];ctx.fillText(tx,p.x+rad*.8,p.y-rad*.68)}
-  if(B&&u.alive!==false){
+  if(B&&u.alive!==false&&!u.isDouble){
     // Attack timer (thin outer arc) and Ability Charge (crisp gold arc) kept neatly inside cell bounds
     const iv=attackIv(B,u);const frac=Math.min(1,u.t/iv);
     const atkR=rad+rimW+1.2;
     ctx.beginPath();ctx.arc(p.x,p.y,atkR,-Math.PI/2,-Math.PI/2+Math.PI*2*frac);ctx.strokeStyle=isP?'rgba(236,228,208,.55)':'rgba(220,110,100,.5)';ctx.lineWidth=1.5;ctx.stroke();
     if(u.abil){const cf=u.charge/100;const chgR=atkR+Math.max(2.4,T*.034);ctx.beginPath();ctx.arc(p.x,p.y,chgR,-Math.PI/2,-Math.PI/2+Math.PI*2*cf);ctx.strokeStyle=cf>=1?'#fff1b0':isP?'#e0b45a':'#e07a5a';ctx.lineWidth=Math.max(2.2,T*.034);ctx.stroke()}
   }
-  if(isP&&u.key===S.sel){ctx.beginPath();ctx.arc(p.x,p.y,rad+Math.max(6,T*.09),0,Math.PI*2);ctx.strokeStyle='#e0b45a';ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([])}
+  if(isP&&!u.isDouble&&u.key===S.sel){ctx.beginPath();ctx.arc(p.x,p.y,rad+Math.max(6,T*.09),0,Math.PI*2);ctx.strokeStyle='#e0b45a';ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([])}
   if(!isP&&S.selE===u.idx&&!B){ctx.beginPath();ctx.arc(p.x,p.y,rad+Math.max(6,T*.09),0,Math.PI*2);ctx.strokeStyle='#ff9c94';ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([])}
   ctx.restore();
 }
@@ -457,9 +459,10 @@ function drawUnitBadges(units,now){
     ctx.save();
     // Power-fantasy counter pill + compact status badges tucked along lower portrait rim (stays inside unit's own tile)
     const pills=[];
+    if(u.isDouble)pills.push(['ILLUSION','#e2c6ff']);
     const ct=isP&&!u.minion?tokenCounter(u):null;
     if(ct)pills.push(ct);
-    const tags=unitStatusTags(u);
+    const tags=u.isDouble?[]:unitStatusTags(u);
     for(const t of tags){if(pills.length<2)pills.push(t)}
     if(pills.length){
       ctx.font=`800 ${fz}px 'Alegreya Sans',sans-serif`;
@@ -487,7 +490,7 @@ function drawUnitHealthBars(units,now,dt=0){
   const T=view.T,R=view.R;
   const bars=[];
   for(const u of units){
-    if(u._hide||u.alive===false)continue;
+    if(u._hide||u.alive===false||u.isDouble)continue;
     // Smooth trailing damage decay for visual hit-weight feedback
     if(u._trailHp===undefined)u._trailHp=u.hp;
     if(u.hp>u._trailHp)u._trailHp=u.hp;

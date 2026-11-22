@@ -16,10 +16,13 @@
 const ECON = {
   freeLosses: 1,
   piggyPerWin: 2,
+  actIntactBonus: 3,
+  interestStep: 5,
+  interestCap: 4,
   winGold: d => 6 + Math.floor(d / 4),
   lossGold: () => 0,
-  heroPrice: t => [0, 3, 6, 9, 13][t] || 13,
-  itemPrice: [2, 3, 4, 6, 10, 5], // Common 2, Uncommon 3, Rare 4, Very Rare 6, Legendary 10, Unique 5
+  heroPrice: t => [0, 4, 7, 11, 15][t] || 15,
+  itemPrice: [3, 4, 6, 9, 13, 7], // Common 3, Uncommon 4, Rare 6, Very Rare 9, Legendary 13, Unique 7
   reroll: n => 1 + n,
   curioReroll: 2,
   sellBack: 1,
@@ -28,12 +31,13 @@ const ECON = {
   board: 4,
   bench: 0,
   stash: 10,
-  shopHeroes: 3,
+  shopHeroes: 4,
   shopItems: 3
 };
 
 const TIERCOL = { 1: '#a8743c', 2: '#8c9aa8', 3: '#d0a02a', 4: '#8a4fb8' };
 const heroValue = t => { let v = 0; for (let i = 1; i <= t; i++) v += ECON.heroPrice(i); return v; };
+const goldInterest = run => Math.min(ECON.interestCap, Math.floor(Math.max(0, (run && run.gold) || 0) / ECON.interestStep));
 const actOf = run => (run && run.adv ? run.adv.act : 1);
 const encounterCount = run => Math.max(0, (run && run.stats && run.stats.won) || 0);
 const slotsOf = h => (h && h.key === 'wallaby' && h.questDone) ? 4 : 3;
@@ -101,11 +105,11 @@ function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0, minR = 0
 
 /* ---------- Difficulty Curve & Hazards ---------- */
 const CURVE = {
-  share: [.50, .65, .80, .92, 1],
-  grow: 1.158,
+  share: [.52, .68, .84, .95, 1],
+  grow: 1.162,
   dmgGrow: 1.168,
-  ease: [0.88, 1.00, 1.10, 1.19, 1.28],
-  retry: .88
+  ease: [0.86, 1.02, 1.15, 1.26, 1.38],
+  retry: .96
 };
 function curveAt(d) {
   const di = Math.max(1, Math.floor(d));
@@ -123,11 +127,11 @@ const HAZARD_KEYS = Object.keys(HAZARDS);
 
 const ADV = {
   acts: 3, rows: 9, bossRow: 8,
-  depth: (act, r) => [1, 5.7, 9.6][act - 1] + r * [.60, .50, .48][act - 1],
-  bossDepth: act => [6.0, 10.1, 13.7][act - 1],
-  eliteDepth: 0.90, eliteK: 1.15, eliteGold: 4,
-  minibossDepth: 1.05, minibossK: 1.16,
-  startGold: 6
+  depth: (act, r) => [1, 5.9, 10.0][act - 1] + r * [.62, .52, .50][act - 1],
+  bossDepth: act => [6.2, 10.4, 14.0][act - 1],
+  eliteDepth: 0.95, eliteK: 1.18, eliteGold: 5,
+  minibossDepth: 1.10, minibossK: 1.18,
+  startGold: 8
 };
 
 const NODE = {
@@ -478,7 +482,7 @@ const canAfford = (run, p) => p != null && run.gold >= p;
 const onSale = (run, kind, i) => run.shop && run.shop.sale && run.shop.sale.kind === kind && run.shop.sale.i === i;
 const itemPrice = (run, i) => { const k = run.shop.items[i]; return k ? Math.max(1, ECON.itemPrice[ITEMS[k].r] - (onSale(run, 'i', i) ? ECON.sale : 0)) : null; };
 const rerollPrice = run => ECON.reroll(run.shop.rr || 0);
-const heroRefund = h => heroValue(h.tier);
+const heroRefund = h => Math.max(2, Math.floor(heroValue(h.tier) * 0.7));
 function itemRefund(run, k) {
   const f = (run.shop.fresh || []).find(x => x[0] === k);
   const base = f ? f[1] : Math.max(1, Math.floor(ECON.itemPrice[ITEMS[k].r] * .5));
@@ -668,11 +672,11 @@ function sellHero(run, uid, swap) {
   if (i < 0) return 0;
   const h = run.team[i];
   if (run.team.length === 1 && !swap) return 0;
-  const back = heroValue(h.tier);
+  const back = heroRefund(h);
   run.gold += back;
   h.items.forEach(k => {
     if (run.stash.length < ECON.stash) run.stash.push(k);
-    else run.gold += ECON.itemPrice[ITEMS[k].r];
+    else run.gold += itemRefund(run, k);
   });
   run.team.splice(i, 1);
   return back;
@@ -1274,9 +1278,10 @@ function updateHeroQuests(run, won, b) {
 /* ---------- Post-Combat Resolution (Piggy Bank Single Free-Loss Rule!) ---------- */
 function resolveFight(run, won, b) {
   const d = run.depth;
-  let gold = 0, piggy = 0, bonusGold = 0;
+  let gold = 0, piggy = 0, bonusGold = 0, interest = 0;
   if (won) {
     gold = ECON.winGold(d);
+    interest = goldInterest(run);
     // Bag of Holding: +1 Gold (max 1) on win
     const hasBag = (run.team || []).some(h => (h.items || []).some(k => ITEMS[k] && ITEMS[k].s && ITEMS[k].s.bagGold));
     if (hasBag) bonusGold += 1;
@@ -1285,7 +1290,7 @@ function resolveFight(run, won, b) {
       bonusGold += Math.min(5, Math.floor((run.gold || 0) * .10));
     }
     if (run.next && run.next.bonusGold) bonusGold += run.next.bonusGold;
-    gold += bonusGold;
+    gold += interest + bonusGold;
     run.stats.won++;
     run.depth++;
     run.retries = 0;
@@ -1305,9 +1310,9 @@ function resolveFight(run, won, b) {
   run.gold += gold + made;
   run.stats.gold += gold + made;
   run.hist.push(run.next ? run.next.threat : 'ambush');
-  run.log.push({ d: Math.round(d), threat: run.next ? run.next.threat : 'ambush', won, gold, made, piggy, time: b ? +b.time.toFixed(1) : 0 });
+  run.log.push({ d: Math.round(d), threat: run.next ? run.next.threat : 'ambush', won, gold, interest, made, piggy, time: b ? +b.time.toFixed(1) : 0 });
   if (run.losses > ECON.freeLosses) run.over = true;
-  return { won, gold, made, d, piggy, bonusGold };
+  return { won, gold, interest, made, d, piggy, bonusGold };
 }
 
 function resolveNodeFight(run, won, b, rand = Math.random) {
@@ -1335,6 +1340,11 @@ function resolveNodeFight(run, won, b, rand = Math.random) {
   if (won && n && n.kind === 'boss') {
     run.adv.bosses.push(n.threat);
     res.actDone = run.adv.act;
+    if (!run.piggyBroken && ECON.actIntactBonus) {
+      run.gold += ECON.actIntactBonus;
+      run.stats.gold += ECON.actIntactBonus;
+      res.actBonus = (res.actBonus || 0) + ECON.actIntactBonus;
+    }
     if (run.adv.act >= ADV.acts) {
       run.victory = true; run.over = true; res.finished = true;
     } else {

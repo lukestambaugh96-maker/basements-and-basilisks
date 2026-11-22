@@ -492,7 +492,8 @@ body.dd-hero #slots,body.dd-hero #bench,body.dd-stash .htile,body.dd-equip .htil
 .maplines .rowlbl{font:italic 12px Georgia,serif;fill:#8a7350}
 /* ================= 0.18: the shop ================= */
 .shop18{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;margin-top:14px}
-.sh-offers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sh-offers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:1160px){.sh-offers{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ho18{display:grid;grid-template-rows:auto 1fr auto;border:3px solid var(--tc);background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 22%,#fbf3e2),#fbf3e2 55%);cursor:pointer;transition:transform .12s,box-shadow .12s;position:relative;min-height:330px}
 .ho18:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(60,40,10,.25)}
 .ho18.poor{filter:saturate(.55)}.ho18.poor .price{color:#a33}
@@ -1062,16 +1063,16 @@ const E = {
     role: 'Archer: shoots from behind the front line'
   },
   ruffian: {
-    name: 'Redbrand Ruffian', arch: 'swarm', hp: 42, ac: 14, sr: 10, ft: 30, rng: 1,
+    name: 'Redbrand Ruffian', arch: 'swarm', hp: 42, ac: 14, sr: 10, pen: 2, ft: 30, rng: 1,
     atk: { n: 'Shortsword', d: [1, 6], flat: 3, kind: 'phys', ty: 'piercing', iv: 1.1, hits: 2 },
-    role: 'Brawler: double-striking brigand'
+    role: 'Brawler: double-striking brigand (2 Armor Pen)'
   },
   shaman: {
-    name: 'Hedge Shaman', arch: 'shaman', hp: 36, ac: 11, sr: 14, ft: 30, rng: 5, elite: 1,
-    atk: { n: 'Hex Spark', d: [1, 6], flat: 2, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.5 },
+    name: 'Hedge Shaman', arch: 'shaman', hp: 36, ac: 11, sr: 14, spen: 2, ft: 30, rng: 5, elite: 1,
+    atk: { n: 'Hex Spark', d: [1, 6], flat: 2, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.45 },
     role: 'Healer: mends allies with herbal fire',
     abil: {
-      n: 'Mend', self: 1, cr: 9, cut: [8, 15],
+      n: 'Mend', self: 1, cr: 10, cut: [8, 15],
       fx(b, u, P) {
         const fr = friends(b, u);
         if (P === 0) { const t = fr.slice().sort((a, c) => a.hp / a.maxHp - c.hp / c.maxHp)[0]; heal(b, u, t, roll(2, 6) + 4); return; }
@@ -1087,11 +1088,11 @@ const E = {
     role: 'Pack hunter: fast melee rusher'
   },
   ripper: {
-    name: 'Ripper (Dire Wolf)', arch: 'charger', hp: 72, ac: 13, sr: 10, ft: 40, rng: 1, elite: 1,
-    atk: { n: 'Savage Bite', d: [2, 6], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.05 },
-    role: 'Charger: leaps at the back row and drags heroes down',
+    name: 'Ripper (Dire Wolf)', arch: 'charger', hp: 72, ac: 13, sr: 10, pen: 2, ft: 40, rng: 1, elite: 1,
+    atk: { n: 'Savage Bite', d: [2, 6], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.0 },
+    role: 'Charger: leaps at the back row and drags heroes down (2 Armor Pen)',
     abil: {
-      n: 'Drag Down', cr: 8, cut: [8, 15],
+      n: 'Drag Down', cr: 10.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 6), { kind: 'phys', ty: 'piercing', melee: 1, ab: 1 });
@@ -1105,11 +1106,11 @@ const E = {
     role: 'Shield wall: heavy AC 17, weak to magic; adjacent allies get +2 AC'
   },
   captain: {
-    name: 'Shield Captain', arch: 'wall', hp: 84, ac: 18, sr: 11, ft: 30, rng: 1, elite: 1,
-    atk: { n: 'Greatsword', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.25 },
-    role: 'Captain: armors the ranks',
+    name: 'Shield Captain', arch: 'wall', hp: 84, ac: 18, sr: 11, pen: 3, ft: 30, rng: 1, elite: 1,
+    atk: { n: 'Greatsword', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.15 },
+    role: 'Captain: armors the ranks and cleaves armor (3 Armor Pen)',
     abil: {
-      n: 'Form Ranks', self: 1, cr: 7, cut: [8, 15],
+      n: 'Form Ranks', self: 1, cr: 10, cut: [8, 15],
       fx(b, u, P) {
         const ts = friends(b, u).filter(a => hd(a, u) <= 2);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 2, ty: 'force', ids: ts.map(x => x.id) });
@@ -1124,17 +1125,17 @@ const E = {
     role: 'Meat shield: half the time gets back up unless Radiant or Necrosis kills it'
   },
   orc: {
-    name: 'Reaver', arch: 'charger', hp: 38, ac: 12, sr: 9, ft: 40, rng: 1,
+    name: 'Reaver', arch: 'charger', hp: 38, ac: 12, sr: 9, pen: 2, ft: 40, rng: 1,
     atk: { n: 'Greataxe', d: [1, 12], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.2 },
-    role: 'Charger: leaps over the frontline at backliners'
+    role: 'Charger: leaps over the frontline at backliners (2 Armor Pen)'
   },
   ogre: {
-    name: 'Ogre', arch: 'brute', hp: 125, ac: 11, sr: 9, ft: 25, rng: 1, elite: 1, large: 1,
-    atk: { n: 'Greatclub', d: [2, 8], flat: 4, kind: 'phys', ty: 'bludgeoning', iv: 1.6 },
+    name: 'Ogre', arch: 'brute', hp: 125, ac: 11, sr: 9, pen: 4, ft: 25, rng: 1, elite: 1, large: 1,
+    atk: { n: 'Greatclub', d: [2, 8], flat: 5, kind: 'phys', ty: 'bludgeoning', iv: 1.35 },
     f: { pushResist: .7 },
-    role: '2×2 Brute: swats heroes away; easy to hit, hits like a boulder',
+    role: '2×2 Brute: armor-crushing boulder swings (4 Armor Pen)',
     abil: {
-      n: 'Swat', cr: 6, cut: [8, 15],
+      n: 'Swat', cr: 9.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 8), { kind: 'phys', ty: 'bludgeoning', melee: 1, ab: 1 });
@@ -1143,12 +1144,12 @@ const E = {
     }
   },
   chief: {
-    name: 'Warlord', arch: 'charger', hp: 82, ac: 14, sr: 11, ft: 40, rng: 1, elite: 1,
-    atk: { n: 'Greataxe', d: [1, 12], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.1 },
+    name: 'Warlord', arch: 'charger', hp: 82, ac: 14, sr: 11, pen: 3, ft: 40, rng: 1, elite: 1,
+    atk: { n: 'Greataxe', d: [1, 12], flat: 5, kind: 'phys', ty: 'slashing', iv: 1.05 },
     f: { hasteAura: [3, 25], pushResist: .4 },
-    role: 'War chief: allies within 3 squares attack 25% faster',
+    role: 'War chief: allies within 3 squares attack 25% faster (3 Armor Pen)',
     abil: {
-      n: 'Axe-Biter', cr: 7, cut: [8, 15],
+      n: 'Axe-Biter', cr: 10, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 12), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
@@ -1157,12 +1158,12 @@ const E = {
     }
   },
   klarg: {
-    name: 'Klarg (Bugbear Chief)', arch: 'charger', hp: 145, ac: 15, sr: 11, ft: 35, rng: 1, elite: 1, boss: 1,
-    atk: { n: 'Morningstar', d: [2, 8], flat: 5, kind: 'phys', ty: 'piercing', iv: 1.3 },
+    name: 'Klarg (Bugbear Chief)', arch: 'charger', hp: 145, ac: 15, sr: 11, pen: 4, ft: 35, rng: 1, elite: 1, boss: 1,
+    atk: { n: 'Morningstar', d: [2, 8], flat: 6, kind: 'phys', ty: 'piercing', iv: 1.15 },
     f: { pushResist: .6 },
-    role: 'Act 1 Miniboss: brutal ambusher who leaps in and smashes for heavy burst',
+    role: 'Act 1 Miniboss: brutal ambusher crushing armor (4 Armor Pen) with heavy stuns',
     abil: {
-      n: 'Brutal Smash', cr: 7.5, cut: [7, 14],
+      n: 'Brutal Smash', cr: 11, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: 1, ty: 'bludgeoning', ids: [t.id] });
@@ -1189,12 +1190,12 @@ const E = {
     role: 'Bowman: brittle bones (AC 11) but high SR 16'
   },
   glasstaff: {
-    name: 'Glasstaff (Iarno Albrek)', arch: 'caster', hp: 145, ac: 13, sr: 17, ft: 30, rng: 6, boss: 1,
-    atk: { n: 'Staff of Defense', d: [3, 4], flat: 2, kind: 'magic', ty: 'force', iv: 1.4 },
+    name: 'Glasstaff (Iarno Albrek)', arch: 'caster', hp: 145, ac: 13, sr: 17, spen: 3, ft: 30, rng: 6, boss: 1,
+    atk: { n: 'Staff of Defense', d: [2, 6], flat: 3, kind: 'magic', ty: 'force', iv: 1.25, hits: 2 },
     f: { pushResist: .5 },
-    role: 'Act 1 Boss: arcane shield mage firing piercing Lightning Bolts & Hold Person roots',
+    role: 'Act 1 Boss: twin-bolt battle mage firing piercing Lightning Bolts & Hold Person (3 Spell Pen)',
     abil: {
-      n: 'Lightning Bolt', cr: 7.8, cut: [7, 14],
+      n: 'Lightning Bolt', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         addWard(b, u, Math.round(u.maxHp * [0.08, 0.12, 0.18, 0.25][P]), u.maxHp * .45, u);
@@ -1207,12 +1208,12 @@ const E = {
     }
   },
   flameskull: {
-    name: 'Flameskull', arch: 'caster', hp: 68, ac: 13, sr: 17, ft: 30, rng: 6, elite: 1,
-    atk: { n: 'Fire Ray', d: [2, 6], flat: 2, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.4 },
+    name: 'Flameskull', arch: 'caster', hp: 68, ac: 13, sr: 17, spen: 3, ft: 30, rng: 6, elite: 1,
+    atk: { n: 'Fire Ray', d: [2, 6], flat: 3, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.2 },
     f: { fireproof: 1 },
-    role: 'Artillery: punishes clumped heroes with Fireball; high SR 17',
+    role: 'Artillery: punishes clumped heroes with Fireball; high SR 17 (3 Spell Pen)',
     abil: {
-      n: 'Fireball', cr: 7, cut: [8, 15],
+      n: 'Fireball', cr: 10.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         const R = P === 3 ? 2 : 1;
@@ -1223,12 +1224,12 @@ const E = {
     }
   },
   owlbear: {
-    name: 'Owlbear', arch: 'brute', hp: 185, ac: 15, sr: 11, ft: 40, rng: 1, elite: 1, large: 1,
-    atk: { n: 'Beak and Claws', d: [1, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.55, hits: 2 },
+    name: 'Owlbear', arch: 'brute', hp: 185, ac: 15, sr: 11, pen: 4, ft: 40, rng: 1, elite: 1, large: 1,
+    atk: { n: 'Beak and Claws', d: [1, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.3, hits: 2 },
     f: { pushResist: .7, enrage: 6 },
-    role: '2×2 Juggernaut: enrages +15% damage every 6 seconds',
+    role: '2×2 Juggernaut: enrages +15% damage every 6s (4 Armor Pen)',
     abil: {
-      n: 'Rend', cr: 6, cut: [8, 15],
+      n: 'Rend', cr: 9.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 8), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
@@ -1243,12 +1244,12 @@ const E = {
     role: 'Afflicter: poisons targets and ignores webs'
   },
   nezznar: {
-    name: 'Nezznar (The Black Spider)', arch: ['summoner', 'afflicter'], hp: 165, ac: 14, sr: 16, ft: 30, rng: 6, boss: 1, large: 1,
-    atk: { n: 'Spider Staff', d: [2, 6], flat: 2, kind: 'magic', ty: 'necrotic', iv: 1.4, nec: 3 },
+    name: 'Nezznar (The Black Spider)', arch: ['summoner', 'afflicter'], hp: 165, ac: 14, sr: 16, spen: 3, ft: 30, rng: 6, boss: 1, large: 1,
+    atk: { n: 'Spider Staff', d: [2, 8], flat: 4, kind: 'magic', ty: 'necrotic', iv: 1.15, nec: 5 },
     f: { pushResist: .6, webwalk: 1 },
-    role: 'Act 1 Boss: necrosis, webs, and giant spider brood',
+    role: 'Act 1 Boss: rapid necrotic blasts, webs, and giant spider brood (3 Spell Pen)',
     abil: {
-      n: 'Web of Shadows', cr: 7.5, cut: [8, 15],
+      n: 'Web of Shadows', cr: 11.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target;
         if (P === 3) { status(b, u, 'CALL THE BROOD', '#c48fe6'); spawn(b, 'spider', u.c - 1, u.r + 1); spawn(b, 'spider', u.c + 1, u.r + 1); return; }
@@ -1260,12 +1261,12 @@ const E = {
     }
   },
   venomfang: {
-    name: 'Venomfang (Green Dragon)', arch: ['brute', 'afflicter'], hp: 215, ac: 17, sr: 14, ft: 35, rng: 2, boss: 1, large: 1,
-    atk: { n: 'Rending Claws', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.45 },
+    name: 'Venomfang (Green Dragon)', arch: ['brute', 'afflicter'], hp: 215, ac: 17, sr: 14, pen: 4, ft: 35, rng: 2, boss: 1, large: 1,
+    atk: { n: 'Bite & Rending Claws', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.25, hits: 2, onHit: [{ t: 'status', el: 'poison', v: 1.5 }] },
     f: { pushResist: .8 },
-    role: 'Act 1 Boss (2×2 Dragon): Poison Breath cones, high AC 17, and Wing Buffet knockback',
+    role: 'Act 1 Boss (2×2 Dragon): twin venomous claws (4 Armor Pen), Poison Breath cones & Wing Buffet',
     abil: {
-      n: 'Poison Breath', cr: 7.5, cut: [7, 14],
+      n: 'Poison Breath', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const fs = foes(b, u).filter(x => !x.hidden);
         if (!fs.length) return;
@@ -1281,11 +1282,11 @@ const E = {
     }
   },
   adept: {
-    name: 'Cult Adept', arch: 'caster', hp: 42, ac: 12, sr: 14, ft: 30, rng: 6, elite: 1,
-    atk: { n: 'Fire Bolt', d: [1, 10], kind: 'magic', el: 'fire', ty: 'fire', iv: 1.6 },
-    role: 'Caster: hurls Fireballs at clumped heroes',
+    name: 'Cult Adept', arch: 'caster', hp: 42, ac: 12, sr: 14, spen: 2, ft: 30, rng: 6, elite: 1,
+    atk: { n: 'Fire Bolt', d: [1, 10], kind: 'magic', el: 'fire', ty: 'fire', iv: 1.45 },
+    role: 'Caster: hurls Fireballs at clumped heroes (2 Spell Pen)',
     abil: {
-      n: 'Fireball', self: 1, cr: 6.5, cut: [8, 15],
+      n: 'Fireball', self: 1, cr: 9.5, cut: [8, 15],
       fx(b, u, P) {
         const hs = foes(b, u).filter(x => !x.hidden && hd(x, u) <= 7); if (!hs.length) return;
         const R = P === 3 ? 2 : 1;
@@ -1297,23 +1298,23 @@ const E = {
     }
   },
   conjurer: {
-    name: 'Conjurer', arch: 'summoner', hp: 46, ac: 12, sr: 14, ft: 30, rng: 5, elite: 1,
-    atk: { n: 'Eldritch Bolt', d: [1, 8], kind: 'magic', ty: 'force', iv: 1.5 },
+    name: 'Conjurer', arch: 'summoner', hp: 46, ac: 12, sr: 14, spen: 2, ft: 30, rng: 5, elite: 1,
+    atk: { n: 'Eldritch Bolt', d: [1, 8], flat: 2, kind: 'magic', ty: 'force', iv: 1.4 },
     f: { summon: { k: 'skeleton', n: 2, every: 8, first: 5, cap: 3, hp: .6 } },
     role: 'Summoner: raises two skeleton archers every 8s'
   },
   caller: {
     name: 'Blight Caller', arch: 'summoner', hp: 42, ac: 12, sr: 12, ft: 30, rng: 5, elite: 1,
-    atk: { n: 'Thorn Lash', d: [1, 8], kind: 'phys', ty: 'piercing', iv: 1.4 },
+    atk: { n: 'Thorn Lash', d: [1, 8], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.35 },
     f: { summon: { k: 'blight', n: 2, every: 6, first: 3, cap: 6 } },
     role: 'Summoner: grows twig blights every 6s'
   },
   necromancer: {
-    name: 'Necromancer', arch: 'afflicter', hp: 66, ac: 12, sr: 15, ft: 30, rng: 6, elite: 1,
-    atk: { n: 'Ray of Enfeeblement', d: [2, 6], flat: 2, kind: 'magic', ty: 'necrotic', iv: 1.5, nec: 3 },
-    role: 'Necromancer: inflicts Necrosis and raises fallen zombies',
+    name: 'Necromancer', arch: 'afflicter', hp: 66, ac: 12, sr: 15, spen: 3, ft: 30, rng: 6, elite: 1,
+    atk: { n: 'Ray of Enfeeblement', d: [2, 6], flat: 3, kind: 'magic', ty: 'necrotic', iv: 1.25, nec: 4 },
+    role: 'Necromancer: inflicts Necrosis and raises fallen zombies (3 Spell Pen)',
     abil: {
-      n: 'Enervation', cr: 7, cut: [8, 15],
+      n: 'Enervation', cr: 10.5, cut: [8, 15],
       fx(b, u, P) {
         if (P === 3) {
           const dead = b.units.filter(x => !x.alive && x.key === 'zombie');
@@ -1390,12 +1391,12 @@ const E = {
     role: 'Skirmisher: blasts scalding fire & Burn'
   },
   ctenmiir: {
-    name: 'Ctenmiir (Vampire)', arch: 'afflicter', hp: 130, ac: 16, sr: 16, ft: 35, rng: 1, elite: 1,
-    atk: { n: 'Vampiric Bite', d: [2, 8], flat: 4, kind: 'phys', ty: 'necrotic', iv: 1.2, nec: 4 },
+    name: 'Ctenmiir (Vampire)', arch: 'afflicter', hp: 130, ac: 16, sr: 16, pen: 3, ft: 35, rng: 1, elite: 1,
+    atk: { n: 'Vampiric Bite', d: [2, 8], flat: 4, kind: 'phys', ty: 'necrotic', iv: 1.15, nec: 4 },
     f: { pushResist: .5 },
-    role: 'Act 2 Elite: undead vampire draining HP and Necrosis; Radiant stops his sustain',
+    role: 'Act 2 Elite: undead vampire draining HP and Necrosis (3 Armor Pen); Radiant stops his sustain',
     abil: {
-      n: 'Blood Drain', cr: 8, cut: [7, 14],
+      n: 'Blood Drain', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         const dealt = hit(b, u, t, roll([3, 4, 5, 6][P], 8), { kind: 'magic', ty: 'necrotic', nec: [6, 8, 12, 16][P], ab: 1 });
@@ -1404,12 +1405,12 @@ const E = {
     }
   },
   efreeti: {
-    name: 'Efreeti Guard', arch: 'caster', hp: 135, ac: 16, sr: 16, ft: 35, rng: 4, elite: 1,
-    atk: { n: 'Hurl Flame', d: [2, 8], flat: 3, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.4 },
+    name: 'Efreeti Guard', arch: 'caster', hp: 135, ac: 16, sr: 16, spen: 3, ft: 35, rng: 4, elite: 1,
+    atk: { n: 'Hurl Flame', d: [2, 8], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.25 },
     f: { fireproof: 1, pushResist: .6 },
-    role: 'Act 2 Elite: fire genie blasting wide Flame Strikes & Burn',
+    role: 'Act 2 Elite: fire genie blasting wide Flame Strikes & Burn (3 Spell Pen)',
     abil: {
-      n: 'Flame Wave', cr: 7.5, cut: [7, 14],
+      n: 'Flame Wave', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target || foes(b, u)[0]; if (!t) return;
         const ts = foes(b, u).filter(x => hd(x, t) <= (P === 3 ? 2 : 1));
@@ -1419,12 +1420,12 @@ const E = {
     }
   },
   chain_golem: {
-    name: 'Chain Golem', arch: 'wall', hp: 155, ac: 18, sr: 14, ft: 25, rng: 2, elite: 1, large: 1,
-    atk: { n: 'Barbed Chains', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.45 },
+    name: 'Chain Golem', arch: 'wall', hp: 155, ac: 18, sr: 14, pen: 4, ft: 25, rng: 2, elite: 1, large: 1,
+    atk: { n: 'Barbed Chains', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.3 },
     f: { pushResist: .8 },
-    role: 'Act 2 Elite (2×2): AC 18 iron construct that Roots and lashes multiple heroes',
+    role: 'Act 2 Elite (2×2): AC 18 iron construct that Roots and lashes heroes (4 Armor Pen)',
     abil: {
-      n: 'Chain Snare', cr: 7, cut: [7, 14],
+      n: 'Chain Snare', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 3).slice(0, P === 3 ? 4 : 2);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 3, ty: 'slashing', ids: ts.map(x => x.id) });
@@ -1433,12 +1434,12 @@ const E = {
     }
   },
   ogre_mage: {
-    name: 'Ogre Mage (Oni)', arch: 'caster', hp: 120, ac: 15, sr: 16, ft: 30, rng: 4, elite: 1,
-    atk: { n: 'Glaive / Frost Bolt', d: [2, 6], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.35 },
+    name: 'Ogre Mage (Oni)', arch: 'caster', hp: 120, ac: 15, sr: 16, spen: 3, ft: 30, rng: 4, elite: 1,
+    atk: { n: 'Glaive / Frost Bolt', d: [2, 6], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.2 },
     f: { pushResist: .5 },
-    role: 'Act 2 Elite: frost-casting oni with Cone of Cold & regeneration',
+    role: 'Act 2 Elite: frost-casting oni with Cone of Cold & regeneration (3 Spell Pen)',
     abil: {
-      n: 'Cone of Cold', cr: 7.5, cut: [7, 14],
+      n: 'Cone of Cold', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 3);
         const list = ts.length ? ts : foes(b, u).slice(0, 2);
@@ -1449,12 +1450,12 @@ const E = {
     }
   },
   keraptis: {
-    name: 'Simulacrum of Keraptis', arch: ['caster', 'summoner'], hp: 175, ac: 14, sr: 16, ft: 30, rng: 5, boss: 1,
-    atk: { n: 'Arcane Bolt', d: [2, 8], flat: 3, kind: 'magic', ty: 'force', iv: 1.4 },
+    name: 'Simulacrum of Keraptis', arch: ['caster', 'summoner'], hp: 175, ac: 14, sr: 16, spen: 4, ft: 30, rng: 5, boss: 1,
+    atk: { n: 'Twin Arcane Bolts', d: [2, 6], flat: 4, kind: 'magic', ty: 'force', iv: 1.25, hits: 2 },
     f: { pushResist: .6, summon: { k: 'steam_mephit', n: 1, every: 10, first: 5, cap: 2, hp: .65 } },
-    role: 'Act 2 Boss: mad archmage weaving Wards, constructs, and Elemental Novas',
+    role: 'Act 2 Boss: mad archmage firing twin arcane bolts (4 Spell Pen), Wards & Elemental Novas',
     abil: {
-      n: 'Funhouse Nova', cr: 8.2, cut: [7, 14],
+      n: 'Funhouse Nova', cr: 12, cut: [7, 14],
       fx(b, u, P) {
         addWard(b, u, Math.round(u.maxHp * [0.08, 0.11, 0.15, 0.20][P]), u.maxHp * .4, u);
         const ts = foes(b, u).filter(x => !x.hidden);
@@ -1465,12 +1466,12 @@ const E = {
     }
   },
   blackrazor_wielder: {
-    name: 'Wielder of Blackrazor', arch: 'brute', hp: 185, ac: 15, sr: 14, ft: 35, rng: 1, boss: 1,
-    atk: { n: 'Blackrazor', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.35 },
+    name: 'Wielder of Blackrazor', arch: 'brute', hp: 185, ac: 15, sr: 14, pen: 4, ft: 35, rng: 1, boss: 1,
+    atk: { n: 'Blackrazor', d: [2, 8], flat: 5, kind: 'phys', ty: 'slashing', iv: 1.05 },
     f: { pushResist: .7, blackrazorBoss: 1 },
-    role: 'Act 2 Boss: soul-drinker gaining Ward, Haste & Damage whenever ANY unit dies!',
+    role: 'Act 2 Boss: rapid soul-drinker (4 Armor Pen) gaining Ward, Haste & Damage on ANY death!',
     abil: {
-      n: 'Devour Soul', cr: 7.8, cut: [7, 14],
+      n: 'Devour Soul', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         const dealt = hit(b, u, t, roll([2, 3, 4, 6][P], 8), { kind: 'phys', ty: 'necrotic', nec: [4, 6, 9, 12][P], melee: 1, ab: 1 });
@@ -1480,12 +1481,12 @@ const E = {
     }
   },
   gynosphinx: {
-    name: 'Gynosphinx', arch: 'caster', hp: 205, ac: 15, sr: 16, ft: 35, rng: 2, boss: 1, large: 1,
-    atk: { n: 'Golden Claws', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.35 },
+    name: 'Gynosphinx', arch: 'caster', hp: 205, ac: 15, sr: 16, pen: 4, spen: 3, ft: 35, rng: 2, boss: 1, large: 1,
+    atk: { n: 'Twin Golden Claws', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.2, hits: 2 },
     f: { pushResist: .8 },
-    role: 'Act 2 Boss (2×2): Roar of Ages stuns/drains Charge; Temporal Shift cleanses debuffs',
+    role: 'Act 2 Boss (2×2): twin claws (4 Armor Pen), Roar of Ages stuns/drains Charge & Temporal Shift',
     abil: {
-      n: 'Roar of Ages', cr: 7.8, cut: [7, 14],
+      n: 'Roar of Ages', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'thunder', ids: ts.map(x => x.id) });
@@ -1498,12 +1499,12 @@ const E = {
     }
   },
   giant_crab: {
-    name: 'Giant Crab of the Bubble', arch: 'wall', hp: 215, ac: 17, sr: 12, ft: 25, rng: 1, boss: 1, large: 1,
-    atk: { n: 'Crushing Claw', d: [2, 8], flat: 4, kind: 'phys', ty: 'bludgeoning', iv: 1.45 },
+    name: 'Giant Crab of the Bubble', arch: 'wall', hp: 215, ac: 17, sr: 12, pen: 4, ft: 25, rng: 1, boss: 1, large: 1,
+    atk: { n: 'Twin Crushing Claws', d: [2, 6], flat: 4, kind: 'phys', ty: 'bludgeoning', iv: 1.3, hits: 2 },
     f: { pushResist: .9, fireproof: 1 },
-    role: 'Act 2 Boss (2×2): AC 17 carapace, Crushing Claw Root, and Boiling Splash fire AoE',
+    role: 'Act 2 Boss (2×2): AC 17 carapace, twin crushing claws (4 Armor Pen), Root & Boiling Splash',
     abil: {
-      n: 'Boiling Splash', cr: 7.8, cut: [7, 14],
+      n: 'Boiling Splash', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= (P === 3 ? 4 : 2));
         const list = ts.length ? ts : foes(b, u).slice(0, 2);
@@ -1581,12 +1582,12 @@ const E = {
     }
   },
   erinyes: {
-    name: 'Erinyes Executioner', arch: 'archer', hp: 128, ac: 17, sr: 16, ft: 40, rng: 5, elite: 1,
+    name: 'Erinyes Executioner', arch: 'archer', hp: 128, ac: 17, sr: 16, pen: 4, ft: 40, rng: 5, elite: 1,
     atk: { n: 'Hellish Longbow', d: [2, 8], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.15, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
     f: { fireproof: 1 },
-    role: 'Act 3 Elite: lethal armored archer raining venomous arrows',
+    role: 'Act 3 Elite: lethal armored archer raining venomous arrows (4 Armor Pen)',
     abil: {
-      n: 'Execution Volley', cr: 8, cut: [7, 14],
+      n: 'Execution Volley', cr: 10.5, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden).sort((a, c) => hpPct(a) - hpPct(c)).slice(0, P === 3 ? 3 : 2);
         ts.forEach(x => {
@@ -1598,12 +1599,12 @@ const E = {
     }
   },
   horned_devil: {
-    name: 'Horned Devil', arch: 'brute', hp: 165, ac: 17, sr: 16, ft: 35, rng: 2, elite: 1, large: 1,
-    atk: { n: 'Infernal Fork', d: [2, 8], flat: 5, kind: 'phys', el: 'fire', ty: 'piercing', iv: 1.35 },
+    name: 'Horned Devil', arch: 'brute', hp: 165, ac: 17, sr: 16, pen: 4, ft: 35, rng: 2, elite: 1, large: 1,
+    atk: { n: 'Infernal Fork', d: [2, 8], flat: 5, kind: 'phys', el: 'fire', ty: 'piercing', iv: 1.25 },
     f: { fireproof: 1, pushResist: .7 },
-    role: 'Act 3 Elite (2×2): massive armored fiend hurling flames',
+    role: 'Act 3 Elite (2×2): massive armored fiend hurling flames (4 Armor Pen)',
     abil: {
-      n: 'Hurl Flame', cr: 7.5, cut: [7, 14],
+      n: 'Hurl Flame', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target || foes(b, u)[0]; if (!t) return;
         const ts = foes(b, u).filter(x => hd(x, t) <= 1);
@@ -1613,12 +1614,12 @@ const E = {
     }
   },
   ice_devil: {
-    name: 'Ice Devil (Gelugon)', arch: 'caster', hp: 158, ac: 17, sr: 18, ft: 35, rng: 2, elite: 1, large: 1,
-    atk: { n: 'Frost Spear', d: [2, 8], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.35 },
+    name: 'Ice Devil (Gelugon)', arch: 'caster', hp: 158, ac: 17, sr: 18, spen: 4, ft: 35, rng: 2, elite: 1, large: 1,
+    atk: { n: 'Frost Spear', d: [2, 8], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.25 },
     f: { pushResist: .7 },
-    role: 'Act 3 Elite (2×2): SR 18 frost devil freezing & staggering the party',
+    role: 'Act 3 Elite (2×2): SR 18 frost devil freezing & staggering the party (4 Spell Pen)',
     abil: {
-      n: 'Wall of Ice', cr: 7.5, cut: [7, 14],
+      n: 'Wall of Ice', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 3);
         const list = ts.length ? ts : foes(b, u).slice(0, 2);
@@ -1628,11 +1629,11 @@ const E = {
     }
   },
   vrock: {
-    name: 'Vrock Demon', arch: 'charger', hp: 112, ac: 15, sr: 15, ft: 40, rng: 1, elite: 1,
+    name: 'Vrock Demon', arch: 'charger', hp: 112, ac: 15, sr: 15, pen: 3, ft: 40, rng: 1, elite: 1,
     atk: { n: 'Vulture Talons', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.15, hits: 2 },
-    role: 'Act 3 Elite: Blood War demon unleashing stunning shrieks & toxic spores',
+    role: 'Act 3 Elite: Blood War demon unleashing stunning shrieks & toxic spores (3 Armor Pen)',
     abil: {
-      n: 'Stunning Screech', cr: 7.5, cut: [7, 14],
+      n: 'Stunning Screech', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 2);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 2, ty: 'poison', ids: ts.map(x => x.id) });
@@ -1641,12 +1642,12 @@ const E = {
     }
   },
   pit_fiend: {
-    name: 'Pit Fiend Enforcer', arch: ['brute', 'summoner'], hp: 205, ac: 16, sr: 16, ft: 35, rng: 2, elite: 1, boss: 1, large: 1,
-    atk: { n: 'Infernal Mace', d: [2, 8], flat: 4, kind: 'phys', el: 'fire', ty: 'fire', iv: 1.4, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
+    name: 'Pit Fiend Enforcer', arch: ['brute', 'summoner'], hp: 205, ac: 16, sr: 16, pen: 4, ft: 35, rng: 2, elite: 1, boss: 1, large: 1,
+    atk: { n: 'Infernal Mace & Tail', d: [2, 6], flat: 5, kind: 'phys', el: 'fire', ty: 'fire', iv: 1.3, hits: 2, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
     f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 12, first: 6, cap: 1, hp: .6 } },
-    role: 'Act 3 Wandering Miniboss (2×2): fire/poison lord summoning Bearded Devils',
+    role: 'Act 3 Wandering Miniboss (2×2): twin fire/poison strikes (4 Armor Pen) summoning Bearded Devils',
     abil: {
-      n: 'Meteor Fireball', cr: 7.8, cut: [7, 14],
+      n: 'Meteor Fireball', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target || foes(b, u)[0]; if (!t) return;
         const ts = foes(b, u).filter(x => hd(x, t) <= (P === 3 ? 2 : 1));
@@ -1656,12 +1657,12 @@ const E = {
     }
   },
   orcus: {
-    name: 'Orcus (Prince of Undeath)', arch: ['summoner', 'afflicter'], hp: 225, ac: 16, sr: 16, ft: 30, rng: 2, boss: 1, large: 1,
-    atk: { n: 'Wand of Orcus', d: [2, 8], flat: 4, kind: 'magic', ty: 'necrotic', iv: 1.45, nec: 3 },
+    name: 'Orcus (Prince of Undeath)', arch: ['summoner', 'afflicter'], hp: 225, ac: 16, sr: 16, spen: 5, ft: 30, rng: 2, boss: 1, large: 1,
+    atk: { n: 'Wand of Orcus', d: [2, 6], flat: 4, kind: 'magic', ty: 'necrotic', iv: 1.3, hits: 2, nec: 4 },
     f: { pushResist: .9, summon: { k: 'wight', n: 1, every: 12, first: 6, cap: 1, hp: .6 } },
-    role: 'Act 3 Boss (2×2): massive Necrosis waves and undead legions',
+    role: 'Act 3 Boss (2×2): twin necrotic Wand strikes (5 Spell Pen), Necrosis waves & undead legions',
     abil: {
-      n: 'Power Word Kill Wave', cr: 8.2, cut: [7, 14],
+      n: 'Power Word Kill Wave', cr: 12, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'necrotic', ids: ts.map(x => x.id) });
@@ -1671,14 +1672,14 @@ const E = {
     }
   },
   asmodeus: {
-    name: 'Asmodeus (Lord of the Ninth)', arch: ['caster', 'summoner'], hp: 215, ac: 16, sr: 17, ft: 35, rng: 5, boss: 1,
-    atk: { n: 'Ruby Rod', d: [2, 8], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.4 },
+    name: 'Asmodeus (Lord of the Ninth)', arch: ['caster', 'summoner'], hp: 215, ac: 16, sr: 17, spen: 5, ft: 35, rng: 5, boss: 1,
+    atk: { n: 'Twin Ruby Rods', d: [2, 6], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.3, hits: 2 },
     f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 12, first: 6, cap: 1, hp: .55 } },
-    role: 'Act 3 Boss: Ruby Rod hellfire beams, Infernal Command stuns, and heavy Wards',
+    role: 'Act 3 Boss: twin hellfire beams (5 Spell Pen), Infernal Command stuns, and heavy Wards',
     abil: {
-      n: 'Infernal Command', cr: 8.4, cut: [7, 14],
+      n: 'Infernal Command', cr: 12, cut: [7, 14],
       fx(b, u, P) {
-        addWard(b, u, Math.round(u.maxHp * [0.08, 0.11, 0.15, 0.20][P]), u.maxHp * .40, u);
+        addWard(b, u, Math.round(u.maxHp * [0.06, 0.08, 0.11, 0.15][P]), u.maxHp * .35, u);
         const ts = foes(b, u).filter(x => !x.hidden);
         const targets = P >= 2 ? ts : ts.slice(0, 2);
         b.events.push({ k: 'area', id: u.id, shape: 'line', r: 5, ty: 'fire', ids: targets.map(x => x.id) });
@@ -1690,12 +1691,12 @@ const E = {
     }
   },
   tiamat: {
-    name: 'Tiamat (Queen of Dragons)', arch: ['brute', 'caster'], hp: 245, ac: 16, sr: 16, ft: 35, rng: 3, boss: 1, large: 1,
-    atk: { n: 'Five-Headed Snap', d: [2, 6], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.45, hits: 2 },
+    name: 'Tiamat (Queen of Dragons)', arch: ['brute', 'caster'], hp: 245, ac: 16, sr: 16, pen: 5, spen: 4, ft: 35, rng: 3, boss: 1, large: 1,
+    atk: { n: 'Five-Headed Snap', d: [2, 8], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.25, hits: 2 },
     f: { fireproof: 1, pushResist: .9 },
-    role: 'Act 3 Boss (2×2): cycles all Five Chromatic Breath Weapons (Fire, Poison, Lightning, Cold, Acid)',
+    role: 'Act 3 Boss (2×2): ferocious multi-head bites (5 Armor Pen) & Five Chromatic Breath Weapons',
     abil: {
-      n: 'Chromatic Breath', cr: 8.2, cut: [7, 14],
+      n: 'Chromatic Breath', cr: 12.5, cut: [7, 14],
       fx(b, u, P) {
         const heads = [
           { n: 'RED BREATH (FIRE)', el: 'fire', ty: 'fire' },
@@ -1742,15 +1743,15 @@ const ENC = {
   },
   redbrands: {
     n: 'Redbrand Ruffians', place: 'Tresendar Cellar', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'Fast brawlers', note: 'Redbrand brigands double-strike up close with crossbows covering the doorway.',
+    q: 'Fast brawlers', note: 'Redbrand brigands double-strike with Armor Pen while a cult mage and crossbowman cover the rear.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
-    u: [['ruffian', 3, 3], ['ruffian', 6, 3], ['ruffian', 4, 4], ['archer', 2, 1], ['archer', 7, 1]]
+    u: [['ruffian', 3, 3], ['ruffian', 6, 3], ['ruffian', 4, 4], ['adept', 2, 1], ['archer', 7, 1]]
   },
   gate: {
     n: 'Hobgoblin Patrol', place: 'Triboar Road', theme: 'forest', mapKey: 'triboar_road',
-    q: 'High AC', note: 'AC 17 Shieldbearers armor each other while archers fire behind. Use magic, Armor Pen, or Radiant.',
+    q: 'High AC', note: 'AC 17 Shieldbearers armor each other while archers and a hedge shaman back them up.',
     map: BATTLE_MAPS.triboar_road.grid,
-    u: [['hobgoblin', 4, 4], ['hobgoblin', 5, 4], ['captain', 4, 3], ['archer', 3, 1], ['archer', 6, 1], ['archer', 8, 1]]
+    u: [['hobgoblin', 4, 4], ['hobgoblin', 5, 4], ['captain', 4, 3], ['archer', 3, 1], ['shaman', 6, 1], ['archer', 8, 1]]
   },
   reavers: {
     n: 'Cragmaw Reavers', place: 'Cragmaw Cave', theme: 'cave', mapKey: 'cragmaw_cave',
@@ -1760,16 +1761,16 @@ const ENC = {
   },
   blights: {
     n: 'Twig Blight Swarm', place: 'Thundertree Ruins', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Swarm', sc: { hp: 1.15, dmg: 1.15 }, note: 'Blights pour down the center while a Blight Caller grows more and ash zombies choke the melee.',
+    q: 'Swarm', sc: { hp: 1.10, dmg: 1.10 }, note: 'Blights and venom spiders pour down the center while a Blight Caller grows more and ash zombies choke melee.',
     map: BATTLE_MAPS.thundertree_ruins.grid,
-    u: [['blight', 3, 3], ['blight', 4, 3], ['blight', 5, 3], ['blight', 6, 3], ['ashzombie', 4, 2], ['caller', 5, 0], ['blight', 8, 3]],
+    u: [['blight', 3, 3], ['blight', 4, 3], ['blight', 5, 3], ['spider', 6, 3], ['ashzombie', 4, 2], ['caller', 5, 0], ['blight', 8, 3]],
     waves: [{ at: 9, u: [['blight', 1, 1], ['blight', 8, 1], ['blight', 4, 0], ['blight', 5, 0]] }]
   },
   skeleton_watch: {
     n: 'Skeleton Watch', place: 'Tresendar Cellar', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'High SR archers', note: 'Skeleton archers shrug off magic (SR 16) behind undying zombies. Physical damage shatters them.',
+    q: 'High SR archers', note: 'Skeleton archers shrug off magic (SR 16) behind undying zombies and choking ash.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
-    u: [['skeleton', 2, 1], ['skeleton', 5, 1], ['skeleton', 7, 1], ['zombie', 4, 3], ['zombie', 5, 3], ['zombie', 3, 4]]
+    u: [['skeleton', 2, 1], ['skeleton', 5, 1], ['skeleton', 7, 1], ['zombie', 4, 3], ['ashzombie', 5, 3], ['zombie', 3, 4]]
   },
   owlwell: {
     n: 'Old Owl Well', place: 'Ruined Watchtower', theme: 'forest', mapKey: 'thundertree_ruins',
@@ -1797,25 +1798,25 @@ const ENC = {
   },
   klarg: {
     n: 'Klarg’s Hideout', place: 'Cragmaw Hideout', theme: 'cave', mapKey: 'cragmaw_cave',
-    q: 'Miniboss', sc: { hp: .95, dmg: .92 }, note: 'Klarg the Bugbear Chief, his Dire Wolf Ripper, and goblin raiders guard stolen Rare loot!',
+    q: 'Miniboss', sc: { hp: .92, dmg: .88 }, note: 'Klarg the Bugbear Chief, his Dire Wolf Ripper, and goblin raiders guard stolen Rare loot!',
     map: BATTLE_MAPS.cragmaw_cave.grid,
     u: [['klarg', 4, 2], ['ripper', 6, 2], ['goblin', 3, 4], ['goblin', 6, 4], ['archer', 2, 0], ['archer', 7, 0]]
   },
   nezznar: {
     n: 'Nezznar, the Black Spider', place: 'Wave Echo Sanctum', theme: 'cave', mapKey: 'spider_temple',
-    q: 'Act 1 Boss', sc: { hp: .95, dmg: .88 }, note: 'Boss: Necrosis, rooting webs, and Giant Spider summons. Bring Ward or fast burst.',
+    q: 'Act 1 Boss', sc: { hp: .98, dmg: .90 }, note: 'Boss: Necrosis, rooting webs, and Giant Spider summons. Bring Ward or fast burst.',
     map: BATTLE_MAPS.spider_temple.grid,
     u: [['nezznar', 4, 0], ['spider', 2, 2], ['spider', 7, 2], ['goblin', 4, 4], ['skeleton', 7, 1]]
   },
   venomfang: {
     n: 'Venomfang, Green Dragon', place: 'Thundertree Ruins', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Act 1 Boss', sc: { hp: .95, dmg: .90 }, note: 'Boss (2×2 Dragon): Poison Breath cones, Wing Buffet knockback, and AC 17 emerald scales.',
+    q: 'Act 1 Boss', sc: { hp: .92, dmg: .84 }, note: 'Boss (2×2 Dragon): Twin venomous claws, Poison Breath cones, Wing Buffet knockback & AC 17 scales.',
     map: BATTLE_MAPS.thundertree_ruins.grid,
     u: [['venomfang', 4, 1], ['adept', 1, 0], ['adept', 8, 0], ['blight', 3, 4], ['blight', 6, 4]]
   },
   glasstaff: {
     n: 'Glasstaff, Redbrand Mage', place: 'Tresendar Manor', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'Act 1 Boss', sc: { hp: 1.18, dmg: 1.12 }, note: 'Boss: Arcane Wards, piercing Lightning Bolt lines, and Hold Person behind Redbrand Shieldbearers.',
+    q: 'Act 1 Boss', sc: { hp: 1.00, dmg: .93 }, note: 'Boss: Arcane Wards, twin arcane bolts, piercing Lightning Bolts & Hold Person behind Redbrands.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
     u: [['glasstaff', 5, 0], ['hobgoblin', 3, 3], ['hobgoblin', 6, 3], ['ruffian', 4, 4], ['skeleton', 2, 1], ['skeleton', 7, 1]]
   },
@@ -1883,25 +1884,25 @@ const ENC = {
   },
   keraptis: {
     n: 'Simulacrum of Keraptis', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: 1.08, dmg: 1.05 }, note: 'Boss: Archmage of White Plume weaving Arcane Wards, Elemental Novas, and constructs.',
+    q: 'Act 2 Boss', sc: { hp: 1.14, dmg: 1.04 }, note: 'Boss: Archmage of White Plume weaving Arcane Wards, twin bolts, Elemental Novas & constructs.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
     u: [['keraptis', 5, 0], ['gargoyle', 3, 3], ['gargoyle', 6, 3], ['steam_mephit', 2, 1], ['steam_mephit', 7, 1]]
   },
   blackrazor_boss: {
     n: 'Wielder of Blackrazor', place: 'Shadow Crypt', theme: 'cave', mapKey: 'shadow_crypt',
-    q: 'Act 2 Boss', sc: { hp: .98, dmg: .95 }, note: 'Boss: Gains Ward, Haste & Damage whenever ANY unit dies — focus him down fast!',
+    q: 'Act 2 Boss', sc: { hp: .96, dmg: .85 }, note: 'Boss: Gains Ward, Haste & Damage whenever ANY unit dies — focus him down fast!',
     map: BATTLE_MAPS.shadow_crypt.grid,
     u: [['blackrazor_wielder', 4, 2], ['ghoul', 2, 3], ['ghoul', 7, 3], ['wight', 4, 3], ['shadow_assassin', 6, 1]]
   },
   gynosphinx: {
     n: 'Gynosphinx', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: 1.14, dmg: 1.12 }, note: 'Boss (2×2): Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
+    q: 'Act 2 Boss', sc: { hp: 1.08, dmg: .94 }, note: 'Boss (2×2): Twin claws, Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
     u: [['gynosphinx', 4, 1], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['manticore', 5, 0]]
   },
   giant_crab: {
     n: 'Giant Crab of the Bubble', place: 'Boiling Bubble Chamber', theme: 'cave', mapKey: 'boiling_bubble',
-    q: 'Act 2 Boss', sc: { hp: 1.26, dmg: 1.22 }, note: 'Boss (2×2): High-AC carapace, Crushing Claw Root, and Boiling Splash fire AoE.',
+    q: 'Act 2 Boss', sc: { hp: 1.10, dmg: .98 }, note: 'Boss (2×2): High-AC carapace, Twin Crushing Claws, Root & Boiling Splash fire AoE.',
     map: BATTLE_MAPS.boiling_bubble.grid,
     u: [['giant_crab', 4, 2], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['kelpie', 5, 0], ['steam_mephit', 1, 1]]
   },
@@ -1969,25 +1970,25 @@ const ENC = {
   },
   pit_fiend: {
     n: 'Pit Fiend Enforcer', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Act 3 Wandering Miniboss', sc: { hp: .96, dmg: .92 }, note: 'Wandering Miniboss (2×2): Infernal fire/poison lord guarded by Bearded Devils. Drops Very Rare/Legendary loot!',
+    q: 'Act 3 Wandering Miniboss', sc: { hp: .94, dmg: .82 }, note: 'Wandering Miniboss (2×2): Infernal fire/poison lord guarded by Bearded Devils. Drops Very Rare/Legendary loot!',
     map: BATTLE_MAPS.avernus_wastes.grid,
     u: [['pit_fiend', 4, 1], ['bearded_devil', 2, 3], ['bearded_devil', 7, 3], ['spined_devil', 5, 0]]
   },
   orcus: {
     n: 'Orcus, Prince of Undeath', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: 1.04, dmg: 1.00 }, note: 'Final Boss (2×2): Wand of Orcus deals massive Necrosis waves and raises relentless undead.',
+    q: 'Act 3 Final Boss', sc: { hp: 1.02, dmg: .88 }, note: 'Final Boss (2×2): Twin Wand of Orcus strikes deal massive Necrosis waves and raise relentless undead.',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['orcus', 4, 1], ['wight', 2, 3], ['wight', 7, 3], ['bone_devil', 5, 3]]
   },
   asmodeus: {
     n: 'Asmodeus, Lord of the Ninth', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .90, dmg: .86 }, note: 'Final Boss: Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
+    q: 'Act 3 Final Boss', sc: { hp: .88, dmg: .74 }, note: 'Final Boss: Twin Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
     map: BATTLE_MAPS.throne_ninth.grid,
-    u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['erinyes', 2, 1], ['spined_devil', 7, 1]]
+    u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['spined_devil', 2, 1], ['spined_devil', 7, 1]]
   },
   tiamat: {
     n: 'Tiamat, Queen of Dragons', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: 1.10, dmg: 1.06 }, note: 'Final Boss (2×2): Cycles all Five Chromatic Breath Weapons (Fire, Poison, Lightning, Cold, Acid)!',
+    q: 'Act 3 Final Boss', sc: { hp: 1.15, dmg: 1.04 }, note: 'Final Boss (2×2): Ferocious Five-Headed bites & all Five Chromatic Breath Weapons!',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['tiamat', 4, 1], ['cambion', 2, 0], ['cambion', 7, 0], ['bearded_devil', 3, 4], ['bearded_devil', 6, 4]]
   }
@@ -2290,17 +2291,17 @@ hero('bram', {
     n: 'Cure Wounds', cr: 11.5, pa: 8, cut: [5, 13], self: 1,
     one: 'Heals closest injured ally; High turns excess healing into Ward, Nat 20 heals adjacent allies & resets Cleric Channel Divinity.',
     b: [
-      'Heals the closest injured ally (2d6 + WIS).',
-      'Heals the closest injured ally (3d6 + WIS).',
-      'Heals the closest injured ally (4d8 + WIS); excess healing becomes Ward.',
-      'Heals all adjacent allies (4d8 + WIS) and resets Channel Divinity for all Clerics!'
+      'Heals the closest injured ally (2d4 + WIS).',
+      'Heals the closest injured ally (3d4 + WIS).',
+      'Heals the closest injured ally (4d6 + WIS); excess healing becomes Ward.',
+      'Heals all adjacent allies (4d6 + WIS) and resets Channel Divinity for all Clerics!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
       const injured = fr.slice().sort((a, c) => (hpPct(a) < .98 ? 0 : 1) - (hpPct(c) < .98 ? 0 : 1) || hd(a, u) - hd(c, u) || hpPct(a) - hpPct(c));
       const t = injured[0] || u;
-      const dice = [[2, 6], [3, 6], [4, 8], [4, 8]][P];
-      const baseAmt = tierRoll(u, dice[0], dice[1]) + Math.max(0, u.m.wis) * 3;
+      const dice = [[2, 4], [3, 4], [4, 6], [4, 6]][P];
+      const baseAmt = tierRoll(u, dice[0], dice[1]) + Math.max(0, u.m.wis) * 2;
       const doHeal = a => {
         let amt = baseAmt;
         if (u.f.discipleLife && hpPct(a) < .5) amt *= 1.4;
@@ -2344,7 +2345,7 @@ hero('faelan', {
   hp: 86, ac: 11, sr: 14,
   kw: { arcane_recovery: 1 },
   ckw: [
-    { k: 'arcane_recovery', sub: 'Ward Siphon', x: 'Whenever a Ward Faelan placed breaks, she gains +15 Charge.' }
+    { k: 'arcane_recovery', sub: 'Ward Siphon', x: 'Whenever any allied Ward breaks, she gains +15 Charge.' }
   ],
   f: { abjurer: 1 },
   atk: { n: 'Ray of Frost', d: [1, 8], flat: 1, kind: 'magic', ty: 'cold', iv: 1.5 },
@@ -2352,16 +2353,16 @@ hero('faelan', {
     n: 'Arcane Ward', cr: 10.0, pa: 6, cut: [5, 13], self: 1,
     one: 'Places an INT-scaled Ward on the most-threatened ally; High Wards 2 allies, Nat 20 Wards everyone & recasts.',
     b: [
-      'Places a 3d8 Arcane Ward on the most-threatened ally.',
-      'Places a 4d8 Arcane Ward on the most-threatened ally.',
-      'Places 5d8 Arcane Wards on the 2 most-threatened allies.',
-      'Wards the entire party (6d8) and immediately casts a second Ward on the lowest-HP ally!'
+      'Places a 3d6 Arcane Ward on the most-threatened ally.',
+      'Places a 4d6 Arcane Ward on the most-threatened ally.',
+      'Places 5d6 Arcane Wards on the 2 most-threatened allies.',
+      'Wards the entire party (6d6) and immediately casts a second Ward on the lowest-HP ally!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
       const threat = a => (hpPct(a) * 100) + a.ward * .4 - (a.role === 'Tank' ? 14 : 0);
       const ord = fr.slice().sort((a, c) => threat(a) - threat(c));
-      const base = tierRoll(u, [3, 4, 5, 6][P], 8) + Math.max(0, u.m.int) * [2, 3, 4, 5][P];
+      const base = tierRoll(u, [3, 4, 5, 6][P], 6) + Math.max(0, u.m.int) * [2, 3, 4, 5][P];
       const val = Math.round(base * chaK(u) * (u.f.projWard ? 1.20 : 1));
       const cap = a => a.maxHp * .48;
       if (P === 3) {
@@ -2379,7 +2380,7 @@ hero('faelan', {
   },
   paths: [
     { k: 'proj_ward', n: 'Projected Ward', attr: 'int', tags: ['ward'], x: 'Arcane Wards are 20% stronger.', f: { projWard: 1 } },
-    { k: 'spell_battery', n: 'Spell Battery', attr: 'int', tags: ['ward', 'charge'], x: 'When Faelan’s Ward breaks, that ally gains +25 Charge.', f: { spellBattery: 1 } }
+    { k: 'spell_battery', n: 'Spell Battery', attr: 'int', tags: ['ward', 'charge'], x: 'When any allied Ward breaks, that ally gains +25 Charge.', f: { spellBattery: 1 } }
   ],
   quest: {
     id: 'faelan_q', statKey: 'wardAbsorbed', goal: 600,
@@ -2468,7 +2469,7 @@ hero('dane', {
     b: [
       'Taunts his target (3s) and deals a 1d8 Radiant Smite.',
       'Taunts his target (4s) and deals a 2d8 Radiant Smite.',
-      'Taunts his target (4s), deals a 2d8 Radiant Smite, and gains a 6d8 Ward.',
+      'Taunts his target (4s), deals a 2d8 Radiant Smite, and gains a 4d6 Ward.',
       'Taunts his target (5s), deals a 3d8 Radiant Smite, and allies hitting it unleash bonus 1d8 Radiant Smites!'
     ],
     fx(b, u, P) {
@@ -2482,7 +2483,7 @@ hero('dane', {
       const dice = [1, 2, 2, 3][P];
       triggerSmite(b, u, t, tierRoll(u, dice, 8), { ab: 1, label: 'COMPELLED DUEL' });
       if (P >= 2) {
-        const w = Math.round((tierRoll(u, 6, 8) + Math.max(0, u.m.cha) * 6) * chaK(u));
+        const w = Math.round((tierRoll(u, 4, 6) + Math.max(0, u.m.cha) * 4) * chaK(u));
         addWard(b, u, w, u.maxHp * .6, u);
       }
       if (P === 3 && t.alive) {
@@ -2600,7 +2601,7 @@ hero('juniper', {
       hitFoes.forEach(x => {
         hit(b, u, x, tierRoll(u, dice, 6), { kind: 'magic', ty: 'poison', area: 1, ab: 1 });
         if (x.alive) applyRoot(b, u, x, dur);
-        if (P >= 2 && x.alive) applyStatus(b, u, x, 'poison', (P === 3 ? 4 : 3) * chaK(u));
+        if (x.alive && (P >= 2 || u.f.overgrowth)) applyStatus(b, u, x, 'poison', (P === 3 ? 4 : P === 2 ? 3 : 2) * chaK(u));
       });
       if (P >= 2) triggerWildShape(b, u, { form: 'Bramble Aspect', dur: 5, thorns: 1 });
       if (P === 3) {
@@ -2614,7 +2615,7 @@ hero('juniper', {
     }
   },
   paths: [
-    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Rooted foes take double Poison damage.', f: { overgrowth: 1 } },
+    { k: 'overgrowth', n: 'Overgrowth', attr: 'wis', tags: ['control', 'poison'], x: 'Entangle applies Poison; Rooted foes take double Poison damage.', f: { overgrowth: 1 } },
     { k: 'circle_land', n: 'Circle of the Land', attr: 'wis', tags: ['control', 'heal'], x: 'Whenever Juniper Roots a foe, heal the lowest-HP ally.', f: { circleLand: 1 } }
   ],
   quest: {
@@ -2813,7 +2814,7 @@ hero('naill', {
   ckw: [
     { k: 'ki', sub: 'Open Hand Strike', x: '4-pip Ki bar filled by attacking and taking hits; at 4 pips, unleashes a heavy Staggering blow (triggers on-hit).' }
   ],
-  f: { monkNaill: 1 },
+  f: { monkNaill: 1, baseEvasion: 0.15 },
   atk: { n: 'Unarmed Strike', d: [1, 6], flat: 2, kind: 'phys', ty: 'bludgeoning', iv: 0.95 },
   abil: {
     n: 'Flurry of Blows', cr: 9.5, pa: 8, cut: [6, 13], self: 1,
@@ -2848,7 +2849,7 @@ hero('naill', {
   },
   paths: [
     { k: 'open_hand', n: 'Open Hand', attr: 'dex', tags: ['onhit'], x: 'Open Hand Strike triggers on-hit effects twice.', f: { naillOpenHand: 1 } },
-    { k: 'flowing_leaves', n: 'Flowing Leaves', attr: 'wis', tags: ['control'], x: 'Open Hand Strike also Staggers adjacent foes.', f: { flowingLeaves: 1 } }
+    { k: 'flowing_leaves', n: 'Flowing Leaves', attr: 'wis', tags: ['control', 'ambush'], x: 'Open Hand Strike also Staggers and Exposes adjacent foes.', f: { flowingLeaves: 1 } }
   ],
   quest: {
     id: 'naill_q', statKey: 'kiStrikes', goal: 15,
@@ -2874,10 +2875,10 @@ hero('nettle', {
   atk: { n: 'Eldritch Blast', d: [1, 10], flat: 1, kind: 'magic', ty: 'force', iv: 1.45 },
   abil: {
     n: 'Infernal Hex', cr: 13.0, pa: 8, cut: [5, 13], self: 1,
-    one: 'Blasts & curses target with Infernal Hex; High adds heavy Burn, Nat 20 curses 3 foes with Hex & Burn.',
+    one: 'Blasts & curses target with Infernal Hex & Burn; High adds heavy Burn, Nat 20 curses 3 foes with Hex & Burn.',
     b: [
-      'Blasts target (2d8 fire) and applies Infernal Hex.',
-      'Blasts target (3d8 fire) and applies Infernal Hex.',
+      'Blasts target (2d8 fire), Infernal Hex, and Burn.',
+      'Blasts target (3d8 fire), Infernal Hex, and Burn.',
       'Blasts target (3d8 fire), applies Infernal Hex, and inflicts heavy Burn.',
       'Blasts and curses 3 foes with Infernal Hex and heavy Burn!'
     ],
@@ -2892,7 +2893,7 @@ hero('nettle', {
         hit(b, u, t, tierRoll(u, dice, 8), { kind: 'magic', el: 'fire', ty: 'fire', ab: 1 });
         if (t.alive) {
           applyNettleHex(b, u, t, true);
-          if (P >= 2) applyStatus(b, u, t, 'burn', (P === 3 ? 10 : 8) * chaK(u));
+          applyStatus(b, u, t, 'burn', [3, 4, 8, 10][P] * chaK(u));
         }
       });
       if (P === 3) callout(b, u, 'INFERNAL CLAUSE!', '#ff7b4a');
@@ -3112,10 +3113,10 @@ hero('jamison', {
     n: 'Emboldening Bond', cr: 13.0, pa: 8, cut: [5, 13], self: 1,
     one: 'Bonds closest unbonded ally & heals bonded allies (30% Heal/Ward share); High bonds 2, Nat 20 bonds entire party.',
     b: [
-      'Bonds the closest unbonded ally and heals all bonded allies (3d6 + CHA).',
-      'Bonds the closest unbonded ally and heals all bonded allies (4d6 + CHA).',
-      'Bonds the 2 closest unbonded allies and heals all bonded allies (5d6 + CHA).',
-      'Bonds the entire party and heals everyone (7d6 + CHA)!'
+      'Bonds the closest unbonded ally and heals all bonded allies (2d4 + CHA).',
+      'Bonds the closest unbonded ally and heals all bonded allies (3d4 + CHA).',
+      'Bonds the 2 closest unbonded allies and heals all bonded allies (4d4 + CHA).',
+      'Bonds the entire party and heals everyone (6d4 + CHA)!'
     ],
     fx(b, u, P) {
       const fr = friends(b, u).filter(a => !a.minion);
@@ -3124,7 +3125,7 @@ hero('jamison', {
       const toBond = P === 3 ? unb : unb.slice(0, P === 2 ? 2 : 1);
       toBond.forEach(a => { a.bonded = u; status(b, a, 'BONDED', '#ffe9a0'); });
       const bonded = fr.filter(a => a.bonded === u);
-      const amt = tierRoll(u, [3, 4, 5, 7][P], 6) + Math.max(0, u.m.cha) * 3;
+      const amt = tierRoll(u, [2, 3, 4, 6][P], 4) + Math.max(0, u.m.cha) * 2;
       b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 4, ty: 'radiant', ids: bonded.map(x => x.id) });
       bonded.forEach(a => heal(b, u, a, amt, { raw: 1, bondShare: 1 }));
       u.stats.bondedCasts = (u.stats.bondedCasts || 0) + Math.max(1, toBond.length);
@@ -3489,7 +3490,7 @@ hero('saint', {
   hp: 94, ac: 12, sr: 14,
   kw: { channel_divinity: 1 },
   ckw: [
-    { k: 'channel_divinity', sub: 'Invoke Duplicity', x: 'Once per fight, summons an Illusory Double that absorbs 1 hit and echoes Saint’s next Toll the Dead.' }
+    { k: 'channel_divinity', sub: 'Invoke Duplicity', x: 'Once per fight, summons an Illusory Double on an empty square that evades 1 hit and echoes Saint’s Toll the Dead.' }
   ],
   f: {},
   atk: { n: 'Bell of Passing', d: [1, 8], flat: 1, kind: 'magic', ty: 'necrotic', iv: 1.45 },
@@ -3505,22 +3506,30 @@ hero('saint', {
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
       if (!fs.length) return;
-      const ringOn = t => {
+      const ringOn = (t, srcUnit = u) => {
         if (!t || !t.alive) return;
         const wounded = t.hp < t.maxHp * .99;
         const dieS = wounded ? 12 : 8;
         const dice = [2, 3, 3, 4][P];
         const nec = [10, 14, 18, 22][P] + Math.max(0, u.m.wis) * 2;
-        b.events.push({ k: 'proj', s: u.id, t: t.id, ty: 'necrotic' });
+        b.events.push({ k: 'proj', s: srcUnit.id, t: t.id, ty: 'necrotic' });
         hit(b, u, t, tierRoll(u, dice, dieS), { kind: 'magic', ty: 'necrotic', nec, ab: 1 });
       };
       const t = fs.slice().sort((a, c) => hpPct(a) - hpPct(c))[0];
-      ringOn(t);
+      ringOn(t, u);
       u.stats.saintCasts = (u.stats.saintCasts || 0) + 1;
-      // If Invoke Duplicity hasn't been used yet, activate it; if a Double is active, it echoes!
-      if (u.illusoryDouble > 0) {
-        const echoT = fs.filter(x => x !== t && x.alive)[0] || t;
-        later(b, .18, () => { if (u.alive && echoT.alive) { status(b, u, 'DOUBLE ECHO', '#c48fe6'); ringOn(echoT); } });
+      // Living Illusory Double(s) on the map echo Toll the Dead from their own square!
+      const doubles = b.units.filter(x => x.alive && x.isDouble && x.owner === u);
+      if (doubles.length > 0) {
+        doubles.forEach((dbl, idx) => {
+          const echoT = fs.filter(x => x !== t && x.alive)[idx % Math.max(1, fs.length - 1)] || t;
+          later(b, .18 + idx * .10, () => {
+            if (u.alive && dbl.alive && echoT && echoT.alive) {
+              status(b, dbl, 'DOUBLE ECHO', '#c48fe6');
+              ringOn(echoT, dbl);
+            }
+          });
+        });
       } else if (!u._cdUsed) {
         triggerSaintCD(b, u);
       }
@@ -3540,7 +3549,7 @@ hero('saint', {
   },
   paths: [
     { k: 'two_faced', n: 'Two-Faced', attr: 'wis', tags: ['necrosis'], x: 'When Saint’s Illusory Double breaks, it inflicts 12 Necrosis on the attacker.', f: { twoFaced: 1 } },
-    { k: 'smoke_mirrors', n: 'Smoke & Mirrors', attr: 'cha', tags: ['evasion', 'heal'], x: 'Whenever an ally evades an attack, heal them for 10% max HP.', f: { smokeMirrors: 1 } }
+    { k: 'smoke_mirrors', n: 'Smoke & Mirrors', attr: 'cha', tags: ['evasion', 'heal'], x: 'Allies gain +10% Evasion and heal 10% max HP on evade.', f: { smokeMirrors: 1 } }
   ],
   quest: {
     id: 'saint_q', statKey: 'saintCasts', goal: 12,
@@ -3566,12 +3575,12 @@ hero('kaska', {
   atk: { n: 'Panther Claws / Thorn Whip', d: [1, 8], flat: 2, kind: 'phys', ty: 'slashing', iv: 1.3 },
   abil: {
     n: 'Moonlit Pounce', cr: 12.5, pa: 9, cut: [6, 13], self: 1,
-    one: 'Leaps onto a foe dealing slashing damage & Exposed; High re-shifts Panther Form, Nat 20 Stuns, re-shifts & heals party.',
+    one: 'Leaps onto a foe dealing slashing damage & Exposed; High adds Root & re-shifts Panther Form, Nat 20 Stuns, re-shifts & heals party.',
     b: [
       'Pounces target for 2d8 slashing and applies Exposed (3s).',
       'Pounces target for 3d8 slashing and applies Exposed (4s).',
-      'Pounces for 3d8 + Exposed and re-shifts into Panther Form (fresh Beast HP).',
-      'Stuns target (2s), re-shifts into Panther Form, and heals the entire party (4d8 + WIS)!'
+      'Pounces for 3d8 + Exposed + Root and re-shifts into Panther Form.',
+      'Stuns target (2s), re-shifts into Panther Form, and heals the entire party (3d6 + WIS)!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -3581,7 +3590,10 @@ hero('kaska', {
       if (spot && hd(u, t) > 1) { u.c = spot.c; u.r = spot.r; u.target = t; b.events.push({ k: 'leap', id: u.id }); }
       b.events.push({ k: 'area', id: u.id, tid: t.id, shape: P === 3 ? 'nova' : 'splash', r: P === 3 ? 2 : 1, ty: 'cold', ids: [t.id] });
       hit(b, u, t, tierRoll(u, P === 0 ? 2 : 3, 8), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
-      if (t.alive) expose(b, t, (P === 0 ? 3 : 4) * chaK(u));
+      if (t.alive) {
+        expose(b, t, (P === 0 ? 3 : 4) * chaK(u));
+        if (P >= 2) applyRoot(b, u, t, 3 * chaK(u));
+      }
       u.stats.pounces = (u.stats.pounces || 0) + 1;
       if (P >= 2) {
         const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .45 : .32));
@@ -3591,7 +3603,7 @@ hero('kaska', {
       if (P === 3) {
         if (t.alive) stun(b, t, 2);
         friends(b, u).filter(a => !a.minion).forEach(a => {
-          heal(b, u, a, tierRoll(u, 4, 8) + Math.max(0, u.m.wis) * 3, { raw: 1 });
+          heal(b, u, a, tierRoll(u, 3, 6) + Math.max(0, u.m.wis) * 2, { raw: 1 });
         });
         callout(b, u, 'MOONLIT HUNT!', '#8fd0ff');
       }
@@ -4255,7 +4267,7 @@ function combineItems(keys) {
 */
 
 const TIERX = { hp: 1.45, dmg: 1.3 };
-const MITIGATE_K = 14; // Cubed AC/SR mitigation midpoint: DR(x) = x^3 / (x^3 + 14^3)
+const MITIGATE_K = 16; // Cubed AC/SR mitigation midpoint: DR(x) = x^3 / (x^3 + 16^3)
 const ROLL_SHIFT = 3;
 const COMBAT_TEMPO = 1.4; // Baseline hero movement/attack tempo so combat reads clearly and DEX/INT scaling shines
 const ENEMY_TEMPO = 1.08; // Faster enemy attack & cast tempo to keep frontline pressure & sustain honest
@@ -4518,7 +4530,7 @@ function mkHero(cfg, side = 'P') {
   return u;
 }
 
-const ESC = { hp: 2.38, dmg: 1.92 };
+const ESC = { hp: 2.36, dmg: 1.66 };
 function mkEnemy(k, c, r, tier, enc) {
   const d = E[k];
   const es = (enc && enc.sc) || {};
@@ -4529,11 +4541,11 @@ function mkEnemy(k, c, r, tier, enc) {
     maxHp: Math.round(d.hp * hpx), hp: Math.round(d.hp * hpx),
     ac: d.ac, sr: d.sr, regen: 0, ward: 0, nec: 0,
     rng: d.rng, ft: d.ft, atk: d.atk, abil: d.abil || null, onHit: d.atk.onHit || [],
-    it: {}, iv: +(d.atk.iv * ENEMY_TEMPO).toFixed(2), cr: d.abil ? d.abil.cr / ENEMY_TEMPO : 0, pa: d.abil ? 5 : 0,
+    it: {}, iv: +(d.atk.iv * ENEMY_TEMPO).toFixed(2), cr: d.abil ? d.abil.cr / ENEMY_TEMPO : 0, pa: d.abil ? (d.boss ? 9 : d.elite ? 7 : 5) : 0,
     charge: 0, t: Math.random() * .5, mt: 0, _lastCastT: -99,
     f: { ...(d.f || {}), webwalk: WEBFREE.has(k) }, die: 'd20',
     bands: d.abil ? { low: d.abil.cut[0], hi: d.abil.cut[1] + 1 } : null,
-    dm, pen: 0, spen: 0, d20Floor: 1, chaPotency: 1, poisonX: 1, bon: null,
+    dm, pen: d.pen || 0, spen: d.spen || 0, d20Floor: 1, chaPotency: 1, poisonX: 1, bon: null,
     cha: 0, con: 0, str: 0, m: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
     haste: 0, tempHaste: 0, tempHasteT: 0, rollBonus: 0, nextBonus: 0, advantage: 0,
     elite: d.elite, boss: d.boss, sz: d.large ? 2 : 1, alive: true, st: freshSt(),
@@ -4555,7 +4567,7 @@ function callout(b, u, txt, col) { b.events.push({ k: 'callout', id: u ? u.id : 
 function otLevel(b) { return b.time >= OT_START ? 1 + Math.floor((b.time - OT_START) / OT_STEP) : 0; }
 const chaK = u => (u && u.chaPotency) || (1 + 0.08 * Math.max(0, (u && u.cha) || 0));
 const adjAllies = (b, u) => alive(b, u.side).filter(a => a !== u && hd(a, u) <= 1).length;
-const isQuarry = t => !!(t && t.st && (t.st.mark || t.st.hex || t.st.vow));
+const isQuarry = t => !!(t && t.st && (t.st.mark || t.st.hex || t.st.radHex > 0 || t.st.vow));
 const auraR = u => (u.f && u.f.divineStrike ? 1 : u.f && u.f.encore ? 1 : 0);
 
 function settleLarge(units) {
@@ -4769,17 +4781,50 @@ function triggerJamisonCD(b, u) {
     // Bonds 1 closest unbonded ally + heals entire party
     const unb = fr.filter(a => a !== u && a.bonded !== u).sort((a, c) => hd(a, u) - hd(c, u))[0];
     if (unb) { unb.bonded = u; status(b, unb, 'BONDED', '#ffe9a0'); }
-    fr.forEach(a => heal(b, u, a, tierRoll(u, 3, 8) + Math.max(0, u.m.cha) * 3, { raw: 1, bondShare: 1 }));
+    fr.forEach(a => heal(b, u, a, tierRoll(u, 2, 6) + Math.max(0, u.m.cha) * 2, { raw: 1, bondShare: 1 }));
     u.stats.bondedCasts = (u.stats.bondedCasts || 0) + 1;
     return fr;
   });
 }
 
+function spawnSaintDouble(b, u) {
+  const maxD = u.questDone ? 2 : 1;
+  const cur = b.units.filter(x => x.alive && x.isDouble && x.owner === u);
+  if (cur.length >= maxD) return cur[0];
+  // Prefer an empty square 1-2 tiles forward/adjacent toward enemies so the double can draw aggro & echo
+  const cands = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const h = { c, r };
+    if (passable(h) && !occupied(b, h, null)) {
+      const distU = hd(h, u);
+      const fwdBias = Math.abs((u.r - 1) - r) * 0.6 + (r <= u.r ? 0 : 1.5);
+      cands.push({ c, r, score: distU + fwdBias + (distU < 1 || distU > 3 ? 6 : 0) });
+    }
+  }
+  cands.sort((a, z) => a.score - z.score);
+  const spot = cands[0];
+  if (!spot) return null;
+  const dbl = {
+    id: UID++, key: 'saint', side: 'P', role: 'Support', name: 'Illusory Double',
+    c: spot.c, r: spot.r, maxHp: 1, hp: 1, ac: 10, sr: 10, evasion: 0,
+    regen: 0, ward: 0, nec: 0, rng: u.rng, ft: 0, atk: null, abil: null, onHit: [],
+    it: {}, iv: 99, cr: 0, pa: 0, charge: 0, t: 0, mt: 0, _lastCastT: -99,
+    f: { illusoryDecoy: 1 }, die: 'd20', bands: null, dm: 1, pen: 0, spen: 0,
+    d20Floor: 1, chaPotency: 1, poisonX: 1, bon: null,
+    cha: 0, con: 0, str: 0, m: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
+    haste: 0, tempHaste: 0, tempHasteT: 0, rollBonus: 0, nextBonus: 0, advantage: 0,
+    minion: 1, isDouble: 1, owner: u, sz: 1, alive: true, st: freshSt(),
+    stats: { dmg: 0, heal: 0, ward: 0, nec: 0, taken: 0, rolls: [0, 0, 0, 0, 0] }, tier: u.tier
+  };
+  b.units.push(dbl);
+  status(b, dbl, 'ILLUSORY DOUBLE', '#c48fe6');
+  return dbl;
+}
+
 function triggerSaintCD(b, u) {
   return triggerChannelDivinity(b, u, 'CD · INVOKE DUPLICITY', () => {
-    const maxD = u.questDone ? 2 : 1;
-    u.illusoryDouble = Math.min(maxD, (u.illusoryDouble || 0) + 1);
-    return [u];
+    const dbl = spawnSaintDouble(b, u);
+    return dbl ? [u, dbl] : [u];
   });
 }
 
@@ -4929,12 +4974,20 @@ function fireNaillKiStrike(b, u, t) {
   u.ki = 0;
   u.stats.kiStrikes = (u.stats.kiStrikes || 0) + 1;
   callout(b, u, 'KI · OPEN HAND!', '#8fd8d8');
-  b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: u.f.flowingLeaves ? 1 : 0.6, ty: 'thunder', ids: [t.id] });
+  const adj = u.f.flowingLeaves ? foes(b, u).filter(x => x.alive && hd(x, t) <= 1) : [t];
+  b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: u.f.flowingLeaves ? 1 : 0.6, ty: 'thunder', ids: adj.map(x => x.id) });
   const got = hit(b, u, t, tierRoll(u, 2, 8) + Math.max(0, u.m.wis) * 2, { kind: 'phys', ty: 'bludgeoning', melee: 1, noBonus: 1 });
   if (t.alive) {
     stagger(b, t, 2);
     onHit(b, u, t, got);
     if (u.f.naillOpenHand && t.alive) onHit(b, u, t, got);
+  }
+  if (u.f.flowingLeaves) {
+    adj.forEach(x => {
+      if (!x.alive) return;
+      stagger(b, x, 2 * chaK(u));
+      expose(b, x, 3 * chaK(u));
+    });
   }
   if (u.key === 'naill' && u.questDone) u.advantage = 1;
   emitClassKw(b, u, 'ki', { target: t });
@@ -5009,7 +5062,7 @@ function applyRoot(b, src, t, dur) {
   if (src && src.key === 'juniper' && src.f.circleLand && b.time >= (src._clT || 0)) {
     src._clT = b.time + 1.0;
     const low = friends(b, src).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
-    if (low) heal(b, src, low, tierRoll(src, 2, 8) + Math.max(0, src.m.wis) * 2, { raw: 1 });
+    if (low) heal(b, src, low, tierRoll(src, 2, 6) + Math.max(0, src.m.wis) * 2, { raw: 1 });
   }
 }
 
@@ -5054,10 +5107,12 @@ function gainGold(b, u, v, why) {
 /* ---------- Damage, Mitigation, Evasion & Temporary Rummage Items ---------- */
 function curEvasion(b, t) {
   if (!t) return 0;
+  const smokeAura = (b && t.side === 'P' && !t.minion && alive(b, 'P').some(x => x.f.smokeMirrors)) ? 0.10 : 0;
   return combineEvasion(
     t.evasion || 0,
     (t.tempEvasionT > 0 ? t.tempEvasion : 0),
-    (t.partyEvasionT > 0 ? t.partyEvasion : 0)
+    (t.partyEvasionT > 0 ? t.partyEvasion : 0),
+    smokeAura
   );
 }
 
@@ -5201,11 +5256,15 @@ function hit(b, src, t, amt, o = {}) {
       return 0;
     }
   }
-  if (src && !o.dot && amt > 0 && (t.illusoryDouble || 0) > 0) {
-    t.illusoryDouble--;
-    status(b, t, 'ILLUSORY DOUBLE!', '#c48fe6');
-    if (t.f.twoFaced && src.alive) {
-      addNec(b, t, src, 12);
+  if (t.isDouble && amt > 0) {
+    t.alive = false; t.hp = 0;
+    b.events.push({ k: 'die', id: t.id });
+    b.units.forEach(x => { if (x.target === t) x.target = null; });
+    status(b, t, 'ILLUSION EVADED!', '#c48fe6');
+    const owner = t.owner;
+    if (owner && owner.alive) {
+      onUnitEvade(b, owner, src);
+      if (owner.f.twoFaced && src && src.alive) addNec(b, owner, src, 12);
     }
     return 0;
   }
@@ -5226,7 +5285,7 @@ function hit(b, src, t, amt, o = {}) {
   }
 
   if (o.dot && o.ty === 'poison' && t.st.root > 0 && alive(b, 'P').some(x => x.f.overgrowth)) raw *= 2;
-  if (o.dot && o.ty === 'fire' && t.st.hex && alive(b, 'P').some(x => x.f.finePrint)) raw *= 2;
+  if (o.dot && o.ty === 'fire' && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.f.finePrint)) raw *= 2;
 
   let dmg = Math.max(amt > 0 ? 1 : 0, Math.round(mitigate(b, src, t, raw, o)));
 
@@ -5249,7 +5308,6 @@ function hit(b, src, t, amt, o = {}) {
     t.stats.wardAbs = (t.stats.wardAbs || 0) + a;
     if (t._wardBy && t._wardBy.stats) t._wardBy.stats.wardAbsorbed = (t._wardBy.stats.wardAbsorbed || 0) + a;
     if (hadWard && t.ward <= 0) {
-      const giver = t._wardBy;
       t._wardBy = null;
       // Gilthrax Ward-Break: blasts cone of Fire equal to absorbed Ward!
       if (t.alive && t.f.gilthraxWard && (t.wardStored || 0) > 0) {
@@ -5257,11 +5315,15 @@ function hit(b, src, t, amt, o = {}) {
         t.wardStored = 0;
         later(b, .02, () => { if (t.alive) triggerGilthraxBreath(b, t, stored, false); });
       }
-      if (giver && giver.alive && giver.f.abjurer) {
-        triggerArcaneRecovery(b, giver, 15, 'WARD BREAK');
-        if (giver.f.spellBattery) {
-          giveCharge(b, t, 25);
-        }
+      // Faelan Ward Siphon & Spell Battery: trigger when ANY allied Ward breaks (0.5s ICD)
+      if (t.side === 'P' && !t.minion) {
+        alive(b, 'P').filter(x => x.f.abjurer && b.time >= (x._wsCd || 0)).forEach(abj => {
+          abj._wsCd = b.time + 0.5;
+          triggerArcaneRecovery(b, abj, 15, 'WARD BREAK');
+          if (abj.f.spellBattery) {
+            giveCharge(b, t, 25);
+          }
+        });
       }
     }
   }
@@ -5580,7 +5642,11 @@ function kill(b, t, src, o) {
   const wasTauntedBy = t.st.tauntBy;
   t.alive = false; t.hp = Math.max(0, t.hp);
   b.events.push({ k: 'die', id: t.id });
-  b.units.forEach(x => { if (x.target === t) x.target = null; if (x.st.tauntBy === t) { x.st.taunt = 0; x.st.tauntBy = null; } });
+  b.units.forEach(x => {
+    if (x.target === t) x.target = null;
+    if (x.st.tauntBy === t) { x.st.taunt = 0; x.st.tauntBy = null; }
+    if (x.isDouble && x.owner === t && x.alive) { x.alive = false; x.hp = 0; b.events.push({ k: 'die', id: x.id }); }
+  });
 
   if (t.side === 'E') {
     const K = src && src.minion && src.owner ? src.owner : src;
@@ -6111,7 +6177,8 @@ function charge(b, u) {
 /* ---------- Attacks & On-Hit ---------- */
 function attackIv(b, u) {
   const rageHaste = (u.bearRage || 0) * 10 + (u.mcRage ? 20 : 0);
-  const radHexHaste = (u.key === 'lumen' && u.target && u.target.st && u.target.st.radHex > 0) ? Math.min(120, u.target.st.radHex * 12) : 0;
+  const hexStacks = (u.key === 'lumen' && u.target && u.target.st) ? ((u.target.st.radHex || 0) + (u.target.st.hex ? 2 : 0)) : 0;
+  const radHexHaste = hexStacks > 0 ? Math.min(120, hexStacks * 12) : 0;
   const h = u.haste + (u.permHaste || 0) + (u.auraHaste || 0) + (u.tempHasteT > 0 ? u.tempHaste : 0) + rageHaste + radHexHaste;
   const slow = (u.st.stag > 0 ? 1.3 : 1) * (u.st.hexSlow > 0 ? 1.25 : 1) * (u.st.chillT > 0 ? 1.15 : 1);
   return u.iv / Math.max(.4, 1 + h / 100) * (1 + Math.min(50, u.st.frz / 2) / 100) * slow / (1 + .2 * otLevel(b));
@@ -6614,7 +6681,7 @@ function tick(b, dt) {
   for (const u of b.units) if (u.hidden && (b.time >= u.hideT || !u.alive)) u.hidden = 0;
 
   for (const u of b.units) {
-    if (!u.alive || u.st.stun > 0) continue;
+    if (!u.alive || u.st.stun > 0 || u.isDouble) continue;
     u.target = pickTarget(b, u);
 
     if (u.abil && !(u.st.charm > 0) && !(u.st.fear > 0)) {
@@ -6658,7 +6725,7 @@ function tick(b, dt) {
 }
 
 function checkOver(b) {
-  const p = alive(b, 'P').length, e = alive(b, 'E').length;
+  const p = alive(b, 'P').filter(x => !x.isDouble).length, e = alive(b, 'E').length;
   if (!e) { b.over = true; b.winner = 'P'; }
   else if (!p) { b.over = true; b.winner = 'E'; }
   else if (b.time >= TIME_LIMIT) { b.over = true; b.winner = 'E'; b.timeout = 1; }
@@ -6694,10 +6761,13 @@ const KW_STATUS = { stag: 'Staggered', exp: 'Exposed', fear: 'Frightened', charm
 const ECON = {
   freeLosses: 1,
   piggyPerWin: 2,
+  actIntactBonus: 3,
+  interestStep: 5,
+  interestCap: 4,
   winGold: d => 6 + Math.floor(d / 4),
   lossGold: () => 0,
-  heroPrice: t => [0, 3, 6, 9, 13][t] || 13,
-  itemPrice: [2, 3, 4, 6, 10, 5], // Common 2, Uncommon 3, Rare 4, Very Rare 6, Legendary 10, Unique 5
+  heroPrice: t => [0, 4, 7, 11, 15][t] || 15,
+  itemPrice: [3, 4, 6, 9, 13, 7], // Common 3, Uncommon 4, Rare 6, Very Rare 9, Legendary 13, Unique 7
   reroll: n => 1 + n,
   curioReroll: 2,
   sellBack: 1,
@@ -6706,12 +6776,13 @@ const ECON = {
   board: 4,
   bench: 0,
   stash: 10,
-  shopHeroes: 3,
+  shopHeroes: 4,
   shopItems: 3
 };
 
 const TIERCOL = { 1: '#a8743c', 2: '#8c9aa8', 3: '#d0a02a', 4: '#8a4fb8' };
 const heroValue = t => { let v = 0; for (let i = 1; i <= t; i++) v += ECON.heroPrice(i); return v; };
+const goldInterest = run => Math.min(ECON.interestCap, Math.floor(Math.max(0, (run && run.gold) || 0) / ECON.interestStep));
 const actOf = run => (run && run.adv ? run.adv.act : 1);
 const encounterCount = run => Math.max(0, (run && run.stats && run.stats.won) || 0);
 const slotsOf = h => (h && h.key === 'wallaby' && h.questDone) ? 4 : 3;
@@ -6779,11 +6850,11 @@ function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0, minR = 0
 
 /* ---------- Difficulty Curve & Hazards ---------- */
 const CURVE = {
-  share: [.50, .65, .80, .92, 1],
-  grow: 1.158,
+  share: [.52, .68, .84, .95, 1],
+  grow: 1.162,
   dmgGrow: 1.168,
-  ease: [0.88, 1.00, 1.10, 1.19, 1.28],
-  retry: .88
+  ease: [0.86, 1.02, 1.15, 1.26, 1.38],
+  retry: .96
 };
 function curveAt(d) {
   const di = Math.max(1, Math.floor(d));
@@ -6801,11 +6872,11 @@ const HAZARD_KEYS = Object.keys(HAZARDS);
 
 const ADV = {
   acts: 3, rows: 9, bossRow: 8,
-  depth: (act, r) => [1, 5.7, 9.6][act - 1] + r * [.60, .50, .48][act - 1],
-  bossDepth: act => [6.0, 10.1, 13.7][act - 1],
-  eliteDepth: 0.90, eliteK: 1.15, eliteGold: 4,
-  minibossDepth: 1.05, minibossK: 1.16,
-  startGold: 6
+  depth: (act, r) => [1, 5.9, 10.0][act - 1] + r * [.62, .52, .50][act - 1],
+  bossDepth: act => [6.2, 10.4, 14.0][act - 1],
+  eliteDepth: 0.95, eliteK: 1.18, eliteGold: 5,
+  minibossDepth: 1.10, minibossK: 1.18,
+  startGold: 8
 };
 
 const NODE = {
@@ -7156,7 +7227,7 @@ const canAfford = (run, p) => p != null && run.gold >= p;
 const onSale = (run, kind, i) => run.shop && run.shop.sale && run.shop.sale.kind === kind && run.shop.sale.i === i;
 const itemPrice = (run, i) => { const k = run.shop.items[i]; return k ? Math.max(1, ECON.itemPrice[ITEMS[k].r] - (onSale(run, 'i', i) ? ECON.sale : 0)) : null; };
 const rerollPrice = run => ECON.reroll(run.shop.rr || 0);
-const heroRefund = h => heroValue(h.tier);
+const heroRefund = h => Math.max(2, Math.floor(heroValue(h.tier) * 0.7));
 function itemRefund(run, k) {
   const f = (run.shop.fresh || []).find(x => x[0] === k);
   const base = f ? f[1] : Math.max(1, Math.floor(ECON.itemPrice[ITEMS[k].r] * .5));
@@ -7346,11 +7417,11 @@ function sellHero(run, uid, swap) {
   if (i < 0) return 0;
   const h = run.team[i];
   if (run.team.length === 1 && !swap) return 0;
-  const back = heroValue(h.tier);
+  const back = heroRefund(h);
   run.gold += back;
   h.items.forEach(k => {
     if (run.stash.length < ECON.stash) run.stash.push(k);
-    else run.gold += ECON.itemPrice[ITEMS[k].r];
+    else run.gold += itemRefund(run, k);
   });
   run.team.splice(i, 1);
   return back;
@@ -7952,9 +8023,10 @@ function updateHeroQuests(run, won, b) {
 /* ---------- Post-Combat Resolution (Piggy Bank Single Free-Loss Rule!) ---------- */
 function resolveFight(run, won, b) {
   const d = run.depth;
-  let gold = 0, piggy = 0, bonusGold = 0;
+  let gold = 0, piggy = 0, bonusGold = 0, interest = 0;
   if (won) {
     gold = ECON.winGold(d);
+    interest = goldInterest(run);
     // Bag of Holding: +1 Gold (max 1) on win
     const hasBag = (run.team || []).some(h => (h.items || []).some(k => ITEMS[k] && ITEMS[k].s && ITEMS[k].s.bagGold));
     if (hasBag) bonusGold += 1;
@@ -7963,7 +8035,7 @@ function resolveFight(run, won, b) {
       bonusGold += Math.min(5, Math.floor((run.gold || 0) * .10));
     }
     if (run.next && run.next.bonusGold) bonusGold += run.next.bonusGold;
-    gold += bonusGold;
+    gold += interest + bonusGold;
     run.stats.won++;
     run.depth++;
     run.retries = 0;
@@ -7983,9 +8055,9 @@ function resolveFight(run, won, b) {
   run.gold += gold + made;
   run.stats.gold += gold + made;
   run.hist.push(run.next ? run.next.threat : 'ambush');
-  run.log.push({ d: Math.round(d), threat: run.next ? run.next.threat : 'ambush', won, gold, made, piggy, time: b ? +b.time.toFixed(1) : 0 });
+  run.log.push({ d: Math.round(d), threat: run.next ? run.next.threat : 'ambush', won, gold, interest, made, piggy, time: b ? +b.time.toFixed(1) : 0 });
   if (run.losses > ECON.freeLosses) run.over = true;
-  return { won, gold, made, d, piggy, bonusGold };
+  return { won, gold, interest, made, d, piggy, bonusGold };
 }
 
 function resolveNodeFight(run, won, b, rand = Math.random) {
@@ -8013,6 +8085,11 @@ function resolveNodeFight(run, won, b, rand = Math.random) {
   if (won && n && n.kind === 'boss') {
     run.adv.bosses.push(n.threat);
     res.actDone = run.adv.act;
+    if (!run.piggyBroken && ECON.actIntactBonus) {
+      run.gold += ECON.actIntactBonus;
+      run.stats.gold += ECON.actIntactBonus;
+      res.actBonus = (res.actBonus || 0) + ECON.actIntactBonus;
+    }
     if (run.adv.act >= ADV.acts) {
       run.victory = true; run.over = true; res.finished = true;
     } else {
@@ -9885,11 +9962,11 @@ function drawUnitToken(u,now,ghost,dt=0){
   const p={x:cp.x,y:cp.y+tokenYOff(u,ghost)};
   const rad=unitRad(u);
   const veil=typeof B!=='undefined'&&B&&u.alive&&typeof inBrush==='function'&&inBrush(u)&&B.time>=(u._shown||0);
-  const deadA=(u.alive===false?.22:1)*(u.hidden?.45:veil?.6:1);
+  const deadA=(u.alive===false?.22:1)*(u.isDouble?.64:u.hidden?.45:veil?.6:1);
   ctx.save();ctx.globalAlpha=deadA*(ghost?.55:1);
   const isP=u.side==='P';const d=isP?H[u.key]:null;
-  const ring1=u.minion?'#5d9a52':isP?ROLE_COL[u.role||d.role]:'#c0504a';
-  const hovered=!ghost&&((isP&&HOVER_HERO&&HOVER_HERO===u.key)||(!isP&&HOVER_ENEMY!=null&&(B?HOVER_ENEMY===u.id:HOVER_ENEMY===u.idx)));
+  const ring1=u.isDouble?'#c48fe6':u.minion?'#5d9a52':isP?ROLE_COL[u.role||d.role]:'#c0504a';
+  const hovered=!ghost&&!u.isDouble&&((isP&&HOVER_HERO&&HOVER_HERO===u.key)||(!isP&&HOVER_ENEMY!=null&&(B?HOVER_ENEMY===u.id:HOVER_ENEMY===u.idx)));
   // Highlight beacon when hovered from side wing roster
   if(hovered&&u.alive!==false){
     const pulse=.5+.5*Math.sin(now*8);
@@ -9907,21 +9984,23 @@ function drawUnitToken(u,now,ghost,dt=0){
     ctx.beginPath();ctx.arc(p.x,p.y,rad+4.5+pt*3.5,0,Math.PI*2);ctx.stroke();ctx.restore();
   }
   if(u.flash&&now-u.flash<.12){ctx.shadowColor='#fff';ctx.shadowBlur=16}
+  if(u.isDouble&&u.alive!==false){ctx.shadowColor='#c48fe6';ctx.shadowBlur=12}
   const rimW=Math.max(2.2,T*.034);
   ctx.beginPath();ctx.arc(p.x,p.y,rad+rimW,0,Math.PI*2);ctx.fillStyle=ring1;ctx.fill();ctx.shadowBlur=0;
   {const img=portraitFor(u);ctx.save();ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.clip();if(u.alive===false)ctx.filter='grayscale(1)';ctx.drawImage(img,p.x-rad,p.y-rad,rad*2,rad*2);ctx.restore();
    if(u.flash&&now-u.flash<.12){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.42)';ctx.fill()}
    if(!isP){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(120,20,20,.1)';ctx.fill()}
-   if(u.minion){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(60,140,60,.25)';ctx.fill()}}
+   if(u.isDouble){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(176,120,230,.32)';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,rad+rimW+2.2,0,Math.PI*2);ctx.strokeStyle='#e2c6ff';ctx.setLineDash([4,3]);ctx.lineWidth=1.4;ctx.stroke();ctx.setLineDash([])}
+   else if(u.minion){ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fillStyle='rgba(60,140,60,.25)';ctx.fill()}}
   if(isP&&!B&&u.tier>1){ctx.font=`800 ${Math.max(10,Math.round(T*.18))}px 'Alegreya Sans',sans-serif`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.85)';const tx='T'+u.tier;ctx.strokeText(tx,p.x+rad*.8,p.y-rad*.68);ctx.fillStyle=TIER_COL[u.tier];ctx.fillText(tx,p.x+rad*.8,p.y-rad*.68)}
-  if(B&&u.alive!==false){
+  if(B&&u.alive!==false&&!u.isDouble){
     // Attack timer (thin outer arc) and Ability Charge (crisp gold arc) kept neatly inside cell bounds
     const iv=attackIv(B,u);const frac=Math.min(1,u.t/iv);
     const atkR=rad+rimW+1.2;
     ctx.beginPath();ctx.arc(p.x,p.y,atkR,-Math.PI/2,-Math.PI/2+Math.PI*2*frac);ctx.strokeStyle=isP?'rgba(236,228,208,.55)':'rgba(220,110,100,.5)';ctx.lineWidth=1.5;ctx.stroke();
     if(u.abil){const cf=u.charge/100;const chgR=atkR+Math.max(2.4,T*.034);ctx.beginPath();ctx.arc(p.x,p.y,chgR,-Math.PI/2,-Math.PI/2+Math.PI*2*cf);ctx.strokeStyle=cf>=1?'#fff1b0':isP?'#e0b45a':'#e07a5a';ctx.lineWidth=Math.max(2.2,T*.034);ctx.stroke()}
   }
-  if(isP&&u.key===S.sel){ctx.beginPath();ctx.arc(p.x,p.y,rad+Math.max(6,T*.09),0,Math.PI*2);ctx.strokeStyle='#e0b45a';ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([])}
+  if(isP&&!u.isDouble&&u.key===S.sel){ctx.beginPath();ctx.arc(p.x,p.y,rad+Math.max(6,T*.09),0,Math.PI*2);ctx.strokeStyle='#e0b45a';ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([])}
   if(!isP&&S.selE===u.idx&&!B){ctx.beginPath();ctx.arc(p.x,p.y,rad+Math.max(6,T*.09),0,Math.PI*2);ctx.strokeStyle='#ff9c94';ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([])}
   ctx.restore();
 }
@@ -9935,9 +10014,10 @@ function drawUnitBadges(units,now){
     ctx.save();
     // Power-fantasy counter pill + compact status badges tucked along lower portrait rim (stays inside unit's own tile)
     const pills=[];
+    if(u.isDouble)pills.push(['ILLUSION','#e2c6ff']);
     const ct=isP&&!u.minion?tokenCounter(u):null;
     if(ct)pills.push(ct);
-    const tags=unitStatusTags(u);
+    const tags=u.isDouble?[]:unitStatusTags(u);
     for(const t of tags){if(pills.length<2)pills.push(t)}
     if(pills.length){
       ctx.font=`800 ${fz}px 'Alegreya Sans',sans-serif`;
@@ -9965,7 +10045,7 @@ function drawUnitHealthBars(units,now,dt=0){
   const T=view.T,R=view.R;
   const bars=[];
   for(const u of units){
-    if(u._hide||u.alive===false)continue;
+    if(u._hide||u.alive===false||u.isDouble)continue;
     // Smooth trailing damage decay for visual hit-weight feedback
     if(u._trailHp===undefined)u._trailHp=u.hp;
     if(u.hp>u._trailHp)u._trailHp=u.hp;
@@ -10711,7 +10791,8 @@ function renderShop() {
   const R = RUN;
   if (SHOP_SEL_ITEM != null && !R.stash[SHOP_SEL_ITEM]) SHOP_SEL_ITEM = null;
   const actMod = currentActModule(R);
-  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div>${goldHub(R.gold)}<div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div>`;
+  const intVal = goldInterest(R);
+  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div>${goldHub(R.gold)}<div class="stat" title="Interest: +1g per ${ECON.interestStep}g held on combat win (max +${ECON.interestCap}g)"><b>+${intVal}g</b><span>Interest</span></div><div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div>`;
 
   // v0.23 Camp Shop Flow Flip: Act Boss Reminder banner (NO combat spoiler!) — except Piggy Bank Retry!
   if (R.adv && R.adv.retryPending && R.next) {
@@ -11213,10 +11294,11 @@ function showResult() {
   const P = B.units.filter(u => u.side === 'P' && !u.minion);
   const rows = P.map(u => `<tr><td>${esc(H[u.key].name)} ${u.alive ? '' : '<span class="fell">fell</span>'}${highlights(u)}</td><td>${Math.round(u.stats.dmg)}</td><td>${Math.round(u.stats.heal + u.stats.ward)}</td><td>${Math.round(u.stats.taken)}</td></tr>`).join('');
   const madeTxt = res.made ? `<div class="small" style="text-align:center">Looted ${gold(res.made)} during the fight.</div>` : '';
-  const actBonusTxt = res.actBonus ? ` (+${res.actBonus}g Act Clear)` : '';
+  const intTxt = res.interest ? ` (+${res.interest}g Interest)` : '';
+  const actBonusTxt = res.actBonus ? ` (+${res.actBonus}g Intact Piggy)` : '';
   let msg;
   if (won) {
-    msg = `+${gold(res.gold + res.made + (res.elite || 0) + (res.minibossGold || 0) + (res.actBonus || 0))}${actBonusTxt} · ${RUN.gold} gold · Piggy Bank ${RUN.piggyBroken ? 'broken' : `holds ${RUN.piggy}g`}`;
+    msg = `+${gold(res.gold + res.made + (res.elite || 0) + (res.minibossGold || 0) + (res.actBonus || 0))}${intTxt}${actBonusTxt} · ${RUN.gold} gold · Piggy Bank ${RUN.piggyBroken ? 'broken' : `holds ${RUN.piggy}g`}`;
   } else if (!RUN.over) {
     msg = `Piggy Bank broke! Paid out +${gold(res.piggy)} — visit the Camp Shop and retry this fight!`;
   } else {

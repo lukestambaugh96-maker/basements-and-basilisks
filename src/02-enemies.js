@@ -150,16 +150,16 @@ const E = {
     role: 'Archer: shoots from behind the front line'
   },
   ruffian: {
-    name: 'Redbrand Ruffian', arch: 'swarm', hp: 42, ac: 14, sr: 10, ft: 30, rng: 1,
+    name: 'Redbrand Ruffian', arch: 'swarm', hp: 42, ac: 14, sr: 10, pen: 2, ft: 30, rng: 1,
     atk: { n: 'Shortsword', d: [1, 6], flat: 3, kind: 'phys', ty: 'piercing', iv: 1.1, hits: 2 },
-    role: 'Brawler: double-striking brigand'
+    role: 'Brawler: double-striking brigand (2 Armor Pen)'
   },
   shaman: {
-    name: 'Hedge Shaman', arch: 'shaman', hp: 36, ac: 11, sr: 14, ft: 30, rng: 5, elite: 1,
-    atk: { n: 'Hex Spark', d: [1, 6], flat: 2, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.5 },
+    name: 'Hedge Shaman', arch: 'shaman', hp: 36, ac: 11, sr: 14, spen: 2, ft: 30, rng: 5, elite: 1,
+    atk: { n: 'Hex Spark', d: [1, 6], flat: 2, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.45 },
     role: 'Healer: mends allies with herbal fire',
     abil: {
-      n: 'Mend', self: 1, cr: 9, cut: [8, 15],
+      n: 'Mend', self: 1, cr: 10, cut: [8, 15],
       fx(b, u, P) {
         const fr = friends(b, u);
         if (P === 0) { const t = fr.slice().sort((a, c) => a.hp / a.maxHp - c.hp / c.maxHp)[0]; heal(b, u, t, roll(2, 6) + 4); return; }
@@ -175,11 +175,11 @@ const E = {
     role: 'Pack hunter: fast melee rusher'
   },
   ripper: {
-    name: 'Ripper (Dire Wolf)', arch: 'charger', hp: 72, ac: 13, sr: 10, ft: 40, rng: 1, elite: 1,
-    atk: { n: 'Savage Bite', d: [2, 6], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.05 },
-    role: 'Charger: leaps at the back row and drags heroes down',
+    name: 'Ripper (Dire Wolf)', arch: 'charger', hp: 72, ac: 13, sr: 10, pen: 2, ft: 40, rng: 1, elite: 1,
+    atk: { n: 'Savage Bite', d: [2, 6], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.0 },
+    role: 'Charger: leaps at the back row and drags heroes down (2 Armor Pen)',
     abil: {
-      n: 'Drag Down', cr: 8, cut: [8, 15],
+      n: 'Drag Down', cr: 10.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 6), { kind: 'phys', ty: 'piercing', melee: 1, ab: 1 });
@@ -193,11 +193,11 @@ const E = {
     role: 'Shield wall: heavy AC 17, weak to magic; adjacent allies get +2 AC'
   },
   captain: {
-    name: 'Shield Captain', arch: 'wall', hp: 84, ac: 18, sr: 11, ft: 30, rng: 1, elite: 1,
-    atk: { n: 'Greatsword', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.25 },
-    role: 'Captain: armors the ranks',
+    name: 'Shield Captain', arch: 'wall', hp: 84, ac: 18, sr: 11, pen: 3, ft: 30, rng: 1, elite: 1,
+    atk: { n: 'Greatsword', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.15 },
+    role: 'Captain: armors the ranks and cleaves armor (3 Armor Pen)',
     abil: {
-      n: 'Form Ranks', self: 1, cr: 7, cut: [8, 15],
+      n: 'Form Ranks', self: 1, cr: 10, cut: [8, 15],
       fx(b, u, P) {
         const ts = friends(b, u).filter(a => hd(a, u) <= 2);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 2, ty: 'force', ids: ts.map(x => x.id) });
@@ -212,17 +212,17 @@ const E = {
     role: 'Meat shield: half the time gets back up unless Radiant or Necrosis kills it'
   },
   orc: {
-    name: 'Reaver', arch: 'charger', hp: 38, ac: 12, sr: 9, ft: 40, rng: 1,
+    name: 'Reaver', arch: 'charger', hp: 38, ac: 12, sr: 9, pen: 2, ft: 40, rng: 1,
     atk: { n: 'Greataxe', d: [1, 12], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.2 },
-    role: 'Charger: leaps over the frontline at backliners'
+    role: 'Charger: leaps over the frontline at backliners (2 Armor Pen)'
   },
   ogre: {
-    name: 'Ogre', arch: 'brute', hp: 125, ac: 11, sr: 9, ft: 25, rng: 1, elite: 1, large: 1,
-    atk: { n: 'Greatclub', d: [2, 8], flat: 4, kind: 'phys', ty: 'bludgeoning', iv: 1.6 },
+    name: 'Ogre', arch: 'brute', hp: 125, ac: 11, sr: 9, pen: 4, ft: 25, rng: 1, elite: 1, large: 1,
+    atk: { n: 'Greatclub', d: [2, 8], flat: 5, kind: 'phys', ty: 'bludgeoning', iv: 1.35 },
     f: { pushResist: .7 },
-    role: '2×2 Brute: swats heroes away; easy to hit, hits like a boulder',
+    role: '2×2 Brute: armor-crushing boulder swings (4 Armor Pen)',
     abil: {
-      n: 'Swat', cr: 6, cut: [8, 15],
+      n: 'Swat', cr: 9.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 8), { kind: 'phys', ty: 'bludgeoning', melee: 1, ab: 1 });
@@ -231,12 +231,12 @@ const E = {
     }
   },
   chief: {
-    name: 'Warlord', arch: 'charger', hp: 82, ac: 14, sr: 11, ft: 40, rng: 1, elite: 1,
-    atk: { n: 'Greataxe', d: [1, 12], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.1 },
+    name: 'Warlord', arch: 'charger', hp: 82, ac: 14, sr: 11, pen: 3, ft: 40, rng: 1, elite: 1,
+    atk: { n: 'Greataxe', d: [1, 12], flat: 5, kind: 'phys', ty: 'slashing', iv: 1.05 },
     f: { hasteAura: [3, 25], pushResist: .4 },
-    role: 'War chief: allies within 3 squares attack 25% faster',
+    role: 'War chief: allies within 3 squares attack 25% faster (3 Armor Pen)',
     abil: {
-      n: 'Axe-Biter', cr: 7, cut: [8, 15],
+      n: 'Axe-Biter', cr: 10, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 12), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
@@ -245,12 +245,12 @@ const E = {
     }
   },
   klarg: {
-    name: 'Klarg (Bugbear Chief)', arch: 'charger', hp: 145, ac: 15, sr: 11, ft: 35, rng: 1, elite: 1, boss: 1,
-    atk: { n: 'Morningstar', d: [2, 8], flat: 5, kind: 'phys', ty: 'piercing', iv: 1.3 },
+    name: 'Klarg (Bugbear Chief)', arch: 'charger', hp: 145, ac: 15, sr: 11, pen: 4, ft: 35, rng: 1, elite: 1, boss: 1,
+    atk: { n: 'Morningstar', d: [2, 8], flat: 6, kind: 'phys', ty: 'piercing', iv: 1.15 },
     f: { pushResist: .6 },
-    role: 'Act 1 Miniboss: brutal ambusher who leaps in and smashes for heavy burst',
+    role: 'Act 1 Miniboss: brutal ambusher crushing armor (4 Armor Pen) with heavy stuns',
     abil: {
-      n: 'Brutal Smash', cr: 7.5, cut: [7, 14],
+      n: 'Brutal Smash', cr: 11, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'splash', r: 1, ty: 'bludgeoning', ids: [t.id] });
@@ -277,12 +277,12 @@ const E = {
     role: 'Bowman: brittle bones (AC 11) but high SR 16'
   },
   glasstaff: {
-    name: 'Glasstaff (Iarno Albrek)', arch: 'caster', hp: 145, ac: 13, sr: 17, ft: 30, rng: 6, boss: 1,
-    atk: { n: 'Staff of Defense', d: [3, 4], flat: 2, kind: 'magic', ty: 'force', iv: 1.4 },
+    name: 'Glasstaff (Iarno Albrek)', arch: 'caster', hp: 145, ac: 13, sr: 17, spen: 3, ft: 30, rng: 6, boss: 1,
+    atk: { n: 'Staff of Defense', d: [2, 6], flat: 3, kind: 'magic', ty: 'force', iv: 1.25, hits: 2 },
     f: { pushResist: .5 },
-    role: 'Act 1 Boss: arcane shield mage firing piercing Lightning Bolts & Hold Person roots',
+    role: 'Act 1 Boss: twin-bolt battle mage firing piercing Lightning Bolts & Hold Person (3 Spell Pen)',
     abil: {
-      n: 'Lightning Bolt', cr: 7.8, cut: [7, 14],
+      n: 'Lightning Bolt', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         addWard(b, u, Math.round(u.maxHp * [0.08, 0.12, 0.18, 0.25][P]), u.maxHp * .45, u);
@@ -295,12 +295,12 @@ const E = {
     }
   },
   flameskull: {
-    name: 'Flameskull', arch: 'caster', hp: 68, ac: 13, sr: 17, ft: 30, rng: 6, elite: 1,
-    atk: { n: 'Fire Ray', d: [2, 6], flat: 2, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.4 },
+    name: 'Flameskull', arch: 'caster', hp: 68, ac: 13, sr: 17, spen: 3, ft: 30, rng: 6, elite: 1,
+    atk: { n: 'Fire Ray', d: [2, 6], flat: 3, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.2 },
     f: { fireproof: 1 },
-    role: 'Artillery: punishes clumped heroes with Fireball; high SR 17',
+    role: 'Artillery: punishes clumped heroes with Fireball; high SR 17 (3 Spell Pen)',
     abil: {
-      n: 'Fireball', cr: 7, cut: [8, 15],
+      n: 'Fireball', cr: 10.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         const R = P === 3 ? 2 : 1;
@@ -311,12 +311,12 @@ const E = {
     }
   },
   owlbear: {
-    name: 'Owlbear', arch: 'brute', hp: 185, ac: 15, sr: 11, ft: 40, rng: 1, elite: 1, large: 1,
-    atk: { n: 'Beak and Claws', d: [1, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.55, hits: 2 },
+    name: 'Owlbear', arch: 'brute', hp: 185, ac: 15, sr: 11, pen: 4, ft: 40, rng: 1, elite: 1, large: 1,
+    atk: { n: 'Beak and Claws', d: [1, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.3, hits: 2 },
     f: { pushResist: .7, enrage: 6 },
-    role: '2×2 Juggernaut: enrages +15% damage every 6 seconds',
+    role: '2×2 Juggernaut: enrages +15% damage every 6s (4 Armor Pen)',
     abil: {
-      n: 'Rend', cr: 6, cut: [8, 15],
+      n: 'Rend', cr: 9.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive || hd(t, u) > 1) return;
         hit(b, u, t, roll([2, 3, 4, 6][P], 8), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
@@ -331,12 +331,12 @@ const E = {
     role: 'Afflicter: poisons targets and ignores webs'
   },
   nezznar: {
-    name: 'Nezznar (The Black Spider)', arch: ['summoner', 'afflicter'], hp: 165, ac: 14, sr: 16, ft: 30, rng: 6, boss: 1, large: 1,
-    atk: { n: 'Spider Staff', d: [2, 6], flat: 2, kind: 'magic', ty: 'necrotic', iv: 1.4, nec: 3 },
+    name: 'Nezznar (The Black Spider)', arch: ['summoner', 'afflicter'], hp: 165, ac: 14, sr: 16, spen: 3, ft: 30, rng: 6, boss: 1, large: 1,
+    atk: { n: 'Spider Staff', d: [2, 8], flat: 4, kind: 'magic', ty: 'necrotic', iv: 1.15, nec: 5 },
     f: { pushResist: .6, webwalk: 1 },
-    role: 'Act 1 Boss: necrosis, webs, and giant spider brood',
+    role: 'Act 1 Boss: rapid necrotic blasts, webs, and giant spider brood (3 Spell Pen)',
     abil: {
-      n: 'Web of Shadows', cr: 7.5, cut: [8, 15],
+      n: 'Web of Shadows', cr: 11.5, cut: [8, 15],
       fx(b, u, P) {
         const t = u.target;
         if (P === 3) { status(b, u, 'CALL THE BROOD', '#c48fe6'); spawn(b, 'spider', u.c - 1, u.r + 1); spawn(b, 'spider', u.c + 1, u.r + 1); return; }
@@ -348,12 +348,12 @@ const E = {
     }
   },
   venomfang: {
-    name: 'Venomfang (Green Dragon)', arch: ['brute', 'afflicter'], hp: 215, ac: 17, sr: 14, ft: 35, rng: 2, boss: 1, large: 1,
-    atk: { n: 'Rending Claws', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.45 },
+    name: 'Venomfang (Green Dragon)', arch: ['brute', 'afflicter'], hp: 215, ac: 17, sr: 14, pen: 4, ft: 35, rng: 2, boss: 1, large: 1,
+    atk: { n: 'Bite & Rending Claws', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.25, hits: 2, onHit: [{ t: 'status', el: 'poison', v: 1.5 }] },
     f: { pushResist: .8 },
-    role: 'Act 1 Boss (2×2 Dragon): Poison Breath cones, high AC 17, and Wing Buffet knockback',
+    role: 'Act 1 Boss (2×2 Dragon): twin venomous claws (4 Armor Pen), Poison Breath cones & Wing Buffet',
     abil: {
-      n: 'Poison Breath', cr: 7.5, cut: [7, 14],
+      n: 'Poison Breath', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const fs = foes(b, u).filter(x => !x.hidden);
         if (!fs.length) return;
@@ -369,11 +369,11 @@ const E = {
     }
   },
   adept: {
-    name: 'Cult Adept', arch: 'caster', hp: 42, ac: 12, sr: 14, ft: 30, rng: 6, elite: 1,
-    atk: { n: 'Fire Bolt', d: [1, 10], kind: 'magic', el: 'fire', ty: 'fire', iv: 1.6 },
-    role: 'Caster: hurls Fireballs at clumped heroes',
+    name: 'Cult Adept', arch: 'caster', hp: 42, ac: 12, sr: 14, spen: 2, ft: 30, rng: 6, elite: 1,
+    atk: { n: 'Fire Bolt', d: [1, 10], kind: 'magic', el: 'fire', ty: 'fire', iv: 1.45 },
+    role: 'Caster: hurls Fireballs at clumped heroes (2 Spell Pen)',
     abil: {
-      n: 'Fireball', self: 1, cr: 6.5, cut: [8, 15],
+      n: 'Fireball', self: 1, cr: 9.5, cut: [8, 15],
       fx(b, u, P) {
         const hs = foes(b, u).filter(x => !x.hidden && hd(x, u) <= 7); if (!hs.length) return;
         const R = P === 3 ? 2 : 1;
@@ -385,23 +385,23 @@ const E = {
     }
   },
   conjurer: {
-    name: 'Conjurer', arch: 'summoner', hp: 46, ac: 12, sr: 14, ft: 30, rng: 5, elite: 1,
-    atk: { n: 'Eldritch Bolt', d: [1, 8], kind: 'magic', ty: 'force', iv: 1.5 },
+    name: 'Conjurer', arch: 'summoner', hp: 46, ac: 12, sr: 14, spen: 2, ft: 30, rng: 5, elite: 1,
+    atk: { n: 'Eldritch Bolt', d: [1, 8], flat: 2, kind: 'magic', ty: 'force', iv: 1.4 },
     f: { summon: { k: 'skeleton', n: 2, every: 8, first: 5, cap: 3, hp: .6 } },
     role: 'Summoner: raises two skeleton archers every 8s'
   },
   caller: {
     name: 'Blight Caller', arch: 'summoner', hp: 42, ac: 12, sr: 12, ft: 30, rng: 5, elite: 1,
-    atk: { n: 'Thorn Lash', d: [1, 8], kind: 'phys', ty: 'piercing', iv: 1.4 },
+    atk: { n: 'Thorn Lash', d: [1, 8], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.35 },
     f: { summon: { k: 'blight', n: 2, every: 6, first: 3, cap: 6 } },
     role: 'Summoner: grows twig blights every 6s'
   },
   necromancer: {
-    name: 'Necromancer', arch: 'afflicter', hp: 66, ac: 12, sr: 15, ft: 30, rng: 6, elite: 1,
-    atk: { n: 'Ray of Enfeeblement', d: [2, 6], flat: 2, kind: 'magic', ty: 'necrotic', iv: 1.5, nec: 3 },
-    role: 'Necromancer: inflicts Necrosis and raises fallen zombies',
+    name: 'Necromancer', arch: 'afflicter', hp: 66, ac: 12, sr: 15, spen: 3, ft: 30, rng: 6, elite: 1,
+    atk: { n: 'Ray of Enfeeblement', d: [2, 6], flat: 3, kind: 'magic', ty: 'necrotic', iv: 1.25, nec: 4 },
+    role: 'Necromancer: inflicts Necrosis and raises fallen zombies (3 Spell Pen)',
     abil: {
-      n: 'Enervation', cr: 7, cut: [8, 15],
+      n: 'Enervation', cr: 10.5, cut: [8, 15],
       fx(b, u, P) {
         if (P === 3) {
           const dead = b.units.filter(x => !x.alive && x.key === 'zombie');
@@ -478,12 +478,12 @@ const E = {
     role: 'Skirmisher: blasts scalding fire & Burn'
   },
   ctenmiir: {
-    name: 'Ctenmiir (Vampire)', arch: 'afflicter', hp: 130, ac: 16, sr: 16, ft: 35, rng: 1, elite: 1,
-    atk: { n: 'Vampiric Bite', d: [2, 8], flat: 4, kind: 'phys', ty: 'necrotic', iv: 1.2, nec: 4 },
+    name: 'Ctenmiir (Vampire)', arch: 'afflicter', hp: 130, ac: 16, sr: 16, pen: 3, ft: 35, rng: 1, elite: 1,
+    atk: { n: 'Vampiric Bite', d: [2, 8], flat: 4, kind: 'phys', ty: 'necrotic', iv: 1.15, nec: 4 },
     f: { pushResist: .5 },
-    role: 'Act 2 Elite: undead vampire draining HP and Necrosis; Radiant stops his sustain',
+    role: 'Act 2 Elite: undead vampire draining HP and Necrosis (3 Armor Pen); Radiant stops his sustain',
     abil: {
-      n: 'Blood Drain', cr: 8, cut: [7, 14],
+      n: 'Blood Drain', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         const dealt = hit(b, u, t, roll([3, 4, 5, 6][P], 8), { kind: 'magic', ty: 'necrotic', nec: [6, 8, 12, 16][P], ab: 1 });
@@ -492,12 +492,12 @@ const E = {
     }
   },
   efreeti: {
-    name: 'Efreeti Guard', arch: 'caster', hp: 135, ac: 16, sr: 16, ft: 35, rng: 4, elite: 1,
-    atk: { n: 'Hurl Flame', d: [2, 8], flat: 3, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.4 },
+    name: 'Efreeti Guard', arch: 'caster', hp: 135, ac: 16, sr: 16, spen: 3, ft: 35, rng: 4, elite: 1,
+    atk: { n: 'Hurl Flame', d: [2, 8], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.25 },
     f: { fireproof: 1, pushResist: .6 },
-    role: 'Act 2 Elite: fire genie blasting wide Flame Strikes & Burn',
+    role: 'Act 2 Elite: fire genie blasting wide Flame Strikes & Burn (3 Spell Pen)',
     abil: {
-      n: 'Flame Wave', cr: 7.5, cut: [7, 14],
+      n: 'Flame Wave', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target || foes(b, u)[0]; if (!t) return;
         const ts = foes(b, u).filter(x => hd(x, t) <= (P === 3 ? 2 : 1));
@@ -507,12 +507,12 @@ const E = {
     }
   },
   chain_golem: {
-    name: 'Chain Golem', arch: 'wall', hp: 155, ac: 18, sr: 14, ft: 25, rng: 2, elite: 1, large: 1,
-    atk: { n: 'Barbed Chains', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.45 },
+    name: 'Chain Golem', arch: 'wall', hp: 155, ac: 18, sr: 14, pen: 4, ft: 25, rng: 2, elite: 1, large: 1,
+    atk: { n: 'Barbed Chains', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.3 },
     f: { pushResist: .8 },
-    role: 'Act 2 Elite (2×2): AC 18 iron construct that Roots and lashes multiple heroes',
+    role: 'Act 2 Elite (2×2): AC 18 iron construct that Roots and lashes heroes (4 Armor Pen)',
     abil: {
-      n: 'Chain Snare', cr: 7, cut: [7, 14],
+      n: 'Chain Snare', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 3).slice(0, P === 3 ? 4 : 2);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 3, ty: 'slashing', ids: ts.map(x => x.id) });
@@ -521,12 +521,12 @@ const E = {
     }
   },
   ogre_mage: {
-    name: 'Ogre Mage (Oni)', arch: 'caster', hp: 120, ac: 15, sr: 16, ft: 30, rng: 4, elite: 1,
-    atk: { n: 'Glaive / Frost Bolt', d: [2, 6], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.35 },
+    name: 'Ogre Mage (Oni)', arch: 'caster', hp: 120, ac: 15, sr: 16, spen: 3, ft: 30, rng: 4, elite: 1,
+    atk: { n: 'Glaive / Frost Bolt', d: [2, 6], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.2 },
     f: { pushResist: .5 },
-    role: 'Act 2 Elite: frost-casting oni with Cone of Cold & regeneration',
+    role: 'Act 2 Elite: frost-casting oni with Cone of Cold & regeneration (3 Spell Pen)',
     abil: {
-      n: 'Cone of Cold', cr: 7.5, cut: [7, 14],
+      n: 'Cone of Cold', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 3);
         const list = ts.length ? ts : foes(b, u).slice(0, 2);
@@ -537,12 +537,12 @@ const E = {
     }
   },
   keraptis: {
-    name: 'Simulacrum of Keraptis', arch: ['caster', 'summoner'], hp: 175, ac: 14, sr: 16, ft: 30, rng: 5, boss: 1,
-    atk: { n: 'Arcane Bolt', d: [2, 8], flat: 3, kind: 'magic', ty: 'force', iv: 1.4 },
+    name: 'Simulacrum of Keraptis', arch: ['caster', 'summoner'], hp: 175, ac: 14, sr: 16, spen: 4, ft: 30, rng: 5, boss: 1,
+    atk: { n: 'Twin Arcane Bolts', d: [2, 6], flat: 4, kind: 'magic', ty: 'force', iv: 1.25, hits: 2 },
     f: { pushResist: .6, summon: { k: 'steam_mephit', n: 1, every: 10, first: 5, cap: 2, hp: .65 } },
-    role: 'Act 2 Boss: mad archmage weaving Wards, constructs, and Elemental Novas',
+    role: 'Act 2 Boss: mad archmage firing twin arcane bolts (4 Spell Pen), Wards & Elemental Novas',
     abil: {
-      n: 'Funhouse Nova', cr: 8.2, cut: [7, 14],
+      n: 'Funhouse Nova', cr: 12, cut: [7, 14],
       fx(b, u, P) {
         addWard(b, u, Math.round(u.maxHp * [0.08, 0.11, 0.15, 0.20][P]), u.maxHp * .4, u);
         const ts = foes(b, u).filter(x => !x.hidden);
@@ -553,12 +553,12 @@ const E = {
     }
   },
   blackrazor_wielder: {
-    name: 'Wielder of Blackrazor', arch: 'brute', hp: 185, ac: 15, sr: 14, ft: 35, rng: 1, boss: 1,
-    atk: { n: 'Blackrazor', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.35 },
+    name: 'Wielder of Blackrazor', arch: 'brute', hp: 185, ac: 15, sr: 14, pen: 4, ft: 35, rng: 1, boss: 1,
+    atk: { n: 'Blackrazor', d: [2, 8], flat: 5, kind: 'phys', ty: 'slashing', iv: 1.05 },
     f: { pushResist: .7, blackrazorBoss: 1 },
-    role: 'Act 2 Boss: soul-drinker gaining Ward, Haste & Damage whenever ANY unit dies!',
+    role: 'Act 2 Boss: rapid soul-drinker (4 Armor Pen) gaining Ward, Haste & Damage on ANY death!',
     abil: {
-      n: 'Devour Soul', cr: 7.8, cut: [7, 14],
+      n: 'Devour Soul', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target; if (!t || !t.alive) return;
         const dealt = hit(b, u, t, roll([2, 3, 4, 6][P], 8), { kind: 'phys', ty: 'necrotic', nec: [4, 6, 9, 12][P], melee: 1, ab: 1 });
@@ -568,12 +568,12 @@ const E = {
     }
   },
   gynosphinx: {
-    name: 'Gynosphinx', arch: 'caster', hp: 205, ac: 15, sr: 16, ft: 35, rng: 2, boss: 1, large: 1,
-    atk: { n: 'Golden Claws', d: [2, 8], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.35 },
+    name: 'Gynosphinx', arch: 'caster', hp: 205, ac: 15, sr: 16, pen: 4, spen: 3, ft: 35, rng: 2, boss: 1, large: 1,
+    atk: { n: 'Twin Golden Claws', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.2, hits: 2 },
     f: { pushResist: .8 },
-    role: 'Act 2 Boss (2×2): Roar of Ages stuns/drains Charge; Temporal Shift cleanses debuffs',
+    role: 'Act 2 Boss (2×2): twin claws (4 Armor Pen), Roar of Ages stuns/drains Charge & Temporal Shift',
     abil: {
-      n: 'Roar of Ages', cr: 7.8, cut: [7, 14],
+      n: 'Roar of Ages', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'thunder', ids: ts.map(x => x.id) });
@@ -586,12 +586,12 @@ const E = {
     }
   },
   giant_crab: {
-    name: 'Giant Crab of the Bubble', arch: 'wall', hp: 215, ac: 17, sr: 12, ft: 25, rng: 1, boss: 1, large: 1,
-    atk: { n: 'Crushing Claw', d: [2, 8], flat: 4, kind: 'phys', ty: 'bludgeoning', iv: 1.45 },
+    name: 'Giant Crab of the Bubble', arch: 'wall', hp: 215, ac: 17, sr: 12, pen: 4, ft: 25, rng: 1, boss: 1, large: 1,
+    atk: { n: 'Twin Crushing Claws', d: [2, 6], flat: 4, kind: 'phys', ty: 'bludgeoning', iv: 1.3, hits: 2 },
     f: { pushResist: .9, fireproof: 1 },
-    role: 'Act 2 Boss (2×2): AC 17 carapace, Crushing Claw Root, and Boiling Splash fire AoE',
+    role: 'Act 2 Boss (2×2): AC 17 carapace, twin crushing claws (4 Armor Pen), Root & Boiling Splash',
     abil: {
-      n: 'Boiling Splash', cr: 7.8, cut: [7, 14],
+      n: 'Boiling Splash', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= (P === 3 ? 4 : 2));
         const list = ts.length ? ts : foes(b, u).slice(0, 2);
@@ -669,12 +669,12 @@ const E = {
     }
   },
   erinyes: {
-    name: 'Erinyes Executioner', arch: 'archer', hp: 128, ac: 17, sr: 16, ft: 40, rng: 5, elite: 1,
+    name: 'Erinyes Executioner', arch: 'archer', hp: 128, ac: 17, sr: 16, pen: 4, ft: 40, rng: 5, elite: 1,
     atk: { n: 'Hellish Longbow', d: [2, 8], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.15, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
     f: { fireproof: 1 },
-    role: 'Act 3 Elite: lethal armored archer raining venomous arrows',
+    role: 'Act 3 Elite: lethal armored archer raining venomous arrows (4 Armor Pen)',
     abil: {
-      n: 'Execution Volley', cr: 8, cut: [7, 14],
+      n: 'Execution Volley', cr: 10.5, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden).sort((a, c) => hpPct(a) - hpPct(c)).slice(0, P === 3 ? 3 : 2);
         ts.forEach(x => {
@@ -686,12 +686,12 @@ const E = {
     }
   },
   horned_devil: {
-    name: 'Horned Devil', arch: 'brute', hp: 165, ac: 17, sr: 16, ft: 35, rng: 2, elite: 1, large: 1,
-    atk: { n: 'Infernal Fork', d: [2, 8], flat: 5, kind: 'phys', el: 'fire', ty: 'piercing', iv: 1.35 },
+    name: 'Horned Devil', arch: 'brute', hp: 165, ac: 17, sr: 16, pen: 4, ft: 35, rng: 2, elite: 1, large: 1,
+    atk: { n: 'Infernal Fork', d: [2, 8], flat: 5, kind: 'phys', el: 'fire', ty: 'piercing', iv: 1.25 },
     f: { fireproof: 1, pushResist: .7 },
-    role: 'Act 3 Elite (2×2): massive armored fiend hurling flames',
+    role: 'Act 3 Elite (2×2): massive armored fiend hurling flames (4 Armor Pen)',
     abil: {
-      n: 'Hurl Flame', cr: 7.5, cut: [7, 14],
+      n: 'Hurl Flame', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target || foes(b, u)[0]; if (!t) return;
         const ts = foes(b, u).filter(x => hd(x, t) <= 1);
@@ -701,12 +701,12 @@ const E = {
     }
   },
   ice_devil: {
-    name: 'Ice Devil (Gelugon)', arch: 'caster', hp: 158, ac: 17, sr: 18, ft: 35, rng: 2, elite: 1, large: 1,
-    atk: { n: 'Frost Spear', d: [2, 8], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.35 },
+    name: 'Ice Devil (Gelugon)', arch: 'caster', hp: 158, ac: 17, sr: 18, spen: 4, ft: 35, rng: 2, elite: 1, large: 1,
+    atk: { n: 'Frost Spear', d: [2, 8], flat: 4, kind: 'magic', el: 'cold', ty: 'cold', iv: 1.25 },
     f: { pushResist: .7 },
-    role: 'Act 3 Elite (2×2): SR 18 frost devil freezing & staggering the party',
+    role: 'Act 3 Elite (2×2): SR 18 frost devil freezing & staggering the party (4 Spell Pen)',
     abil: {
-      n: 'Wall of Ice', cr: 7.5, cut: [7, 14],
+      n: 'Wall of Ice', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 3);
         const list = ts.length ? ts : foes(b, u).slice(0, 2);
@@ -716,11 +716,11 @@ const E = {
     }
   },
   vrock: {
-    name: 'Vrock Demon', arch: 'charger', hp: 112, ac: 15, sr: 15, ft: 40, rng: 1, elite: 1,
+    name: 'Vrock Demon', arch: 'charger', hp: 112, ac: 15, sr: 15, pen: 3, ft: 40, rng: 1, elite: 1,
     atk: { n: 'Vulture Talons', d: [2, 6], flat: 4, kind: 'phys', ty: 'slashing', iv: 1.15, hits: 2 },
-    role: 'Act 3 Elite: Blood War demon unleashing stunning shrieks & toxic spores',
+    role: 'Act 3 Elite: Blood War demon unleashing stunning shrieks & toxic spores (3 Armor Pen)',
     abil: {
-      n: 'Stunning Screech', cr: 7.5, cut: [7, 14],
+      n: 'Stunning Screech', cr: 10, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => hd(x, u) <= 2);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 2, ty: 'poison', ids: ts.map(x => x.id) });
@@ -729,12 +729,12 @@ const E = {
     }
   },
   pit_fiend: {
-    name: 'Pit Fiend Enforcer', arch: ['brute', 'summoner'], hp: 205, ac: 16, sr: 16, ft: 35, rng: 2, elite: 1, boss: 1, large: 1,
-    atk: { n: 'Infernal Mace', d: [2, 8], flat: 4, kind: 'phys', el: 'fire', ty: 'fire', iv: 1.4, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
+    name: 'Pit Fiend Enforcer', arch: ['brute', 'summoner'], hp: 205, ac: 16, sr: 16, pen: 4, ft: 35, rng: 2, elite: 1, boss: 1, large: 1,
+    atk: { n: 'Infernal Mace & Tail', d: [2, 6], flat: 5, kind: 'phys', el: 'fire', ty: 'fire', iv: 1.3, hits: 2, onHit: [{ t: 'status', el: 'poison', v: 2 }] },
     f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 12, first: 6, cap: 1, hp: .6 } },
-    role: 'Act 3 Wandering Miniboss (2×2): fire/poison lord summoning Bearded Devils',
+    role: 'Act 3 Wandering Miniboss (2×2): twin fire/poison strikes (4 Armor Pen) summoning Bearded Devils',
     abil: {
-      n: 'Meteor Fireball', cr: 7.8, cut: [7, 14],
+      n: 'Meteor Fireball', cr: 11.5, cut: [7, 14],
       fx(b, u, P) {
         const t = u.target || foes(b, u)[0]; if (!t) return;
         const ts = foes(b, u).filter(x => hd(x, t) <= (P === 3 ? 2 : 1));
@@ -744,12 +744,12 @@ const E = {
     }
   },
   orcus: {
-    name: 'Orcus (Prince of Undeath)', arch: ['summoner', 'afflicter'], hp: 225, ac: 16, sr: 16, ft: 30, rng: 2, boss: 1, large: 1,
-    atk: { n: 'Wand of Orcus', d: [2, 8], flat: 4, kind: 'magic', ty: 'necrotic', iv: 1.45, nec: 3 },
+    name: 'Orcus (Prince of Undeath)', arch: ['summoner', 'afflicter'], hp: 225, ac: 16, sr: 16, spen: 5, ft: 30, rng: 2, boss: 1, large: 1,
+    atk: { n: 'Wand of Orcus', d: [2, 6], flat: 4, kind: 'magic', ty: 'necrotic', iv: 1.3, hits: 2, nec: 4 },
     f: { pushResist: .9, summon: { k: 'wight', n: 1, every: 12, first: 6, cap: 1, hp: .6 } },
-    role: 'Act 3 Boss (2×2): massive Necrosis waves and undead legions',
+    role: 'Act 3 Boss (2×2): twin necrotic Wand strikes (5 Spell Pen), Necrosis waves & undead legions',
     abil: {
-      n: 'Power Word Kill Wave', cr: 8.2, cut: [7, 14],
+      n: 'Power Word Kill Wave', cr: 12, cut: [7, 14],
       fx(b, u, P) {
         const ts = foes(b, u).filter(x => !x.hidden);
         b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 5, ty: 'necrotic', ids: ts.map(x => x.id) });
@@ -759,14 +759,14 @@ const E = {
     }
   },
   asmodeus: {
-    name: 'Asmodeus (Lord of the Ninth)', arch: ['caster', 'summoner'], hp: 215, ac: 16, sr: 17, ft: 35, rng: 5, boss: 1,
-    atk: { n: 'Ruby Rod', d: [2, 8], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.4 },
+    name: 'Asmodeus (Lord of the Ninth)', arch: ['caster', 'summoner'], hp: 215, ac: 16, sr: 17, spen: 5, ft: 35, rng: 5, boss: 1,
+    atk: { n: 'Twin Ruby Rods', d: [2, 6], flat: 4, kind: 'magic', el: 'fire', ty: 'fire', iv: 1.3, hits: 2 },
     f: { fireproof: 1, pushResist: .8, summon: { k: 'bearded_devil', n: 1, every: 12, first: 6, cap: 1, hp: .55 } },
-    role: 'Act 3 Boss: Ruby Rod hellfire beams, Infernal Command stuns, and heavy Wards',
+    role: 'Act 3 Boss: twin hellfire beams (5 Spell Pen), Infernal Command stuns, and heavy Wards',
     abil: {
-      n: 'Infernal Command', cr: 8.4, cut: [7, 14],
+      n: 'Infernal Command', cr: 12, cut: [7, 14],
       fx(b, u, P) {
-        addWard(b, u, Math.round(u.maxHp * [0.08, 0.11, 0.15, 0.20][P]), u.maxHp * .40, u);
+        addWard(b, u, Math.round(u.maxHp * [0.06, 0.08, 0.11, 0.15][P]), u.maxHp * .35, u);
         const ts = foes(b, u).filter(x => !x.hidden);
         const targets = P >= 2 ? ts : ts.slice(0, 2);
         b.events.push({ k: 'area', id: u.id, shape: 'line', r: 5, ty: 'fire', ids: targets.map(x => x.id) });
@@ -778,12 +778,12 @@ const E = {
     }
   },
   tiamat: {
-    name: 'Tiamat (Queen of Dragons)', arch: ['brute', 'caster'], hp: 245, ac: 16, sr: 16, ft: 35, rng: 3, boss: 1, large: 1,
-    atk: { n: 'Five-Headed Snap', d: [2, 6], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.45, hits: 2 },
+    name: 'Tiamat (Queen of Dragons)', arch: ['brute', 'caster'], hp: 245, ac: 16, sr: 16, pen: 5, spen: 4, ft: 35, rng: 3, boss: 1, large: 1,
+    atk: { n: 'Five-Headed Snap', d: [2, 8], flat: 4, kind: 'phys', ty: 'piercing', iv: 1.25, hits: 2 },
     f: { fireproof: 1, pushResist: .9 },
-    role: 'Act 3 Boss (2×2): cycles all Five Chromatic Breath Weapons (Fire, Poison, Lightning, Cold, Acid)',
+    role: 'Act 3 Boss (2×2): ferocious multi-head bites (5 Armor Pen) & Five Chromatic Breath Weapons',
     abil: {
-      n: 'Chromatic Breath', cr: 8.2, cut: [7, 14],
+      n: 'Chromatic Breath', cr: 12.5, cut: [7, 14],
       fx(b, u, P) {
         const heads = [
           { n: 'RED BREATH (FIRE)', el: 'fire', ty: 'fire' },
@@ -830,15 +830,15 @@ const ENC = {
   },
   redbrands: {
     n: 'Redbrand Ruffians', place: 'Tresendar Cellar', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'Fast brawlers', note: 'Redbrand brigands double-strike up close with crossbows covering the doorway.',
+    q: 'Fast brawlers', note: 'Redbrand brigands double-strike with Armor Pen while a cult mage and crossbowman cover the rear.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
-    u: [['ruffian', 3, 3], ['ruffian', 6, 3], ['ruffian', 4, 4], ['archer', 2, 1], ['archer', 7, 1]]
+    u: [['ruffian', 3, 3], ['ruffian', 6, 3], ['ruffian', 4, 4], ['adept', 2, 1], ['archer', 7, 1]]
   },
   gate: {
     n: 'Hobgoblin Patrol', place: 'Triboar Road', theme: 'forest', mapKey: 'triboar_road',
-    q: 'High AC', note: 'AC 17 Shieldbearers armor each other while archers fire behind. Use magic, Armor Pen, or Radiant.',
+    q: 'High AC', note: 'AC 17 Shieldbearers armor each other while archers and a hedge shaman back them up.',
     map: BATTLE_MAPS.triboar_road.grid,
-    u: [['hobgoblin', 4, 4], ['hobgoblin', 5, 4], ['captain', 4, 3], ['archer', 3, 1], ['archer', 6, 1], ['archer', 8, 1]]
+    u: [['hobgoblin', 4, 4], ['hobgoblin', 5, 4], ['captain', 4, 3], ['archer', 3, 1], ['shaman', 6, 1], ['archer', 8, 1]]
   },
   reavers: {
     n: 'Cragmaw Reavers', place: 'Cragmaw Cave', theme: 'cave', mapKey: 'cragmaw_cave',
@@ -848,16 +848,16 @@ const ENC = {
   },
   blights: {
     n: 'Twig Blight Swarm', place: 'Thundertree Ruins', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Swarm', sc: { hp: 1.15, dmg: 1.15 }, note: 'Blights pour down the center while a Blight Caller grows more and ash zombies choke the melee.',
+    q: 'Swarm', sc: { hp: 1.10, dmg: 1.10 }, note: 'Blights and venom spiders pour down the center while a Blight Caller grows more and ash zombies choke melee.',
     map: BATTLE_MAPS.thundertree_ruins.grid,
-    u: [['blight', 3, 3], ['blight', 4, 3], ['blight', 5, 3], ['blight', 6, 3], ['ashzombie', 4, 2], ['caller', 5, 0], ['blight', 8, 3]],
+    u: [['blight', 3, 3], ['blight', 4, 3], ['blight', 5, 3], ['spider', 6, 3], ['ashzombie', 4, 2], ['caller', 5, 0], ['blight', 8, 3]],
     waves: [{ at: 9, u: [['blight', 1, 1], ['blight', 8, 1], ['blight', 4, 0], ['blight', 5, 0]] }]
   },
   skeleton_watch: {
     n: 'Skeleton Watch', place: 'Tresendar Cellar', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'High SR archers', note: 'Skeleton archers shrug off magic (SR 16) behind undying zombies. Physical damage shatters them.',
+    q: 'High SR archers', note: 'Skeleton archers shrug off magic (SR 16) behind undying zombies and choking ash.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
-    u: [['skeleton', 2, 1], ['skeleton', 5, 1], ['skeleton', 7, 1], ['zombie', 4, 3], ['zombie', 5, 3], ['zombie', 3, 4]]
+    u: [['skeleton', 2, 1], ['skeleton', 5, 1], ['skeleton', 7, 1], ['zombie', 4, 3], ['ashzombie', 5, 3], ['zombie', 3, 4]]
   },
   owlwell: {
     n: 'Old Owl Well', place: 'Ruined Watchtower', theme: 'forest', mapKey: 'thundertree_ruins',
@@ -885,25 +885,25 @@ const ENC = {
   },
   klarg: {
     n: 'Klarg’s Hideout', place: 'Cragmaw Hideout', theme: 'cave', mapKey: 'cragmaw_cave',
-    q: 'Miniboss', sc: { hp: .95, dmg: .92 }, note: 'Klarg the Bugbear Chief, his Dire Wolf Ripper, and goblin raiders guard stolen Rare loot!',
+    q: 'Miniboss', sc: { hp: .92, dmg: .88 }, note: 'Klarg the Bugbear Chief, his Dire Wolf Ripper, and goblin raiders guard stolen Rare loot!',
     map: BATTLE_MAPS.cragmaw_cave.grid,
     u: [['klarg', 4, 2], ['ripper', 6, 2], ['goblin', 3, 4], ['goblin', 6, 4], ['archer', 2, 0], ['archer', 7, 0]]
   },
   nezznar: {
     n: 'Nezznar, the Black Spider', place: 'Wave Echo Sanctum', theme: 'cave', mapKey: 'spider_temple',
-    q: 'Act 1 Boss', sc: { hp: .95, dmg: .88 }, note: 'Boss: Necrosis, rooting webs, and Giant Spider summons. Bring Ward or fast burst.',
+    q: 'Act 1 Boss', sc: { hp: .98, dmg: .90 }, note: 'Boss: Necrosis, rooting webs, and Giant Spider summons. Bring Ward or fast burst.',
     map: BATTLE_MAPS.spider_temple.grid,
     u: [['nezznar', 4, 0], ['spider', 2, 2], ['spider', 7, 2], ['goblin', 4, 4], ['skeleton', 7, 1]]
   },
   venomfang: {
     n: 'Venomfang, Green Dragon', place: 'Thundertree Ruins', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Act 1 Boss', sc: { hp: .95, dmg: .90 }, note: 'Boss (2×2 Dragon): Poison Breath cones, Wing Buffet knockback, and AC 17 emerald scales.',
+    q: 'Act 1 Boss', sc: { hp: .92, dmg: .84 }, note: 'Boss (2×2 Dragon): Twin venomous claws, Poison Breath cones, Wing Buffet knockback & AC 17 scales.',
     map: BATTLE_MAPS.thundertree_ruins.grid,
     u: [['venomfang', 4, 1], ['adept', 1, 0], ['adept', 8, 0], ['blight', 3, 4], ['blight', 6, 4]]
   },
   glasstaff: {
     n: 'Glasstaff, Redbrand Mage', place: 'Tresendar Manor', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'Act 1 Boss', sc: { hp: 1.18, dmg: 1.12 }, note: 'Boss: Arcane Wards, piercing Lightning Bolt lines, and Hold Person behind Redbrand Shieldbearers.',
+    q: 'Act 1 Boss', sc: { hp: 1.00, dmg: .93 }, note: 'Boss: Arcane Wards, twin arcane bolts, piercing Lightning Bolts & Hold Person behind Redbrands.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
     u: [['glasstaff', 5, 0], ['hobgoblin', 3, 3], ['hobgoblin', 6, 3], ['ruffian', 4, 4], ['skeleton', 2, 1], ['skeleton', 7, 1]]
   },
@@ -971,25 +971,25 @@ const ENC = {
   },
   keraptis: {
     n: 'Simulacrum of Keraptis', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: 1.08, dmg: 1.05 }, note: 'Boss: Archmage of White Plume weaving Arcane Wards, Elemental Novas, and constructs.',
+    q: 'Act 2 Boss', sc: { hp: 1.14, dmg: 1.04 }, note: 'Boss: Archmage of White Plume weaving Arcane Wards, twin bolts, Elemental Novas & constructs.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
     u: [['keraptis', 5, 0], ['gargoyle', 3, 3], ['gargoyle', 6, 3], ['steam_mephit', 2, 1], ['steam_mephit', 7, 1]]
   },
   blackrazor_boss: {
     n: 'Wielder of Blackrazor', place: 'Shadow Crypt', theme: 'cave', mapKey: 'shadow_crypt',
-    q: 'Act 2 Boss', sc: { hp: .98, dmg: .95 }, note: 'Boss: Gains Ward, Haste & Damage whenever ANY unit dies — focus him down fast!',
+    q: 'Act 2 Boss', sc: { hp: .96, dmg: .85 }, note: 'Boss: Gains Ward, Haste & Damage whenever ANY unit dies — focus him down fast!',
     map: BATTLE_MAPS.shadow_crypt.grid,
     u: [['blackrazor_wielder', 4, 2], ['ghoul', 2, 3], ['ghoul', 7, 3], ['wight', 4, 3], ['shadow_assassin', 6, 1]]
   },
   gynosphinx: {
     n: 'Gynosphinx', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: 1.14, dmg: 1.12 }, note: 'Boss (2×2): Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
+    q: 'Act 2 Boss', sc: { hp: 1.08, dmg: .94 }, note: 'Boss (2×2): Twin claws, Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
     u: [['gynosphinx', 4, 1], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['manticore', 5, 0]]
   },
   giant_crab: {
     n: 'Giant Crab of the Bubble', place: 'Boiling Bubble Chamber', theme: 'cave', mapKey: 'boiling_bubble',
-    q: 'Act 2 Boss', sc: { hp: 1.26, dmg: 1.22 }, note: 'Boss (2×2): High-AC carapace, Crushing Claw Root, and Boiling Splash fire AoE.',
+    q: 'Act 2 Boss', sc: { hp: 1.10, dmg: .98 }, note: 'Boss (2×2): High-AC carapace, Twin Crushing Claws, Root & Boiling Splash fire AoE.',
     map: BATTLE_MAPS.boiling_bubble.grid,
     u: [['giant_crab', 4, 2], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['kelpie', 5, 0], ['steam_mephit', 1, 1]]
   },
@@ -1057,25 +1057,25 @@ const ENC = {
   },
   pit_fiend: {
     n: 'Pit Fiend Enforcer', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Act 3 Wandering Miniboss', sc: { hp: .96, dmg: .92 }, note: 'Wandering Miniboss (2×2): Infernal fire/poison lord guarded by Bearded Devils. Drops Very Rare/Legendary loot!',
+    q: 'Act 3 Wandering Miniboss', sc: { hp: .94, dmg: .82 }, note: 'Wandering Miniboss (2×2): Infernal fire/poison lord guarded by Bearded Devils. Drops Very Rare/Legendary loot!',
     map: BATTLE_MAPS.avernus_wastes.grid,
     u: [['pit_fiend', 4, 1], ['bearded_devil', 2, 3], ['bearded_devil', 7, 3], ['spined_devil', 5, 0]]
   },
   orcus: {
     n: 'Orcus, Prince of Undeath', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: 1.04, dmg: 1.00 }, note: 'Final Boss (2×2): Wand of Orcus deals massive Necrosis waves and raises relentless undead.',
+    q: 'Act 3 Final Boss', sc: { hp: 1.02, dmg: .88 }, note: 'Final Boss (2×2): Twin Wand of Orcus strikes deal massive Necrosis waves and raise relentless undead.',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['orcus', 4, 1], ['wight', 2, 3], ['wight', 7, 3], ['bone_devil', 5, 3]]
   },
   asmodeus: {
     n: 'Asmodeus, Lord of the Ninth', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .90, dmg: .86 }, note: 'Final Boss: Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
+    q: 'Act 3 Final Boss', sc: { hp: .88, dmg: .74 }, note: 'Final Boss: Twin Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
     map: BATTLE_MAPS.throne_ninth.grid,
-    u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['erinyes', 2, 1], ['spined_devil', 7, 1]]
+    u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['spined_devil', 2, 1], ['spined_devil', 7, 1]]
   },
   tiamat: {
     n: 'Tiamat, Queen of Dragons', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: 1.10, dmg: 1.06 }, note: 'Final Boss (2×2): Cycles all Five Chromatic Breath Weapons (Fire, Poison, Lightning, Cold, Acid)!',
+    q: 'Act 3 Final Boss', sc: { hp: 1.15, dmg: 1.04 }, note: 'Final Boss (2×2): Ferocious Five-Headed bites & all Five Chromatic Breath Weapons!',
     map: BATTLE_MAPS.throne_ninth.grid,
     u: [['tiamat', 4, 1], ['cambion', 2, 0], ['cambion', 7, 0], ['bearded_devil', 3, 4], ['bearded_devil', 6, 4]]
   }
