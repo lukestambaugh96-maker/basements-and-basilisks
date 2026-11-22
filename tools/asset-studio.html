@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Asset Studio · Basements &amp; Basilisks 0.22</title>
+  <title>Asset Studio · Basements &amp; Basilisks 0.23</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;600;700;800&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
@@ -56,7 +56,7 @@
 <div class="wrap">
   <div class="top">
     <div>
-      <h1>Asset Studio<small>Basements &amp; Basilisks 0.22</small></h1>
+      <h1>Asset Studio<small>Basements &amp; Basilisks 0.23</small></h1>
       <div class="cov" id="covLine">Loading registry...</div>
     </div>
     <div class="row">
@@ -184,7 +184,7 @@ function saveLocalManifest() {
 }
 
 function exportableManifest() {
-  const out = { version: '0.22', baseUrl: ASSET_MANIFEST.baseUrl || '', heroes: {}, forms: {}, enemies: {}, items: {}, maps: {} };
+  const out = { version: '0.23', baseUrl: ASSET_MANIFEST.baseUrl || '', heroes: {}, forms: {}, enemies: {}, items: {}, maps: {} };
   ['heroes', 'forms', 'enemies', 'items', 'maps'].forEach(cat => {
     CATALOG[cat].forEach(it => {
       const v = (ASSET_MANIFEST[cat] && ASSET_MANIFEST[cat][it.key]) || '';

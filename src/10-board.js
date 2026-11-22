@@ -266,7 +266,36 @@ function drawBoard(now){
   ctx.fillStyle='#0b0a0d';ctx.fillRect(0,0,view.w,view.h);ctx.drawImage(mapLayer,0,0,view.w,view.h);
   const T=view.T;
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(MAP[r][c]==='^'){const p=center(c,r);ctx.save();ctx.shadowColor='#ff7a2a';ctx.shadowBlur=14;drawFlame(ctx,p.x,p.y,T,now);ctx.restore()}
-  if(!B){ctx.save();DEPLOY.forEach(h=>{const x=view.pad+h.c*T,y=view.pad+h.r*T;ctx.fillStyle='rgba(224,180,90,.16)';ctx.fillRect(x+1,y+1,T-2,T-2);ctx.strokeStyle='rgba(224,180,90,.42)';ctx.strokeRect(x+2.5,y+2.5,T-5,T-5)});ctx.restore()}
+  if(!B){
+    ctx.save();
+    DEPLOY.forEach(h=>{const x=view.pad+h.c*T,y=view.pad+h.r*T;ctx.fillStyle='rgba(224,180,90,.16)';ctx.fillRect(x+1,y+1,T-2,T-2);ctx.strokeStyle='rgba(224,180,90,.42)';ctx.strokeRect(x+2.5,y+2.5,T-5,T-5)});
+    // v0.23 Spatial Targeting Preview: highlight closest ally for Rosalind, Toot & Brother Jamison during deployment!
+    const partyList = (S && S.party) ? S.party.filter(h => h.c != null && h.r != null) : [];
+    partyList.forEach(h => {
+      const def = H[h.key];
+      if (!def || def.targetMode !== 'closest_ally') return;
+      const others = partyList.filter(o => o !== h).sort((a, c) => hd(a, h) - hd(c, h));
+      const tgt = others[0];
+      if (!tgt) return;
+      const p1 = center(h.c, h.r), p2 = center(tgt.c, tgt.r);
+      const col = h.key === 'jamison' ? '#9be38a' : '#ffd76a';
+      ctx.save();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(p2.x, p2.y, T * .44, 0, Math.PI * 2); ctx.stroke();
+      const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2 - 8;
+      const lbl = h.key === 'jamison' ? 'BOND' : h.key === 'toot' ? 'MOTE' : 'INSPIRE';
+      ctx.font = `800 ${Math.max(9, Math.round(T * .18))}px 'Alegreya Sans',sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(20,14,10,.78)'; ctx.fillRect(mx - 22, my - 7, 44, 14);
+      ctx.fillStyle = col; ctx.fillText(lbl, mx, my);
+      ctx.restore();
+    });
+    ctx.restore();
+  }
   // reinforcements: marked squares with a countdown
   {const ws=B?(B.waves||[]).filter(w=>!w.done):previewWaves();ctx.save();ws.forEach(w=>{const left=B?Math.max(0,w.at-B.time):w.at;w.u.forEach(([k,c,r])=>{const p=center(c,r);ctx.setLineDash([5,4]);ctx.lineWidth=2;ctx.strokeStyle='rgba(255,120,110,.85)';ctx.fillStyle='rgba(120,20,20,.35)';ctx.beginPath();ctx.arc(p.x,p.y,T*.38,0,7);ctx.fill();ctx.stroke();ctx.setLineDash([]);
       ctx.font=`800 ${Math.max(10,Math.round(T*.26))}px 'Alegreya Sans',sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ffd0c8';ctx.fillText(left.toFixed(0)+'s',p.x,p.y+1)})});ctx.restore()}

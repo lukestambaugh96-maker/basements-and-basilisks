@@ -513,9 +513,12 @@ const ITEMS = {
 const ALL_ITEM_KEYS = Object.keys(ITEMS);
 const COMMON_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r === 0);
 const STANDARD_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r <= 4);
+const CORE_ITEM_KEYS = STANDARD_ITEM_KEYS;
 const UNIQUE_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r === 5);
 
 const ITEM_BY_R = [0, 1, 2, 3, 4, 5].map(r => ALL_ITEM_KEYS.filter(k => ITEMS[k].r === r));
+const itemKwHooks = k => (ITEMS[k] && ITEMS[k].kwHooks) || [];
+const itemText = k => itemDesc(ITEMS[k]);
 
 function uniqueItemsForParty(party, ownedSet) {
   const kwSet = new Set();

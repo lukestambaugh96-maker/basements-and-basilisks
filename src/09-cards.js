@@ -171,9 +171,22 @@ function numbers(k, t, cfg) {
 const statTile = (ic, label, val, sub, kwk) => `<div class="st" title="${esc(label)}">${kwk ? `<span class="kw" tabindex="0" role="button" data-kw="${kwk}">${icon(ic, 15)}</span>` : icon(ic, 15)}<b>${val}</b><span>${esc(sub || label)}</span></div>`;
 function statTiles(N, full) {
   const { d, st, hits, avg, every } = N;
-  if (full === 'extra') return [statTile('abil', 'Ability cadence', `~${fmt(every)}s`, 'ability', 'ability'), statTile('speed', 'Speed', d.ft, 'ft', 'speed'), statTile('regen', 'Regeneration', fmt(st.regen) + '/s', 'regen', 'regen')].join('');
-  const dmg = statTile('dmg', 'Damage per attack', `${hits > 1 ? hits + '×' : ''}${Math.round(avg)}`, d.atk.kind === 'magic' ? 'magic' : d.atk.kind === 'holy' ? 'Holy' : 'physical', d.atk.kind === 'magic' ? 'magic' : d.atk.kind === 'holy' ? 'holy' : 'physical');
-  const base = [statTile('hp', 'HP', st.maxHp, st.sz > 1 ? 'HP (2×2)' : 'HP', 'HP'), statTile('ac', 'AC', st.ac, 'AC', 'AC'), statTile('sr', 'SR', st.sr, 'SR', 'SR'), dmg, statTile('rate', 'Attack interval', fmt(st.iv) + 's', 'attack'), statTile('range', 'Range', d.rng, d.reach === 'Melee' ? 'melee' : 'range', 'melee')];
+  if (full === 'extra') {
+    const ev = st.evasion > 0 ? [statTile('evasion', 'Evasion', `${Math.round(st.evasion * 100)}%`, 'evasion', 'evasion')] : [];
+    return [statTile('abil', 'Ability cadence', `~${fmt(every)}s`, 'ability', 'ability'), statTile('speed', 'Speed', d.ft, 'ft', 'speed'), statTile('regen', 'Regeneration', fmt(st.regen) + '/s', 'regen', 'regen'), ...ev].join('');
+  }
+  const rad = d.atk.kind === 'radiant' || d.atk.kind === 'holy';
+  const dmg = statTile('dmg', 'Damage per attack', d.atk.d[0] === 0 ? '0' : `${hits > 1 ? hits + '×' : ''}${Math.round(avg)}`, d.atk.kind === 'magic' ? 'magic' : rad ? 'Radiant' : 'physical', d.atk.kind === 'magic' ? 'magic' : rad ? 'radiant' : 'physical');
+  const base = [
+    statTile('hp', 'HP', st.maxHp, st.sz > 1 ? 'HP (2×2)' : 'HP', 'HP'),
+    statTile('ac', 'AC', st.ac, 'AC', 'AC'),
+    statTile('sr', 'SR', st.sr, 'SR', 'SR'),
+    dmg,
+    statTile('rate', 'Attack interval', fmt(st.iv) + 's', 'attack'),
+    st.evasion > 0
+      ? statTile('evasion', 'Evasion', `${Math.round(st.evasion * 100)}%`, 'evasion', 'evasion')
+      : statTile('range', 'Range', d.rng, d.reach === 'Melee' ? 'melee' : 'range', 'melee')
+  ];
   return base.join('');
 }
 
@@ -205,48 +218,69 @@ function attrRow(d, st, cfg) {
 const r1 = x => Math.round(x), fx2 = x => +x.toFixed(2);
 function mathSpan(txt, attr, title, tip) { return `<span class="kw amath" style="--ac:${ATTR_COL[attr] || '#6b5a44'}" tabindex="0" role="button" data-tn="${esc(title)}" data-tip="${esc(tip)}">${txt}</span>`; }
 function atkMath(d, st) {
-  const A = st.atk || d.atk, bon = atkBonus(st, d), fl = A.flat || 0, k = st.dm * (st.atM || 1) * (A.mul || 1);
+  const A = st.atk || d.atk;
+  if (A.d[0] === 0) return mathSpan('0 dmg', st.k, A.n, 'Performs in place for a chance to pop +1 Gold.');
+  const bon = atkBonus(st, d), fl = A.flat || 0, k = st.dm * (st.atM || 1) * (A.mul || 1);
   const a = st.w;
   return mathSpan(`${A.d[0]}d${A.d[1]}${fl + bon ? sgn(fl + bon) : ''}${k !== 1 ? `<small> ×${fx2(k)}</small>` : ''}`, a, `${A.n}`, `Scales linearly with ${ATTR_N[a]} (${sgn(bon)}) and Tier (×${fx2(k)}).`);
 }
 function annotateDice(html, d, st) {
-  return html.replace(/(\d+)d(\d+)(\s+(Holy|fire|necrotic|radiant|thunder|cold|lightning|force|poison))?/g, (m, n, f, _t, ty) => {
-    const holy = ty === 'Holy';
-    return mathSpan(`${n}d${f}${ty ? ' ' + ty : ''}`, holy ? null : st.k, `${st.abil.n}`, holy ? 'Holy ignores AC and SR.' : `Scales with ${ATTR_N[st.k]} (${sgn(st.mk)}) and Tier.`);
+  return html.replace(/(\d+)d(\d+)(\s+(Radiant|Holy|fire|necrotic|radiant|thunder|cold|lightning|force|poison))?/g, (m, n, f, _t, ty) => {
+    const rad = ty === 'Radiant' || ty === 'Holy' || ty === 'radiant';
+    return mathSpan(`${n}d${f}${ty ? ' ' + ty : ''}`, rad ? null : st.k, `${st.abil.n}`, rad ? 'Radiant ignores AC and SR.' : `Scales with ${ATTR_N[st.k]} (${sgn(st.mk)}) and Tier.`);
   });
 }
 
 function largeCard(k, t, opts = {}) {
   const seen = new Set(), G = s => glossarize(s, seen);
   const N = numbers(k, t, opts.cfg), { d, st, hits, odds } = N, L = st.bands.low, Hb = st.bands.hi;
-  const cp = opts.previewPath || (t >= 2 ? (opts.cfg ? opts.cfg.path : pathOf(k)) : null);
+  const hObj = opts.heroObj;
+  // Strict Progressive Disclosure: only display Specialization if chosen (or explicitly previewed)
+  const cp = opts.previewPath || (opts.cfg && opts.cfg.path) || (hObj && hObj.path) || null;
   const A = st.atk || d.atk;
-  const atkKind = A.kind === 'phys' ? 'physical' : A.kind === 'holy' ? 'Holy' : 'magic';
-  const atkLine = `${A.n}: §ATK§ ${A.ty || atkKind}${hits > 1 ? ` ×${hits}` : ''} every ${fmt(st.iv)}s`;
+  const isRad = A.kind === 'radiant' || A.kind === 'holy';
+  const atkKind = A.kind === 'phys' ? 'physical' : isRad ? 'Radiant' : 'magic';
+  const atkLine = `${A.n}: §ATK§ ${A.d[0] === 0 ? '(chance to pop +1 Gold)' : (A.ty || atkKind)}${hits > 1 ? ` ×${hits}` : ''} every ${fmt(st.iv)}s`;
   const pct = x => Math.round(x * 100);
   const bandRow = (i, lab, range, txt) => `<div class="band b${i}"><span class="bn">${i === 0 ? kw('fizzle', lab) : i === 4 ? kw('nat20', lab) : kw('band', lab)}<i>${range}</i></span><span>${annotateDice(G(txt), d, st)}</span></div>`;
   const AB = st.abil || d.abil, role = st.role || d.role, TG = TRIG[st.trig];
 
-  // Hero Quest block
+  // Strict Progressive Disclosure: Quest only appears once accepted at a Quest Board (or completed)
   const q = d.quest;
-  const hObj = opts.heroObj;
+  const qActive = !!(hObj && (hObj.questActive || hObj.questDone)) || !!(opts.cfg && (opts.cfg.questActive || opts.cfg.questDone));
   const qProg = hObj ? (hObj.questProg || 0) : 0;
   const qDone = !!(hObj && hObj.questDone) || !!(opts.cfg && opts.cfg.questDone);
-  const questHTML = q ? `<div class="qcard${qDone ? ' done' : ''}"><div class="qhead"><b>Quest · ${esc(q.rewardName)}</b><span>${qDone ? 'COMPLETE ★' : `${Math.round(qProg)} / ${q.goal}`}</span></div><div class="qgoal">${esc(q.label)}</div><div class="qrew">${G(q.rewardDesc)}</div></div>` : '';
+  const questHTML = (q && qActive)
+    ? `<div class="qcard${qDone ? ' done' : ''}"><div class="qhead"><b>Quest · ${esc(q.rewardName)}</b><span>${qDone ? 'COMPLETE ★' : `${Math.round(qProg)} / ${q.goal}`}</span></div><div class="qgoal">${esc(q.label)}</div><div class="qrew">${G(q.rewardDesc)}</div></div>`
+    : '';
 
-  const pathBox = p => {
-    const on = cp === p.k, off = cp && !on;
-    const tags = [p.attr ? `<span class="grow" style="--ac:${ATTR_COL[p.attr]}">+1 ${ATTR_S2[p.attr]}</span>` : '', (p.tags || []).map(tg => tagPill(tg)).join('')].join('');
-    return `<details class="path${on ? ' on' : off ? ' off' : ''}"${on && !opts.compact ? ' open' : ''}><summary><b>${esc(p.n)}</b>${on ? '<span class="chosen">chosen</span>' : ''}<span class="ptags">${tags}</span><span class="px">${G(p.x)}</span></summary><div class="pfull">${G(p.full || p.x)}${p.t4x ? `<p class="t4"><b>Tier IV:</b> ${G(p.t4x)}</p>` : ''}</div></details>`;
-  };
+  // Strict Progressive Disclosure: Tier II Specialization only shown once chosen or previewed
+  const chosenSpec = cp ? d.paths.find(p => p.k === cp) : null;
+  const specHTML = chosenSpec
+    ? `<div class="specbox"><span class="lbl">${kw('spec', 'Tier II Specialization')}</span><div class="specline"><b>${esc(chosenSpec.n)}</b>${chosenSpec.attr ? ` <span class="grow" style="--ac:${ATTR_COL[chosenSpec.attr]}">+1 ${ATTR_S2[chosenSpec.attr]}</span>` : ''} — ${G(chosenSpec.x)}</div></div>`
+    : '';
+
+  // Strict Progressive Disclosure: Tier IV Epic Boon only shown once chosen
+  const boonKey = (hObj && hObj.boon) || (opts.cfg && opts.cfg.boon) || null;
+  const boonObj = boonKey && EPIC_BOONS[boonKey];
+  const boonHTML = boonObj
+    ? `<div class="boonbox"><span class="lbl">${kw('boon', 'Tier IV Epic Boon')}</span><div class="specline"><b>${esc(boonObj.n)}</b> — ${G(boonObj.x)}</div></div>`
+    : '';
+
+  // Strict Progressive Disclosure: Multiclass Dip only shown once acquired
+  const mcKey = (hObj && hObj.multiclass) || (opts.cfg && opts.cfg.multiclass) || null;
+  const mcObj = mcKey && MULTICLASS[mcKey];
+  const mcHTML = mcObj
+    ? `<div class="mcbox"><span class="lbl">${kw('multiclass', `Multiclass · ${mcObj.cls}`)}</span><div class="specline">${classKwPill(mcObj.kw, false)} ${G(mcObj.x)}</div></div>`
+    : '';
 
   const formMap = { dane: 'dane_form', arthur: 'arthur_form', pillar: 'pillar_form', jamison: 'jamison_quest', saint: 'saint_quest' };
   const activeForm = qDone && formMap[k] ? formMap[k] : '';
-  const ckwPills = (d.ckw || []).map(e => classKwPill(e.k, false, e.sub)).join('');
+  const ckwPills = (d.ckw || []).map(e => classKwPill(e.k, false, e.sub)).join('') + (mcObj ? classKwPill(mcObj.kw, false, 'Multiclass') : '');
   return `<div class="hcard lg c13" style="--tc:${TIER_INK[t]};--rc:${ROLE_COL[role]}">
    <div class="ribbon">${kw('tier', TIER_NAME[t])}</div>
-   <div class="chead"><div><h2 class="cname">${esc(d.name)}</h2><div class="ctitle">${esc(d.title)}</div>${ckwPills ? `<div class="cckw">${ckwPills}</div>` : ''}</div><span class="rolechip">${role}</span></div>
-   <div class="splash"><canvas data-splash="${k}"${activeForm ? ` data-form="${activeForm}"` : ''}></canvas><div class="reach">${G(d.reach)} · ${st.sz > 1 ? 'Large 2×2 · ' : ''}${G(d.ft + ' ft')}</div></div>
+   <div class="chead"><div><h2 class="cname">${esc(d.name)}</h2><div class="ctitle">${esc(d.title)}${mcObj ? ` / ${esc(mcObj.cls)}` : ''}</div>${ckwPills ? `<div class="cckw">${ckwPills}</div>` : ''}</div><span class="rolechip">${role}</span></div>
+   <div class="splash"><canvas data-splash="${k}"${activeForm ? ` data-form="${activeForm}"` : ''}></canvas><div class="reach">${G(d.reach)} · ${st.sz > 1 ? 'Large 2×2 · ' : ''}${d.ft > 0 ? G(d.ft + ' ft') : 'Stationary'}</div></div>
    ${glanceHTML(k, cp, G)}
    <div class="stats">${statTiles(N, false)}</div>
    ${attrRow(d, st, opts.cfg)}
@@ -254,8 +288,7 @@ function largeCard(k, t, opts = {}) {
    <details class="abil"><summary><span class="ah"><b>${esc(AB.n)}</b><span class="lbl">${kw('ability', 'Ability')} · ~${fmt(N.every)}s · ${kw('trig-' + st.trig, TG.n)} · floor ${st.d20Floor}</span></span>
      <span class="odds">${odds.map((x, i) => x > 0 ? `<i style="flex:${x};background:${BCOL[i]}" title="${pct(x)}%">${pct(x) >= 8 ? pct(x) + '%' : ''}</i>` : '').join('')}</span><span class="more">${kw('key-attr', 'd20' + sgn(st.rb || 0))} ▾</span></summary>
     ${bandRow(0, 'Fizzle', 'natural 1', 'Nothing happens; half Charge comes back.')}${bandRow(1, 'Low', `${L} or less`, AB.b[0])}${bandRow(2, 'Mid', `${L + 1}–${Hb - 1}`, AB.b[1])}${bandRow(3, 'High', `${Hb}+`, AB.b[2])}${bandRow(4, 'Natural 20', 'natural 20', AB.b[3])}</details>
-   ${questHTML}
-   <div class="paths"><span class="lbl">${t >= 2 || opts.previewPath ? kw('tier2', 'Tier II path') : kw('tier2', 'Tier II: choose one (retrainable at Campfires)')}</span><div class="pp">${d.paths.map(pathBox).join('')}</div></div>
+   ${specHTML}${boonHTML}${mcHTML}${questHTML}
    <details class="moreinfo"><summary>More about ${esc(d.name)} ▾</summary><div class="stats">${statTiles(N, 'extra')}</div><p class="bio">${esc(d.bio)}</p></details>
    ${opts.items || ''}${opts.foot || ''}
   </div>`;
@@ -270,24 +303,48 @@ function loadSaved() { return Promise.resolve(); }
 /* ---------- Enemy Cards ---------- */
 const E_ABIL = {
   shaman: ['Heals the most-hurt ally 2d6+4.', 'Heals allies within 3 squares 2d6+4.', 'Heals allies within 3 squares 3d6+4.', 'Heals every ally 4d6+4.'],
-  ripper: ['2d6 and stuns 0.8s.', '3d6 and stuns 1.2s.', '4d6 and stuns 1.8s.', '6d6 and stuns 3s.'],
-  captain: ['Allies within 2 squares: +2 AC for 4s.', '+2 AC for 6s.', '+3 AC for 8s.', '+4 AC for 10s and 15 Ward.'],
+  ripper: ['2d6 and stuns 0.8s.', '3d6 and stuns 1.2s.', '4d6 and stuns 1.8s.', '6d6 and stuns 2.5s.'],
+  captain: ['Allies within 2 squares: +2 AC for 4s.', '+2 AC for 6s.', '+3 AC for 8s.', '+3 AC for 10s and 20 Ward.'],
   ogre: ['2d8 and pushes 1 square.', '3d8 and pushes 2 squares.', '4d8 and pushes 2 squares.', '6d8, pushes 3 squares, and stuns 1.5s.'],
   chief: ['2d12 to target.', '3d12.', '4d12.', '6d12, and every ally gains 40 Charge.'],
-  glasstaff: ['Hold Person: 2d6 psychic + root 2s.', 'Lightning Bolt: 4d6 in a line.', '6d6 in a line.', '8d6 in a line + stun 1.5s.'],
-  flameskull: ['2d6 fire AoE.', '3d6 fire AoE.', '5d6 fire AoE.', '8d6 fire wide AoE.'],
+  klarg: ['3d8 smash.', '4d8 smash.', '5d8 smash and stuns 1.2s.', '7d8 smash, stuns, and hastes allies!'],
+  glasstaff: ['Arcane Ward + Hold Person root.', 'Arcane Ward + 4d6 Lightning line.', 'Strong Ward + 5d6 Lightning + Root.', 'Heavy Ward + 7d6 Lightning + Stun!'],
+  flameskull: ['2d6 fire AoE.', '3d6 fire AoE.', '5d6 fire AoE.', '7d6 wide fire AoE.'],
   owlbear: ['2d8 to target.', '3d8 and stuns 0.8s.', '4d8 and stuns 1.2s.', '6d8 and stuns 2s.'],
   nezznar: ['2d8 necrotic + 6 necrosis + root.', '2d8 + 8 necrosis AoE.', '3d8 + 12 necrosis AoE.', 'Calls the Brood: summons two Giant Spiders.'],
+  venomfang: ['2d8 Poison Breath cone.', '3d8 Poison Breath cone.', '4d8 Poison Breath + Wing Buffet knockback.', '5d8 wide Poison Breath + knockback!'],
   adept: ['Fireball 2d6 AoE.', 'Fireball 3d6 AoE.', 'Fireball 4d6 AoE.', 'Fireball 6d6 wide AoE.'],
-  necromancer: ['10 necrosis on target.', '16 necrosis on target.', '16 necrosis AoE.', 'Raises every fallen zombie at half HP.']
+  necromancer: ['10 necrosis on target.', '14 necrosis on target.', '16 necrosis AoE.', 'Raises every fallen zombie at half HP.'],
+  kelpie: ['2d6 psychic + Root.', '2d6 psychic + Root.', '3d6 psychic + Root & Charm.', '4d6 psychic + Root & Charm.'],
+  flesh_golem: ['2d8 cleave.', '3d8 cleave.', '4d8 cleave.', '5d8 cleave + Stun 1.5s.'],
+  ctenmiir: ['3d8 necrotic + 6 necrosis & heals.', '4d8 + 8 necrosis & heals.', '5d8 + 12 necrosis & heals.', '6d8 + 16 necrosis & heals.'],
+  efreeti: ['3d6 fire + Burn AoE.', '4d6 fire + Burn AoE.', '5d6 fire + Burn AoE.', '7d6 wide fire + Burn AoE.'],
+  chain_golem: ['2d8 slashing + Root 2.5s.', '3d8 + Root.', '4d8 + Root.', '5d8 + Roots up to 4 heroes.'],
+  ogre_mage: ['3d6 cold cone + Stagger + heal.', '4d6 cold cone + Stagger + heal.', '5d6 cold cone + Stagger + heal.', '6d6 cold cone + Stagger + heal.'],
+  keraptis: ['Arcane Ward + 2d6 Elemental Nova.', 'Arcane Ward + 3d6 Nova.', 'Strong Ward + 4d6 Frost Nova.', 'Massive Ward + 5d6 Nova + summons Gargoyle!'],
+  blackrazor_wielder: ['3d8 + 6 necrosis + Ward.', '4d8 + 8 necrosis + Ward.', '5d8 + 12 necrosis + Ward.', '7d8 + 16 necrosis + Ward + Haste!'],
+  gynosphinx: ['2d6 Roar + Charge drain.', '3d6 Roar + Charge drain.', '4d6 Roar + Stagger + Temporal cleanse/heal.', '5d6 Roar + Stun + Temporal cleanse/heal!'],
+  giant_crab: ['2d6 Boiling Splash + Root.', '3d6 Boiling Splash + Root.', '4d6 Boiling Splash + Root.', '6d6 wide Boiling Splash + Root!'],
+  cambion: ['2d6 fire ray.', '3d6 fire ray.', '4d6 fire ray + Charm.', '5d6 fire ray + Charm.'],
+  chain_devil: ['2d6 chains + Root.', '3d6 + Root.', '4d6 + Root.', '5d6 + Roots 3 heroes.'],
+  erinyes: ['3d8 venomous volley.', '4d8 venomous volley.', '5d8 venomous volley.', '6d8 venomous volley at 3 heroes.'],
+  horned_devil: ['3d6 Hurl Flame + Burn.', '4d6 Hurl Flame + Burn.', '5d6 Hurl Flame + Burn.', '7d6 Hurl Flame + Burn.'],
+  ice_devil: ['3d6 frost cone + Stagger.', '4d6 frost cone + Stagger.', '5d6 frost cone + Stagger.', '6d6 frost cone + Stagger.'],
+  vrock: ['2d6 toxic screech.', '3d6 toxic screech.', '4d6 screech + Stun.', '5d6 screech + Stun.'],
+  pit_fiend: ['3d6 Meteor Fireball + Burn.', '4d6 Meteor Fireball + Burn.', '6d6 Meteor Fireball + Burn.', '8d6 wide Meteor Fireball + Burn!'],
+  orcus: ['2d8 + 8 Necrosis wave.', '3d8 + 12 Necrosis wave.', '4d8 + 16 Necrosis wave.', '5d8 + 22 Necrosis wave + raises Ghouls!'],
+  asmodeus: ['Ward + 3d6 Ruby Rod line.', 'Ward + 4d6 line.', 'Heavy Ward + 5d6 line + Stun.', 'Massive Ward + 6d6 line + Stun + Exposed!'],
+  tiamat: ['3d6 Chromatic Breath cone.', '4d6 Chromatic Breath cone.', '5d6 Chromatic Breath cone.', '6d6 full-party Chromatic Breath!']
 };
 const E_TRAIT = f => [
-  f.undying && ['Gets back up', `${Math.round(f.undying * 100)}% chance to rise at 30% HP unless killed by Holy or necrosis.`],
+  f.undying && ['Gets back up', `${Math.round(f.undying * 100)}% chance to rise at 30% HP unless killed by Radiant or Necrosis.`],
   f.deathPuff && ['Choking ash', 'Bursts into Poison on adjacent heroes when it falls.'],
   f.hasteAura && ['War cry', `Allies within ${f.hasteAura[0]} squares attack ${f.hasteAura[1]}% faster.`],
   f.pushResist && ['Stands firm', `Ignores ${Math.round(f.pushResist * 100)}% of pushes.`],
   f.enrage && ['Enrages', `Every ${f.enrage}s it hits 15% harder.`],
   f.webwalk && ['Web walker', 'Webs don’t hold it.'],
+  f.fireproof && ['Fireproof', 'Ignores fire tiles and Boiling Steam.'],
+  f.blackrazorBoss && ['Soul Drinker', 'Gains Ward, Haste, and Damage whenever ANY unit dies!'],
   f.summon && ['Summoner', `Every ${f.summon.every}s summons ${f.summon.n} ${(E[f.summon.k] || {}).name || f.summon.k}s.`]
 ].filter(Boolean);
 const archChips = k => { const A = archOf(k); return A.length ? `<span class="archs">${A.map(a => `<span class="archchip" tabindex="0" data-tn="${esc(EARCH[a].n)}" data-tip="${esc(EARCH[a].x)}">${esc(EARCH[a].n)}</span>`).join('')}</span>` : ''; };
@@ -295,9 +352,9 @@ function enemyCard(u, b, compact) {
   const d = E[u.key] || {}, a = d.atk || u.atk, avg = ((a.d[0] * (a.d[1] + 1) / 2) + (a.flat || 0)) * (u.dm || 1);
   const tag = u.boss ? 'Boss' : u.elite ? 'Elite' : 'Foe';
   const ac = b ? curAC(b, u) : u.ac, sr = b ? curSR(b, u) : u.sr;
-  const kind = a.kind === 'phys' ? (a.ty || 'physical') : a.kind === 'holy' ? 'Holy' : 'magic';
+  const kind = a.kind === 'phys' ? (a.ty || 'physical') : (a.kind === 'radiant' || a.kind === 'holy') ? 'Radiant' : 'magic';
   const s = u.st || {};
-  const live = [s.stun > 0 && 'Stunned', s.root > 0 && 'Rooted', s.taunt > 0 && 'Taunted', s.mark && 'Marked', s.hex && `Hex ×${s.hexStacks || 1}`, s.burn >= 1 && `Burn ${Math.round(s.burn)}`, s.poison > 0 && `Poison ${s.poison.toFixed(0)}/s`, u.nec > 0 && `Necrosis ${Math.round(u.nec)}`, u.ward > 0 && `Ward ${Math.round(u.ward)}`].filter(Boolean);
+  const live = [s.stun > 0 && 'Stunned', s.root > 0 && 'Rooted', s.taunt > 0 && 'Taunted', s.markStacks > 0 && `Mark ×${s.markStacks}`, s.hex && 'Infernal Hex', s.radHex > 0 && `Radiant Hex ×${s.radHex}`, s.burn >= 1 && `Burn ${Math.round(s.burn)}`, s.poison > 0 && `Poison ${s.poison.toFixed(0)}/s`, u.nec > 0 && `Necrosis ${Math.round(u.nec)}`, u.ward > 0 && `Ward ${Math.round(u.ward)}`].filter(Boolean);
   const hp = b ? `${Math.max(0, Math.round(u.hp))} / ${u.maxHp}` : u.maxHp;
   const head = `<div class="ehead"><img src="${portraitURL(u.key)}" alt=""><div><div class="lbl">${tag}</div><b>${esc(u.name || d.name)}</b><div class="erole">${esc(d.role || '')}</div>${archChips(u.key)}</div></div>`;
   const stats = `<div class="estats"><span><i>HP</i>${hp}</span><span><i>AC</i>${ac}</span><span><i>SR</i>${sr}</span><span><i>Speed</i>${d.ft || u.ft} ft</span><span><i>Range</i>${d.rng || u.rng}</span></div>`;
@@ -308,20 +365,20 @@ function enemyCard(u, b, compact) {
   return `<div class="ecard">${head}${stats}${atk}${ab}${tr}${live.length ? `<div class="elive">${live.join(' · ')}</div>` : ''}</div>`;
 }
 
-/* ---------- v0.22 Changelog ---------- */
+/* ---------- v0.23 Changelog ---------- */
 const CHANGELOG_HTML = `
-<div><h3>24-Hero Cast &amp; Unified 12-Class Keyword System</h3><ul>
-<li><b>6 Toggleable Hero Packs (24 Heroes + 6 Transformation Forms):</b> <i>You Meet at a Tavern</i> (Arthur, Bram, Faelan, Wallaby), <i>Around the Campfire</i> (Sir Dane, Lorcan, Juniper, Rosalind), <i>Off the Beaten Path</i> (Cinder, Zark, Naill, Nettle), <i>Divine Intervention</i> (Pillar, Mother Laurel, Lumen, Brother Jamison), <i>Cornering the Market</i> (Zoe, Toot, Gilthrax, Gains), and <i>Surprise Round</i> (Velith, Corvin, Saint, Kaska).</li>
-<li><b>17 Iconic Class Keywords across all 12 Classes:</b> Action Surge (Fighter), Channel Divinity (Cleric), Smite &amp; Aura (Paladin), Arcane Recovery (Wizard), Rage (Barbarian), Bardic Inspiration (Bard), Wild Shape (Druid), Hunter’s Mark (Ranger), Sneak Attack &amp; Cunning Action (Rogue), Ki &amp; Ki Ability (Monk), Sorcery Points &amp; Metamagic (Sorcerer), and Hex &amp; Pact Boon (Warlock).</li>
-<li><b>Built-In Hero Quests:</b> Every hero carries a personal Quest with a Signature Reward—including Large 2×2 mounted Sir Dane &amp; stone-colossus Pillar, Arthur’s Flame Gauntlet, and uncapped run scalers.</li>
+<div><h3>3-Act Campaign, 9-Row Constricting DAG &amp; 10 Rotating Bosses</h3><ul>
+<li><b>Act 1 — Phandalin &amp; the Triboar Trail:</b> 4 curated maps, Klarg’s Hideout optional miniboss, and 3 rotating bosses (<i>Nezznar</i>, <i>Venomfang</i> 2×2 Dragon, <i>Glasstaff</i>).</li>
+<li><b>Act 2 — White Plume Mountain:</b> 4 dungeon maps, visible <b>Dungeon Hazards</b> (Boiling Steam, Frictionless Floor, Arcane Dampener) with Vault Loot, and 4 rotating bosses (<i>Keraptis</i>, <i>Blackrazor</i>, <i>Gynosphinx</i>, <i>Giant Crab</i>).</li>
+<li><b>Act 3 — The Hells:</b> New volcanic <code>hells</code> board theme, <b>Wandering Pit Fiend</b> miniboss stepping across lanes, Devil’s Bargain <code>?</code> events, and 3 endgame bosses (<i>Orcus</i>, <i>Asmodeus</i>, <i>Tiamat</i>).</li>
+<li><b>Camp Shop Flow Flip &amp; Whole-Shop Freeze:</b> Camp Shop opens after wins and at Act start with an Act Boss Reminder and Whole-Shop Freeze; combat nodes jump straight to Tactical Deployment.</li>
 </ul></div>
-<div><h3>46 Canonical D&amp;D Items &amp; Encounter-Scaled Shop</h3><ul>
-<li><b>46 Canonical D&amp;D Items (All Always in Shop):</b> 8 Common staples, 24 Class-Keyword items (2 per class), and 14 Armor Ladder &amp; Archetype Riders with exact 6-attribute parity (7 items / +10 modifier per attribute).</li>
-<li><b>Smooth Encounter Progression:</b> Hero recruit tiers (I–III) and item rarities (Common → Very Rare) scale smoothly with each encounter won while keeping Tier I and Common gear findable late-run.</li>
-<li><b>No Duplicate Hunting:</b> 2 dedicated Recruit Slots (unowned heroes) + 1 exact Next-Tier Upgrade Slot (starting from Shop #2), plus <i>Bag of Holding</i> for +1 stash capacity.</li>
+<div><h3>Complete 24-Hero Rework, Strict Progressive Disclosure, Epic Boons &amp; Multiclass</h3><ul>
+<li><b>24 Reworked Heroes &amp; 13 Canonical Class Keywords:</b> Lumen reborn as a <b>Celestial Warlock</b>, Mother Laurel as a frontline Cleave Drain Tank, Arthur on universal <b>Evasion</b> + Action Surge, Zoe tossing any random Common item, Gilthrax unleashing Gold Dragon Fire Breath, Toot dancing for bounty Motes, and live spatial targeting lines for Rosalind, Toot &amp; Brother Jamison!</li>
+<li><b>Tier II Specializations &amp; Tier IV Universal Epic Boons:</b> Strictly 1-line Specializations hidden until Tier II, plus a shared 9-card Tier IV Epic Boon deck (pick 1 of 3).</li>
+<li><b>12 Single-Class Named Multiclass Nodes (✧) &amp; Opt-In Quest Board (❖):</b> Visit unique locations like <i>Oath Shrine</i> or <i>Arcane Study</i> to dip a second class &amp; unlock its Curio items, and opt into personal Hero Quests on the Quest Board.</li>
 </ul></div>
-<div><h3>Six-Attribute Rework, Retraining &amp; Piggy Bank</h3><ul>
-<li><b>Six-Attribute Split:</b> STR (melee Armor Pen &amp; Intercept), DEX (linear Attack Speed &amp; AC), CON (linear HP &amp; Poison resist), INT (Charge Speed, capped at 1 cast/s), WIS (SR + minimum natural d20 floor), CHA (Commanding Presence buff/debuff potency). High-roll scaling uses each hero’s <b>Key Attribute</b>.</li>
-<li><b>Campfire Retraining &amp; Training Nodes:</b> Retrain any Tier II+ Path freely at Campfires, or promote a hero +1 Tier at Training nodes.</li>
-<li><b>Piggy Bank Loss Rule:</b> Wins fill the Piggy Bank; your first loss breaks it, pays out all saved gold, and lets you shop and retry that fight; a second loss ends the run.</li>
+<div><h3>82-Item Six-Tier Catalog &amp; Cubed AC/SR Combat Math</h3><ul>
+<li><b>58 Universal Standard Items (5 Tiers) + 24 Unique Class-Keyword Items:</b> Common (2g), Uncommon (3g), Rare (4g), Very Rare (6g), Legendary (10g) with exact per-tier 6-attribute parity, plus 24 Unique items (2 per class) sold at the <b>Curio Merchant (⚖)</b>.</li>
+<li><b>Cubed AC/SR Curve (K = 14), Multiplicative Evasion &amp; Radiant Damage:</b> Bounded accuracy where every point of AC/SR (10–20) feels impactful, counterable by Armor/Spell Pen, scarce Radiant true damage, and universal Evasion.</li>
 </ul></div>`;

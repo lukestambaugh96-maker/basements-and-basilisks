@@ -1,13 +1,15 @@
-/* ================= 0.22 GAME SHELL UI =================
-   Title, Intro, Pack Draft, First Pick, Adventure Map (with Training Promote, Campfire Retraining,
-   Quest Board Acceleration, Piggy Bank), Reworked Recruit/Upgrade Shop, Placement, Combat, and Results.
+/* ================= 0.23 GAME SHELL UI =================
+   Title, Intro, Pack Toggles, First Pick, Camp Shop (Boss Reminder + Whole-Shop Freeze),
+   9-Row Constricting DAG Map (Curio, Single-Class Multiclass, Opt-In Quest Board, ? Mystery Events,
+   Dungeon Hazards, Stationary & Wandering Miniboss), Tier II Specialization / Tier III ASI /
+   Tier IV Epic Boon pickers, Tactical Deployment, Combat, and Results.
 */
 
 const TIER_COL = { 1: '#d8d0bc', 2: '#7fd08f', 3: '#7fb4f0', 4: '#c49af0' };
 let S = { enc: 'run', eTier: 1, party: [], sel: null, selE: null, speed: 1, sound: true };
 let mapLayer = null, mapDirty = true;
 let RUN = null, PHASE = 'title';
-const SAVE_KEY = 'bb022.run', BEST_KEY = 'bb022.best';
+const SAVE_KEY = 'bb023.run', BEST_KEY = 'bb023.best';
 const rom = ['', 'I', 'II', 'III', 'IV'];
 const short = n => n.replace(/^(Sir|Sister|Brother) /, '').split(' ')[0];
 
@@ -19,15 +21,14 @@ function saveRun() {
 function loadRun() {
   try {
     const r = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
-    if (r && r.v === '0.22' && !r.over) {
+    if (r && r.v === '0.23' && !r.over) {
       r.team = r.team.filter(h => H[h.key]);
       RUN_UID = Math.max(1, ...r.team.map(h => h.uid + 1));
       if (r.adv) {
         if (!Array.isArray(r.adv.path)) r.adv.path = [];
-        // Sanitize stale prior-act trail from pre-fix saves where pos was reset without clearing path
         if (!r.adv.pos && r.adv.path.length) r.adv.path = [];
         if (r.adv.pos && r.adv.pos.r >= ADV.bossRow) { r.adv.pos = null; r.adv.path = []; }
-        r.adv.itemPool = [...CORE_ITEM_KEYS];
+        r.adv.itemPool = [...STANDARD_ITEM_KEYS];
       }
       if (Array.isArray(r.stash)) r.stash = r.stash.filter(k => ITEMS[k]);
       if (Array.isArray(r.team)) r.team.forEach(h => { if (Array.isArray(h.items)) h.items = h.items.filter(k => ITEMS[k]); });
@@ -74,7 +75,9 @@ function checkPendingPath() {
   const h = RUN.team.find(x => x.tier >= 2 && !x.path);
   if (h) { pathModal(h); return; }
   const a = RUN.team.find(x => x.tier >= 3 && !x.asi);
-  if (a) asiModal(a);
+  if (a) { asiModal(a); return; }
+  const b = RUN.team.find(x => x.tier >= 4 && !x.boon);
+  if (b) { boonModal(b); return; }
 }
 
 function asiModal(h, sel) {
@@ -87,6 +90,18 @@ function asiModal(h, sel) {
     <p class="mute small">Choose one attribute modifier to raise permanently by +2.</p>
     <div class="asiopts">${ATTRS.map(opt).join('')}</div>
     <div class="row" style="justify-content:center"><button class="btn primary big" data-a="chooseAsi" data-u="${h.uid}" data-p="${sel}">+2 ${ATTR_N[sel]}</button></div></div>`, null, true);
+}
+
+function boonModal(h) {
+  const d = H[h.key];
+  if (!h._boonOffer || h._boonOffer.length < 3) h._boonOffer = rollEpicBoonOffer();
+  const offer = h._boonOffer;
+  openModal(`<div class="mpanel pathpanel"><div class="row" style="gap:12px;flex-wrap:nowrap">${iconSlot(h.key, 64)}<div><div class="lbl">${esc(d.name)} reaches Tier IV!</div><h2>Choose an Epic Boon (1 of 3)</h2></div></div>
+    <p class="mute small">Tier IV champions draw 3 boons from the universal 9-card Epic Boon deck.</p>
+    <div class="boonopts">${offer.map(bk => {
+      const B0 = EPIC_BOONS[bk];
+      return `<button class="boonopt" data-a="chooseBoon" data-u="${h.uid}" data-p="${bk}"><b>★ ${esc(B0.n)}</b><span>${glossarize(B0.x)}</span></button>`;
+    }).join('')}</div></div>`, null, true);
 }
 
 function tokenCanvas(k, D, opts = {}) {
@@ -111,7 +126,7 @@ function renderTitle() {
   const r = loadRun(); $('contBtn').hidden = !r;
   if (r) $('contBtn').innerHTML = `Continue · Act ${r.adv ? r.adv.act : 1}, ${r.stats.won} wins`;
   const b = getBest();
-  $('bestLine').textContent = b ? `Record: ${b.won} fights won${b.victory ? ' (Adventure cleared!)' : ''}${b.lead && H[b.lead] ? `, led by ${H[b.lead].name}` : ''}.` : 'Beat all 3 Act Bosses to conquer the adventure.';
+  $('bestLine').textContent = b ? `Record: ${b.won} fights won${b.victory ? ' (Adventure cleared!)' : ''}${b.lead && H[b.lead] ? `, led by ${H[b.lead].name}` : ''}.` : 'Conquer Phandalin, White Plume Mountain, and The Hells!';
   const p = $('parade'); p.innerHTML = '';
   HERO_ORDER.forEach(k => { const c = iconCanvas(k, 52); c.title = `${H[k].name} — ${H[k].title}`; p.appendChild(c); });
   show('start');
@@ -121,16 +136,18 @@ function renderPick() {
   $('picks').innerHTML = RUN.firstPick.map(k => largeCard(k, 1, { cfg: { key: k, tier: 1 }, foot: `<div class="cfoot"><span class="note">${H[k].role} · free</span><button class="btn primary" data-a="pick" data-k="${k}">Recruit ${esc(H[k].name)}</button></div>` })).join('');
   paintCanvases($('picks')); show('pick');
 }
-function doPick(k) { freeHero(RUN, k); startAct(RUN); renderMap(); }
+function doPick(k) {
+  freeHero(RUN, k);
+  startAct(RUN);
+  // v0.23 Camp Shop Flow Flip: startAct() refreshes shop and opens Camp Shop before map choice!
+  renderShop(); show('shop'); saveRun();
+}
 
-const PACK_PREF_KEY = 'bb022.packs';
+const PACK_PREF_KEY = 'bb023.packs';
 function loadEnabledPacks() {
   try {
     const arr = JSON.parse(localStorage.getItem(PACK_PREF_KEY) || 'null');
-    if (Array.isArray(arr)) {
-      const valid = arr.filter(k => PACKS[k]);
-      if (valid.length) return new Set(valid);
-    }
+    if (Array.isArray(arr)) { const valid = arr.filter(k => PACKS[k]); if (valid.length) return new Set(valid); }
   } catch (e) {}
   return new Set(PACK_ORDER);
 }
@@ -143,9 +160,9 @@ function saveEnabledPacks() {
 function renderPacks() {
   const chosen = PACK_ORDER.filter(k => ENABLED_PACKS.has(k));
   const heroCount = chosen.reduce((sum, k) => sum + PACKS[k].heroes.length, 0);
-  $('packLbl').textContent = 'Pre-run pack setup · 6 Packs · 24 Heroes';
+  $('packLbl').textContent = 'Pre-run pack setup · 6 Packs · 24 Reworked Heroes';
 
-  const ctrlHtml = `<div class="packsummary"><b>${chosen.length}</b> of ${PACK_ORDER.length} Packs enabled · <b>${heroCount}</b> Heroes · All <b>${CORE_ITEM_KEYS.length}</b> Items in Shop</div>
+  const ctrlHtml = `<div class="packsummary"><b>${chosen.length}</b> of ${PACK_ORDER.length} Packs enabled · <b>${heroCount}</b> Heroes · All <b>${STANDARD_ITEM_KEYS.length}</b> Shop Items + <b>${UNIQUE_ITEM_KEYS.length}</b> Curio Uniques</div>
     <div class="row">
       <button class="btn sm" data-a="packsAll">Enable all 6</button>
       <button class="btn sm" data-a="packsCore3">Starter 3</button>
@@ -168,7 +185,6 @@ function renderPacks() {
       <h3>${esc(P.n)}</h3>
       <p class="mute">${esc(P.x)}</p>
       <div class="packheroes">${P.heroes.map(h => `<button class="packhero" data-a="packHero" data-k="${h}" style="${roleStyle(h, 1)}" title="Inspect ${esc(H[h].name)}">${iconSlot(h, 64)}<b>${esc(H[h].name)}</b><span>${esc(H[h].role)} · ${esc(H[h].cls)}</span></button>`).join('')}</div>
-      ${P.item && ITEMS[P.item] ? `<div class="packitem" title="${esc(itemText(P.item))}">${itemIcon(P.item, 36)}<span><b>${esc(ITEMS[P.item].n)}</b> <small class="mute">(Featured · Always in Shop)</small><br><span class="small mute">${esc(itemText(P.item))}</span></span></div>` : ''}
       <button class="btn ${on ? '' : 'primary'}" data-a="togglePack" data-k="${k}">${on ? 'Disable this pack' : 'Enable this pack'}</button>
     </div>`;
   }).join('');
@@ -177,10 +193,8 @@ function renderPacks() {
 
 function togglePackKey(k) {
   if (!PACKS[k]) return;
-  if (ENABLED_PACKS.has(k)) ENABLED_PACKS.delete(k);
-  else ENABLED_PACKS.add(k);
-  saveEnabledPacks();
-  renderPacks();
+  if (ENABLED_PACKS.has(k)) ENABLED_PACKS.delete(k); else ENABLED_PACKS.add(k);
+  saveEnabledPacks(); renderPacks();
 }
 
 function confirmPacks() {
@@ -188,30 +202,40 @@ function confirmPacks() {
   if (!chosen.length) { toast('Enable at least 1 Pack to start!'); return; }
   startRunWithPacks(RUN, chosen);
   toast(`${chosen.length} pack${chosen.length === 1 ? '' : 's'} active (${RUN.adv.pool.length} heroes in shop pool)!`);
-  renderPick();
-  saveRun();
+  renderPick(); saveRun();
 }
 
-/* ---------- Adventure Map ---------- */
-const nodeTitle = n => n.threat ? `${NODE[n.kind].n}: ${THREATS[n.threat].n}` : NODE[n.kind].n;
-const nodeTip = n => {
-  if (n.threat) {
-    const T = THREATS[n.threat];
-    const fs = [...new Set(ENC[T.enc].u.map(u => u[0]))];
-    const A = [...new Set(fs.flatMap(archOf))].map(a => EARCH[a].n);
-    return `${T.q}.${A.length ? ' ' + A.join(', ') + '.' : ''}${n.kind === 'elite' ? ' Harder fight; pays +4 gold and a bonus item.' : ''}`;
-  }
-  return {
-    train: 'Promote a hero +1 Tier for free, or give +1 permanent attribute.',
-    quest: 'Accelerate one hero’s personal Quest (+35% progress toward their Signature Reward).',
-    rest: 'Retrain a Tier II+ hero’s Path for free, reinforce your Piggy Bank (+4g), or forage (+6g).',
-    treasure: 'Choose one of three items from your active pool.'
-  }[n.kind] || '';
+/* ==========================================================================
+   9-ROW CONSTRICTING NON-CROSSING DAG MAP
+   ========================================================================== */
+const nodeTitle = (n, isWanderer) => {
+  if (isWanderer) return `⚑ Wandering Miniboss: ${RUN.adv.wanderer.name}`;
+  if (n.kind === 'boss' && n.threat && ENC[n.threat]) return `Act Boss: ${ENC[n.threat].n}`;
+  if (n.kind === 'miniboss' && n.label) return `Optional Miniboss: ${n.label}`;
+  if (n.kind === 'multiclass' && n.mcClass) return `${n.label} (${n.mcClass} Multiclass)`;
+  return NODE[n.kind].n;
+};
+const nodeTip = (n, isWanderer) => {
+  if (isWanderer) return 'Pit Fiend Enforcer prowls this lane! Defeat it for +10g and a guaranteed Very Rare/Legendary relic, or route around it.';
+  const haz = n.hazard && HAZARDS[n.hazard] ? ` Hazard: ${HAZARDS[n.hazard].n} — ${HAZARDS[n.hazard].x}` : '';
+  if (n.kind === 'boss' && n.threat && ENC[n.threat]) return `${ENC[n.threat].note}`;
+  if (n.kind === 'miniboss') return `Optional Act Miniboss! Grants +6g and guaranteed Rare/Very Rare loot.${haz}`;
+  if (n.kind === 'multiclass' && n.mcClass) return `Single-Class Dip (${n.mcClass} · ${CLASS_KW[MULTICLASS[n.mcClass].kw].n}): ${MULTICLASS[n.mcClass].x} (or fallback +4g / +1 Attr).`;
+  return ({
+    fight: `Standard combat encounter from this Act’s pool.${haz}`,
+    elite: `Dangerous Elite fight! Grants bonus gold and a Treasure draft.${haz}`,
+    mystery: 'Mystery stop: Act choice event (55%), surprise ambush (20%), hidden treasure (15%), or wandering peddler (10%).',
+    curio: 'Curio Merchant: 3 Unique Class-Keyword items (5g) filtered to your party’s keywords (+1 reroll for 2g).',
+    train: 'Promote a hero +1 Tier for free, or drill +1 permanent attribute.',
+    quest: 'Opt-In Quest Board: accept a hero’s personal Quest, accelerate an active Quest (+35%), or claim +4g bounty.',
+    rest: 'Retrain any Tier II+ hero’s Specialization freely, reinforce Piggy Bank (+4g), or forage (+4g).',
+    treasure: 'Choose one of three items (evaluated at +3 encounters rarity!).'
+  }[n.kind] || '') + haz;
 };
 
 let _bossRead = null, _bossKey = '';
 function bossReadCached() {
-  const key = RUN.adv.act + '|' + RUN.team.map(h => h.key + h.tier + (h.path || '') + h.items.join('') + (h.questDone ? 'Q' : '') + JSON.stringify(h.train || {})).join(',');
+  const key = RUN.adv.act + '|' + (RUN.adv.actBoss || '') + '|' + RUN.team.map(h => h.key + h.tier + (h.path || '') + (h.boon || '') + (h.multiclass || '') + h.items.join('') + (h.questDone ? 'Q' : '') + JSON.stringify(h.train || {})).join(',');
   if (key !== _bossKey || !_bossRead) { _bossKey = key; try { _bossRead = bossRead(RUN, 3); } catch (e) { _bossRead = null; } }
   return _bossRead;
 }
@@ -219,39 +243,69 @@ function bossReadCached() {
 function renderMap() {
   const A = RUN.adv;
   if (!A.map || !A.map.length) startAct(RUN);
-  if (!A.pos && A.path && A.path.length) A.path = [];
   const M = A.map;
+  const actMod = currentActModule(RUN);
   const next = new Set(nextNodes(RUN));
-  const W = 760, Hh = 660, y = r => Hh - 50 - r * ((Hh - 110) / ADV.bossRow), x = n => 40 + n.x * (W - 80);
+  const W = 780, Hh = 740, y = r => Hh - 46 - r * ((Hh - 96) / ADV.bossRow), x = n => 56 + n.x * (W - 112);
   const visited = new Set((A.path || []).map(p => p.r + ',' + p.i));
   if (A.pos) visited.add(A.pos.r + ',' + A.pos.i);
-  const trail = [...(A.path || []), ...(A.pos ? [A.pos] : [])].map(p => M[p.r] && M[p.r][p.i]).filter(Boolean);
+
   const lines = [];
-  trail.forEach((a, k) => { const b = trail[k + 1]; if (b) lines.push(`<line x1="${x(a)}" y1="${y(a.r)}" x2="${x(b)}" y2="${y(b.r)}" class="on"/>`); });
-  const cur = trail[trail.length - 1];
-  if (cur) [...next].forEach(b => lines.push(`<line x1="${x(cur)}" y1="${y(cur.r)}" x2="${x(b)}" y2="${y(b.r)}" class="nx"/>`));
-  M.forEach((row, r) => { if (r < ADV.bossRow) lines.unshift(`<text x="${W - 14}" y="${y(r) + 4}" text-anchor="end" class="rowlbl">${r % 2 === 0 ? 'Choose a fight' : 'Choose a stop'}</text>`); });
+  // Draw ALL explicit non-crossing DAG edges
+  for (let r = 0; r < M.length - 1; r++) {
+    M[r].forEach(a => {
+      (a.next || []).forEach(j => {
+        const b = M[r + 1][j];
+        if (!b) return;
+        const isCur = A.pos && A.pos.r === a.r && A.pos.i === a.i && next.has(b);
+        const isVisited = visited.has(a.r + ',' + a.i) && visited.has(b.r + ',' + b.i);
+        const cls = isCur ? 'nx' : isVisited ? 'on' : 'dag';
+        lines.push(`<line x1="${x(a)}" y1="${y(a.r)}" x2="${x(b)}" y2="${y(b.r)}" class="${cls}"/>`);
+      });
+    });
+  }
+
   const BR = bossReadCached();
+  const Wn = A.wanderer && A.wanderer.alive ? A.wanderer : null;
+
   const nodes = M.flat().map(n => {
     const key = n.r + ',' + n.i, can = next.has(n), been = visited.has(key);
-    const lbl = n.threat ? THREATS[n.threat].n : NODE[n.kind].n;
-    return `<button class="mnode k-${n.kind}${can ? ' can' : ''}${been ? ' been' : ''}" style="left:${x(n)}px;top:${y(n.r)}px" ${can ? `data-a="node" data-r="${n.r}" data-i="${n.i}"` : 'disabled'} data-tn="${esc(nodeTitle(n))}" data-tip="${esc(nodeTip(n))}"><span class="g">${NODE[n.kind].g}</span><span class="nl">${esc(lbl)}</span>${n.kind === 'boss' && BR ? `<span class="read r-${BR.label.toLowerCase()}">${BR.label}</span>` : ''}</button>`;
+    const isCurPos = A.pos && A.pos.r === n.r && A.pos.i === n.i;
+    const isWand = !!(Wn && Wn.r === n.r && Wn.i === n.i);
+    let glyph = NODE[n.kind].g;
+    let lbl = NODE[n.kind].n;
+    if (n.kind === 'boss' && n.threat && ENC[n.threat]) lbl = ENC[n.threat].n.split(',')[0];
+    else if (n.kind === 'miniboss' && n.label) lbl = n.label;
+    else if (n.kind === 'multiclass' && n.label) lbl = n.label;
+    if (isWand) { glyph = '⚑'; lbl = 'Pit Fiend!'; }
+    const hazBadge = n.hazard && HAZARDS[n.hazard] ? `<span class="hazbadge" title="${esc(HAZARDS[n.hazard].n)}">${HAZARDS[n.hazard].g}</span>` : '';
+    const bossTag = n.kind === 'boss' && BR ? `<span class="read r-${BR.label.toLowerCase()}">${BR.label}</span>` : '';
+    return `<button class="mnode k-${n.kind}${can ? ' can' : ''}${been ? ' been' : ''}${isCurPos ? ' here' : ''}${isWand ? ' wanderer' : ''}${n.hazard ? ' has-haz' : ''}" style="left:${x(n)}px;top:${y(n.r)}px" ${can ? `data-a="node" data-r="${n.r}" data-i="${n.i}"` : 'disabled'} data-tn="${esc(nodeTitle(n, isWand))}" data-tip="${esc(nodeTip(n, isWand))}"><span class="g">${glyph}</span><span class="nl">${esc(lbl)}</span>${hazBadge}${bossTag}</button>`;
   }).join('');
-  $('mapBoard').innerHTML = `<svg class="maplines" viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}">${lines.join('')}</svg>${nodes}`;
-  $('mapHead').innerHTML = `<div><div class="lbl">Act ${A.act} of ${ADV.acts}</div><h2>${['The Forest Road', 'The Hill Country', 'The Old Keep'][A.act - 1] || 'The Road'}</h2></div>
-    <div class="row" style="gap:16px;align-items:center"><span title="Piggy Bank (single free loss)">Piggy: ${piggyTxt()}</span><b class="goldbig">${gold(RUN.gold)}</b><span class="small mute">${RUN.stats.won} wins</span><button class="btn" data-a="mapShop">Party &amp; stash</button></div>`;
 
-  // Show built-in personal Hero Quests in sidebar!
-  const qs = RUN.team.map(h => {
-    const q = H[h.key].quest; if (!q) return '';
+  $('mapBoard').innerHTML = `<svg class="maplines" viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}">${lines.join('')}</svg>${nodes}`;
+  $('mapHead').innerHTML = `<div><div class="lbl">Act ${A.act} of ${ADV.acts} · ${esc(actMod.sub)}</div><h2>${esc(actMod.name)}</h2></div>
+    <div class="row" style="gap:14px;align-items:center"><span title="Piggy Bank (single free loss)">Piggy: ${piggyTxt()}</span><b class="goldbig">${gold(RUN.gold)}</b><span class="small mute">${RUN.stats.won} wins</span><button class="btn primary" data-a="openCampShop">Open Camp Shop</button></div>`;
+
+  // Sidebar: only display accepted / completed quests (strict progressive disclosure!)
+  const activeQs = RUN.team.filter(h => (h.questActive || h.questDone) && H[h.key].quest);
+  const qsHtml = activeQs.length ? activeQs.map(h => {
+    const q = H[h.key].quest;
     const pct = h.questDone ? 100 : Math.round(Math.min(1, (h.questProg || 0) / q.goal) * 100);
     return `<div class="quest" title="${esc(q.rewardName)}: ${esc(q.rewardDesc)}">${iconSlot(h.key, 30)}<div><b>${esc(H[h.key].name)}: ${esc(q.rewardName)}</b><div class="qbar"><i style="width:${pct}%"></i></div><span class="small mute">${h.questDone ? 'COMPLETE ★' : `${Math.round(h.questProg || 0)} / ${q.goal} · ${esc(q.label)}`}</span></div></div>`;
-  }).join('');
+  }).join('') : `<div class="small mute">Visit a ❖ Quest Board to accept a hero’s personal Quest.</div>`;
 
-  $('mapSide').innerHTML = `<div class="lbl">Your party (${RUN.team.length}/4)</div><div class="mparty">${RUN.team.map(h => `<button data-a="card" data-u="${h.uid}" title="${esc(H[h.key].name)}">${iconSlot(h.key, 46)}<span>${rom[h.tier]}${h.questDone ? '★' : ''}</span></button>`).join('')}</div>
-    <div class="lbl">Enabled packs (${A.packs.length} · ${A.pool.length} heroes)</div><div class="small">${A.packs.map(k => esc(PACKS[k].n)).join(' · ')}</div>
-    <div class="lbl">Hero quests</div>${qs}
-    ${BR ? `<div class="lbl">Act boss</div><div class="small"><b>${esc(THREATS[M[ADV.bossRow][0].threat].n)}</b>: <span class="read r-${BR.label.toLowerCase()}">${BR.label}</span></div>` : ''}`;
+  const bossKey = A.actBoss || M[ADV.bossRow][0].threat;
+  const bossEnc = ENC[bossKey];
+  const bossUnitKey = bossEnc && bossEnc.u && bossEnc.u[0] ? bossEnc.u[0][0] : 'nezznar';
+
+  $('mapSide').innerHTML = `<div class="lbl">Your party (${RUN.team.length}/4)</div>
+    <div class="mparty">${RUN.team.map(h => `<button data-a="card" data-u="${h.uid}" title="${esc(H[h.key].name)}">${iconSlot(h.key, 46)}<span>${rom[h.tier]}${h.multiclass ? '✧' : ''}${h.boon ? '★' : ''}</span></button>`).join('')}</div>
+    <div class="lbl">Act ${A.act} Boss</div>
+    <div class="bossrem-side"><img src="${portraitURL(bossUnitKey)}" alt=""><div><b>${esc(bossEnc ? bossEnc.n : bossKey)}</b>${BR ? ` <span class="read r-${BR.label.toLowerCase()}">${BR.label}</span>` : ''}<div class="small mute">${esc(bossEnc ? bossEnc.note : '')}</div></div></div>
+    <div class="lbl">Active Quests</div>${qsHtml}
+    ${Wn ? `<div class="warnbox"><b>⚑ Wandering Miniboss</b><br><span class="small">Pit Fiend Enforcer is patrolling Row ${Wn.r + 1}!</span></div>` : ''}`;
+
   paintCanvases($('advmap')); paintTokens($('advmap')); show('advmap'); A.stage = 'map'; saveRun();
   checkPendingPath();
 }
@@ -259,23 +313,29 @@ function renderMap() {
 function chooseNode(r, i) {
   const n = RUN.adv.map[r][i];
   if (!nextNodes(RUN).includes(n)) return;
-  RUN.adv.path = RUN.adv.path || [];
-  if (RUN.adv.pos) RUN.adv.path.push({ ...RUN.adv.pos });
   const k = enterNode(RUN, n);
-  if (k === 'fight') { enterShop(); return; }
+  if (k === 'battle') { goPlacement(); return; }
   eventModal(k);
 }
 
-/* ---------- Map Events (Training Tier-Up / Stat Drill, Campfire Retrain, Quest Boost, Treasure) ---------- */
-function finishEvent(msg) { if (msg) toast(msg); closeModal(true); clearNode(RUN); renderMap(); }
+/* ==========================================================================
+   MAP EVENT MODALS (Training, Quest Board, Campfire, Treasure, Curio, Multiclass, ? Mystery)
+   ========================================================================== */
+function finishEvent(msg) {
+  if (msg) toast(msg);
+  closeModal(true);
+  clearNode(RUN);
+  renderMap();
+}
 
 function eventModal(k, arg) {
   const on = RUN.team;
+
   if (k === 'train') {
     if (!arg) {
       const canProm = on.filter(h => h.tier < 4);
       openModal(`<div class="mpanel"><div class="lbl">Training grounds</div><h2>Promote or Drill</h2>
-        <p class="mute small">Choose a hero to <b>promote +1 Tier for free</b> (no shop RNG!) or drill for <b>+1 permanent attribute</b>.</p>
+        <p class="mute small">Choose a hero to <b>promote +1 Tier for free</b> or drill for <b>+1 permanent attribute</b>.</p>
         ${canProm.length ? `<div class="lbl">Free Tier-Up (+1 Tier)</div><div class="evheroes">${canProm.map(h => `<button class="evhero" data-a="evPromote" data-u="${h.uid}">${iconSlot(h.key, 52)}<b>${esc(H[h.key].name)}</b><span class="small">Tier ${rom[h.tier]} → <b>${rom[h.tier + 1]}</b></span></button>`).join('')}</div>` : ''}
         <div class="lbl">Or Attribute Drill (+1 permanent stat)</div>
         <div class="evheroes">${on.map(h => `<button class="evhero" data-a="evTrainHero" data-u="${h.uid}">${iconSlot(h.key, 48)}<b>${esc(H[h.key].name)}</b><span class="small mute">Tier ${rom[h.tier]}</span></button>`).join('')}</div>
@@ -295,22 +355,24 @@ function eventModal(k, arg) {
   }
 
   if (k === 'quest') {
-    const active = on.filter(h => !h.questDone && H[h.key].quest);
-    openModal(`<div class="mpanel"><div class="lbl">Quest board</div><h2>Accelerate a Hero Quest</h2>
-      <p class="mute small">${active.length ? 'Advance one hero’s personal Quest by +35% toward their Signature Reward.' : 'All active Hero Quests are already complete!'}</p>
-      <div class="evquests">${active.map(h => {
+    // v0.23 Opt-In Quest Board: accept a hero's personal Quest OR accelerate an active Quest (+35%) OR take +4g bounty!
+    const eligible = on.filter(h => !h.questDone && H[h.key].quest);
+    openModal(`<div class="mpanel"><div class="lbl">❖ Quest Board (Opt-In)</div><h2>Accept or Advance a Personal Quest</h2>
+      <p class="mute small">Accept a hero’s personal Quest to begin tracking it, boost an already-active Quest (+35%), or claim a +4g mercenary bounty.</p>
+      <div class="evquests">${eligible.map(h => {
         const q = H[h.key].quest;
-        return `<button class="evquest" data-a="evQuestBoost" data-u="${h.uid}">${iconSlot(h.key, 48)}<span><b>${esc(H[h.key].name)} · ${esc(q.rewardName)}</b><br><span class="small mute">${Math.round(h.questProg || 0)}/${q.goal} — ${esc(q.label)}</span></span></button>`;
+        const isAct = !!h.questActive;
+        return `<button class="evquest" data-a="evQuestBoost" data-u="${h.uid}">${iconSlot(h.key, 48)}<span><b>${esc(H[h.key].name)} · ${esc(q.rewardName)}</b> <span class="qtag">${isAct ? 'ACTIVE · +35% BOOST' : 'ACCEPT QUEST'}</span><br><span class="small mute">${isAct ? `${Math.round(h.questProg || 0)}/${q.goal} — ` : ''}${esc(q.label)} → ${esc(q.rewardDesc)}</span></span></button>`;
       }).join('')}</div>
-      <div class="row" style="justify-content:center"><button class="btn" data-a="evSkip">Move on</button></div></div>`, null, true);
+      <div class="row" style="justify-content:center;gap:10px;margin-top:8px"><button class="btn primary" data-a="evRest" data-p="gold">Take Bounty (+${gold(4)})</button></div></div>`, null, true);
     return;
   }
 
   if (k === 'rest') {
     const retrainable = on.filter(h => h.tier >= 2 && h.path && H[h.key].paths.length >= 2);
-    openModal(`<div class="mpanel"><div class="lbl">Campfire</div><h2>Rest, Forage, or Retrain</h2>
-      <p class="mute small">Retrain any Tier II+ hero’s Path for free to pivot cleanly into new Pack synergies, or stock up on Gold.</p>
-      ${retrainable.length ? `<div class="lbl">Retrain Tier II Path (Free)</div><div class="evheroes">${retrainable.map(h => {
+    openModal(`<div class="mpanel"><div class="lbl">♨ Campfire</div><h2>Rest, Forage, or Retrain</h2>
+      <p class="mute small">Retrain any Tier II+ hero’s Specialization freely, reinforce your Piggy Bank, or forage for Gold.</p>
+      ${retrainable.length ? `<div class="lbl">Retrain Tier II Specialization (Free)</div><div class="evheroes">${retrainable.map(h => {
         const curP = H[h.key].paths.find(p => p.k === h.path);
         const altP = H[h.key].paths.find(p => p.k !== h.path);
         if (!curP || !altP) return '';
@@ -318,55 +380,129 @@ function eventModal(k, arg) {
       }).join('')}</div>` : ''}
       <div class="row" style="justify-content:center;gap:12px;margin-top:8px">
         ${!RUN.piggyBroken ? `<button class="btn big" data-a="evRest" data-p="piggy">Fill Piggy Bank (+4g saved)</button>` : ''}
-        <button class="btn primary big" data-a="evRest" data-p="gold">Forage (+${gold(6)})</button>
+        <button class="btn primary big" data-a="evRest" data-p="gold">Forage (+${gold(4)})</button>
       </div></div>`, null, true);
+    return;
+  }
+
+  if (k === 'curio') {
+    const C = RUN.adv.curio || rollCurioStock(RUN);
+    RUN.adv.curio = C;
+    openModal(`<div class="mpanel"><div class="lbl">⚖ Curio Merchant · Unique Class-Keyword Relics</div><h2>Curiosities for Your Party (${gold(RUN.gold)})</h2>
+      <p class="mute small">Stocked with Unique Trigger &amp; Modifier relics matching your party’s Class Keywords (5g each).</p>
+      <div class="evitems">${C.items.map((e, i) => {
+        const it = ITEMS[e.key], R = RARITY[it.r];
+        const dis = e.bought || RUN.gold < e.price || RUN.stash.length >= ECON.stash;
+        const kwTag = it.cls ? `<span class="ckwtag" style="--kc:${R.col}">${esc(it.cls)} · ${esc(it.uKind || 'Unique')}</span>` : '';
+        return `<button class="evitem${e.bought ? ' sold' : ''}" data-a="curioBuy" data-i="${i}" ${dis ? 'disabled' : ''}>${itemIcon(e.key, 48)}<span><b>${esc(it.n)}</b> ${kwTag} · <b style="color:${R.col}">${e.bought ? 'SOLD' : `${e.price}g`}</b><br><span class="small">${esc(itemText(e.key))}</span></span></button>`;
+      }).join('')}</div>
+      <div class="row" style="justify-content:center;gap:10px;margin-top:8px">
+        ${!C.rerolled ? `<button class="btn gold" data-a="curioReroll" ${RUN.gold < ECON.curioReroll ? 'disabled' : ''}>Reroll Stock (${ECON.curioReroll}g)</button>` : ''}
+        <button class="btn primary" data-a="evSkip">Leave Merchant</button>
+      </div></div>`, null, true);
+    return;
+  }
+
+  if (k === 'multiclass') {
+    const n = RUN.adv.node;
+    const cls = (n && n.mcClass) || MULTICLASS_KEYS[0];
+    const M0 = MULTICLASS[cls];
+    const elig = eligibleForMulticlass(RUN, cls);
+    openModal(`<div class="mpanel"><div class="lbl">✧ Multiclass Shrine · ${esc(M0.node)}</div><h2>Dip into ${esc(cls)}</h2>
+      <div class="mcpreview">${classKwPill(M0.kw, false)} <b>${esc(cls)} Dip:</b> ${glossarize(M0.x)}</div>
+      <p class="mute small">Grants 1 hero (without a prior multiclass, whose base class isn’t ${esc(cls)}) this passive and unlocks ${esc(cls)} Curio items!</p>
+      ${elig.length ? `<div class="evheroes">${elig.map(h => `<button class="evhero" data-a="evMulticlass" data-u="${h.uid}" data-p="${cls}">${iconSlot(h.key, 52)}<b>${esc(H[h.key].name)}</b><span class="small mute">${esc(H[h.key].cls)} + <b>${esc(cls)}</b></span></button>`).join('')}</div>`
+        : `<p class="small mute" style="text-align:center">No hero in your party is eligible for ${esc(cls)} Multiclass — take a fallback reward below!</p>`}
+      <div class="row" style="justify-content:center;gap:10px;margin-top:10px">
+        <button class="btn" data-a="evRest" data-p="gold">Fallback: +${gold(4)}</button>
+        <button class="btn" data-a="evMcAttr">Fallback: +1 Key Attribute to 1st Hero</button>
+      </div></div>`, null, true);
+    return;
+  }
+
+  if (k === 'mystery') {
+    const M = RUN.adv.mystery;
+    if (!M) { finishEvent(); return; }
+    if (M.type === 'treasure') {
+      RUN.adv._t = M.items;
+      openModal(`<div class="mpanel"><div class="lbl">? Mystery · Hidden Cache</div><h2>${esc(M.title)}</h2>
+        <div class="evitems">${M.items.map((it, i) => `<button class="evitem" data-a="evTake" data-i="${i}" data-p="treasure">${itemIcon(it, 48)}<span><b>${esc(ITEMS[it].n)}</b><br><span class="small">${esc(itemText(it))}</span></span></button>`).join('')}</div>
+        <div class="row" style="justify-content:center"><button class="btn" data-a="evSkip">Leave it</button></div></div>`, null, true);
+      return;
+    }
+    if (M.type === 'peddler') {
+      openModal(`<div class="mpanel"><div class="lbl">? Mystery · Discount Peddler</div><h2>${esc(M.title)} (${gold(RUN.gold)})</h2>
+        <div class="evitems">${M.items.map((e, i) => {
+          const it = ITEMS[e.key], R = RARITY[it.r];
+          const dis = e.bought || RUN.gold < e.price || RUN.stash.length >= ECON.stash;
+          return `<button class="evitem${e.bought ? ' sold' : ''}" data-a="peddlerBuy" data-i="${i}" ${dis ? 'disabled' : ''}>${itemIcon(e.key, 48)}<span><b>${esc(it.n)}</b> · <b style="color:${R.col}">${e.bought ? 'SOLD' : `${e.price}g`}</b><br><span class="small">${esc(itemText(e.key))}</span></span></button>`;
+        }).join('')}</div>
+        <div class="row" style="justify-content:center"><button class="btn primary" data-a="evSkip">Move on</button></div></div>`, null, true);
+      return;
+    }
+    const ev = M.event;
+    openModal(`<div class="mpanel"><div class="lbl">? Mystery Event · ${esc(currentActModule(RUN).name)}</div><h2>${esc(ev.n)}</h2>
+      <p style="line-height:1.5;margin:8px 0 14px">${esc(ev.body)}</p>
+      <div class="evquests">${ev.choices.map((ch, i) => `<button class="evquest" data-a="mysteryChoice" data-i="${i}" ${ch.cost && RUN.gold < ch.cost ? 'disabled' : ''}><span><b>${esc(ch.label)}</b></span></button>`).join('')}</div></div>`, null, true);
     return;
   }
 
   if (k === 'treasure' || k === 'loot') {
     const T = k === 'loot' ? RUN.adv.loot : treasureOffer(RUN);
     RUN.adv._t = T;
-    openModal(`<div class="mpanel"><div class="lbl">${k === 'loot' ? 'Spoils of the elite' : 'Treasure'}</div><h2>Take one item</h2>
-      <div class="evitems">${T.map((it, i) => `<button class="evitem" data-a="evTake" data-i="${i}" data-p="${k}">${itemIcon(it, 48)}<span><b>${esc(ITEMS[it].n)}</b><br><span class="small">${esc(itemText(it))}</span></span></button>`).join('')}</div>
+    openModal(`<div class="mpanel"><div class="lbl">${k === 'loot' ? 'Spoils of Victory' : '◆ Treasure Cache'}</div><h2>Take one item</h2>
+      <div class="evitems">${T.map((it, i) => `<button class="evitem" data-a="evTake" data-i="${i}" data-p="${k}">${itemIcon(it, 48)}<span><b>${esc(ITEMS[it].n)}</b> <small style="color:${RARITY[ITEMS[it].r].col}">(${RARITY[ITEMS[it].r].n})</small><br><span class="small">${esc(itemText(it))}</span></span></button>`).join('')}</div>
       <div class="row" style="justify-content:center"><button class="btn" data-a="evSkip" data-p="${k}">Leave it</button></div></div>`, null, true);
   }
 }
 
-/* ---------- Reworked Shop (Encounter-Scaled Odds, Direct Equip/Drag, Class Keyword Synergy Highlights) ---------- */
+/* ==========================================================================
+   CAMP SHOP (Act Boss Reminder, Whole-Shop Freeze Only, Direct Equip/Drag)
+   ========================================================================== */
 let SHOP_SEL_ITEM = null;
 const isFavMatch = (k, h) => {
   if (!k || !h) return false;
   const hooks = itemKwHooks(k);
   if (!hooks.length) return false;
-  const hkw = classKwOf(h.key);
+  const hkw = heroKeywords(h);
   return hooks.some(x => hkw.includes(x));
 };
 
-function enterShop() {
+function enterShop(alreadyOpen) {
   SHOP_SEL_ITEM = null;
-  if (!RUN.adv) buildEncounter(RUN);
-  const fresh = openShop(RUN);
+  if (!alreadyOpen) {
+    const fresh = openShop(RUN);
+    if (!fresh) toast('Your frozen shop is waiting.');
+  }
   renderShop(); show('shop'); saveRun();
-  if (!fresh) toast('Your frozen shop is waiting.');
 }
 
 function renderShop() {
   const R = RUN;
   if (SHOP_SEL_ITEM != null && !R.stash[SHOP_SEL_ITEM]) SHOP_SEL_ITEM = null;
+  const actMod = currentActModule(R);
   $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div><div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div><div class="stat"><b class="goldbig">${gold(R.gold)}</b><span>Gold</span></div>`;
 
-  const N = R.next;
-  const foesHtml = N.foes.map(k => `<img src="${portraitURL(k)}" class="${E[k].elite || E[k].boss ? 'el' : ''}" alt="${esc(E[k].name)}" title="${esc(E[k].name)}">`).join('');
-  $('nextFight').innerHTML = `<div><div class="lbl">${advLabel()}${R.retries ? ` · Piggy Bank Retry (${Math.round((1 - Math.pow(CURVE.retry, R.retries)) * 100)}% softer)` : ''}</div><h3>${esc(N.n)}${N.boss ? '<span class="bossb">BOSS</span>' : ''}</h3><div class="q">${esc(N.q)}.</div><div class="foes">${foesHtml}</div></div>
-    <div style="display:grid;gap:6px;justify-items:end"><span class="small" style="color:#cdb68a">Win: +${gold(ECON.winGold(R.depth))}</span><button class="btn primary big" data-a="tobattle">To battle</button></div>`;
+  // v0.23 Camp Shop Flow Flip: Act Boss Reminder banner (NO combat spoiler!) — except Piggy Bank Retry!
+  if (R.adv && R.adv.retryPending && R.next) {
+    const N = R.next;
+    const foesHtml = N.foes.map(k => `<img src="${portraitURL(k)}" class="${E[k].elite || E[k].boss ? 'el' : ''}" alt="${esc(E[k].name)}" title="${esc(E[k].name)}">`).join('');
+    $('nextFight').innerHTML = `<div><div class="lbl">Piggy Bank Retry (${Math.round((1 - Math.pow(CURVE.retry, R.retries || 1)) * 100)}% softer)</div><h3>Retry: ${esc(N.n)}${N.boss ? '<span class="bossb">BOSS</span>' : ''}</h3><div class="q">${esc(N.q)}</div><div class="foes">${foesHtml}</div></div>
+      <div style="display:grid;gap:6px;justify-items:end"><button class="btn primary big" data-a="tobattle">Retry Battle →</button></div>`;
+  } else {
+    const bossKey = (R.adv && R.adv.actBoss) || 'nezznar';
+    const bossEnc = ENC[bossKey] || ENC.nezznar;
+    const bossUnit = bossEnc.u && bossEnc.u[0] ? bossEnc.u[0][0] : 'nezznar';
+    $('nextFight').innerHTML = `<div class="row" style="gap:14px;align-items:center"><img src="${portraitURL(bossUnit)}" class="el" style="width:52px;height:52px;border-radius:50%;border:2px solid #d0a02a" alt=""><div><div class="lbl">Camp Shop · Act ${actOf(R)}: ${esc(actMod.name)}</div><h3>Act Boss Reminder: ${esc(bossEnc.n)}</h3><div class="q">${esc(bossEnc.note)}</div></div></div>
+      <div style="display:grid;gap:6px;justify-items:end"><button class="btn primary big" data-a="toMap">Choose Next Path →</button></div>`;
+  }
 
   const on = R.team;
   const selItemKey = SHOP_SEL_ITEM != null ? R.stash[SHOP_SEL_ITEM] : null;
-  // Mechanical tags & Class Keywords shown as readability cues (zero trait-counting bonuses)
   const tc = {}, kc = {};
   on.forEach(h => {
     tagsOf(h.key).forEach(t => tc[t] = (tc[t] || 0) + 1);
-    classKwOf(h.key).forEach(kwk => kc[kwk] = (kc[kwk] || 0) + 1);
+    heroKeywords(h).forEach(kwk => kc[kwk] = (kc[kwk] || 0) + 1);
     (h.items || []).forEach(ik => itemKwHooks(ik).forEach(kwk => kc[kwk] = (kc[kwk] || 0) + 1));
   });
   const partyTagSet = new Set(Object.keys(tc));
@@ -400,10 +536,11 @@ function renderShop() {
 
   const rp = rerollPrice(R);
   $('rerollBtn').innerHTML = `Reroll · ${gold(rp)}`; $('rerollBtn').disabled = R.gold < rp;
-  $('freezeBtn').textContent = R.shop.frozen ? 'Frozen' : 'Freeze'; $('freezeBtn').classList.toggle('primary', !!R.shop.frozen);
+  $('freezeBtn').textContent = R.shop.frozen ? '❄ Shop Frozen' : 'Freeze Shop';
+  $('freezeBtn').classList.toggle('primary', !!R.shop.frozen);
   const ho = heroTierOdds(encounterCount(R)).map(x => Math.round(x * 100));
   const io = itemRarityOdds(encounterCount(R)).map(x => Math.round(x * 100));
-  $('shopNote').innerHTML = `Hero odds: T1 ${ho[0]}% · T2 ${ho[1]}% · T3 ${ho[2]}% &nbsp;|&nbsp; Item odds: C ${io[0]}% · U ${io[1]}% · R ${io[2]}% · VR ${io[3]}% &nbsp;|&nbsp; Matching-tier copy upgrades hero`;
+  $('shopNote').innerHTML = `Heroes: T1 ${ho[0]}% · T2 ${ho[1]}% · T3 ${ho[2]}% &nbsp;|&nbsp; Items: C ${io[0]}% · U ${io[1]}% · R ${io[2]}% · VR ${io[3]}% · L ${io[4]}%`;
   paintCanvases($('shop')); paintTokens($('shop'));
   document.querySelectorAll('#offers canvas[data-osplash]').forEach(c => drawSplash(c, c.dataset.osplash, 240, 200));
   checkPendingPath();
@@ -412,27 +549,28 @@ function renderShop() {
 function heroOfferCard(k, i, partyTagSet, partyKwSet) {
   const kind = (RUN.shop.slotKind && RUN.shop.slotKind[i]) || (i === 2 ? 'upgrade' : 'recruit');
   if (!k) return `<div class="ho18 sold"><span class="small mute">${kind === 'upgrade' ? 'Upgrade slot · Sold' : 'Recruit slot · Sold'}</span></div>`;
-  const d = H[k], o = heroOffer(RUN, k, i), ot = o.offerTier || 1, lk = RUN.shop.lockH[i];
+  const d = H[k], o = heroOffer(RUN, k, i), ot = o.offerTier || 1;
   const can = !o.maxed && RUN.gold >= o.price;
   const slotBadge = o.upgrade ? `<span class="slotbadge upg">UPGRADE</span>` : `<span class="slotbadge rec">RECRUIT</span>`;
-  const own = o.upgrade ? `<div class="ownline">Tier ${rom[o.offerTier]} copy · Upgrades Tier ${rom[o.upgrade.tier]} → <b>Tier ${rom[o.tier]}</b></div>` : (ot >= 2 ? `<div class="ownline">Pre-tiered <b>Tier ${rom[ot]}</b> recruit (pick Path on buy)</div>` : '');
+  const own = o.upgrade ? `<div class="ownline">Tier ${rom[o.offerTier]} copy · Upgrades Tier ${rom[o.upgrade.tier]} → <b>Tier ${rom[o.tier]}</b></div>` : (ot >= 2 ? `<div class="ownline">Pre-tiered <b>Tier ${rom[ot]}</b> recruit (pick Specialization)</div>` : '');
   const ckwHtml = (d.ckw || []).map(e => classKwPill(e.k, !!(partyKwSet && partyKwSet.has(e.k)), e.sub)).join('');
   const ckwLine = (d.ckw && d.ckw[0]) ? `<div class="hoab kwline"><b>${esc(CLASS_KW[d.ckw[0].k].n)}</b> ${esc(d.ckw[0].x)}</div>` : '';
   const tagHtml = tagsOf(k).map(t => {
     const D = TAGDEF[t]; if (!D) return '';
     const match = partyTagSet && partyTagSet.has(t);
-    return `<span class="tag18${match ? ' syn' : ''}" style="--tc:${D.c}" data-tn="${esc(D.n)}${match ? ' (Party Match)' : ''}" data-tip="${esc(D.x)}${match ? ' Shares synergy tag with your current party.' : ''}">${match ? '★ ' : ''}${esc(D.n)}</span>`;
+    return `<span class="tag18${match ? ' syn' : ''}" style="--tc:${D.c}" data-tn="${esc(D.n)}${match ? ' (Party Match)' : ''}" data-tip="${esc(D.x)}">${match ? '★ ' : ''}${esc(D.n)}</span>`;
   }).join('');
-  return `<div class="ho18${lk ? ' locked' : ''}${can ? '' : ' poor'}" style="--tc:${TIERCOL[ot]}" data-a="${o.maxed ? 'offerCard' : 'buyHero'}" data-i="${i}">
+  return `<div class="ho18${RUN.shop.frozen ? ' locked' : ''}${can ? '' : ' poor'}" style="--tc:${TIERCOL[ot]}" data-a="${o.maxed ? 'offerCard' : 'buyHero'}" data-i="${i}">
     <div class="hoart"><canvas data-osplash="${k}"></canvas>${slotBadge}<span class="hotier">${rom[ot]}</span>${o.sale ? `<span class="salebadge">−${o.sale}</span>` : ''}</div>
     <div class="hob"><div class="hon">${esc(d.name)}</div><div class="hoc">${esc(d.cls)} · ${esc(d.role)}</div><div class="hotags">${ckwHtml}${tagHtml}</div>${ckwLine}<div class="hoab"><b>${esc(d.abil.n)}</b> ${esc(abil1(k))}</div>${own}</div>
-    <div class="hof"><b class="price">${o.maxed ? 'Max' : gold(o.price)}</b><span><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockH" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button><button class="btn sm" data-a="offerCard" data-i="${i}">Card</button></span></div></div>`;
+    <div class="hof"><b class="price">${o.maxed ? 'Max' : gold(o.price)}</b><button class="btn sm" data-a="offerCard" data-i="${i}">Card</button></div></div>`;
 }
 
 function partyChip(h, selItemKey) {
   const d = H[h.key], path = h.path ? d.paths.find(p => p.k === h.path) : null;
   const q = d.quest;
-  const qPct = q ? (h.questDone ? 100 : Math.round(Math.min(1, (h.questProg || 0) / q.goal) * 100)) : 0;
+  const showQuest = q && (h.questActive || h.questDone);
+  const qPct = showQuest ? (h.questDone ? 100 : Math.round(Math.min(1, (h.questProg || 0) / q.goal) * 100)) : 0;
   const maxS = slotsOf(h);
   let eqCls = '', favBadge = '';
   if (selItemKey) {
@@ -442,13 +580,14 @@ function partyChip(h, selItemKey) {
     if (fav) favBadge = `<span class="favpill">★ Synergy</span>`;
   }
   const itemsRow = `<div class="pitems">${Array.from({ length: maxS }, (_, j) => h.items[j]
-    ? `<span class="pit" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}${isFavMatch(h.items[j], h) ? ' (★ Synergy)' : ''}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
+    ? `<span class="pit" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
     : `<span class="pit empty" title="Empty item slot"></span>`).join('')}</div>`;
-  const questRow = q ? `<div class="chipq${h.questDone ? ' done' : ''}" title="${esc(q.rewardName)}: ${esc(q.rewardDesc)}"><div class="cqbar"><i style="width:${qPct}%"></i></div><span>${h.questDone ? '★ Quest Done' : `${Math.round(h.questProg || 0)}/${q.goal}`}</span></div>` : '';
+  const questRow = showQuest ? `<div class="chipq${h.questDone ? ' done' : ''}" title="${esc(q.rewardName)}: ${esc(q.rewardDesc)}"><div class="cqbar"><i style="width:${qPct}%"></i></div><span>${h.questDone ? '★ Quest Done' : `${Math.round(h.questProg || 0)}/${q.goal}`}</span></div>` : '';
+  const badges = `${h.multiclass ? `<span class="mcpill" title="Multiclass: ${esc(h.multiclass)}">✧ ${esc(h.multiclass)}</span>` : ''}${h.boon ? `<span class="boonpill" title="${esc(EPIC_BOONS[h.boon].n)}">★ Boon</span>` : ''}`;
   return `<div class="pchip${eqCls}" style="--tc:${TIERCOL[h.tier]}" data-drop-hero="${h.uid}" ${selItemKey ? `data-a="shopEquip" data-u="${h.uid}"` : ''}>
-    <span data-a="${selItemKey ? 'shopEquip' : 'card'}" data-u="${h.uid}" title="${selItemKey ? 'Click to equip selected item' : 'View full card & Quest'}">${iconSlot(h.key, 42)}</span>
-    <div style="min-width:0"><b>${esc(d.name)}</b> <span class="tb">${rom[h.tier]}</span>${favBadge}
-      <div class="small mute">${path ? esc(path.n) : h.tier >= 2 ? `<button class="needpath" data-a="path" data-u="${h.uid}">Choose Path</button>` : esc(d.cls)}</div>
+    <span data-a="${selItemKey ? 'shopEquip' : 'card'}" data-u="${h.uid}" title="${selItemKey ? 'Click to equip selected item' : 'View full card'}">${iconSlot(h.key, 42)}</span>
+    <div style="min-width:0"><b>${esc(d.name)}</b> <span class="tb">${rom[h.tier]}</span>${badges}${favBadge}
+      <div class="small mute">${path ? esc(path.n) : h.tier >= 2 ? `<button class="needpath" data-a="path" data-u="${h.uid}">Choose Spec</button>` : esc(d.cls)}</div>
       ${itemsRow}${questRow}
     </div>
     <button class="btn sm" data-a="sell" data-u="${h.uid}" ${RUN.team.length <= 1 ? 'disabled' : ''}>Sell ${heroValue(h.tier)}</button></div>`;
@@ -456,10 +595,10 @@ function partyChip(h, selItemKey) {
 
 function itemOfferCard(k, i, partyKwSet) {
   if (!k) return `<div class="io18 sold"><span class="small mute">Sold</span></div>`;
-  const it = ITEMS[k], R = RARITY[it.r], p = itemPrice(RUN, i), lk = RUN.shop.lockI[i];
+  const it = ITEMS[k], R = RARITY[it.r], p = itemPrice(RUN, i);
   const kwMatches = itemKwHooks(k).filter(kwk => partyKwSet && partyKwSet.has(kwk)).map(kwk => CLASS_KW[kwk].n);
   const favLine = kwMatches.length ? `<div class="iofav kw">★ Synergy: ${esc(kwMatches.slice(0, 2).join(', '))}</div>` : '';
-  return `<div class="io18${lk ? ' locked' : ''}${kwMatches.length ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div>${favLine}</div><button class="btn sm lockb${lk ? ' on' : ''}" data-a="lockI" data-i="${i}">${lk ? 'Kept' : 'Lock'}</button></div>`;
+  return `<div class="io18${RUN.shop.frozen ? ' locked' : ''}${kwMatches.length ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div><div class="small mute">${esc(itemStatsText(it))}</div>${favLine}</div></div>`;
 }
 
 function heroCardModal(h, extra) {
@@ -470,11 +609,11 @@ function heroCardModal(h, extra) {
 
 function pathModal(h, sel) {
   const d = H[h.key]; sel = sel || d.paths[0].k; const cfg = { ...cfgOf(h, RUN), path: sel };
-  const opt = (p, idx) => `<button class="pathopt${p.k === sel ? ' sel' : ''}" data-a="previewPath" data-u="${h.uid}" data-p="${p.k}"><b>${idx === 0 ? 'Path 1 (Vertical): ' : 'Path 2 (Splash): '}${esc(p.n)}</b>
+  const opt = p => `<button class="pathopt${p.k === sel ? ' sel' : ''}" data-a="previewPath" data-u="${h.uid}" data-p="${p.k}"><b>${esc(p.n)}</b>
     <span class="ptags">${p.attr ? `<span class="grow" style="--ac:${ATTR_COL[p.attr]}">+1 ${ATTR_S2[p.attr]}</span>` : ''}${(p.tags || []).map(t => tagPill(t)).join('')}</span>
-    <span>${glossarize(p.full || p.x)}</span>${p.t4x ? `<span class="small mute"><b>Tier IV:</b> ${glossarize(p.t4x)}</span>` : ''}</button>`;
-  openModal(`<div class="mpanel pathpanel"><div class="row" style="gap:12px;flex-wrap:nowrap">${iconSlot(h.key, 64)}<div><div class="lbl">${esc(d.name)} reaches Tier II</div><h2>Choose ${esc(d.name)}’s Path</h2></div></div>
-    <p class="mute small">Path 1 fuels ${esc(d.name)}’s own firework; Path 2 wires it into teammates. You can retrain freely at any Campfire.</p>
+    <span>${glossarize(p.x)}</span></button>`;
+  openModal(`<div class="mpanel pathpanel"><div class="row" style="gap:12px;flex-wrap:nowrap">${iconSlot(h.key, 64)}<div><div class="lbl">${esc(d.name)} reaches Tier II</div><h2>Choose ${esc(d.name)}’s Specialization</h2></div></div>
+    <p class="mute small">Pick one Specialization (retrainable freely at any Campfire).</p>
     <div class="pathopts">${d.paths.map(opt).join('')}</div>
     <div class="pathprev">${largeCard(h.key, h.tier, { cfg, heroObj: h, previewPath: sel, compact: 1 })}</div>
     <div class="row" style="justify-content:center"><button class="btn primary big" data-a="choosePath" data-u="${h.uid}" data-p="${sel}">Choose ${esc(d.paths.find(p => p.k === sel).n)}</button></div></div>`, null, true);
@@ -483,7 +622,7 @@ function pathModal(h, sel) {
 function swapModal(i) {
   const k = RUN.shop.heroes[i], o = heroOffer(RUN, k, i);
   openModal(`<div class="mpanel"><div class="lbl">Party is full (4/4)</div><h2>Replace who with ${esc(H[k].name)} (Tier ${rom[o.tier]})?</h2>
-    <p class="small mute">Replaced hero refunds full gold worth (${gold(0).replace('0 ', '')}) and returns their items to stash.</p>
+    <p class="small mute">Replaced hero refunds full gold worth and returns their items to stash.</p>
     <div class="evheroes">${RUN.team.map(h => `<button class="evhero" data-a="swapBuy" data-i="${i}" data-u="${h.uid}">${iconSlot(h.key, 52)}<b>${esc(H[h.key].name)}</b><span class="small mute">Tier ${rom[h.tier]} · refunds ${heroValue(h.tier)}g</span></button>`).join('')}</div>
     <div class="row" style="justify-content:center"><button class="btn" data-a="closeModal">Cancel</button></div></div>`);
 }
@@ -494,7 +633,7 @@ function renderItemTray() {
   const pb = $('pbench'); if (!pb) return;
   if (B) { pb.hidden = true; return; }
   pb.hidden = false;
-  if (!RUN.stash.length) { pb.innerHTML = `<span class="small mute">Item stash is empty — buy items in the shop or earn them from Treasure &amp; Elites.</span>`; return; }
+  if (!RUN.stash.length) { pb.innerHTML = `<span class="small mute">Item stash is empty — buy items at Camp Shop or Curio Merchants.</span>`; return; }
   pb.innerHTML = `<span class="lbl" style="margin-right:8px">Equip items</span>` + RUN.stash.map((k, i) =>
     `<button class="titem${SEL_ITEM === i ? ' sel' : ''}" data-a="trayItem" data-i="${i}" title="${esc(ITEMS[k].n)}: ${esc(itemText(k))}">${itemIcon(k, 34)}<span>${esc(ITEMS[k].n)}</span></button>`
   ).join('') + (SEL_ITEM != null ? `<span class="small mute" style="margin-left:8px">Click a hero below to equip ${esc(ITEMS[RUN.stash[SEL_ITEM]].n)}</span>` : '');
@@ -507,19 +646,21 @@ function goPlacement() {
   loadMap(ENC.run.map); mapDirty = true; _setupKey = '';
   $('result').hidden = true; show('combat'); renderCombatBar(); renderStrip();
   requestAnimationFrame(() => resize());
-  $('hint').hidden = false; $('hint').textContent = 'Drag heroes onto gold deploy squares, equip items from the tray below, then begin.';
+  const hazTxt = RUN.next && RUN.next.hazard && HAZARDS[RUN.next.hazard] ? ` Hazard: ${HAZARDS[RUN.next.hazard].n} (${HAZARDS[RUN.next.hazard].x})` : '';
+  $('hint').hidden = false; $('hint').textContent = 'Drag heroes onto gold deploy squares (dashed lines preview closest-ally targets), then begin.' + hazTxt;
   saveRun();
 }
 
 function renderCombatBar() {
   const N = RUN.next;
-  $('cTitle').innerHTML = `${advLabel()} · ${esc(N.n)}${N.boss ? ' <span class="bossb">BOSS</span>' : ''}`;
-  $('cSub').textContent = N.q + '.';
+  const hazChip = N && N.hazard && HAZARDS[N.hazard] ? ` <span class="hazchip">${HAZARDS[N.hazard].g} ${esc(HAZARDS[N.hazard].n)}</span>` : '';
+  $('cTitle').innerHTML = `${advLabel()} · ${esc(N.n)}${N.boss ? ' <span class="bossb">BOSS</span>' : ''}${hazChip}`;
+  $('cSub').textContent = (ENC.run && ENC.run.note) || N.q || '';
   $('cStats').innerHTML = `<span title="Piggy Bank">Piggy: ${piggyTxt()}</span><span>${gold(RUN.gold)}</span><span id="cGold"></span><span>Wins ${RUN.stats.won}</span>`;
   const sp = [0.5, 1, 2, 4].map(v => `<button class="btn${S.speed === v ? ' on' : ''}" data-a="spd" data-v="${v}">${v}×</button>`).join('');
   $('cCtl').innerHTML = B
     ? `${sp}<button class="btn" data-a="pause">${paused ? 'Resume' : 'Pause'}</button><button class="btn" data-a="sound">${S.sound ? 'Sound on' : 'Sound off'}</button><button class="btn" data-a="btext">${BTXT === 'all' ? 'All text' : 'Key text'}</button>`
-    : `<button class="btn" data-a="backshop">Back to shop</button><button class="btn" data-a="autoplace">Auto place</button><button class="btn primary" data-a="begin-battle">Begin battle</button>`;
+    : `<button class="btn" data-a="autoplace">Auto place</button><button class="btn primary" data-a="begin-battle">Begin battle</button>`;
 }
 
 function startBattle() {
@@ -578,21 +719,20 @@ function enemyTip(en, ev) {
   T.style.left = x + 'px'; T.style.top = Math.max(8, y) + 'px';
 }
 
-/* Live v0.22 power-fantasy counters drawn beneath hero tokens on the battle map */
+/* Live v0.23 power-fantasy counters drawn beneath hero tokens */
 function tokenCounter(u) {
   if (!B) return null;
   if (u.zealotT > 0) return [`ZEALOT ${u.zealotT.toFixed(1)}s`, '#ffe9a0'];
   if (u.beast && u.beast.hp > 0) return [`PANTHER`, '#8fd0ff'];
   if (u.illusoryDouble > 0) return [`DOUBLE ×${u.illusoryDouble}`, '#c48fe6'];
-  if (u.radiantSoulT > 0) return [`RADIANT`, '#ffe9a0'];
-  if (u.alert > 0) return [`ALERT ×${u.alert}`, '#8fd0ff'];
-  if (u.bearRage > 0) return [`BEAR ×${u.bearRage}`, '#ff6a4a'];
-  if (u.f && u.f.sorceryBar) { const mx = u.f.draconicSurge && u.tier >= 4 ? 3 : 4; return ['SORC ' + '●'.repeat(u.sorcery || 0) + '○'.repeat(Math.max(0, mx - (u.sorcery || 0))), '#ff9c4a']; }
-  if (u.kw && u.kw.ki && u.ki > 0) { const mx = kiCost(u); return ['KI ' + '●'.repeat(u.ki) + '○'.repeat(Math.max(0, mx - u.ki)), '#8fd8d8']; }
-  if (u.afterimage > 0) return [`AFTER ×${u.afterimage}`, '#8fd8d8'];
+  if (u.bearRage > 0) return [`RAGE ×${u.bearRage}`, '#ff6a4a'];
+  if (u.kw && u.kw.metamagic && u.sorcery > 0) return ['SORC ' + '●'.repeat(u.sorcery) + '○'.repeat(Math.max(0, 4 - u.sorcery)), '#ff9c4a'];
+  if (u.kw && u.kw.ki && u.ki > 0) return ['KI ' + '●'.repeat(u.ki) + '○'.repeat(Math.max(0, 4 - u.ki)), '#8fd8d8'];
+  if (u.inspMote) return [`MOTE +2g`, '#ffd76a'];
   if (u.inspDie) return [`d${u.inspDie.sides} INSP`, '#ffd76a'];
-  if (u.bonded) return [`BOND +d${u.bondDie || 4}`, '#ffe9a0'];
-  if (u.clauses > 0) return [`CLAUSE ×${u.clauses}`, '#c48fe6'];
+  if (u.bonded) return [`BONDED`, '#9be38a'];
+  const ev = curEvasion(B, u);
+  if (ev >= 0.25) return [`EV ${Math.round(ev * 100)}%`, '#8fd0ff'];
   return null;
 }
 
@@ -608,9 +748,9 @@ function showResult() {
   const actBonusTxt = res.actBonus ? ` (+${res.actBonus}g Act Clear)` : '';
   let msg;
   if (won) {
-    msg = `+${gold(res.gold + res.made + (res.elite || 0) + (res.actBonus || 0))}${actBonusTxt} · ${RUN.gold} gold · Piggy Bank ${RUN.piggyBroken ? 'broken' : `holds ${RUN.piggy}g`}`;
+    msg = `+${gold(res.gold + res.made + (res.elite || 0) + (res.minibossGold || 0) + (res.actBonus || 0))}${actBonusTxt} · ${RUN.gold} gold · Piggy Bank ${RUN.piggyBroken ? 'broken' : `holds ${RUN.piggy}g`}`;
   } else if (!RUN.over) {
-    msg = `Piggy Bank broke! Paid out +${gold(res.piggy)} — visit the shop, adjust your party, and retry this fight!`;
+    msg = `Piggy Bank broke! Paid out +${gold(res.piggy)} — visit the Camp Shop and retry this fight!`;
   } else {
     msg = 'Second loss — the adventure ends here.';
   }
@@ -624,7 +764,7 @@ function showResult() {
     <div class="reward">${msg}</div>${madeTxt}${qTxt}
     <p class="small mute" style="text-align:center">${advLabel()}: ${esc(RUN.next.n)}, in ${B.time.toFixed(1)}s.</p>
     <table class="rt"><tr><th>Hero</th><th>Damage</th><th>Heal / Ward</th><th>Taken</th></tr>${rows}</table>
-    <div class="row" style="justify-content:center"><button class="btn primary big" data-a="afterFight">${RUN.over ? 'See run summary' : res.actDone ? `Begin Act ${RUN.adv.act + 1}` : !won ? 'To shop & retry' : 'Back to map'}</button></div></div>`;
+    <div class="row" style="justify-content:center"><button class="btn primary big" data-a="afterFight">${RUN.over ? 'See run summary' : res.actDone ? `Advance to Act ${RUN.adv.act + 1}` : !won ? 'To Camp Shop & Retry' : 'To Camp Shop →'}</button></div></div>`;
   $('result').hidden = false; renderCombatBar();
   if (RUN.over) { recordBest(); clearRun(); } else saveRun();
 }
@@ -638,28 +778,27 @@ function afterFight() {
   if (RUN.adv.loot) { eventModal('loot'); return; }
   const to = afterNodeFight(RUN, RUN._res || {});
   RUN._res = null;
+  _bossKey = ''; _bossRead = null;
   if (to === 'over') renderOver();
-  else if (to === 'packs') renderPacks();
-  else if (to === 'shop') enterShop();
-  else { _bossKey = ''; _bossRead = null; renderMap(); }
+  else if (to === 'shop') { renderShop(); show('shop'); saveRun(); }
+  else renderMap();
 }
 
 function highlights(u) {
   const s = u.stats, c = [];
-  if (s.actionSurges) c.push(`${s.actionSurges} Action Surge${s.actionSurges > 1 ? 's' : ''}`);
+  if (s.actionSurges) c.push(`${s.actionSurges} Action Surge`);
   if (s.channelDivinities) c.push(`${s.channelDivinities} Channel Div.`);
   if (s.smites) c.push(`${s.smites} Smites`);
   if (s.arcaneRecoveries) c.push(`${s.arcaneRecoveries} Arcane Rec.`);
   if (s.bearRagePeak) c.push(`Rage ×${s.bearRagePeak}`);
   else if (s.zealotProcs) c.push(`${s.zealotProcs} Zealot Rage`);
   if (s.wildShapes) c.push(`${s.wildShapes} Wild Shape`);
-  if (s.kiStrikes) c.push(`${s.kiStrikes} Ki Abil.`);
+  if (s.kiStrikes) c.push(`${s.kiStrikes} Ki Strikes`);
   if (s.metamagics) c.push(`${s.metamagics} Metamagic`);
-  if (s.pactBoons) c.push(`${s.pactBoons} Pact Boons`);
+  if (s.hexDeaths) c.push(`${s.hexDeaths} Hellfires`);
   if (s.sneaks) c.push(`${s.sneaks} Sneaks`);
-  if (s.alertDodges) c.push(`${s.alertDodges} dodges`);
+  if (s.evades) c.push(`${s.evades} evades`);
   if (s.rootsApplied) c.push(`${s.rootsApplied} roots`);
-  if (s.inspPassed) c.push(`${s.inspPassed} passes`);
   if (s.gold) c.push(`+${s.gold}g`);
   return c.length ? `<div class="hl">${c.slice(0, 3).map(x => `<span>${x}</span>`).join('')}</div>` : '';
 }
@@ -670,15 +809,15 @@ function recordBest() {
 }
 function renderOver() {
   const R = RUN;
-  $('overBox').innerHTML = `<div class="lbl">${R.victory ? 'Victory' : 'Run Ended'}</div><h1>${R.victory ? 'All Three Acts Cleared!' : 'Fallen in the Adventure'}</h1>
+  $('overBox').innerHTML = `<div class="lbl">${R.victory ? 'Victory' : 'Run Ended'}</div><h1>${R.victory ? 'All Three Acts Conquered!' : 'Fallen in the Adventure'}</h1>
     <div><div class="bigscore">${R.stats.won}</div><div class="mute">fights won</div></div>
-    <div class="overteam">${R.team.map(h => `<div>${iconSlot(h.key, 64)}<b>${esc(H[h.key].name)}</b><span class="mute">Tier ${rom[h.tier]}${h.path ? ' · ' + esc(H[h.key].paths.find(p => p.k === h.path).n) : ''}${h.questDone ? ' · ★' : ''}</span></div>`).join('')}</div>
+    <div class="overteam">${R.team.map(h => `<div>${iconSlot(h.key, 64)}<b>${esc(H[h.key].name)}</b><span class="mute">Tier ${rom[h.tier]}${h.path ? ' · ' + esc(H[h.key].paths.find(p => p.k === h.path).n) : ''}${h.multiclass ? ' · ' + esc(h.multiclass) : ''}${h.boon ? ' · ★' : ''}</span></div>`).join('')}</div>
     <p class="small mute">Gold earned ${R.stats.gold} · spent ${R.stats.spent} · rerolls ${R.stats.rerolls}</p>
     <div class="row" style="justify-content:center"><button class="btn primary big" data-a="newrun">New run</button><button class="btn" data-a="title">Title</button></div>`;
   paintTokens($('overBox')); show('over');
 }
 
-function changelogModal() { openModal(`<div class="mpanel" style="max-width:720px"><h2>What’s new in 0.22</h2><div class="changelog">${CHANGELOG_HTML}</div></div>`); }
+function changelogModal() { openModal(`<div class="mpanel" style="max-width:740px"><h2>What’s new in 0.23</h2><div class="changelog">${CHANGELOG_HTML}</div></div>`); }
 
 /* ---------- Global Click & Keyboard Input ---------- */
 document.addEventListener('click', e => {
@@ -713,9 +852,9 @@ document.addEventListener('click', e => {
       const st = RUN.adv.stage;
       if (st === 'packs') renderPacks();
       else if (!RUN.team.length) { RUN.firstPick = (RUN.firstPick && RUN.firstPick.length) ? RUN.firstPick : firstPickFromPacks(RUN.adv.packs); renderPick(); }
-      else if (st === 'map' || st === 'event') { RUN.adv.node = null; RUN.adv.stage = 'map'; renderMap(); }
-      else if (RUN.phase === 'shop') { renderShop(); show('shop'); }
-      else goPlacement();
+      else if (st === 'shop') { renderShop(); show('shop'); }
+      else if (st === 'battle' && ENC.run) goPlacement();
+      else { RUN.adv.node = null; RUN.adv.stage = 'map'; renderMap(); }
       break;
     }
     case 'title': clearTimeout(_resTimer); _resTimer = 0; closeModal(true); if (RUN && !RUN.over) saveRun(); B = null; running = false; renderTitle(); break;
@@ -730,16 +869,17 @@ document.addEventListener('click', e => {
     case 'changelog': changelogModal(); break;
     case 'closeModal': closeModal(); break;
     case 'node': chooseNode(+el.dataset.r, +el.dataset.i); break;
-    case 'mapShop': openModal(`<div class="mpanel"><div class="lbl">Your party</div><div class="evheroes">${RUN.team.map(x => `<button class="evhero" data-a="card" data-u="${x.uid}">${iconSlot(x.key, 56)}<b>${esc(H[x.key].name)}</b><span class="small mute">Tier ${rom[x.tier]}${x.questDone ? ' · ★' : ''}</span></button>`).join('')}</div><div class="lbl">Stash</div><div>${RUN.stash.map(k => `<span title="${esc(ITEMS[k].n)}: ${esc(itemText(k))}">${itemIcon(k, 40)}</span>`).join(' ') || '<span class="small mute">Empty</span>'}</div></div>`); break;
+    case 'openCampShop': renderShop(); show('shop'); break;
+    case 'toMap':
+      if (RUN.team.some(x => (x.tier >= 2 && !x.path) || (x.tier >= 3 && !x.asi) || (x.tier >= 4 && !x.boon))) { checkPendingPath(); return; }
+      renderMap(); break;
     case 'evPromote': {
       const r = promoteHero(RUN, uid);
       if (r.ok) {
         closeModal(true); clearNode(RUN); renderMap();
         toast(`${H[r.hero.key].name} promoted to Tier ${rom[r.hero.tier]}!`);
         checkPendingPath();
-      } else {
-        finishEvent();
-      }
+      } else finishEvent();
       break;
     }
     case 'evTrainHero': eventModal('train', uid); break;
@@ -754,11 +894,76 @@ document.addEventListener('click', e => {
     }
     case 'evQuestBoost': {
       const r = accelerateHeroQuest(RUN, uid);
-      if (r) finishEvent(r.completed ? `★ Quest Complete! ${H[r.h.key].name} unlocks ${r.q.rewardName}!` : `${H[r.h.key].name} Quest boosted (+${r.boost})!`);
+      if (r) finishEvent(r.accepted ? `Accepted ${H[r.h.key].name}’s Quest: ${r.q.rewardName}!` : r.completed ? `★ Quest Complete! ${H[r.h.key].name} unlocks ${r.q.rewardName}!` : `${H[r.h.key].name} Quest boosted (+${r.boost})!`);
       else finishEvent();
       break;
     }
     case 'evRest': finishEvent(restAt(RUN, el.dataset.p)); break;
+    case 'curioBuy': {
+      const r = buyCurioItem(RUN, i);
+      if (!r.ok) return toast(r.why);
+      toast(`Bought ${ITEMS[r.item].n}!`);
+      eventModal('curio'); saveRun();
+      break;
+    }
+    case 'curioReroll': {
+      const r = rerollCurio(RUN);
+      if (!r.ok) return toast(r.why);
+      toast('Curio stock rerolled!');
+      eventModal('curio'); saveRun();
+      break;
+    }
+    case 'evMulticlass': {
+      if (applyMulticlass(RUN, uid, el.dataset.p)) finishEvent(`${H[h.key].name} gained ${el.dataset.p} Multiclass!`);
+      else finishEvent();
+      break;
+    }
+    case 'evMcAttr': {
+      const h0 = RUN.team[0];
+      if (h0) { const ka = H[h0.key].pair[1]; trainHero(RUN, h0.uid, ka); finishEvent(`${H[h0.key].name} gained +1 ${ATTR_N[ka]}!`); }
+      else finishEvent();
+      break;
+    }
+    case 'peddlerBuy': {
+      const M = RUN.adv.mystery;
+      const entry = M && M.items && M.items[i];
+      if (!entry || entry.bought || RUN.gold < entry.price || RUN.stash.length >= ECON.stash) return toast('Cannot buy');
+      RUN.gold -= entry.price; RUN.stats.spent += entry.price;
+      entry.bought = true; RUN.stash.push(entry.key);
+      toast(`Bought ${ITEMS[entry.key].n}!`);
+      eventModal('mystery'); saveRun();
+      break;
+    }
+    case 'mysteryChoice': {
+      const M = RUN.adv.mystery;
+      const ch = M && M.event && M.event.choices && M.event.choices[i];
+      if (!ch) { finishEvent(); break; }
+      if (ch.cost && RUN.gold < ch.cost) return toast('Not enough gold');
+      if (ch.cost) { RUN.gold -= ch.cost; RUN.stats.spent += ch.cost; }
+      if (ch.fight) {
+        closeModal(true);
+        buildEncounter(RUN, Math.random, { threat: ch.fight, bonusGold: ch.bonusGold || 0 });
+        RUN.next.kind = 'fight';
+        RUN.adv.stage = 'battle';
+        goPlacement();
+        break;
+      }
+      const out = ch.fx(RUN, Math.random);
+      if (out && typeof out === 'object' && out.ambush) {
+        closeModal(true);
+        const actMod = currentActModule(RUN);
+        buildEncounter(RUN, Math.random, { threat: pickFromBag(RUN, `${actMod.id}_norm`, actMod.pools.normal, Math.random) });
+        RUN.next.kind = 'fight';
+        RUN.adv.stage = 'battle';
+        toast(out.msg || 'Ambush!');
+        goPlacement();
+        break;
+      }
+      const msg = (out && typeof out === 'object') ? out.msg : out;
+      finishEvent(msg || 'Moved on.');
+      checkPendingPath();
+      break;
+    }
     case 'evTake': {
       takeTreasure(RUN, RUN.adv._t[i]); toast(`${ITEMS[RUN.adv._t[i]].n} added to stash`);
       if (el.dataset.p === 'loot') { RUN.adv.loot = null; closeModal(true); afterFight(); }
@@ -770,8 +975,9 @@ document.addEventListener('click', e => {
       else finishEvent();
       break;
     }
-    case 'tobattle': if (RUN.team.some(x => x.tier >= 2 && !x.path)) return toast('Choose a Tier II path first'); goPlacement(); break;
-    case 'backshop': renderShop(); show('shop'); break;
+    case 'tobattle':
+      if (RUN.team.some(x => (x.tier >= 2 && !x.path) || (x.tier >= 3 && !x.asi) || (x.tier >= 4 && !x.boon))) { checkPendingPath(); return; }
+      goPlacement(); break;
     case 'autoplace': autoPlace(RUN, true); S.party = boardHeroes(RUN); _setupKey = ''; saveRun(); break;
     case 'begin-battle': startBattle(); break;
     case 'afterFight': afterFight(); break;
@@ -806,11 +1012,7 @@ document.addEventListener('click', e => {
       const r = buyItem(RUN, i); if (!r.ok) return toast(r.why);
       toast(`${ITEMS[r.item].n} added to stash`); renderShop(); saveRun(); break;
     }
-    case 'stashSelect': {
-      SHOP_SEL_ITEM = SHOP_SEL_ITEM === i ? null : i;
-      renderShop();
-      break;
-    }
+    case 'stashSelect': SHOP_SEL_ITEM = SHOP_SEL_ITEM === i ? null : i; renderShop(); break;
     case 'stashClear': SHOP_SEL_ITEM = null; renderShop(); break;
     case 'shopEquip': {
       if (e.target.closest('button')) return;
@@ -833,21 +1035,15 @@ document.addEventListener('click', e => {
       else toast('Stash is full');
       break;
     }
-    case 'stashSell': {
-      const k = RUN.stash[i]; if (!k) break;
-      openModal(`<div class="mpanel"><div class="row" style="gap:10px">${itemIcon(k, 48)}<div><h2>${esc(ITEMS[k].n)}</h2><p class="small">${glossarize(itemText(k))}</p></div></div><p class="small mute">Click or drag items onto a hero in the Shop to equip them.</p><div class="row"><button class="btn" data-a="sellItem" data-i="${i}">Sell for ${itemRefund(RUN, k)}g</button><button class="btn" data-a="closeModal">Keep</button></div></div>`);
-      break;
-    }
     case 'sellItem': { const back = sellItem(RUN, i); SHOP_SEL_ITEM = null; closeModal(); toast(`Sold for ${back}g`); renderShop(); saveRun(); break; }
     case 'reroll': if (!reroll(RUN)) return toast('Not enough gold'); renderShop(); saveRun(); break;
-    case 'lockH': toast(toggleLock(RUN, 'h', i) ? 'Locked for next shop' : 'Unlocked'); renderShop(); saveRun(); break;
-    case 'lockI': toast(toggleLock(RUN, 'i', i) ? 'Locked for next shop' : 'Unlocked'); renderShop(); saveRun(); break;
-    case 'freeze': toast(toggleFreeze(RUN) ? 'Shop frozen for next round' : 'Unfrozen'); renderShop(); saveRun(); break;
+    case 'freeze': toast(toggleFreeze(RUN) ? 'Whole shop frozen until next refresh' : 'Shop unfrozen'); renderShop(); saveRun(); break;
     case 'path': if (h) pathModal(h); break;
     case 'previewPath': if (h) pathModal(h, el.dataset.p); break;
     case 'previewAsi': if (h) asiModal(h, el.dataset.p); break;
     case 'chooseAsi': closeModal(true); if (h) { h.asi = el.dataset.p; toast(`${H[h.key].name}: +2 ${ATTR_N[h.asi]}`); } if (PHASE === 'shop') renderShop(); else renderMap(); saveRun(); checkPendingPath(); break;
     case 'choosePath': closeModal(true); if (h) { h.path = el.dataset.p; const pn = H[h.key].paths.find(p => p.k === h.path); toast(`${H[h.key].name}: ${pn ? pn.n : h.path}`); } if (PHASE === 'shop') renderShop(); else renderMap(); saveRun(); checkPendingPath(); break;
+    case 'chooseBoon': closeModal(true); if (h && chooseHeroBoon(RUN, uid, el.dataset.p)) { delete h._boonOffer; toast(`★ ${H[h.key].name} gained ${EPIC_BOONS[h.boon].n}!`); } if (PHASE === 'shop') renderShop(); else renderMap(); saveRun(); checkPendingPath(); break;
     case 'sell': if (h) { openModal(`<div class="mpanel"><h2>Sell ${esc(H[h.key].name)}?</h2><p>Refunds full worth (${gold(heroValue(h.tier))}) and returns items to stash.</p><div class="row"><button class="btn primary" data-a="sellYes" data-u="${uid}">Sell for ${heroValue(h.tier)}g</button><button class="btn" data-a="closeModal">Keep</button></div></div>`); } break;
     case 'sellYes': { const back = sellHero(RUN, uid); closeModal(); toast(`Sold for ${back}g`); renderShop(); saveRun(); break; }
   }
@@ -864,28 +1060,14 @@ document.addEventListener('dragstart', e => {
   e.dataTransfer.setData('text/plain', String(_dragStashIdx));
   setTimeout(() => renderShop(), 0);
 });
-document.addEventListener('dragend', () => {
-  document.querySelectorAll('.pchip.ddover').forEach(x => x.classList.remove('ddover'));
-  _dragStashIdx = null;
-});
-document.addEventListener('dragover', e => {
-  if (_dragStashIdx == null) return;
-  const chip = e.target.closest('.pchip[data-drop-hero]');
-  if (!chip) return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  chip.classList.add('ddover');
-});
-document.addEventListener('dragleave', e => {
-  const chip = e.target.closest('.pchip[data-drop-hero]');
-  if (chip) chip.classList.remove('ddover');
-});
+document.addEventListener('dragend', () => { document.querySelectorAll('.pchip.ddover').forEach(x => x.classList.remove('ddover')); _dragStashIdx = null; });
+document.addEventListener('dragover', e => { if (_dragStashIdx == null) return; const chip = e.target.closest('.pchip[data-drop-hero]'); if (!chip) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; chip.classList.add('ddover'); });
+document.addEventListener('dragleave', e => { const chip = e.target.closest('.pchip[data-drop-hero]'); if (chip) chip.classList.remove('ddover'); });
 document.addEventListener('drop', e => {
   if (_dragStashIdx == null) return;
   const chip = e.target.closest('.pchip[data-drop-hero]');
   if (!chip) return;
-  e.preventDefault();
-  chip.classList.remove('ddover');
+  e.preventDefault(); chip.classList.remove('ddover');
   const idx = _dragStashIdx; _dragStashIdx = null;
   const uid = +chip.dataset.dropHero;
   const hh = RUN && RUN.team.find(x => x.uid === uid);
@@ -894,11 +1076,7 @@ document.addEventListener('drop', e => {
   if (hh.items.length >= slotsOf(hh)) { toast(`${H[hh.key].name} has no free item slot`); return; }
   if (!canCarry(hh, k)) { toast(`${ITEMS[k].n} is a ${ITEMS[k].t} weapon!`); return; }
   const fav = isFavMatch(k, hh);
-  if (equip(RUN, uid, idx)) {
-    SHOP_SEL_ITEM = null;
-    toast(fav ? `★ Synergy! ${H[hh.key].name} equips ${ITEMS[k].n}` : `${H[hh.key].name} equips ${ITEMS[k].n}`);
-    renderShop(); saveRun();
-  }
+  if (equip(RUN, uid, idx)) { SHOP_SEL_ITEM = null; toast(fav ? `★ Synergy! ${H[hh.key].name} equips ${ITEMS[k].n}` : `${H[hh.key].name} equips ${ITEMS[k].n}`); renderShop(); saveRun(); }
 });
 
 document.addEventListener('keydown', e => {

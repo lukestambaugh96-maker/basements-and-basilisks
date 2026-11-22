@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Basements &amp; Basilisks 0.22 · 24 Heroes, 12-Class Keywords &amp; 46 D&amp;D Items</title>
-  <meta name="description" content="Basements & Basilisks v0.22 roguelike auto-battler with the Six-Attribute Rework, 24 heroes across 6 toggleable Packs, 12-Class Keyword System, 46 canonical D&D items, encounter-scaled shop progression, and Piggy Bank loss system." />
+  <title>Basements &amp; Basilisks 0.23 · 3-Act Campaign, 24 Reworked Heroes &amp; 82 Items</title>
+  <meta name="description" content="Basements & Basilisks v0.23 roguelike auto-battler with 3 full Acts (Phandalin, White Plume Mountain, The Hells), 10 rotating bosses, 9-row constricting DAG map, 24 reworked heroes, 82 six-tier D&D items, Tier IV Epic Boons, and Multiclass nodes." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
@@ -14,14 +14,14 @@
 <!-- title -->
 <section class="screen" id="start">
   <div class="title-wrap">
-    <div class="ver">Version 0.22 · 24 Heroes · 12-Class Keywords · 46 Canonical D&amp;D Items</div>
+    <div class="ver">Version 0.23 · 3 Acts · 10 Bosses · 24 Heroes · 82 Canonical D&amp;D Items</div>
     <h1>Basements <span class="amp">&amp;</span> Basilisks</h1>
     <div class="parade" id="parade"></div>
     <div class="title-btns">
       <button class="btn primary big" data-a="newrun">New run</button>
       <button class="btn big" data-a="continue" id="contBtn" hidden>Continue</button>
       <div class="row" style="justify-content:center">
-        <button class="btn" data-a="changelog">What’s new in 0.22</button>
+        <button class="btn" data-a="changelog">What’s new in 0.23</button>
         <a class="btn" id="wikiLink" href="tools/wiki.html" style="text-decoration:none">Field Guide &amp; Stat Tracker</a>
         <a class="btn" id="assetStudioLink" href="tools/asset-studio.html" style="text-decoration:none">Asset Studio</a>
       </div>
@@ -33,14 +33,14 @@
 <!-- intro -->
 <section class="screen" id="intro" hidden>
   <div class="intro frame">
-    <h2>The Adventure (v0.22)</h2>
-    <p class="goal">Three acts, three bosses, four heroes. Build a trigger machine.</p>
+    <h2>The Adventure (v0.23)</h2>
+    <p class="goal">Three Acts — Phandalin, White Plume Mountain, and The Hells. Four heroes. Ten rotating bosses.</p>
     <ul>
-      <li><b>Pre-Run Pack Selection (24 Heroes, 6 Packs).</b> Enable or disable any combination of the 6 Hero Packs before your run starts. Enabled heroes populate shop Recruit Slots across all 3 Acts, while all 46 canonical D&amp;D items are always available.</li>
-      <li><b>12-Class Keyword System (17 Keywords).</b> Every class shares iconic mechanical hooks—Action Surge, Channel Divinity, Smite &amp; Aura, Arcane Recovery, Rage, Bardic Inspiration, Wild Shape, Hunter’s Mark, Sneak Attack &amp; Cunning Action, Ki, Sorcery Points &amp; Metamagic, and Hex &amp; Pact Boon—bridged by 24 class-keyword items.</li>
-      <li><b>Encounter-Scaled Shop (No Duplicate Hunting).</b> Two <b>Recruit Slots</b> offer unowned heroes with smoothly climbing Tier I–III odds per win, while the <b>Upgrade Slot</b> (from Shop #2 onward) offers an exact Next-Tier Upgrade for an owned hero. Item rarities scale smoothly from Common to Very Rare.</li>
-      <li><b>Six-Attribute Rework &amp; d20 Floors.</b> STR adds melee Armor Pen, DEX drives Attack Speed, CON scales HP, INT speeds Charge (capped at 1 cast/sec), WIS raises your minimum natural d20 roll floor, and CHA scales buff/debuff potency.</li>
-      <li><b>Campfire Retraining, Hero Quests &amp; Piggy Bank.</b> Retrain Tier II+ Paths freely at Campfires, promote heroes at Training nodes, complete personal <b>Hero Quests</b> (like Large 2×2 Sir Dane &amp; Pillar), and rely on your Piggy Bank for one free retry on your first loss.</li>
+      <li><b>3-Act Campaign &amp; 9-Row Constricting Map.</b> Chart non-crossing routes through Phandalin (Klarg miniboss), White Plume Mountain (Dungeon Hazards &amp; Vault Loot), and The Hells (Wandering Pit Fiend &amp; Devil’s Bargains).</li>
+      <li><b>24 Reworked Heroes &amp; 13 Canonical Class Keywords.</b> Clean Tier I cards with strict progressive disclosure, strictly 1-line Tier II Specializations, universal Tier IV <b>Epic Boons</b> (pick 1 of 3), opt-in <b>Quest Board (❖)</b> quests, and 12 single-class named <b>Multiclass (✧)</b> shrines.</li>
+      <li><b>82 Canonical D&amp;D Items Across 6 Tiers.</b> 58 Universal Standard Shop items (Common → Legendary) with exact 6-attribute parity, plus 24 <b>Unique</b> Class-Keyword relics (2 per class) sold at the <b>Curio Merchant (⚖)</b>.</li>
+      <li><b>Cubed AC/SR Curve, Universal Evasion &amp; Radiant Damage.</b> Every point of AC/SR matters inside bounded accuracy (10–20), countered by Armor/Spell Pen, rare Radiant true damage, and multiplicative Evasion.</li>
+      <li><b>Camp Shop Flow Flip &amp; Piggy Bank.</b> Visit the Camp Shop between fights (with Whole-Shop Freeze and an Act Boss Reminder), jump straight into Tactical Deployment on combat nodes, and rely on your Piggy Bank for one free retry on your first loss.</li>
     </ul>
     <div class="row" style="justify-content:center">
       <button class="btn primary big" data-a="begin">Choose hero packs</button>
@@ -54,7 +54,7 @@
   <div class="pickhead">
     <div class="lbl" id="packLbl">Before your adventure</div>
     <h2>Enable Hero Packs</h2>
-    <p class="mute">Toggle any combination of the 6 Packs on or off. Enabled heroes populate shop Recruit Slots; all 46 canonical D&amp;D items are always available in shops.</p>
+    <p class="mute">Toggle any combination of the 6 Packs on or off. Enabled heroes populate shop Recruit Slots; all 58 Standard items &amp; 24 Curio Uniques are always unlocked.</p>
   </div>
   <div class="packbar" id="packControls"></div>
   <div class="packs" id="packList"></div>
@@ -72,7 +72,7 @@
   <div class="pickhead">
     <div class="lbl">From your enabled packs</div>
     <h2>Choose your first hero</h2>
-    <p class="mute">One hero joins free. All other heroes from your enabled Packs appear in shop Recruit Slots.</p>
+    <p class="mute">One hero joins free. Then visit Camp Shop #1 before choosing your first path!</p>
   </div>
   <div class="picks" id="picks"></div>
 </section>
@@ -81,7 +81,7 @@
 <section class="screen" id="shop" hidden>
   <div class="vellum">
     <div class="topbar">
-      <h1>Basements &amp; Basilisks<small>0.22 · Six-Attribute Rework</small></h1>
+      <h1>Basements &amp; Basilisks<small>0.23 · Camp Shop</small></h1>
       <div class="stats" id="shopStats"></div>
       <button class="btn sm" data-a="title">Save and quit</button>
     </div>
