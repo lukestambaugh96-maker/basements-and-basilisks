@@ -1388,6 +1388,14 @@ function kill(b, t, src, o) {
     }
   }
 
+  // Act 2 Boss: Wielder of Blackrazor gains Ward, Haste & Damage whenever ANY unit dies!
+  alive(b, 'E').filter(x => x !== t && x.f && x.f.blackrazorBoss).forEach(br => {
+    addWard(b, br, Math.round(br.maxHp * .15), br.maxHp * .65, br);
+    br.permHaste = Math.min(100, (br.permHaste || 0) + 15);
+    br.dm *= 1.10;
+    status(b, br, 'SOUL DEVOURED!', '#c48fe6');
+  });
+
   if (t.f.deathPuff) {
     const ps = alive(b, t.side === 'P' ? 'E' : 'P').filter(x => hd(x, t) <= 1);
     b.events.push({ k: 'area', id: t.id, shape: 'nova', r: 1, ty: 'poison', ids: ps.map(x => x.id) });

@@ -23,6 +23,7 @@ const COVER_SQ='k',COVER_ARMOR=2;
 let MAP=null,DEPLOY=[];
 function loadMap(rows){MAP=rows.map(r=>r.split(''));ROWS=MAP.length;COLS=MAP[0].length;DEPLOY=[];
   MAP.forEach((row,r)=>row.forEach((t,c)=>{if(t==='P'){DEPLOY.push({c,r});row[c]='.'}}))}
+function mirrorMap(rows){return rows.map(r=>r.split('').reverse().join(''))}
 const inb=h=>h.c>=0&&h.c<COLS&&h.r>=0&&h.r<ROWS;
 const tile=h=>MAP&&inb(h)?MAP[h.r][h.c]:'#';
 const passable=h=>inb(h)&&!BLOCK_MOVE.includes(tile(h));

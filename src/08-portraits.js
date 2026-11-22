@@ -140,6 +140,40 @@ function construct(x){body(x,'#6a4a2a');x.fillStyle='#b8863a';x.beginPath();x.ro
   x.fillStyle='#5a3a1a';for(let i=0;i<4;i++)x.fillRect(38+i*7,56,4,6)}
 function human(x,o){humanoid(x,{anc:'Human',cls:o.cls,skin:o.skin,hair:o.hair})}
 
+function dragonHead(x,o){
+  const col=o.col||'#2d7a42',dark=shade(col,.65),hi=shade(col,1.25),eye=o.eye||'#ffe04a';
+  x.lineCap='round';x.strokeStyle=dark;x.lineWidth=6;
+  x.beginPath();x.moveTo(32,34);x.quadraticCurveTo(16,18,12,8);x.moveTo(68,34);x.quadraticCurveTo(84,18,88,8);x.stroke();
+  poly(x,[[18,46],[50,16],[82,46],[70,74],[50,86],[30,74]],col);
+  poly(x,[[30,48],[50,32],[70,48],[62,72],[50,82],[38,72]],hi);
+  poly(x,[[28,44],[45,42],[44,48],[30,49]],dark);poly(x,[[72,44],[55,42],[56,48],[70,49]],dark);
+  [39,61].forEach(ex=>{x.save();x.shadowColor=eye;x.shadowBlur=8;E(x,ex,48,4.2,2.6,eye);x.restore();E(x,ex,48,1.1,2.4,'#120a08')});
+  poly(x,[[36,72],[40,80],[44,72]],'#f4ecd8');poly(x,[[56,72],[60,80],[64,72]],'#f4ecd8');
+  if(o.mist){x.save();x.globalAlpha=.4;E(x,26,82,14,7,o.mist);E(x,74,82,14,7,o.mist);x.restore()}
+}
+function devilHead(x,o){
+  const skin=o.skin||'#a82824',dark=shade(skin,.6),horn=o.horn||'#241818',eye=o.eye||'#ffd84a';
+  if(o.wings){poly(x,[[50,62],[6,18],[12,68],[34,76]],dark);poly(x,[[50,62],[94,18],[88,68],[66,76]],dark)}
+  body(x,o.body||'#2a1418',o.trim||'#c8a040');
+  x.lineCap='round';x.strokeStyle=horn;x.lineWidth=o.big?8:6;
+  x.beginPath();x.moveTo(34,34);x.quadraticCurveTo(14,20,18,6);x.moveTo(66,34);x.quadraticCurveTo(86,20,82,6);x.stroke();
+  E(x,50,50,o.big?24:20,22,skin);
+  poly(x,[[34,42],[46,45],[46,48],[34,46]],dark);poly(x,[[66,42],[54,45],[54,48],[66,46]],dark);
+  [41,59].forEach(ex=>{x.save();x.shadowColor=eye;x.shadowBlur=8;E(x,ex,49,3.6,2.2,eye);x.restore()});
+  if(o.beard){poly(x,[[34,60],[50,84],[66,60]],'#2a2226');x.strokeStyle='#7a6a66';x.lineWidth=1.5;for(let i=-2;i<=2;i++){x.beginPath();x.moveTo(50+i*5,62);x.lineTo(50+i*4,78);x.stroke()}}
+  if(o.crown){poly(x,[[30,30],[36,14],[44,26],[50,10],[56,26],[64,14],[70,30]],'#e0b44a')}
+  if(o.fangs){poly(x,[[41,62],[43,69],[46,62]],'#f4ecd8');poly(x,[[54,62],[57,69],[59,62]],'#f4ecd8')}
+}
+function golemHead(x,o){
+  const col=o.col||'#7c8478',dark=shade(col,.65);
+  body(x,o.body||'#3a3836',o.trim||'#8a7a60');
+  x.fillStyle=col;x.fillRect(28,24,44,44);x.fillStyle=dark;x.fillRect(28,58,44,10);
+  if(o.stitches){x.strokeStyle='#221a18';x.lineWidth=2;x.beginPath();x.moveTo(30,36);x.lineTo(70,34);x.stroke();for(let i=0;i<5;i++){x.beginPath();x.moveTo(35+i*8,31);x.lineTo(35+i*8,39);x.stroke()}}
+  if(o.chains){x.strokeStyle='#a8aeb6';x.lineWidth=3;for(let i=0;i<4;i++){x.beginPath();x.arc(28+i*15,66,5,0,7);x.stroke()}}
+  [40,60].forEach(ex=>{E(x,ex,46,4,2.8,o.eye||'#ffe06a')});
+  x.fillStyle='#1c1816';x.fillRect(38,57,24,4);
+}
+
 const ENEMY={
   goblin:x=>goblinoid(x,{skin:'#7aa04a',body:'#5a4a30'}),
   archer:x=>goblinoid(x,{skin:'#6a9a4a',hood:1,body:'#4a5a30'}),
@@ -151,6 +185,7 @@ const ENEMY={
   klarg:x=>goblinoid(x,{skin:'#a8703a',big:1,hair:'#4a2a14',body:'#3a2a1a',crown:1}),
   glasstaff:x=>{humanoid(x,{anc:'Human',cls:'Wizard',skin:'#e8c4a0',hair:'#c8a058'});x.save();x.strokeStyle='#bfe8ff';x.lineWidth=3;x.shadowColor='#bfe8ff';x.shadowBlur=8;x.beginPath();x.moveTo(82,100);x.lineTo(86,52);x.stroke();poly(x,[[86,42],[91,52],[86,60],[81,52]],'rgba(200,240,255,.8)');x.restore();x.fillStyle='#a8262a';x.fillRect(22,33,56,4)},
   spider:spider,nezznar:drow,
+  venomfang:x=>dragonHead(x,{col:'#2e7d3c',eye:'#ffe24a',mist:'#7aff6a'}),
   shaman:x=>{goblinoid(x,{skin:'#8a7ac0',hood:1,body:'#5a3a6a'});x.fillStyle='#ffe08a';x.beginPath();x.arc(80,24,7,0,7);x.fill()},
   orc:x=>goblinoid(x,{skin:'#7f9478',big:1,hair:'#2a2a2a',body:'#5a4636'}),
   chief:x=>goblinoid(x,{skin:'#70886a',big:1,hair:'#1e1e1e',body:'#6a2a22',crown:1}),
@@ -169,6 +204,50 @@ const ENEMY={
     x.fillStyle='#d8b040';x.beginPath();x.moveTo(42,58);x.lineTo(58,58);x.lineTo(50,78);x.closePath();x.fill();x.fillStyle='#5a3a1e';[[22,24],[78,24]].forEach(([a,b])=>{x.beginPath();x.moveTo(a-8,b+14);x.lineTo(a,b-8);x.lineTo(a+8,b+14);x.closePath();x.fill()})},
   blight:x=>{x.strokeStyle='#6a5030';x.lineWidth=7;x.lineCap='round';[[50,96,50,40],[50,60,26,34],[50,56,76,30],[50,44,40,14],[50,44,62,12],[26,34,14,22],[76,30,88,20]].forEach(([a,b,c,d])=>{x.beginPath();x.moveTo(a,b);x.lineTo(c,d);x.stroke()});
     x.fillStyle='#4a7a34';[[14,20],[88,18],[40,12],[62,10]].forEach(([a,b])=>{x.beginPath();x.ellipse(a,b,7,4,.6,0,7);x.fill()});x.fillStyle='#ffd24a';[[44,50],[56,50]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,3,0,7);x.fill()})},
+
+  /* ---------- ACT 2: WHITE PLUME MOUNTAIN ---------- */
+  kelpie:x=>{body(x,'#1d4a48','#4ea89a');E(x,50,48,22,24,'#3e7a6c');for(let i=0;i<7;i++){x.strokeStyle='#1d5a46';x.lineWidth=3.5;x.beginPath();x.moveTo(28+i*7,28);x.quadraticCurveTo(22+i*8,52,26+i*7,82);x.stroke()}[41,59].forEach(ex=>E(x,ex,46,3.5,2.4,'#8fffe6'))},
+  gargoyle:x=>devilHead(x,{skin:'#7a7c82',horn:'#4c4e54',body:'#4a4c52',wings:1,eye:'#ffcf6a',fangs:1}),
+  flesh_golem:x=>golemHead(x,{col:'#8a9a82',body:'#4c3c34',stitches:1,eye:'#c4ff7a'}),
+  manticore:x=>{poly(x,[[50,56],[8,24],[18,68]],'#6a3a22');poly(x,[[50,56],[92,24],[82,68]],'#6a3a22');E(x,50,52,28,26,'#9a5828');E(x,50,52,20,18,'#c88446');[41,59].forEach(ex=>E(x,ex,48,3.6,2.4,'#ffe052'));poly(x,[[40,62],[44,70],[48,62]],'#f4ecd8');poly(x,[[52,62],[56,70],[60,62]],'#f4ecd8')},
+  wight:x=>{body(x,'#24242c','#6a8a9a');E(x,50,48,18,22,'#7a8890');[42,58].forEach(ex=>{x.save();x.shadowColor='#88ffaa';x.shadowBlur=6;E(x,ex,46,3.2,2.2,'#88ffaa');x.restore()});poly(x,[[26,28],[50,14],[74,28]],'#3a3e48')},
+  ghoul:x=>{E(x,50,52,20,22,'#7c8a6e');[41,59].forEach(ex=>E(x,ex,48,3.5,2.5,'#ff5a4a'));x.fillStyle='#241010';x.fillRect(38,59,24,8);for(let i=0;i<5;i++)poly(x,[[39+i*5,59],[41+i*5,66],[43+i*5,59]],'#f4ecd8')},
+  shadow_assassin:x=>{body(x,'#14121c','#5a3a7a');x.beginPath();x.ellipse(50,46,24,26,0,0,7);x.fillStyle='#1c1828';x.fill();[41,59].forEach(ex=>{x.save();x.shadowColor='#c48fe6';x.shadowBlur=8;E(x,ex,48,3.5,1.8,'#c48fe6');x.restore()})},
+  steam_mephit:x=>{x.save();x.globalAlpha=.45;E(x,50,50,36,34,'#c8d8e6');x.restore();devilHead(x,{skin:'#9aa8b8',horn:'#5a6470',body:'#586878',eye:'#ff9a4a'})},
+  ctenmiir:x=>{body(x,'#1e1420','#9a1e2e');E(x,50,48,19,23,'#dcd6dc');poly(x,[[30,36],[50,20],[70,36],[64,30],[50,26],[36,30]],'#1a141c');[41,59].forEach(ex=>{x.save();x.shadowColor='#ff3a4a';x.shadowBlur=8;E(x,ex,48,3.4,2.2,'#ff3a4a');x.restore()});poly(x,[[42,60],[44,68],[46,60]],'#fff');poly(x,[[54,60],[56,68],[58,60]],'#fff')},
+  efreeti:x=>{devilHead(x,{skin:'#c83e1c',horn:'#2a120a',body:'#4a1a12',trim:'#e0b44a',crown:1,beard:1,eye:'#ffe85a'});x.save();x.globalAlpha=.45;E(x,50,18,22,12,'#ff8a2a');x.restore()},
+  chain_golem:x=>golemHead(x,{col:'#5c6068',body:'#2c2e34',chains:1,eye:'#ff7a3a'}),
+  ogre_mage:x=>devilHead(x,{skin:'#466a9a',horn:'#e8e0cc',body:'#28203c',trim:'#d0a03a',fangs:1,eye:'#ffe27a'}),
+  keraptis:x=>{humanoid(x,{anc:'Human',cls:'Wizard',skin:'#d8c8b4',hair:'#eef2f8'});[20,80].forEach((ox,i)=>{x.save();x.shadowColor=i?'#8fd0ff':'#ff7a3a';x.shadowBlur=10;E(x,ox,38,8,8,i?'#8fd0ff':'#ff7a3a');x.restore()})},
+  blackrazor_wielder:x=>{body(x,'#1a1426','#8a4fb8');E(x,50,48,20,22,'#2a2434');[42,58].forEach(ex=>{x.save();x.shadowColor='#d88aff';x.shadowBlur=8;E(x,ex,48,3.6,2,'#d88aff');x.restore()});x.save();x.strokeStyle='#d88aff';x.lineWidth=4;x.shadowColor='#a850ff';x.shadowBlur=10;x.beginPath();x.moveTo(82,94);x.lineTo(82,14);x.stroke();x.restore()},
+  gynosphinx:x=>{poly(x,[[50,58],[4,22],[14,72]],'#d8b86a');poly(x,[[50,58],[96,22],[86,72]],'#d8b86a');E(x,50,52,26,26,'#c89642');E(x,50,48,18,20,'#e4c498');poly(x,[[30,30],[50,16],[70,30]],'#2a4a8a');[42,58].forEach(ex=>E(x,ex,46,3.4,2.2,'#ffe27a'))},
+  giant_crab:x=>{x.fillStyle='#c43c24';E(x,50,58,34,24,'#c43c24');E(x,50,54,24,16,'#e05838');poly(x,[[18,52],[4,22],[26,34],[18,44]],'#a82a18');poly(x,[[82,52],[96,22],[74,34],[82,44]],'#a82a18');[40,60].forEach(ex=>{x.strokeStyle='#8a2012';x.lineWidth=3;x.beginPath();x.moveTo(ex,42);x.lineTo(ex,28);x.stroke();E(x,ex,26,4,4,'#141010');E(x,ex+1,25,1.2,1.2,'#fff')})},
+
+  /* ---------- ACT 3: THE HELLS ---------- */
+  bearded_devil:x=>devilHead(x,{skin:'#9a3028',body:'#3c2220',beard:1,eye:'#ffca4a'}),
+  hell_hound:x=>{beast(x,{fur:'#3a1614',red:1});x.save();x.globalAlpha=.5;E(x,50,24,26,12,'#ff6a22');x.restore()},
+  spined_devil:x=>devilHead(x,{skin:'#b84228',wings:1,body:'#421a18',eye:'#ffe25a'}),
+  imp:x=>devilHead(x,{skin:'#8a242c',wings:1,body:'#301418',eye:'#ffe06a',fangs:1}),
+  cambion:x=>devilHead(x,{skin:'#b43632',wings:1,body:'#2a121c',trim:'#d0a03a',eye:'#ff9a4a'}),
+  bone_devil:x=>{skull(x);x.strokeStyle='#b8a890';x.lineWidth=4;x.beginPath();x.moveTo(24,78);x.quadraticCurveTo(50,92,76,78);x.stroke();[41,59].forEach(ex=>E(x,ex,46,3.5,2.5,'#ff5a3a'))},
+  narzugon:x=>{body(x,'#241418','#c83a24');E(x,50,48,22,24,'#3a282c');x.fillStyle='#ff5a22';x.fillRect(34,45,32,4);poly(x,[[30,28],[22,8],[38,24]],'#8a2018');poly(x,[[70,28],[78,8],[62,24]],'#8a2018')},
+  chain_devil:x=>golemHead(x,{col:'#6c3834',body:'#281214',chains:1,eye:'#ff4a2a'}),
+  erinyes:x=>{devilHead(x,{skin:'#d8a898',wings:1,horn:'#3a1818',body:'#5a1418',trim:'#e0b44a',eye:'#ff3a3a'})},
+  horned_devil:x=>devilHead(x,{skin:'#a02a1e',big:1,wings:1,body:'#3a1410',eye:'#ffd84a',fangs:1}),
+  ice_devil:x=>devilHead(x,{skin:'#6aa8c8',big:1,horn:'#cceeff',body:'#1e384e',trim:'#9ad8ff',eye:'#e0f8ff'}),
+  vrock:x=>{poly(x,[[50,58],[6,18],[16,74]],'#4a3c48');poly(x,[[50,58],[94,18],[84,74]],'#4a3c48');E(x,50,50,22,24,'#6a5864');poly(x,[[40,54],[60,54],[50,74]],'#c8b482');[41,59].forEach(ex=>E(x,ex,45,3.5,2.4,'#ff4a4a'))},
+  pit_fiend:x=>devilHead(x,{skin:'#b81e18',big:1,wings:1,crown:1,body:'#2a0a0c',trim:'#ff8a2a',eye:'#ffe84a',fangs:1}),
+  orcus:x=>{devilHead(x,{skin:'#4c5a52',big:1,wings:1,horn:'#d8d0be',body:'#1a1420',trim:'#7a3fa0',eye:'#ff3a4a',fangs:1});x.save();x.shadowColor='#88ff88';x.shadowBlur=8;E(x,84,32,8,8,'#e8e0cc');x.restore()},
+  asmodeus:x=>{devilHead(x,{skin:'#b82024',horn:'#1a0c0e',crown:1,beard:1,body:'#3a0c12',trim:'#ffd76a',eye:'#ffe86a'});x.save();x.shadowColor='#ff2a2a';x.shadowBlur=10;E(x,84,34,7,9,'#ff2a3a');x.restore()},
+  tiamat:x=>{
+    // Five Chromatic Dragon Heads fanned in an iconic crown!
+    const heads=[['#22242a',20,56],['#dce8f4',32,36],['#c8241e',50,26],['#2868c0',68,36],['#2e8a3c',80,56]];
+    heads.forEach(([col,hx,hy])=>{
+      x.strokeStyle=shade(col,.7);x.lineWidth=7;x.beginPath();x.moveTo(50,94);x.quadraticCurveTo(hx,hy+24,hx,hy);x.stroke();
+      E(x,hx,hy,12,11,col);
+      E(x,hx-3,hy-1,2,1.6,'#ffe24a');E(x,hx+3,hy-1,2,1.6,'#ffe24a');
+    });
+  }
 };
 
 /* ---------- hand-tuned hero portraits: background and personality ---------- */
@@ -373,7 +452,20 @@ window.portraitFor=function(u){
   else c=P(128,x=>{bg(x,'#3a2224');goblinoid(x,{skin:'#7aa04a'})});
   return PORTRAIT[k]=c;
 };
-const E_BG={adept:'#4a1e10',conjurer:'#2a1e3a',caller:'#1e2a16',flameskull:'#12301a',necromancer:'#4a1a1e',owlbear:'#3a2a1a',blight:'#1e2a16',chief:'#4a2a1a',captain:'#3a2a2a',zombie:'#2a3028',ashzombie:'#34322e',nezznar:'#3a1a4a',klarg:'#5a2a1e',glasstaff:'#2a3a5a',skeleton:'#2a3030',spider:'#2a1a22'};
+const E_BG={
+  adept:'#4a1e10',conjurer:'#2a1e3a',caller:'#1e2a16',flameskull:'#12301a',necromancer:'#4a1a1e',
+  owlbear:'#3a2a1a',blight:'#1e2a16',chief:'#4a2a1a',captain:'#3a2a2a',zombie:'#2a3028',
+  ashzombie:'#34322e',nezznar:'#3a1a4a',klarg:'#5a2a1e',glasstaff:'#2a3a5a',skeleton:'#2a3030',
+  spider:'#2a1a22',venomfang:'#183c24',ruffian:'#4a1e20',
+  kelpie:'#14383a',gargoyle:'#34363c',flesh_golem:'#2c382c',manticore:'#4a2a18',wight:'#1e2a34',
+  ghoul:'#263022',shadow_assassin:'#181426',steam_mephit:'#3a4a58',ctenmiir:'#3a1220',
+  efreeti:'#5c1e0c',chain_golem:'#2c2c34',ogre_mage:'#1c2c4a',keraptis:'#24204a',
+  blackrazor_wielder:'#2a143c',gynosphinx:'#523a18',giant_crab:'#4a1e18',
+  bearded_devil:'#4a1814',hell_hound:'#4a120a',spined_devil:'#4c1e16',imp:'#3c141c',
+  cambion:'#3c1424',bone_devil:'#2e2424',narzugon:'#3a1214',chain_devil:'#361414',
+  erinyes:'#52141a',horned_devil:'#4c1410',ice_devil:'#14324a',vrock:'#302234',
+  pit_fiend:'#5a100c',orcus:'#22142c',asmodeus:'#520c14',tiamat:'#2c1824'
+};
 const URLS={};
 window.portraitURL=function(k){
   if(typeof assetURL==='function'){
