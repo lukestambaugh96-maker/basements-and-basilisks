@@ -460,7 +460,7 @@ function triggerGilthraxBreath(b, u, storedDmg, wide = false) {
   const fs = foes(b, u).filter(x => !x.hidden && hd(x, u) <= rad);
   const list = fs.length ? fs : foes(b, u).filter(x => !x.hidden).sort((a, c) => hd(a, u) - hd(c, u)).slice(0, 2);
   if (!list.length) return;
-  const dmg = Math.max(Math.round(14 * tierScale(u)), Math.round(storedDmg * (wide ? 1.15 : 0.9)));
+  const dmg = Math.max(Math.round(10 * tierScale(u)), Math.round(storedDmg * (wide ? 0.50 : 0.35)));
   b.events.push({ k: 'area', id: u.id, tid: list[0].id, shape: 'cone', r: rad, ty: 'fire', ids: list.map(x => x.id) });
   callout(b, u, 'GOLD DRAGON BREATH!', '#ff9c4a');
   list.forEach(x => {
@@ -651,11 +651,11 @@ function addSorcery(b, u, n, excludeCenter, hurlFn) {
       } else {
         const fs = foes(b, u).filter(x => !x.hidden);
         if (!fs.length) return;
-        const c = fs[0];
+        const c = fs.slice().sort((a, z) => fs.filter(x => hd(x, z) <= 1).length - fs.filter(x => hd(x, a) <= 1).length)[0];
         const hitFoes = fs.filter(x => hd(x, c) <= 1);
         b.events.push({ k: 'area', id: u.id, tid: c.id, shape: 'splash', r: 1, ty: 'fire', ids: hitFoes.map(x => x.id) });
         hitFoes.forEach(x => {
-          hit(b, u, x, roll(4, 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1 });
+          hit(b, u, x, tierRoll(u, 4, 6), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, ab: 1 });
           if (x.alive) applyStatus(b, u, x, 'burn', 8 * chaK(u));
           if (u.f.wildfire && x.alive) expose(b, x, 4 * chaK(u));
         });
@@ -667,7 +667,7 @@ function addSorcery(b, u, n, excludeCenter, hurlFn) {
 
 function addBearRage(b, u, stacks = 1) {
   if (!u || !u.alive) return;
-  u.bearRage = (u.bearRage || 0) + stacks;
+  u.bearRage = Math.min(8, (u.bearRage || 0) + stacks);
   u.stats.bearRagePeak = Math.max(u.stats.bearRagePeak || 0, u.bearRage);
   u.stats.rages = (u.stats.rages || 0) + stacks;
   status(b, u, `RAGE ×${u.bearRage}`, '#ff6a4a');
@@ -777,7 +777,7 @@ function triggerPactBoon(b, hexer, victim, killer) {
     if (near.length) {
       b.events.push({ k: 'area', id: hexer.id, tid: victim.id, shape: 'splash', r: 2, ty: 'fire', ids: near.map(x => x.id) });
       near.forEach(x => {
-        hit(b, hexer, x, tierRoll(hexer, 2, 8), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, noBonus: 1 });
+        hit(b, hexer, x, tierRoll(hexer, 1, 8), { kind: 'magic', el: 'fire', ty: 'fire', area: 1, noBonus: 1 });
         if (x.alive) applyStatus(b, hexer, x, 'burn', 4 * chaK(hexer));
       });
     }
@@ -1116,10 +1116,10 @@ function hit(b, src, t, amt, o = {}) {
     }
   }
 
-  // Mother Laurel Spec 1 Verdant Aura: heals self for 40% and adjacent allies for 20% of damage dealt
+  // Mother Laurel Verdant Aura: heals self for 50% and adjacent allies for 25% of damage dealt
   if (pre > 0 && src && src.alive && src.f.verdantAura && !o.dot) {
-    const selfH = Math.max(1, Math.round(pre * .40));
-    const allyH = Math.max(1, Math.round(pre * .20));
+    const selfH = Math.max(1, Math.round(pre * .50));
+    const allyH = Math.max(1, Math.round(pre * .25));
     heal(b, src, src, selfH, { raw: 1 });
     friends(b, src).filter(a => a !== src && !a.minion && hd(a, src) <= 1).forEach(a => heal(b, src, a, allyH, { raw: 1 }));
   }
@@ -1223,21 +1223,25 @@ function hit(b, src, t, amt, o = {}) {
       const refD = Math.max(1, Math.round(pre * t.it.meleeReflect));
       later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, refD, { kind: 'phys', ty: 'bludgeoning', noBonus: 1, thorn: 1 }); });
     }
-    // Sir Dane Spec 1 Oath of Devotion: taking hits from his Taunted foe retaliates with a Smite (1s CD)
-    if (t.f.oathDevotion && src.st.tauntBy === t && b.time >= (t._devotionT || 0)) {
-      t._devotionT = b.time + 1.0;
-      later(b, 0, () => { if (src.alive && t.alive) triggerSmite(b, t, src, tierRoll(t, 1, 8), { thorn: 1 }); });
+    // Sir Dane Spec 1 Oath of Devotion: taking a hit from his Taunted foe grants +30% Attack Speed (3s)
+    if (t.f.oathDevotion && src.st.tauntBy === t) {
+      t.tempHaste = Math.max(t.tempHaste || 0, 30);
+      t.tempHasteT = Math.max(t.tempHasteT || 0, 3.0);
+      if (b.time >= (t._devotionT || 0)) {
+        t._devotionT = b.time + 1.5;
+        status(b, t, 'DEVOTION +30% AS', '#ffe9a0');
+      }
     }
     if (t.vineThornsT > 0 && hd(src, t) <= 1) {
       later(b, 0, () => { if (src.alive && t.alive) hit(b, t, src, Math.round(5 * tierScale(t)), { kind: 'magic', ty: 'poison', noBonus: 1, thorn: 1 }); });
     }
   }
 
-  // Juniper innate Charge gain when Rooted foes take damage
+  // Juniper innate Charge gain when Rooted foes take damage (+6 Charge, 1.0s CD)
   if (pre > 0 && t.side === 'E' && t.st.root > 0) {
     alive(b, 'P').filter(x => x.f.naturalRecovery && b.time >= (x._nrT || 0)).forEach(x => {
-      x._nrT = b.time + .4;
-      giveCharge(b, x, 10 * (x.chgX || 1), 1);
+      x._nrT = b.time + 1.0;
+      giveCharge(b, x, 6 * (x.chgX || 1), 1);
     });
   }
 
@@ -1249,14 +1253,13 @@ function hit(b, src, t, amt, o = {}) {
     }
   }
 
-  // Warlock Patron Hex: Infernal Hex (+1d6 Fire, scales w/ tier) / Warlock Multiclass Hex (+1d4 Necrotic) on every hit
+  // Warlock Patron Hex: Infernal Hex (+1d6 Fire) / Warlock Multiclass Hex (+1d4 Necrotic) credited to attacking ally
   if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.alive && t.st.hex && !o.dot && !o.hexProc) {
-    const hexer = t.st.hex;
     const isInfernal = t.st.hexType === 'infernal';
     const dieS = isInfernal ? 6 : 4;
     const ty = isInfernal ? 'fire' : 'necrotic';
-    const bonus = isInfernal ? roll(Math.max(1, Math.ceil((hexer.tier || 1) * 0.75)), dieS) : roll(1, dieS);
-    later(b, 0, () => { if (t.alive) hit(b, hexer, t, bonus, { kind: 'magic', ty, noBonus: 1, hexProc: 1 }); });
+    const bonus = roll(1, dieS);
+    later(b, 0, () => { if (t.alive && src.alive) hit(b, src, t, bonus, { kind: 'magic', ty, noBonus: 1, hexProc: 1 }); });
   }
   // Sir Dane Nat 20 Crusade Aura: allies attacking his Taunted foe trigger a bonus 1d8 Smite + 10 Charge!
   if (pre > 0 && src && src.side === 'P' && t.side === 'E' && t.st.duelCrusade > 0 && !o.dot && !o.crusadeProc && !o.onhit) {
@@ -1309,12 +1312,14 @@ function applyElement(b, src, t, el, dealt, o) {
   if (el === 'fire') {
     s.burn += dealt * .55;
     s.burnT = s.burnT || .5;
+    if (src) s.burnBy = src;
     if (src && src.key === 'cinder') src.stats.burnCredit = (src.stats.burnCredit || 0) + 1;
   } else if (el === 'cold') {
     s.frz += dealt * 2.0;
     if (s.frz >= 100) { s.frz = 0; stun(b, t, 1.2); status(b, t, 'FROZEN', '#8fd0ff'); }
   } else if (el === 'poison') {
     s.poison += Math.max(1, dealt * .15);
+    if (src) s.poisonBy = src;
     if (src && src.f && src.f.nightshade) expose(b, t, 3.5 * chaK(src));
   } else if (el === 'acid') {
     s.acid = Math.min(6, s.acid + 1); s.acidT = 5;
@@ -1328,12 +1333,14 @@ function applyStatus(b, src, t, el, v, max) {
   if (el === 'burn') {
     s.burn += v * k;
     s.burnT = s.burnT || .5;
+    if (src) s.burnBy = src;
     if (src && src.key === 'cinder') src.stats.burnCredit = (src.stats.burnCredit || 0) + 1;
   } else if (el === 'cold') {
     s.frz += v;
     if (s.frz >= 100) { s.frz = 0; stun(b, t, 1.2); status(b, t, 'FROZEN', '#8fd0ff'); }
   } else if (el === 'poison') {
     s.poison += v * k;
+    if (src) s.poisonBy = src;
     if (src && src.f && src.f.nightshade) expose(b, t, 3.5 * chaK(src));
   } else if (el === 'nec') {
     addNec(b, src, t, v);
@@ -1542,7 +1549,7 @@ function addWard(b, t, v, cap, giver, o = {}) {
   if (cap) v = Math.min(v, Math.max(0, cap - t.ward));
   if (v <= 0) return;
   t.ward += v;
-  if (t.f && t.f.gilthraxWard) t.wardStored = (t.wardStored || 0) + v;
+  if (t.f && t.f.gilthraxWard) t.wardStored = Math.min(cap || t.maxHp * 1.1, (t.wardStored || 0) + v);
   t.stats.wardIn = (t.stats.wardIn || 0) + v;
   if (giver) {
     t._wardBy = giver;
@@ -1922,7 +1929,7 @@ function charge(b, u) {
 
 /* ---------- Attacks & On-Hit ---------- */
 function attackIv(b, u) {
-  const rageHaste = (u.bearRage || 0) * 10 + (u.mcRage ? 20 : 0);
+  const rageHaste = u.mcRage ? 20 : 0;
   const hexStacks = (u.key === 'lumen' && u.target && u.target.st) ? ((u.target.st.radHex || 0) + (u.target.st.hex ? 2 : 0)) : 0;
   const radHexHaste = hexStacks > 0 ? Math.min(120, hexStacks * 12) : 0;
   const h = u.haste + (u.permHaste || 0) + (u.auraHaste || 0) + (u.tempHasteT > 0 ? u.tempHaste : 0) + rageHaste + radHexHaste;
@@ -2089,8 +2096,8 @@ function postStrikeHooks(b, u, t, got) {
   // Mother Laurel Cleave, Verdant Smite (Nature Magic vs Rooted), Quest Root & Verdant Aura drain
   if (u.f.verdantCleave && got > 0) {
     foes(b, u).filter(x => x !== t && hd(x, u) <= 1).forEach(x => {
-      const cg = hit(b, u, x, tierRoll(u, u.atk.d[0], u.atk.d[1]) + (u.atk.flat || 0), { kind: 'phys', ty: 'slashing', melee: 1, onhit: 1 });
-      if (x.alive && x.st.root > 0) triggerSmite(b, u, x, tierRoll(u, 1, 4), { kind: 'magic', ty: 'poison', label: 'VERDANT SMITE', onhit: 1 });
+      const splash = Math.max(1, Math.round((tierRoll(u, u.atk.d[0], u.atk.d[1]) + (u.atk.flat || 0)) * 0.5));
+      hit(b, u, x, splash, { kind: 'phys', ty: 'slashing', melee: 1, onhit: 1 });
     });
   }
   if (u.key === 'mother_laurel' && u.questDone && t.alive) applyRoot(b, u, t, 1.0);
@@ -2218,11 +2225,14 @@ function newBattle(encKey, party, eTier) {
     if (u.key === 'gilthrax' && u.questDone) {
       const wVal = gilthraxWardAmount(u, 1);
       addWard(b, u, wVal, u.maxHp * .8, u);
-      u.wardStored = (u.wardStored || 0) + wVal;
       status(b, u, 'FREE ARCANE SHIELD', '#ffd76a');
     }
 
     // Hero passives & specs at combat start
+    if (u.f.startMark) {
+      const nf = foes(b, u).sort((a, c) => hd(a, u) - hd(c, u))[0];
+      if (nf) markFoe(b, u, nf, 1);
+    }
     if (u.f.assassinate) {
       u.hidden = 1; u.hideT = 3.0;
       status(b, u, 'STEALTH', '#c48fe6');
@@ -2362,7 +2372,7 @@ function tick(b, dt) {
         s.burnT = .5;
         const v = Math.max(1, Math.round(s.burn * .35));
         s.burn *= .65;
-        hit(b, null, u, v, { dot: 1, ty: 'fire' });
+        hit(b, s.burnBy || null, u, v, { dot: 1, ty: 'fire' });
         if (u.side === 'E') {
           alive(b, 'P').filter(x => x.f.draconicSurge).forEach(c => {
             c._dsTicks = (c._dsTicks || 0) + 1;
@@ -2381,7 +2391,7 @@ function tick(b, dt) {
       if (s.poisonAcc >= 1) {
         const v = Math.floor(s.poisonAcc);
         s.poisonAcc -= v;
-        hit(b, null, u, v, { dot: 1, ty: 'poison' });
+        hit(b, s.poisonBy || null, u, v, { dot: 1, ty: 'poison' });
         if (!u.alive) continue;
       }
     }
@@ -2416,7 +2426,8 @@ function tick(b, dt) {
     }
 
     const lowDouble = (u.it && u.it.lowDoubleRegen && u.hp < u.maxHp * .5) ? 2 : 1;
-    const totalRegen = (u.regen || 0) * ((u.doubleRegenT || 0) > 0 ? 2 : 1) * lowDouble + (u.it && u.it.pctRegen ? u.maxHp * u.it.pctRegen : 0);
+    const rageRegen = u.bearRage > 0 ? u.maxHp * 0.01 * Math.min(8, u.bearRage) : 0;
+    const totalRegen = (u.regen || 0) * ((u.doubleRegenT || 0) > 0 ? 2 : 1) * lowDouble + (u.it && u.it.pctRegen ? u.maxHp * u.it.pctRegen : 0) + rageRegen;
     if (totalRegen > 0 && u.hp < u.maxHp) {
       const r = Math.min(u.maxHp - u.hp, totalRegen * dt);
       u.hp += r; u.stats.regenIn = (u.stats.regenIn || 0) + r;

@@ -208,14 +208,14 @@ hero('arthur', {
   bio: 'Always first through the tavern door and first to draw steel.',
   attr: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 10 },
   prim: 'str', pair: ['str', 'dex'],
-  hp: 112, ac: 14, sr: 11,
+  hp: 120, ac: 14, sr: 13,
   kw: { action_surge: 1 },
   ckw: [
     { k: 'action_surge', sub: 'Counter-Strike', x: 'Whenever Arthur evades an attack, he triggers Action Surge (immediate free Longsword strike).' }
   ],
   f: { baseEvasion: 0.20, arthurSurge: 1 },
   passive: { n: 'Alert', x: 'Grants +20% Evasion.' },
-  atk: { n: 'Longsword', d: [1, 8], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.35 },
+  atk: { n: 'Longsword', d: [1, 8], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.2 },
   abil: {
     n: 'Longbow Volley', cr: 10.0, pa: 11, cut: [6, 13], self: 1,
     one: 'Looses 1–4 arrows at farthest foes (on-hit); High grants +25% Evasion, Nat 20 grants party +35% Evasion.',
@@ -402,12 +402,12 @@ hero('wallaby', {
   atk: { n: 'Shortsword', d: [1, 6], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.05 },
   abil: {
     n: 'Backstab', cr: 9.5, pa: 8, cut: [5, 13], self: 1,
-    one: 'Leaps behind the farthest foe for heavy piercing burst; High enters Stealth, Nat 20 refunds 100% Charge & +2 Gold.',
+    one: 'Leaps behind the farthest foe for armor-piercing burst (4 Armor Pen); Mid+ enters Stealth, Nat 20 refunds 100% Charge & +2 Gold.',
     b: [
-      'Leaps behind the farthest foe for 3d6 piercing damage.',
-      'Leaps behind the farthest foe for 5d6 piercing damage.',
-      'Leaps behind the farthest foe for 7d6 piercing and enters Stealth (halving next hit).',
-      'Leaps behind the farthest foe for 9d6 piercing, refunds 100% Charge, and pops +2 Gold!'
+      'Leaps behind the farthest foe for 3d6 piercing (4 Armor Pen).',
+      'Leaps behind the farthest foe for 5d6 piercing (4 Armor Pen) and enters Stealth (1.5s).',
+      'Leaps behind the farthest foe for 7d6 piercing (4 Armor Pen) and enters Stealth (halving next hit).',
+      'Leaps behind the farthest foe for 9d6 piercing (4 Armor Pen), refunds 100% Charge, and pops +2 Gold!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -416,10 +416,11 @@ hero('wallaby', {
       const spot = walkNbrs(t).filter(h => freeHex(b, h, u)).sort((a, c) => hd(c, u) - hd(a, u))[0];
       if (spot) { u.c = spot.c; u.r = spot.r; u.target = t; b.events.push({ k: 'leap', id: u.id }); }
       const dice = [3, 5, 7, 9][P];
-      hit(b, u, t, tierRoll(u, dice, 6), { kind: 'phys', ty: 'piercing', melee: 1, ab: 1 });
+      hit(b, u, t, tierRoll(u, dice, 6), { kind: 'phys', ty: 'piercing', melee: 1, ab: 1, pen: 4 });
       triggerSneakAttack(b, u, t, { ability: 1 });
       if (u.f.pickpocket) gainGold(b, u, P === 3 ? 2 : 1, 'PICKPOCKET');
-      if (P >= 2) triggerCunningAction(b, u, t, { stealth: 2.5, stealthShield: 1, label: 'STEALTH' });
+      if (P === 1) triggerCunningAction(b, u, t, { stealth: 1.5, label: 'STEALTH' });
+      else if (P >= 2) triggerCunningAction(b, u, t, { stealth: 2.5, stealthShield: 1, label: 'STEALTH' });
       if (P === 3) {
         giveCharge(b, u, 100, 1);
         gainGold(b, u, 2, 'JACKPOT');
@@ -488,7 +489,7 @@ hero('dane', {
     }
   },
   paths: [
-    { k: 'oath_devotion', n: 'Oath of Devotion', attr: 'str', tags: ['radiant', 'control'], x: 'Retaliates with a Radiant Smite whenever his Taunted foe hits him.', f: { oathDevotion: 1 } },
+    { k: 'oath_devotion', n: 'Oath of Devotion', attr: 'str', tags: ['radiant', 'control'], x: 'Taking a hit from his Taunted foe grants +30% Attack Speed (3s).', f: { oathDevotion: 1 } },
     { k: 'aura_protection', n: 'Aura of Protection', attr: 'cha', tags: ['side'], x: 'Aura of Devotion expands to 2 squares and grants +2 AC and +2 SR.', f: { auraProtection: 1 } }
   ],
   quest: {
@@ -511,15 +512,15 @@ hero('lorcan', {
   ckw: [
     { k: 'hunters_mark', sub: 'Quarry Focus', x: 'Marked foes take +1d4 bonus damage from every hit (stacks).' }
   ],
-  f: { huntMark: 1 },
-  atk: { n: 'Longbow', d: [1, 8], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.3 },
+  f: { huntMark: 1, startMark: 1 },
+  atk: { n: 'Longbow', d: [1, 8], flat: 2, kind: 'phys', ty: 'piercing', iv: 1.15 },
   abil: {
     n: 'Hunter’s Volley', cr: 10.5, pa: 10, cut: [6, 13], self: 1,
-    one: 'Applies Hunter’s Mark and fires 1–4 arrows (on-hit); Nat 20 jumps Mark stacks on kill & refunds 50% Charge.',
+    one: 'Starts fight Marking nearest foe; Volley applies Mark and fires 2–4 arrows (on-hit); Nat 20 jumps Mark & refunds 50% Charge.',
     b: [
-      'Applies Hunter’s Mark and fires 1 arrow (1d8, on-hit).',
-      'Applies Hunter’s Mark and fires 1 arrow (2d8, on-hit).',
+      'Applies Hunter’s Mark and fires 2 arrows (1d8 each, on-hit).',
       'Applies Hunter’s Mark and fires 2 arrows (2d8 each, on-hit).',
+      'Applies Hunter’s Mark and fires 3 arrows (2d8 each, on-hit).',
       'Applies Hunter’s Mark and fires 4 arrows (2d8 each); on kill, Mark stacks jump & refund 50% Charge!'
     ],
     fx(b, u, P) {
@@ -527,7 +528,7 @@ hero('lorcan', {
       if (!fs.length) return;
       const t = (u.target && u.target.alive) ? u.target : fs.sort((a, c) => hd(a, u) - hd(c, u))[0];
       markFoe(b, u, t, 1);
-      const count = [1, 1, 2, 4][P];
+      const count = [2, 2, 3, 4][P];
       const dice = P === 0 ? 1 : 2;
       for (let i = 0; i < count; i++) {
         later(b, i * .08, () => {
@@ -578,10 +579,10 @@ hero('juniper', {
     n: 'Entangle', cr: 10.5, pa: 8, cut: [5, 13], self: 1,
     one: 'Roots an enemy clump with nature damage; High adds Poison & Wild Shape Thorns, Nat 20 Roots frontline & ticks Poison twice.',
     b: [
-      'Roots an enemy clump (2s) for 2d6 nature damage.',
-      'Roots an enemy clump (3s) for 3d6 nature damage.',
-      'Roots an enemy clump (3.5s), applies Poison, and triggers Wild Shape (nearby allies gain Thorns).',
-      'Roots the entire enemy frontline (4s), triggers Wild Shape, and triggers all Poison twice!'
+      'Roots an enemy clump (2s) for 1d6 nature damage.',
+      'Roots an enemy clump (3s) for 1d6 nature damage.',
+      'Roots an enemy clump (3.5s, 2d6), applies Poison, and triggers Wild Shape (nearby allies gain Thorns).',
+      'Roots the entire enemy frontline (4s, 2d6), triggers Wild Shape, and triggers all Poison twice!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -591,7 +592,7 @@ hero('juniper', {
         ? fs.slice().sort((a, c) => hd(a, u) - hd(c, u)).slice(0, Math.min(fs.length, 4))
         : fs.filter(x => hd(x, center) <= 1);
       const dur = [2, 3, 3.5, 4][P] * chaK(u);
-      const dice = [2, 3, 3, 4][P];
+      const dice = [1, 1, 2, 2][P];
       b.events.push({ k: 'area', id: u.id, tid: center.id, shape: P === 3 ? 'nova' : 'splash', r: P === 3 ? 3 : 1, ty: 'poison', ids: hitFoes.map(x => x.id) });
       hitFoes.forEach(x => {
         hit(b, u, x, tierRoll(u, dice, 6), { kind: 'magic', ty: 'poison', area: 1, ab: 1 });
@@ -690,9 +691,9 @@ hero('cinder', {
     { k: 'metamagic', sub: 'Twinned Spell', x: '4-pip Sorcery bar (+1 per cast); at 4 pips, automatically casts a free Twinned Fireball at another clump.' }
   ],
   f: {},
-  atk: { n: 'Fire Bolt', d: [1, 10], flat: 1, kind: 'magic', ty: 'fire', iv: 1.55 },
+  atk: { n: 'Fire Bolt', d: [1, 10], flat: 1, kind: 'magic', ty: 'fire', iv: 1.4 },
   abil: {
-    n: 'Fireball', cr: 8.5, pa: 9, cut: [6, 13], self: 1,
+    n: 'Fireball', cr: 9.5, pa: 9, cut: [6, 13], self: 1,
     one: 'Blasts the densest enemy clump with Fire + Burn; High gains +2 Sorcery, Nat 20 detonates all Burn on the board.',
     b: [
       'Blasts the densest clump (3d6 fire + Burn) and gains +1 Sorcery.',
@@ -752,30 +753,31 @@ hero('zark', {
   hp: 144, ac: 13, sr: 11,
   kw: { rage: 1 },
   ckw: [
-    { k: 'rage', sub: 'Bear Totem', x: 'Each stack of Rage grants +6% damage reduction and +10% attack speed (stacks endlessly).' }
+    { k: 'rage', sub: 'Bear Totem', x: 'Each stack of Rage grants +6% damage reduction and +1% max HP/s regen (up to 8 stacks).' }
   ],
   f: { bearRage: 1, relentlessEndurance: 1 },
   passive: { n: 'Relentless Endurance', x: 'Once per fight, survives lethal damage at 1 HP.' },
   atk: { n: 'Greataxe', d: [1, 12], flat: 3, kind: 'phys', ty: 'slashing', iv: 1.65 },
   abil: {
     n: 'Bear Cleave', cr: 12.0, pa: 9, cut: [6, 13], self: 1,
-    one: 'Sweeps adjacent foes with his greataxe; High gains +1 Rage & heals 10% HP, Nat 20 gains +2 Rage & Stuns.',
+    one: 'Sweeps adjacent foes with his greataxe; High Taunts, gains +1 Rage & heals 10% HP, Nat 20 gains +2 Rage & Stuns.',
     b: [
       'Sweeps adjacent foes for 2d8 slashing.',
-      'Sweeps adjacent foes for 3d8 slashing.',
-      'Sweeps adjacent foes for 3d10 slashing, gains +1 Rage, and heals 10% max HP.',
-      'Sweeps adjacent foes for 4d12 slashing, gains +2 Rage, and Stuns hit foes (1.5s)!'
+      'Sweeps adjacent foes for 2d8 slashing.',
+      'Sweeps adjacent foes for 3d8 slashing, Taunts, gains +1 Rage, and heals 10% max HP.',
+      'Sweeps adjacent foes for 3d10 slashing, gains +2 Rage, and Stuns hit foes (1.5s)!'
     ],
     fx(b, u, P) {
       const adj = foes(b, u).filter(x => !x.hidden && hd(x, u) <= 1);
       const list = adj.length ? adj : foes(b, u).filter(x => !x.hidden).sort((a, c) => hd(a, u) - hd(c, u)).slice(0, 1);
-      const dice = [[2, 8], [3, 8], [3, 10], [4, 12]][P];
+      const dice = [[2, 8], [2, 8], [3, 8], [3, 10]][P];
       b.events.push({ k: 'area', id: u.id, shape: 'nova', r: 1, ty: 'slashing', ids: list.map(x => x.id) });
       list.forEach(x => {
         hit(b, u, x, tierRoll(u, dice[0], dice[1]), { kind: 'phys', ty: 'slashing', melee: 1, area: 1, ab: 1 });
         if (P === 3 && x.alive) stun(b, x, 1.5);
       });
       if (P === 2) {
+        taunt(b, u, 1, 3 * chaK(u));
         addBearRage(b, u, 1);
         heal(b, u, u, Math.round(u.maxHp * .10), { raw: 1 });
       }
@@ -872,20 +874,20 @@ hero('nettle', {
     n: 'Infernal Hex', cr: 13.0, pa: 8, cut: [5, 13], self: 1,
     one: 'Blasts & curses target with Infernal Hex & Burn; High adds heavy Burn, Nat 20 curses 3 foes with Hex & Burn.',
     b: [
-      'Blasts target (2d8 fire), Infernal Hex, and Burn.',
-      'Blasts target (3d8 fire), Infernal Hex, and Burn.',
-      'Blasts target (3d8 fire), applies Infernal Hex, and inflicts heavy Burn.',
-      'Blasts and curses 3 foes with Infernal Hex and heavy Burn!'
+      'Blasts target (1d6 fire), Infernal Hex, and Burn.',
+      'Blasts target (2d6 fire), Infernal Hex, and Burn.',
+      'Blasts target (2d6 fire), applies Infernal Hex, and inflicts heavy Burn.',
+      'Blasts and curses 3 foes (2d6 fire) with Infernal Hex and heavy Burn!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
       if (!fs.length) return;
       const ord = fs.slice().sort((a, c) => (a.st.hex ? 1 : 0) - (c.st.hex ? 1 : 0) || hd(a, u) - hd(c, u));
       const list = P === 3 ? ord.slice(0, 3) : [ord[0]];
-      const dice = P === 0 ? 2 : 3;
+      const dice = P === 0 ? 1 : 2;
       list.forEach(t => {
         b.events.push({ k: 'proj', s: u.id, t: t.id, ty: 'fire' });
-        hit(b, u, t, tierRoll(u, dice, 8), { kind: 'magic', el: 'fire', ty: 'fire', ab: 1 });
+        hit(b, u, t, tierRoll(u, dice, 6), { kind: 'magic', el: 'fire', ty: 'fire', ab: 1 });
         if (t.alive) {
           applyNettleHex(b, u, t, true);
           applyStatus(b, u, t, 'burn', [3, 4, 8, 10][P] * chaK(u));
@@ -928,10 +930,10 @@ hero('pillar', {
     n: 'Monument Slam', cr: 11.5, pa: 9, cut: [6, 13], self: 1,
     one: 'Slams his target and Taunts nearby foes; High enters Zealot Rage (3s), Nat 20 line-Stuns & enters Zealot Rage (4s).',
     b: [
+      'Slams his target (2d6 bludgeoning) and Taunts nearby foes.',
       'Slams his target (2d8 bludgeoning) and Taunts nearby foes.',
-      'Slams his target (3d8 bludgeoning) and Taunts nearby foes.',
-      'Slams his target (3d8 bludgeoning), Taunts nearby foes, and enters Zealot Rage (3s).',
-      'Cracks the ground in a line Stun (4d8 bludgeoning, 1.5s), Taunts, and enters Zealot Rage (4s)!'
+      'Slams his target (2d8 bludgeoning), Taunts nearby foes, and enters Zealot Rage (3s).',
+      'Cracks the ground in a line Stun (3d8 bludgeoning, 1.5s), Taunts, and enters Zealot Rage (4s)!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -942,14 +944,13 @@ hero('pillar', {
         const lineFoes = fs.filter(x => hd(x, u) <= (u.questDone ? 4 : 3)).slice(0, u.questDone ? 5 : 4);
         b.events.push({ k: 'area', id: u.id, tid: t.id, shape: 'line', r: u.questDone ? 4 : 3, ty: 'bludgeoning', ids: lineFoes.map(x => x.id) });
         lineFoes.forEach(x => {
-          hit(b, u, x, tierRoll(u, 4, 8), { kind: 'phys', ty: 'bludgeoning', melee: 1, area: 1, ab: 1 });
+          hit(b, u, x, tierRoll(u, 3, 8), { kind: 'phys', ty: 'bludgeoning', melee: 1, area: 1, ab: 1 });
           if (x.alive) stun(b, x, 1.5);
         });
         enterZealotRage(b, u, 4);
         callout(b, u, 'UNDYING MONUMENT!', '#ffe9a0');
       } else {
-        const dice = P === 0 ? 2 : 3;
-        hit(b, u, t, tierRoll(u, dice, 8), { kind: 'phys', ty: 'bludgeoning', melee: 1, ab: 1 });
+        hit(b, u, t, tierRoll(u, 2, P === 0 ? 6 : 8), { kind: 'phys', ty: 'bludgeoning', melee: 1, ab: 1 });
         if (P === 2) enterZealotRage(b, u, 3);
       }
     }
@@ -976,7 +977,7 @@ hero('mother_laurel', {
   hp: 132, ac: 14, sr: 14,
   kw: { aura: 1, smite: 1 },
   ckw: [
-    { k: 'aura', sub: 'Verdant Aura', x: 'Heals for 40% of all damage she deals; adjacent allies heal for half as much (20%).' },
+    { k: 'aura', sub: 'Verdant Aura', x: 'Heals for 50% of all damage she deals; adjacent allies heal for half as much (25%).' },
     { k: 'smite', sub: 'Verdant Smite', x: 'Attacks against Rooted foes deal +1d4 Nature (Magic) Smite damage.' }
   ],
   f: { verdantCleave: 1, verdantAura: 1, verdantSmite: 1 },
@@ -985,16 +986,16 @@ hero('mother_laurel', {
     n: 'Nature’s Wrath', cr: 11.5, pa: 9, cut: [6, 13], self: 1,
     one: 'Roots adjacent foes with Nature damage; High Smites every Rooted enemy, Nat 20 Roots within 2 squares & Smites twice.',
     b: [
-      'Roots adjacent foes (2.5s) for 2d6 Nature damage.',
-      'Roots adjacent foes (3s) for 3d6 Nature damage.',
-      'Roots adjacent foes (3s, 3d6) and triggers Verdant Smite on every Rooted enemy on the board.',
-      'Roots all foes within 2 squares (4s, 4d6) and triggers Verdant Smite on them twice!'
+      'Roots adjacent foes (2.5s) for 1d6 Nature damage.',
+      'Roots adjacent foes (3s) for 2d6 Nature damage.',
+      'Roots adjacent foes (3s, 2d6) and triggers Verdant Smite on every Rooted enemy on the board.',
+      'Roots all foes within 2 squares (4s, 3d6) and triggers Verdant Smite on them twice!'
     ],
     fx(b, u, P) {
       const rad = P === 3 ? 2 : 1;
       const near = foes(b, u).filter(x => !x.hidden && hd(x, u) <= rad);
       const list = near.length ? near : foes(b, u).filter(x => !x.hidden).sort((a, c) => hd(a, u) - hd(c, u)).slice(0, 2);
-      const dice = [2, 3, 3, 4][P];
+      const dice = [1, 2, 2, 3][P];
       const dur = [2.5, 3, 3, 4][P] * chaK(u);
       b.events.push({ k: 'area', id: u.id, shape: 'nova', r: rad, ty: 'poison', ids: list.map(x => x.id) });
       list.forEach(x => {
@@ -1301,14 +1302,14 @@ hero('gains', {
     { k: 'arcane_recovery', sub: 'Transmutation', x: 'Whenever Gold drops in combat, Gains recovers +15 Charge.' }
   ],
   f: { transmuter: 1, goldBolt: 1 },
-  atk: { n: 'Alchemical Bolt', d: [1, 6], flat: 0, kind: 'magic', ty: 'force', iv: 1.75 },
+  atk: { n: 'Alchemical Bolt', d: [1, 8], flat: 1, kind: 'magic', ty: 'force', iv: 1.55 },
   abil: {
-    n: 'Gilded Beam', cr: 6.8, pa: 10, cut: [6, 13], self: 1,
-    one: 'Heavy force beam marking target Gilded (+1 Gold on death); High hits 2 foes, Nat 20 scales with Gold held & Gilds nearby.',
+    n: 'Gilded Beam', cr: 8.0, pa: 10, cut: [6, 13], self: 1,
+    one: 'Heavy Gold-scaled force beam marking target Gilded (+1 Gold on death); High hits 2 foes, Nat 20 doubles Gold bonus & Gilds nearby.',
     b: [
-      'Fires a heavy force beam (3d8) and marks the foe Gilded (+1 Gold on death).',
-      'Fires a heavy force beam (4d8) and marks the foe Gilded (+1 Gold on death).',
-      'Fires heavy force beams (5d8) at 2 foes and marks both Gilded.',
+      'Fires a heavy force beam (3d8 + ½ Gold held) and marks the foe Gilded (+1 Gold on death).',
+      'Fires a heavy force beam (4d8 + ½ Gold held) and marks the foe Gilded (+1 Gold on death).',
+      'Fires heavy force beams (5d8 + ½ Gold held) at 2 foes and marks both Gilded.',
       'Blasts target (6d8 + Gold held) and marks nearby foes Gilded!'
     ],
     fx(b, u, P) {
@@ -1317,7 +1318,7 @@ hero('gains', {
       const ord = fs.slice().sort((a, c) => (a.st.gilded ? 1 : 0) - (c.st.gilded ? 1 : 0) || c.hp - a.hp);
       const list = P === 2 ? ord.slice(0, 2) : [ord[0]];
       const dice = [3, 4, 5, 6][P];
-      const goldBonus = P === 3 ? Math.min(45, (u.goldHeld || 0)) : 0;
+      const goldBonus = P === 3 ? Math.min(45, (u.goldHeld || 0)) : Math.min(20, Math.floor((u.goldHeld || 0) * 0.5));
       list.forEach(t => {
         b.events.push({ k: 'proj', s: u.id, t: t.id, ty: 'force' });
         hit(b, u, t, tierRoll(u, dice, 8) + goldBonus, { kind: 'magic', ty: 'force', ab: 1 });
@@ -1415,7 +1416,7 @@ hero('corvin', {
   bio: 'Twin-bladed ambush hunter who opens fast and shreds Marked foes with a blur of steel.',
   attr: { str: 12, dex: 16, con: 12, int: 10, wis: 14, cha: 10 },
   prim: 'dex', pair: ['dex', 'wis'],
-  hp: 102, ac: 14, sr: 12,
+  hp: 112, ac: 14, sr: 13,
   kw: { hunters_mark: 1 },
   ckw: [
     { k: 'hunters_mark', sub: 'Quarry Focus', x: 'Marked foes take +1d4 bonus damage from every hit (stacks).' }
@@ -1425,11 +1426,11 @@ hero('corvin', {
   atk: { n: 'Twin Shortswords', d: [1, 6], flat: 1, kind: 'phys', ty: 'slashing', iv: 1.35, hits: 2 },
   abil: {
     n: 'Dread Ambush', cr: 9.0, pa: 8, cut: [6, 13], self: 1,
-    one: 'Applies Hunter’s Mark & unleashes 2–4 melee strikes (on-hit); High enters Stealth, Nat 20 spawns a Shadow Echo.',
+    one: 'Applies Hunter’s Mark & unleashes 2–4 melee strikes (on-hit); Mid+ enters Stealth, Nat 20 spawns a Shadow Echo.',
     b: [
       'Applies Hunter’s Mark and unleashes 2 rapid melee strikes (on-hit).',
-      'Applies Hunter’s Mark and unleashes 3 rapid melee strikes (on-hit).',
-      'Applies Hunter’s Mark, unleashes 3 rapid strikes, and enters Stealth (2s).',
+      'Applies Hunter’s Mark, unleashes 3 rapid strikes (on-hit), and enters Stealth (1.5s).',
+      'Applies Hunter’s Mark, unleashes 3 rapid strikes, and enters Stealth (2.5s).',
       'Applies Hunter’s Mark, unleashes 4 rapid strikes, and spawns a Shadow Echo repeating the spin!'
     ],
     fx(b, u, P) {
@@ -1456,7 +1457,8 @@ hero('corvin', {
       };
       const count = [2, 3, 3, 4][P];
       spin(0, count);
-      if (P >= 2) triggerCunningAction(b, u, t, { stealth: 2, label: 'GLOOM STEALTH' });
+      if (P === 1) triggerCunningAction(b, u, t, { stealth: 1.5, label: 'GLOOM STEALTH' });
+      else if (P >= 2) triggerCunningAction(b, u, t, { stealth: 2.5, label: 'GLOOM STEALTH' });
       if (P === 3 || (P === 2 && u.questDone)) {
         spin(count * .07 + .12, count);
         callout(b, u, 'SHADOW ECHO!', '#c48fe6');
@@ -1493,10 +1495,10 @@ hero('saint', {
     n: 'Toll the Dead', cr: 12.5, pa: 8, cut: [5, 13], self: 1,
     one: 'Inflicts necrotic damage + Necrosis (d12 vs wounded); High refreshes Invoke Duplicity, Nat 20 also Staggers & Exposes farthest foe.',
     b: [
+      'Rings the bell for 1d8 (1d12 if wounded) necrotic + Necrosis.',
       'Rings the bell for 2d8 (2d12 if wounded) necrotic + Necrosis.',
-      'Rings the bell for 3d8 (3d12 if wounded) necrotic + Necrosis.',
-      'Rings the bell for 3d8/3d12 necrotic + Necrosis and refreshes Invoke Duplicity.',
-      'Rings the bell for 4d8/4d12 necrotic + Necrosis, refreshes Invoke Duplicity, and Staggers + Exposes farthest foe!'
+      'Rings the bell for 2d8/2d12 necrotic + Necrosis and refreshes Invoke Duplicity.',
+      'Rings the bell for 3d8/3d12 necrotic + Necrosis, refreshes Invoke Duplicity, and Staggers + Exposes farthest foe!'
     ],
     fx(b, u, P) {
       const fs = foes(b, u).filter(x => !x.hidden);
@@ -1505,7 +1507,7 @@ hero('saint', {
         if (!t || !t.alive) return;
         const wounded = t.hp < t.maxHp * .99;
         const dieS = wounded ? 12 : 8;
-        const dice = [2, 3, 3, 4][P];
+        const dice = [1, 2, 2, 3][P];
         const nec = [10, 14, 18, 22][P] + Math.max(0, u.m.wis) * 2;
         b.events.push({ k: 'proj', s: srcUnit.id, t: t.id, ty: 'necrotic' });
         hit(b, u, t, tierRoll(u, dice, dieS), { kind: 'magic', ty: 'necrotic', nec, ab: 1 });
@@ -1572,9 +1574,9 @@ hero('kaska', {
     n: 'Moonlit Pounce', cr: 12.5, pa: 9, cut: [6, 13], self: 1,
     one: 'Leaps onto a foe dealing slashing damage & Exposed; High adds Root & re-shifts Panther Form, Nat 20 Stuns, re-shifts & heals party.',
     b: [
-      'Pounces target for 2d8 slashing and applies Exposed (3s).',
-      'Pounces target for 3d8 slashing and applies Exposed (4s).',
-      'Pounces for 3d8 + Exposed + Root and re-shifts into Panther Form.',
+      'Pounces target for 1d8 slashing and applies Exposed (3s).',
+      'Pounces target for 2d8 slashing and applies Exposed (4s).',
+      'Pounces for 2d8 + Exposed + Root, heals lowest-HP ally (1d6 + WIS), and re-shifts Panther Form.',
       'Stuns target (2s), re-shifts into Panther Form, and heals the entire party (3d6 + WIS)!'
     ],
     fx(b, u, P) {
@@ -1584,12 +1586,16 @@ hero('kaska', {
       const spot = walkNbrs(t).filter(h => freeHex(b, h, u)).sort((a, c) => hd(a, u) - hd(c, u))[0];
       if (spot && hd(u, t) > 1) { u.c = spot.c; u.r = spot.r; u.target = t; b.events.push({ k: 'leap', id: u.id }); }
       b.events.push({ k: 'area', id: u.id, tid: t.id, shape: P === 3 ? 'nova' : 'splash', r: P === 3 ? 2 : 1, ty: 'cold', ids: [t.id] });
-      hit(b, u, t, tierRoll(u, P === 0 ? 2 : 3, 8), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
+      hit(b, u, t, tierRoll(u, P === 0 ? 1 : 2, 8), { kind: 'phys', ty: 'slashing', melee: 1, ab: 1 });
       if (t.alive) {
         expose(b, t, (P === 0 ? 3 : 4) * chaK(u));
         if (P >= 2) applyRoot(b, u, t, 3 * chaK(u));
       }
       u.stats.pounces = (u.stats.pounces || 0) + 1;
+      if (P === 2) {
+        const low = friends(b, u).filter(a => !a.minion).sort((a, c) => hpPct(a) - hpPct(c))[0];
+        if (low) heal(b, u, low, tierRoll(u, 1, 6) + Math.max(0, u.m.wis) * 2, { raw: 1 });
+      }
       if (P >= 2) {
         const bhp = Math.round(u.maxHp * (u.f.lunarResilience ? .45 : .32));
         u.beast = { hp: bhp, max: bhp };
