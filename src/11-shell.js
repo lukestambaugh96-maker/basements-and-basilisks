@@ -1109,9 +1109,11 @@ if (typeof initAssets === 'function') {
     HERO_ORDER.forEach(k => { PORTRAIT[k] = tokenCanvas(k, 96); });
     mapDirty = true;
     if (PHASE === 'start') renderTitle();
+    else if (PHASE === 'pick' && RUN) renderPick();
     else if (PHASE === 'shop' && RUN) renderShop();
     else if (PHASE === 'advmap' && RUN) renderMap();
     else if (PHASE === 'packs' && RUN) renderPacks();
+    else if (PHASE === 'combat') { renderStrip(); drawBoard(); }
   });
 }
 document.fonts && document.fonts.ready.then(() => { if (PHASE === 'combat') resize(); });

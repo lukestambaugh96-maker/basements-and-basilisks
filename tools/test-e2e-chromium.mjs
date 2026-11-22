@@ -306,6 +306,17 @@ async function main() {
   console.log('WIKI CHECK:', { ...wikiCheck, itemRows });
   assert(wikiCheck.rosterRows === 24 && wikiCheck.dossierText > 200 && itemRows === 82 && wikiCheck.bossRows === 10 && wikiCheck.botRows === 5, 'Wiki v0.23 check failed');
 
+  // Verify Asset Studio loads cleanly with 30 assigned hero/form art slots and 0 errors!
+  await send('Page.navigate', { url: 'http://127.0.0.1:8081/tools/asset-studio.html' });
+  await new Promise(r => setTimeout(r, 800));
+  const studioCheck = await evalJS(`({
+    cards: document.querySelectorAll('#grid .card').length,
+    assignedCards: document.querySelectorAll('#grid .card.assigned').length,
+    cov: document.getElementById('covLine')?.textContent || ''
+  })`);
+  console.log('ASSET STUDIO CHECK:', studioCheck);
+  assert(studioCheck.cards === 24 && studioCheck.assignedCards === 24 && studioCheck.cov.includes('30 /'), 'Asset Studio check failed: ' + JSON.stringify(studioCheck));
+
   assert(errors.length === 0, 'Browser errors detected: ' + JSON.stringify(errors));
   console.log('ALL v0.23 CHROMIUM E2E ASSERTIONS PASSED (0 errors)!');
   ws.close();

@@ -115,7 +115,8 @@ const THEMES_META = {
   forest:  { name: 'Forest Theme',  sub: 'Default background for woodland encounters', color: '#4b5a33' },
   cave:    { name: 'Cave Theme',    sub: 'Default background for cavern & spider encounters', color: '#4a443d' },
   tavern:  { name: 'Tavern Theme',  sub: 'Default background for indoor/tavern encounters', color: '#6a4a2c' },
-  dungeon: { name: 'Dungeon Theme', sub: 'Default background for stone keep & boss encounters', color: '#4e4b47' }
+  dungeon: { name: 'Dungeon Theme', sub: 'Default background for stone keep & boss encounters', color: '#4e4b47' },
+  hells:   { name: 'The Hells Theme', sub: 'Act 3 infernal obsidian & brimstone lava battlegrounds', color: '#4a1814' }
 };
 
 const QUEST_FORMS = [
@@ -146,16 +147,16 @@ function buildCatalog() {
       sub: `${E[k].boss ? 'Boss' : E[k].elite ? 'Elite' : 'Regular'} · ${E[k].role || 'Foe'}`,
       suggested: `assets/enemies/${k}.png`
     })),
-    items: ITEM_ORDER.map(k => ({
+    items: ALL_ITEM_KEYS.map(k => ({
       cat: 'items', key: k, name: ITEMS[k].n,
-      sub: `${RARITY[ITEMS[k].r].n}${ITEMS[k].packOnly ? ' · Pack Item' : ' · Core Shop'}`,
+      sub: `${RARITY[ITEMS[k].r].n}${ITEMS[k].r === 5 ? ` · Curio Unique (${ITEMS[k].cls || 'Class'})` : ' · Standard Shop'}`,
       suggested: `assets/items/${k}.png`
     })),
     maps: [
       ...Object.entries(THEMES_META).map(([k, v]) => ({
         cat: 'maps', key: k, name: v.name, sub: v.sub, suggested: `assets/maps/${k}.png`, color: v.color
       })),
-      ...Object.keys(ENC).map(k => ({
+      ...Object.keys(ENC).filter(k => k !== 'spider').map(k => ({
         cat: 'maps', key: k, name: `${ENC[k].n || k} (Encounter)`,
         sub: `Overrides ${ENC[k].theme} theme · ${ENC[k].place || ''}`,
         suggested: `assets/maps/${k}.png`, color: (THEMES_META[ENC[k].theme] || {}).color || '#3e3a35'

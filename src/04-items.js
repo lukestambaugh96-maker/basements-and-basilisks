@@ -511,6 +511,7 @@ const ITEMS = {
 };
 
 const ALL_ITEM_KEYS = Object.keys(ITEMS);
+const ITEM_ORDER = ALL_ITEM_KEYS;
 const COMMON_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r === 0);
 const STANDARD_ITEM_KEYS = ALL_ITEM_KEYS.filter(k => ITEMS[k].r <= 4);
 const CORE_ITEM_KEYS = STANDARD_ITEM_KEYS;
