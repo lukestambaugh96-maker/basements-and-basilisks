@@ -58,6 +58,8 @@ function toast(t) {
   _toastT = setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.hidden = true, 260); }, 2100);
 }
 const gold = n => `${n} <span class="coin"></span>`;
+const goldHub = (n, { dark = false, sm = false, extra = '' } = {}) =>
+  `<div class="gold-hub${dark ? ' dark' : ''}${sm ? ' sm' : ''}" title="Your spendable gold"><span class="coin coin-lg"></span><span class="gh-val"><b class="gh-num">${n}</b><span class="gh-lbl">GOLD</span></span>${extra}</div>`;
 const piggyTxt = () => RUN.piggyBroken
   ? '<i class="pig broke" title="Piggy Bank broken: your next loss ends the run">Broken</i>'
   : `<i class="pig" title="Wins fill the Piggy Bank. Your first loss breaks it, pays out all saved gold, and lets you shop and retry.">${gold(RUN.piggy)}</i>`;
@@ -285,7 +287,11 @@ function renderMap() {
 
   $('mapBoard').innerHTML = `<svg class="maplines" viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}">${lines.join('')}</svg>${nodes}`;
   $('mapHead').innerHTML = `<div><div class="lbl">Act ${A.act} of ${ADV.acts} · ${esc(actMod.sub)}</div><h2>${esc(actMod.name)}</h2></div>
-    <div class="row" style="gap:14px;align-items:center"><span title="Piggy Bank (single free loss)">Piggy: ${piggyTxt()}</span><b class="goldbig">${gold(RUN.gold)}</b><span class="small mute">${RUN.stats.won} wins</span><button class="btn primary" data-a="openCampShop">Open Camp Shop</button></div>`;
+    <div class="maphead-center">
+      ${goldHub(RUN.gold)}
+      <div class="hud-submeta"><span title="Piggy Bank (single free loss)">Piggy: ${piggyTxt()}</span><span>${RUN.stats.won} wins</span></div>
+    </div>
+    <div class="maphead-act"><button class="btn primary" data-a="openCampShop">Open Camp Shop</button></div>`;
 
   // Sidebar: only display accepted / completed quests (strict progressive disclosure!)
   const activeQs = RUN.team.filter(h => (h.questActive || h.questDone) && H[h.key].quest);
@@ -388,7 +394,7 @@ function eventModal(k, arg) {
   if (k === 'curio') {
     const C = RUN.adv.curio || rollCurioStock(RUN);
     RUN.adv.curio = C;
-    openModal(`<div class="mpanel"><div class="lbl">⚖ Curio Merchant · Unique Class-Keyword Relics</div><h2>Curiosities for Your Party (${gold(RUN.gold)})</h2>
+    openModal(`<div class="mpanel"><div class="modal-head-gold"><div><div class="lbl">⚖ Curio Merchant · Unique Class-Keyword Relics</div><h2>Curiosities for Your Party</h2></div>${goldHub(RUN.gold, { sm: true })}</div>
       <p class="mute small">Stocked with Unique Trigger &amp; Modifier relics matching your party’s Class Keywords (5g each).</p>
       <div class="evitems">${C.items.map((e, i) => {
         const it = ITEMS[e.key], R = RARITY[it.r];
@@ -431,7 +437,7 @@ function eventModal(k, arg) {
       return;
     }
     if (M.type === 'peddler') {
-      openModal(`<div class="mpanel"><div class="lbl">? Mystery · Discount Peddler</div><h2>${esc(M.title)} (${gold(RUN.gold)})</h2>
+      openModal(`<div class="mpanel"><div class="modal-head-gold"><div><div class="lbl">? Mystery · Discount Peddler</div><h2>${esc(M.title)}</h2></div>${goldHub(RUN.gold, { sm: true })}</div>
         <div class="evitems">${M.items.map((e, i) => {
           const it = ITEMS[e.key], R = RARITY[it.r];
           const dis = e.bought || RUN.gold < e.price || RUN.stash.length >= ECON.stash;
@@ -441,7 +447,8 @@ function eventModal(k, arg) {
       return;
     }
     const ev = M.event;
-    openModal(`<div class="mpanel"><div class="lbl">? Mystery Event · ${esc(currentActModule(RUN).name)}</div><h2>${esc(ev.n)}</h2>
+    const hasCost = (ev.choices || []).some(ch => ch.cost);
+    openModal(`<div class="mpanel">${hasCost ? `<div class="modal-head-gold"><div><div class="lbl">? Mystery Event · ${esc(currentActModule(RUN).name)}</div><h2>${esc(ev.n)}</h2></div>${goldHub(RUN.gold, { sm: true })}</div>` : `<div class="lbl">? Mystery Event · ${esc(currentActModule(RUN).name)}</div><h2>${esc(ev.n)}</h2>`}
       <p style="line-height:1.5;margin:8px 0 14px">${esc(ev.body)}</p>
       <div class="evquests">${ev.choices.map((ch, i) => `<button class="evquest" data-a="mysteryChoice" data-i="${i}" ${ch.cost && RUN.gold < ch.cost ? 'disabled' : ''}><span><b>${esc(ch.label)}</b></span></button>`).join('')}</div></div>`, null, true);
     return;
@@ -481,7 +488,7 @@ function renderShop() {
   const R = RUN;
   if (SHOP_SEL_ITEM != null && !R.stash[SHOP_SEL_ITEM]) SHOP_SEL_ITEM = null;
   const actMod = currentActModule(R);
-  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div><div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div><div class="stat"><b class="goldbig">${gold(R.gold)}</b><span>Gold</span></div>`;
+  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div>${goldHub(R.gold)}<div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div>`;
 
   // v0.23 Camp Shop Flow Flip: Act Boss Reminder banner (NO combat spoiler!) — except Piggy Bank Retry!
   if (R.adv && R.adv.retryPending && R.next) {
@@ -534,6 +541,8 @@ function renderShop() {
   $('offers').innerHTML = R.shop.heroes.map((k, i) => heroOfferCard(k, i, partyTagSet, partyKwSet)).join('');
   $('itemOffers').innerHTML = R.shop.items.map((k, i) => itemOfferCard(k, i, partyKwSet)).join('');
 
+  const sp = $('shopPurse');
+  if (sp) sp.innerHTML = `<span class="coin"></span><b>${R.gold}</b><span class="sp-lbl">gold</span>`;
   const rp = rerollPrice(R);
   $('rerollBtn').innerHTML = `Reroll · ${gold(rp)}`; $('rerollBtn').disabled = R.gold < rp;
   $('freezeBtn').textContent = R.shop.frozen ? '❄ Shop Frozen' : 'Freeze Shop';
@@ -601,11 +610,12 @@ function itemOfferCard(k, i, partyKwSet) {
   return `<div class="io18${RUN.shop.frozen ? ' locked' : ''}${kwMatches.length ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div><div class="small mute">${esc(itemStatsText(it))}</div>${favLine}</div></div>`;
 }
 
-function heroCardModal(h, extra) {
+function heroCardHtml(h, extra) {
   const cfg = cfgOf(h, RUN);
   const items = h.items.length ? `<div class="citems"><span class="lbl">Carrying (${h.items.length}/${slotsOf(h)})</span>${h.items.map(k => `<div>${itemIcon(k, 28)}<span><b>${esc(ITEMS[k].n)}</b> · ${glossarize(itemText(k))}</span></div>`).join('')}</div>` : '';
-  openModal(largeCard(h.key, h.tier, { cfg, heroObj: h, items, foot: extra || '' }));
+  return largeCard(h.key, h.tier, { cfg, heroObj: h, items, foot: extra || '' });
 }
+function heroCardModal(h, extra) { openModal(heroCardHtml(h, extra)); }
 
 function pathModal(h, sel) {
   const d = H[h.key]; sel = sel || d.paths[0].k; const cfg = { ...cfgOf(h, RUN), path: sel };
@@ -628,26 +638,56 @@ function swapModal(i) {
 }
 
 /* ---------- Placement & Combat ---------- */
-let SEL_ITEM = null;
+let SEL_ITEM = null, BATTLE_FEED = [], INSPECT = null, _inspSig = '';
+const MAP_TILE_INFO = [
+  ['O', 'Pillar / Tree', 'Blocks move & sight'],
+  ['c', 'Crates / Tables', 'Blocks move, not sight'],
+  [',', 'Rough Terrain', 'Slows movement'],
+  ['v', 'Tall Brush', 'Conceals units inside'],
+  ['~', 'Deep Water', 'Blocks move, not sight'],
+  ['_', 'Chasm', 'Pushed units fall in'],
+  ['^', 'Fire', 'Burns units on tile'],
+  ['w', 'Web', 'Roots units for 1.2s'],
+  ['a', 'Arrow Slit', 'Blocks move, allows sight'],
+  ['x', 'Powder Barrel', 'Explodes from fire/AoE']
+];
+
+const hasRightInspector = () => window.innerWidth >= 1020 && !!$('cCardSlot') && !$('combat').hidden;
+
 function renderItemTray() {
   const pb = $('pbench'); if (!pb) return;
-  if (B) { pb.hidden = true; return; }
+  if (B || !RUN.stash.length) { pb.hidden = true; return; }
   pb.hidden = false;
-  if (!RUN.stash.length) { pb.innerHTML = `<span class="small mute">Item stash is empty — buy items at Camp Shop or Curio Merchants.</span>`; return; }
-  pb.innerHTML = `<span class="lbl" style="margin-right:8px">Equip items</span>` + RUN.stash.map((k, i) =>
-    `<button class="titem${SEL_ITEM === i ? ' sel' : ''}" data-a="trayItem" data-i="${i}" title="${esc(ITEMS[k].n)}: ${esc(itemText(k))}">${itemIcon(k, 34)}<span>${esc(ITEMS[k].n)}</span></button>`
-  ).join('') + (SEL_ITEM != null ? `<span class="small mute" style="margin-left:8px">Click a hero below to equip ${esc(ITEMS[RUN.stash[SEL_ITEM]].n)}</span>` : '');
+  pb.innerHTML = `<div class="pbench-head"><span class="lbl">Stash</span><span class="small mute">${RUN.stash.length}</span></div><div class="pbench-list">` + RUN.stash.map((k, i) =>
+    `<button class="titem${SEL_ITEM === i ? ' sel' : ''}" data-a="trayItem" data-i="${i}" title="${esc(ITEMS[k].n)}: ${esc(itemText(k))}">${itemIcon(k, 26)}<span>${esc(ITEMS[k].n)}</span></button>`
+  ).join('') + `</div>` + (SEL_ITEM != null ? `<div class="pbench-tip">Click hero to equip</div>` : '');
+}
+
+function defaultInspect() {
+  if (!B) {
+    const foes = setupUnits().filter(x => x.side === 'E').sort((a, b) => (b.boss ? 2 : b.elite ? 1 : 0) - (a.boss ? 2 : a.elite ? 1 : 0));
+    if (foes.length) return { kind: 'enemy', idx: foes[0].idx };
+    const hs = boardHeroes(RUN);
+    return hs.length ? { kind: 'hero', key: hs[0].key } : null;
+  }
+  const foes = B.units.filter(x => x.side === 'E' && x.alive).sort((a, b) => (b.boss ? 2 : b.elite ? 1 : 0) - (a.boss ? 2 : a.elite ? 1 : 0));
+  if (foes.length) return { kind: 'enemy', uid: foes[0].id };
+  const hs = boardHeroes(RUN);
+  return hs.length ? { kind: 'hero', key: hs[0].key } : null;
 }
 
 function goPlacement() {
   clearTimeout(_resTimer); _resTimer = 0;
-  B = null; running = false; paused = false; FX = []; resultShown = false; SEL_ITEM = null;
+  B = null; running = false; paused = false; FX = []; resultShown = false; SEL_ITEM = null; BATTLE_FEED = []; _inspSig = '';
+  if (typeof HOVER_HERO !== 'undefined') HOVER_HERO = null;
+  if (typeof HOVER_ENEMY !== 'undefined') HOVER_ENEMY = null;
   autoPlace(RUN); S.party = boardHeroes(RUN); S.sel = null; S.selE = null;
   loadMap(ENC.run.map); mapDirty = true; _setupKey = '';
-  $('result').hidden = true; show('combat'); renderCombatBar(); renderStrip();
+  INSPECT = defaultInspect();
+  $('result').hidden = true; show('combat'); renderCombatBar(); renderStrip(); renderInspector(); renderIntel();
   requestAnimationFrame(() => resize());
   const hazTxt = RUN.next && RUN.next.hazard && HAZARDS[RUN.next.hazard] ? ` Hazard: ${HAZARDS[RUN.next.hazard].n} (${HAZARDS[RUN.next.hazard].x})` : '';
-  $('hint').hidden = false; $('hint').textContent = 'Drag heroes onto gold deploy squares (dashed lines preview closest-ally targets), then begin.' + hazTxt;
+  $('hint').hidden = false; $('hint').textContent = 'Drag heroes onto gold deploy squares, then begin.' + hazTxt;
   saveRun();
 }
 
@@ -656,35 +696,211 @@ function renderCombatBar() {
   const hazChip = N && N.hazard && HAZARDS[N.hazard] ? ` <span class="hazchip">${HAZARDS[N.hazard].g} ${esc(HAZARDS[N.hazard].n)}</span>` : '';
   $('cTitle').innerHTML = `${advLabel()} · ${esc(N.n)}${N.boss ? ' <span class="bossb">BOSS</span>' : ''}${hazChip}`;
   $('cSub').textContent = (ENC.run && ENC.run.note) || N.q || '';
-  $('cStats').innerHTML = `<span title="Piggy Bank">Piggy: ${piggyTxt()}</span><span>${gold(RUN.gold)}</span><span id="cGold"></span><span>Wins ${RUN.stats.won}</span>`;
+  $('cStats').innerHTML = `${goldHub(RUN.gold, { dark: true, extra: '<span class="gh-loot" id="cGold" hidden></span>' })}<span class="cmeta"><span title="Piggy Bank">Piggy ${piggyTxt()}</span><span class="csep">·</span><span>Wins ${RUN.stats.won}</span></span>`;
   const sp = [0.5, 1, 2, 4].map(v => `<button class="btn${S.speed === v ? ' on' : ''}" data-a="spd" data-v="${v}">${v}×</button>`).join('');
   $('cCtl').innerHTML = B
-    ? `${sp}<button class="btn" data-a="pause">${paused ? 'Resume' : 'Pause'}</button><button class="btn" data-a="sound">${S.sound ? 'Sound on' : 'Sound off'}</button><button class="btn" data-a="btext">${BTXT === 'all' ? 'All text' : 'Key text'}</button>`
+    ? `<span class="ctimer" id="cTimer">⏱ ${B.time.toFixed(1)}s</span>${sp}<button class="btn" data-a="pause">${paused ? 'Resume' : 'Pause'}</button><button class="btn" data-a="sound">${S.sound ? 'Sound' : 'Muted'}</button><button class="btn" data-a="btext">${BTXT === 'all' ? 'All txt' : 'Key txt'}</button>`
     : `<button class="btn" data-a="autoplace">Auto place</button><button class="btn primary" data-a="begin-battle">Begin battle</button>`;
 }
 
 function startBattle() {
   clearTimeout(_resTimer); _resTimer = 0;
   if ($('pbench')) $('pbench').hidden = true;
+  if (typeof HOVER_HERO !== 'undefined') HOVER_HERO = null;
+  if (typeof HOVER_ENEMY !== 'undefined') HOVER_ENEMY = null;
   B = newBattle('run', partyCfg(RUN), 1);
-  running = true; paused = false; resultShown = false; FX = []; simAcc = 0;
-  $('hint').hidden = true; renderCombatBar(); renderStrip();
+  running = true; paused = false; resultShown = false; FX = []; simAcc = 0; BATTLE_FEED = []; _inspSig = '';
+  // Carry over inspected hero, or map inspected setup enemy to live enemy unit
+  if (!INSPECT) INSPECT = defaultInspect();
+  else if (INSPECT.kind === 'enemy') {
+    const liveE = B.units.filter(x => x.side === 'E');
+    const match = (INSPECT.idx != null && liveE[INSPECT.idx]) || liveE.sort((a, b) => (b.boss ? 2 : b.elite ? 1 : 0) - (a.boss ? 2 : a.elite ? 1 : 0))[0];
+    INSPECT = match ? { kind: 'enemy', uid: match.id } : defaultInspect();
+  }
+  $('hint').hidden = true; renderCombatBar(); renderStrip(); renderInspector(); renderIntel();
+  requestAnimationFrame(() => resize());
 }
 
 function renderStrip() {
   const hs = boardHeroes(RUN);
   renderItemTray();
-  $('strip').innerHTML = hs.map(h => `<button class="pc" style="${roleStyle(h.key, h.tier)}" data-a="pcard" data-u="${h.uid}" data-key="${h.key}">${iconSlot(h.key, 44)}<div style="min-width:0"><div class="pn">${esc(H[h.key].name)}<i>${rom[h.tier]}${h.questDone ? '★' : ''}</i></div><div class="pbar"><i style="width:100%"></i><u style="left:100%;width:0"></u><s style="width:0"></s></div><div class="pbar ch"><i style="width:0"></i></div>${!B ? `<div class="pitems">${Array.from({ length: slotsOf(h) }, (_, j) => h.items[j] ? `<span class="pit" data-a="trayOff" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}: click to unequip">${itemIcon(h.items[j], 22)}</span>` : `<span class="pit empty"></span>`).join('')}</div>` : ''}</div></button>`).join('');
+  $('strip').innerHTML = hs.map(h => {
+    const st = heroStats(cfgOf(h, RUN));
+    const shortName = H[h.key].name.replace(/^(Mother|Brother|Sister|Sir|Old)\s+/i, '').split(' ')[0];
+    const active = INSPECT && INSPECT.kind === 'hero' && INSPECT.key === h.key ? ' active' : '';
+    return `<button class="pc${active}" style="${roleStyle(h.key, h.tier)}" data-a="pcard" data-u="${h.uid}" data-key="${h.key}" data-hover-hero="${h.key}" title="${esc(H[h.key].name)} · Click to view Hero Card">
+      ${iconSlot(h.key, 36)}
+      <div class="pc-body">
+        <div class="pc-top"><span class="pc-name-wrap"><span class="pn">${esc(shortName)}</span><i class="pc-tier">${rom[h.tier]}${h.questDone ? '★' : ''}</i></span></div>
+        <div class="pbar"><i style="width:100%"></i><u style="left:100%;width:0"></u><s style="width:0"></s></div>
+        <div class="pbar ch"><i style="width:0"></i></div>
+        <div class="pc-sub"><span class="pc-hp">${st.maxHp}</span><span class="pc-tags"></span></div>
+        ${!B ? `<div class="pitems">${Array.from({ length: slotsOf(h) }, (_, j) => h.items[j] ? `<span class="pit" data-a="trayOff" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}: click to unequip">${itemIcon(h.items[j], 18)}</span>` : `<span class="pit empty"></span>`).join('')}</div>` : ''}
+      </div>
+    </button>`;
+  }).join('');
   paintTokens($('strip')); paintCanvases($('strip')); updateStrip();
+}
+
+function renderInspectorPicks() {
+  const box = $('inspPicks'); if (!box || !RUN) return;
+  const hs = boardHeroes(RUN);
+  const heroBtns = hs.map(h => {
+    const on = INSPECT && INSPECT.kind === 'hero' && INSPECT.key === h.key ? ' on' : '';
+    const dead = B && !B.units.some(x => x.side === 'P' && !x.minion && x.key === h.key && x.alive) ? ' dead' : '';
+    return `<button class="ipick p${on}${dead}" data-a="inspHero" data-key="${h.key}" data-hover-hero="${h.key}" title="${esc(H[h.key].name)}">${iconSlot(h.key, 26)}</button>`;
+  }).join('');
+
+  let foeBtns = '';
+  if (!B) {
+    const seen = new Set();
+    const list = setupUnits().filter(x => x.side === 'E').sort((a, b) => (b.boss ? 2 : b.elite ? 1 : 0) - (a.boss ? 2 : a.elite ? 1 : 0));
+    const unique = list.filter(x => { if (seen.has(x.key)) return false; seen.add(x.key); return true; });
+    foeBtns = unique.map(su => {
+      const on = INSPECT && INSPECT.kind === 'enemy' && (INSPECT.idx === su.idx || (INSPECT.idx != null && setupUnits().find(x => x.side === 'E' && x.idx === INSPECT.idx)?.key === su.key)) ? ' on' : '';
+      return `<button class="ipick e${su.boss ? ' boss' : ''}${on}" data-a="inspEnemy" data-idx="${su.idx}" data-hover-enemy="${su.idx}" title="${esc(su.name)}"><img src="${portraitURL(su.key)}" alt="" /></button>`;
+    }).join('');
+  } else {
+    const seen = new Set();
+    const list = B.units.filter(x => x.side === 'E').slice().sort((a, b) => (b.boss ? 2 : b.elite ? 1 : 0) - (a.boss ? 2 : a.elite ? 1 : 0) || (b.alive - a.alive));
+    const unique = list.filter(x => { if (seen.has(x.key)) return false; seen.add(x.key); return true; });
+    foeBtns = unique.map(u => {
+      const on = INSPECT && INSPECT.kind === 'enemy' && INSPECT.uid === u.id ? ' on' : '';
+      return `<button class="ipick e${u.boss ? ' boss' : ''}${on}${u.alive ? '' : ' dead'}" data-a="inspEnemy" data-uid="${u.id}" data-hover-uid="${u.id}" title="${esc(u.name)}"><img src="${portraitURL(u.key)}" alt="" /></button>`;
+    }).join('');
+  }
+  box.innerHTML = `${heroBtns}<span class="ipick-sep"></span>${foeBtns}`;
+  paintTokens(box);
+}
+
+function renderInspector() {
+  const slot = $('cCardSlot'); if (!slot || !RUN) return;
+  if (!INSPECT) INSPECT = defaultInspect();
+  renderInspectorPicks();
+  document.querySelectorAll('#strip .pc').forEach(el => {
+    el.classList.toggle('active', !!(INSPECT && INSPECT.kind === 'hero' && INSPECT.key === el.dataset.key));
+  });
+  if (!INSPECT) {
+    slot.innerHTML = `<div class="insp-empty small mute">Click any hero or enemy on the board to view their card.</div>`;
+    _inspSig = '';
+    return;
+  }
+  if (INSPECT.kind === 'hero') {
+    const h = RUN.team.find(x => x.key === INSPECT.key);
+    if (!h) { INSPECT = defaultInspect(); if (INSPECT) return renderInspector(); return; }
+    const sig = `h:${h.key}:${h.tier}:${h.items.join(',')}:${B ? 1 : 0}`;
+    if (sig !== _inspSig) {
+      slot.innerHTML = `${B ? `<div class="insp-live" id="inspLive"></div>` : ''}<div class="insp-card-wrap">${heroCardHtml(h, '')}</div>`;
+      paintCanvases(slot); paintTokens(slot);
+      _inspSig = sig;
+    }
+    updateInspectorLive();
+    return;
+  }
+  if (INSPECT.kind === 'enemy') {
+    const en = B
+      ? (B.units.find(x => x.id === INSPECT.uid) || B.units.find(x => x.side === 'E'))
+      : previewEnemy(INSPECT.idx);
+    if (!en) { INSPECT = defaultInspect(); if (INSPECT) return renderInspector(); return; }
+    const sig = `e:${B ? en.id : INSPECT.idx}:${en.key}:${B ? 1 : 0}`;
+    if (sig !== _inspSig) {
+      slot.innerHTML = `${B ? `<div class="insp-live foe" id="inspLive"></div>` : ''}<div class="insp-ecard">${enemyCard(en, B)}</div>`;
+      _inspSig = sig;
+    }
+    updateInspectorLive();
+  }
+}
+
+function updateInspectorLive() {
+  if (!B || !INSPECT) return;
+  const el = $('inspLive'); if (!el) return;
+  let u = null;
+  if (INSPECT.kind === 'hero') u = B.units.find(x => x.side === 'P' && !x.minion && x.key === INSPECT.key);
+  else if (INSPECT.kind === 'enemy') u = B.units.find(x => x.id === INSPECT.uid);
+  if (!u) return;
+  const hp = Math.max(0, Math.round(u.hp)), ward = Math.max(0, Math.round(u.ward || 0)), nec = Math.max(0, Math.round(u.nec || 0));
+  const totalCap = Math.max(u.maxHp, hp + ward);
+  const hpPct = (hp / totalCap) * 100, wardPct = Math.min(100 - hpPct, (ward / totalCap) * 100), necPct = Math.min(100, (nec / totalCap) * 100);
+  const tags = u.alive && typeof unitStatusTags === 'function' ? unitStatusTags(u).slice(0, 4) : [];
+  const statsTxt = u.side === 'P'
+    ? `⚔ ${Math.round(u.stats.dmg || 0)}${(u.stats.heal || u.stats.ward) ? ` · ✚ ${Math.round((u.stats.heal || 0) + (u.stats.ward || 0))}` : ''} · Chg ${Math.round(u.charge || 0)}%`
+    : `AC ${curAC(B, u)} · SR ${curSR(B, u)}${u.abil ? ` · Chg ${Math.round(u.charge || 0)}%` : ''}`;
+  el.innerHTML = `<div class="il-top"><b>${u.alive ? `${hp}/${u.maxHp}${ward ? ` +${ward}⛨` : ''}` : 'FALLEN'}</b><span>${statsTxt}</span></div>
+    <div class="pbar${u.side === 'E' ? ' foe' : ''}"><i style="width:${hpPct}%"></i><u style="left:${hpPct}%;width:${wardPct}%"></u><s style="width:${necPct}%"></s></div>
+    ${tags.length ? `<div class="il-tags">${tags.map(([t, c]) => `<span class="mtag" style="--mc:${c}">${esc(t)}</span>`).join('')}</div>` : ''}`;
+}
+
+function renderIntel() {
+  const box = $('cIntel'); if (!box) return;
+  const N = RUN && RUN.next;
+  const haz = N && N.hazard && HAZARDS[N.hazard] ? HAZARDS[N.hazard] : null;
+  const hazHtml = haz ? `<div class="intel-haz"><b>${haz.g} ${esc(haz.n)}</b><span>${esc(haz.x)}</span></div>` : '';
+  if (!B) {
+    const waves = previewWaves();
+    const waveHtml = waves.length ? `<div class="intel-sec"><div class="lbl">Reinforcements</div>${waves.map(w =>
+      `<div class="intel-row"><b>${w.at}s</b><span>${w.u.map(([k]) => esc((E[k] && E[k].name) || k)).join(', ')}</span></div>`
+    ).join('')}</div>` : '';
+    const present = new Set();
+    if (MAP) MAP.forEach(row => row.forEach(ch => present.add(ch)));
+    const theme = (ENC[S.enc] && ENC[S.enc].theme) || 'dungeon';
+    const tiles = MAP_TILE_INFO.filter(([ch]) => present.has(ch));
+    const terrainHtml = tiles.length ? `<div class="intel-sec"><div class="lbl">Arena Terrain</div><div class="mleg compact">${tiles.map(([ch, n, desc]) =>
+      `<div class="mleg-item" title="${esc(desc)}"><img src="${tileIcon(ch, theme)}" alt="" /><span><b>${esc(n)}</b> · ${esc(desc)}</span></div>`
+    ).join('')}</div></div>` : '';
+    box.innerHTML = `${hazHtml}${waveHtml}${terrainHtml}`;
+    box.hidden = !(hazHtml || waveHtml || terrainHtml);
+    return;
+  }
+  box.hidden = false;
+  box.innerHTML = `${hazHtml}<div class="wing-subhead"><span class="lbl">Battle Log</span><span class="small mute">Key events</span></div><div class="feed" id="battleFeed"><div class="feed-empty small mute">Battle underway…</div></div>`;
+  renderBattleFeed();
+}
+
+function pushBattleFeed(e, u) {
+  if (!B) return;
+  const t = `${B.time.toFixed(1)}s`;
+  let item = null;
+  if (e.k === 'roll') {
+    const nat20 = e.nat === 20 && e.band === 2 && !/·/.test(e.name || '');
+    const isP = e.side !== 'E';
+    if (nat20) item = { t, col: '#ffdf6a', txt: `${u.name.split(' ')[0]} NAT 20 · ${e.name.split(' · ')[0]}` };
+    else if (isP && e.band === 2 && !e.follow) item = { t, col: '#ffc23d', txt: `${u.name.split(' ')[0]} rolled ${e.nat} (High) · ${e.name.split(' · ')[0]}` };
+    else if (isP && e.band === -1) item = { t, col: '#ff9c94', txt: `${u.name.split(' ')[0]} fizzled (${e.nat})` };
+    else if (!isP && (u.boss || u.elite) && e.band >= 1) item = { t, col: '#ff8a7a', txt: `${u.name} cast ${e.name.split(' · ')[0]} (${e.nat})` };
+  } else if (e.k === 'callout' && e.txt) {
+    item = { t, col: e.col || '#ffd76a', txt: `${u ? u.name.split(' ')[0] + ': ' : ''}${e.txt}` };
+  } else if (e.k === 'die' && u) {
+    item = { t, col: u.side === 'P' ? '#ff6a6a' : '#8ef09e', txt: u.side === 'P' ? `${u.name} fell!` : `${u.name} defeated` };
+  } else if (e.k === 'wave') {
+    item = { t, col: '#ff9c94', txt: 'Reinforcements arrived!' };
+  } else if (e.k === 'overtime' && e.lvl > 0) {
+    item = { t, col: '#ffd76a', txt: e.lvl === 1 ? 'Overtime begins!' : `Overtime ×${e.lvl}` };
+  } else if (e.k === 'boom') {
+    item = { t, col: '#ffb04a', txt: 'Powder barrel detonated!' };
+  }
+  if (!item) return;
+  BATTLE_FEED.unshift(item);
+  if (BATTLE_FEED.length > 14) BATTLE_FEED.length = 14;
+  renderBattleFeed();
+}
+
+function renderBattleFeed() {
+  const el = $('battleFeed'); if (!el) return;
+  if (!BATTLE_FEED.length) { el.innerHTML = `<div class="feed-empty small mute">Battle underway…</div>`; return; }
+  el.innerHTML = BATTLE_FEED.map(f => `<div class="feed-row"><span class="feed-t">${f.t}</span><span class="feed-x" style="color:${f.col}">${esc(f.txt)}</span></div>`).join('');
 }
 
 function updateStrip() {
   if (PHASE !== 'combat') return;
-  const cg = $('cGold'); if (cg) cg.innerHTML = B && B.gold ? `+${gold(B.gold)} looted` : '';
+  const cg = $('cGold'); if (cg) { const lg = B && B.gold ? Math.round(B.gold) : 0; cg.hidden = !lg; if (lg) cg.textContent = `+${lg}g`; }
+
   document.querySelectorAll('#strip .pc').forEach(el => {
-    const u = B && B.units.find(x => x.side === 'P' && x.key === el.dataset.key);
+    const u = B && B.units.find(x => x.side === 'P' && !x.minion && x.key === el.dataset.key);
     const bars = el.querySelectorAll('.pbar');
-    if (!u) { bars[0].querySelector('i').style.width = '100%'; bars[0].querySelector('u').style.width = '0'; bars[0].querySelector('s').style.width = '0'; return; }
+    if (!u) {
+      bars[0].querySelector('i').style.width = '100%'; bars[0].querySelector('u').style.width = '0'; bars[0].querySelector('s').style.width = '0';
+      return;
+    }
     const hp = Math.max(0, u.hp), ward = Math.max(0, u.ward || 0), nec = Math.max(0, u.nec || 0);
     const totalCap = Math.max(u.maxHp, hp + ward);
     const hpPct = (hp / totalCap) * 100;
@@ -694,8 +910,21 @@ function updateStrip() {
     const wu = bars[0].querySelector('u'); wu.style.left = hpPct + '%'; wu.style.width = wardPct + '%';
     bars[0].querySelector('s').style.width = necPct + '%';
     const ci = bars[1].querySelector('i'); ci.style.width = (u.charge || 0) + '%'; ci.classList.toggle('full', u.charge >= 100);
+    const hpEl = el.querySelector('.pc-hp');
+    if (hpEl) hpEl.textContent = u.alive ? `${Math.round(hp)}${ward >= 1 ? `+${Math.round(ward)}` : ''}` : 'Fell';
+    const tagsEl = el.querySelector('.pc-tags');
+    if (tagsEl) {
+      const list = [];
+      if (u.alive) {
+        const ct = tokenCounter(u); if (ct) list.push(ct);
+        if (typeof unitStatusTags === 'function') unitStatusTags(u).forEach(t => { if (list.length < 1) list.push(t); });
+      }
+      const html = list.slice(0, 1).map(([t, c]) => `<span class="mtag" style="--mc:${c}">${esc(t)}</span>`).join('');
+      if (tagsEl.dataset.h !== html) { tagsEl.innerHTML = html; tagsEl.dataset.h = html; }
+    }
     el.classList.toggle('dead', !u.alive);
   });
+  updateInspectorLive();
 }
 setInterval(updateStrip, 120);
 
@@ -704,8 +933,24 @@ function liveLine(key) {
   return `<div class="live">${u.alive ? `HP ${Math.max(0, Math.round(u.hp))}/${u.maxHp}${u.ward > 0 ? ` · Ward ${Math.round(u.ward)}` : ''} · Charge ${Math.round(u.charge)}%` : 'Fallen'} · dmg ${Math.round(u.stats.dmg)}${u.stats.heal ? `, heal ${Math.round(u.stats.heal)}` : ''}</div>`;
 }
 function renderSide() {
-  if (S.sel && B) { const h = RUN.team.find(x => x.key === S.sel); if (h) heroCardModal(h, liveLine(h.key)); S.sel = null; }
-  if (S.selE != null && S.selE !== false) { const en = typeof S.selE === 'object' ? S.selE : previewEnemy(S.selE); S.selE = null; if (en) enemyCardModal(en); }
+  if (S.sel) {
+    const h = RUN.team.find(x => x.key === S.sel);
+    if (h) {
+      if (hasRightInspector()) { INSPECT = { kind: 'hero', key: h.key }; renderInspector(); }
+      else if (B) heroCardModal(h, liveLine(h.key));
+    }
+    if (B) S.sel = null;
+  }
+  if (S.selE != null && S.selE !== false) {
+    if (hasRightInspector()) {
+      INSPECT = typeof S.selE === 'object' ? { kind: 'enemy', uid: S.selE.id } : { kind: 'enemy', idx: S.selE };
+      renderInspector();
+    } else {
+      const en = typeof S.selE === 'object' ? S.selE : previewEnemy(S.selE);
+      if (en) enemyCardModal(en);
+    }
+    S.selE = null;
+  }
 }
 function previewEnemy(i) { const e = ENC[S.enc].u[i]; return e ? mkEnemy(e[0], e[1], e[2], 1, ENC[S.enc]) : null; }
 function enemyCardModal(en) { enemyTip(null); openModal(`<div class="mpanel ecardwrap">${enemyCard(en, B)}</div>`); }
@@ -829,13 +1074,13 @@ document.addEventListener('click', e => {
   const h = RUN && RUN.team.find(x => x.uid === uid);
 
   if (a === 'trayItem') { SEL_ITEM = SEL_ITEM === i ? null : i; renderItemTray(); return; }
-  if (a === 'trayOff') { e.stopPropagation(); if (unequip(RUN, uid, i)) { SEL_ITEM = null; renderStrip(); saveRun(); } return; }
+  if (a === 'trayOff') { e.stopPropagation(); if (unequip(RUN, uid, i)) { SEL_ITEM = null; renderStrip(); renderInspector(); saveRun(); } return; }
   if (a === 'pcard' && SEL_ITEM != null && !B) {
     const hh = RUN.team.find(x => x.uid === uid);
     if (hh && hh.items.length >= slotsOf(hh)) { toast(`${H[hh.key].name} has no free item slot (${hh.items.length}/${slotsOf(hh)})`); return; }
     const k = RUN.stash[SEL_ITEM];
     if (!canCarry(hh, k)) { toast(`${ITEMS[k].n} is a ${ITEMS[k].t} weapon!`); return; }
-    if (equip(RUN, uid, SEL_ITEM)) { toast(`${H[hh.key].name} equips ${ITEMS[k].n}`); SEL_ITEM = null; renderStrip(); saveRun(); }
+    if (equip(RUN, uid, SEL_ITEM)) { toast(`${H[hh.key].name} equips ${ITEMS[k].n}`); SEL_ITEM = null; renderStrip(); renderInspector(); saveRun(); }
     return;
   }
 
@@ -985,7 +1230,26 @@ document.addEventListener('click', e => {
     case 'pause': paused = !paused; renderCombatBar(); break;
     case 'sound': S.sound = !S.sound; renderCombatBar(); break;
     case 'btext': BTXT = BTXT === 'all' ? 'key' : 'all'; renderCombatBar(); break;
-    case 'pcard': if (h) heroCardModal(h, liveLine(h.key)); break;
+    case 'pcard':
+      if (h) {
+        if (hasRightInspector()) { INSPECT = { kind: 'hero', key: h.key }; renderInspector(); }
+        else heroCardModal(h, liveLine(h.key));
+      }
+      break;
+    case 'inspHero':
+      if (el.dataset.key) { INSPECT = { kind: 'hero', key: el.dataset.key }; renderInspector(); }
+      break;
+    case 'inspEnemy':
+      if (B && el.dataset.uid != null) { INSPECT = { kind: 'enemy', uid: +el.dataset.uid }; renderInspector(); }
+      else if (el.dataset.idx != null) { INSPECT = { kind: 'enemy', idx: +el.dataset.idx }; renderInspector(); }
+      break;
+    case 'ecard': {
+      let en = null;
+      if (B && el.dataset.uid != null) en = B.units.find(x => x.id === +el.dataset.uid);
+      else if (el.dataset.idx != null) en = previewEnemy(+el.dataset.idx);
+      if (en) enemyCardModal(en);
+      break;
+    }
     case 'card': if (h) heroCardModal(h); break;
     case 'offerCard': {
       const k = RUN.shop.heroes[i]; if (!k) return;
@@ -1087,11 +1351,32 @@ document.addEventListener('keydown', e => {
 window.addEventListener('resize', () => { if (PHASE === 'combat') resize(); });
 if (window.ResizeObserver) new ResizeObserver(() => { if (PHASE === 'combat') resize(); }).observe($('boardWrap'));
 
+/* Side-wing & quick-pick hover linking: highlights matching unit token (and placement threat line) on the board */
+const _wl = $('cWingLeft'), _wr = $('cWingRight');
+if (_wl) {
+  _wl.addEventListener('pointerover', e => { const c = e.target.closest('[data-hover-hero]'); if (c && typeof HOVER_HERO !== 'undefined') HOVER_HERO = c.dataset.hoverHero; });
+  _wl.addEventListener('pointerout', e => { const c = e.target.closest('[data-hover-hero]'); if (c && !c.contains(e.relatedTarget) && typeof HOVER_HERO !== 'undefined') HOVER_HERO = null; });
+  _wl.addEventListener('pointerleave', () => { if (typeof HOVER_HERO !== 'undefined') HOVER_HERO = null; });
+}
+if (_wr) {
+  _wr.addEventListener('pointerover', e => {
+    const ch = e.target.closest('[data-hover-hero]');
+    if (ch && typeof HOVER_HERO !== 'undefined') { HOVER_HERO = ch.dataset.hoverHero; HOVER_ENEMY = null; return; }
+    const ce = e.target.closest('[data-hover-uid],[data-hover-enemy]');
+    if (ce && typeof HOVER_ENEMY !== 'undefined') { HOVER_HERO = null; HOVER_ENEMY = ce.dataset.hoverUid != null ? +ce.dataset.hoverUid : +ce.dataset.hoverEnemy; }
+  });
+  _wr.addEventListener('pointerout', e => {
+    const c = e.target.closest('[data-hover-hero],[data-hover-uid],[data-hover-enemy]');
+    if (c && !c.contains(e.relatedTarget)) { if (typeof HOVER_HERO !== 'undefined') HOVER_HERO = null; if (typeof HOVER_ENEMY !== 'undefined') HOVER_ENEMY = null; }
+  });
+  _wr.addEventListener('pointerleave', () => { if (typeof HOVER_HERO !== 'undefined') HOVER_HERO = null; if (typeof HOVER_ENEMY !== 'undefined') HOVER_ENEMY = null; });
+}
+
 function resize() {
   const wrap = $('boardWrap');
-  view.pad = 4;
-  const W = Math.max(280, wrap.clientWidth - 4), Hh = Math.max(240, (wrap.clientHeight || window.innerHeight - 130) - 4);
-  view.T = Math.max(26, Math.min(128, Math.floor(Math.min((W - view.pad * 2) / COLS, (Hh - view.pad * 2) / ROWS))));
+  view.pad = 10;
+  const W = Math.max(260, wrap.clientWidth - 12), Hh = Math.max(240, (wrap.clientHeight || window.innerHeight - 12) - 12);
+  view.T = Math.max(26, Math.min(144, Math.floor(Math.min((W - view.pad * 2) / COLS, (Hh - view.pad * 2) / ROWS))));
   view.R = view.T * .64;
   view.w = view.T * COLS + view.pad * 2; view.h = view.T * ROWS + view.pad * 2;
   const dpr = window.devicePixelRatio || 1;
@@ -1113,7 +1398,7 @@ if (typeof initAssets === 'function') {
     else if (PHASE === 'shop' && RUN) renderShop();
     else if (PHASE === 'advmap' && RUN) renderMap();
     else if (PHASE === 'packs' && RUN) renderPacks();
-    else if (PHASE === 'combat') { renderStrip(); drawBoard(); }
+    else if (PHASE === 'combat') { renderStrip(); _inspSig = ''; renderInspector(); drawBoard(); }
   });
 }
 document.fonts && document.fonts.ready.then(() => { if (PHASE === 'combat') resize(); });

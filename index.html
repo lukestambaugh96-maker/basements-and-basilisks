@@ -92,6 +92,7 @@
         <div class="sh-bar">
           <span class="small mute" id="shopNote"></span>
           <span class="row">
+            <span class="shop-purse" id="shopPurse"></span>
             <button class="btn" data-a="freeze" id="freezeBtn"></button>
             <button class="btn gold" data-a="reroll" id="rerollBtn"></button>
           </span>
@@ -116,18 +117,34 @@
 
 <!-- combat -->
 <section id="combat" hidden>
-  <div class="cbar">
-    <div><h2 id="cTitle"></h2><div class="q" id="cSub"></div></div>
-    <div class="cstats" id="cStats"></div>
-    <div class="row" id="cCtl"></div>
+  <div class="cstage">
+    <div id="boardWrap">
+      <canvas id="board"></canvas>
+      <div class="c-ov c-ov-tl">
+        <div class="cbar-title"><h2 id="cTitle"></h2><div class="q" id="cSub"></div></div>
+      </div>
+      <div class="c-ov c-ov-tr">
+        <div class="cstats" id="cStats"></div>
+      </div>
+      <div class="c-ov c-ov-left" id="cWingLeft">
+        <div class="strip" id="strip"></div>
+        <div class="pbench" id="pbench" data-drop="pbench" hidden></div>
+      </div>
+      <div class="c-ov c-ov-br">
+        <div class="row c-ctl-bar" id="cCtl"></div>
+      </div>
+      <div class="hint" id="hint" hidden></div>
+      <div class="result" id="result" hidden></div>
+    </div>
+    <aside class="cwing cwing-right" id="cWingRight">
+      <div class="insp-head">
+        <span class="lbl">Unit Card</span>
+        <div class="insp-picks" id="inspPicks"></div>
+      </div>
+      <div class="insp-card" id="cCardSlot"></div>
+      <div class="cintel" id="cIntel"></div>
+    </aside>
   </div>
-  <div id="boardWrap">
-    <canvas id="board"></canvas>
-    <div class="hint" id="hint" hidden></div>
-    <div class="result" id="result" hidden></div>
-  </div>
-  <div class="strip" id="strip"></div>
-  <div class="pbench" id="pbench" data-drop="pbench" hidden></div>
 </section>
 
 <!-- game over -->
