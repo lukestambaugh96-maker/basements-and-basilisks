@@ -60,6 +60,45 @@ const classKwPill = (kwKey, match, sub) => {
   return `<span class="ckwpill${match ? ' syn' : ''}" style="--kc:${K.c}" data-tn="${esc(title)}" data-tip="${esc(tip)}">${match ? '★ ' : ''}${esc(K.n)}</span>`;
 };
 
+/* ---------- v0.23 Tier IV Universal Epic Boons (9-Card Shared Deck) ---------- */
+const EPIC_BOONS = {
+  irresistible_offense: { k: 'irresistible_offense', n: 'Boon of Irresistible Offense', x: 'All damage dealt ignores AC and SR.' },
+  spell_recall:         { k: 'spell_recall',         n: 'Boon of Spell Recall',         x: 'Abilities cast a second time on High and Nat 20.' },
+  recovery:             { k: 'recovery',             n: 'Boon of Recovery',             x: 'First time dropping to 0 HP each fight, revive at 50% HP.' },
+  combat_prowess:       { k: 'combat_prowess',       n: 'Boon of Combat Prowess',       x: 'Basic attacks heal you for 30% of damage dealt.' },
+  fate:                 { k: 'fate',                 n: 'Boon of Fate',                 x: 'Natural 19s count as Nat 20s.' },
+  speed:                { k: 'speed',                n: 'Boon of Speed',                x: '+35% Attack Speed and +25% Charge Speed.' },
+  fortitude:            { k: 'fortitude',            n: 'Boon of Fortitude',            x: '+40% Max HP and start every fight with a 25% Max HP Ward.' },
+  night_spirit:         { k: 'night_spirit',         n: 'Boon of the Night Spirit',     x: '+25% Evasion; evading an attack grants +15 Charge.' },
+  dimensional_travel:   { k: 'dimensional_travel',   n: 'Boon of Dimensional Travel',   x: 'Starts combat with +50 Charge and teleports to safety at 40% HP.' }
+};
+const EPIC_BOON_KEYS = Object.keys(EPIC_BOONS);
+
+/* ---------- v0.23 Single-Class Multiclass Dips (12 Unique Named Map Nodes) ---------- */
+const MULTICLASS = {
+  Fighter:   { cls: 'Fighter',   node: 'Sparring Grounds',  kw: 'action_surge',       x: 'Make an extra basic attack immediately after casting your ability.' },
+  Rogue:     { cls: 'Rogue',     node: 'Thieves’ Guild',    kw: 'sneak_attack',       x: 'Basic attacks deal +1d6 bonus damage against flanked or Exposed foes (1/s).' },
+  Cleric:    { cls: 'Cleric',    node: 'Wayside Chapel',    kw: 'channel_divinity',   x: 'Once per fight, when dropping to 0 HP, revive at 25% Max HP.' },
+  Paladin:   { cls: 'Paladin',   node: 'Oath Shrine',       kw: 'smite',              x: 'Every 3rd basic attack deals +1d6 Radiant damage.' },
+  Wizard:    { cls: 'Wizard',    node: 'Arcane Study',      kw: 'arcane_recovery',    x: 'High and Nat 20 casts recover +25 Charge.' },
+  Barbarian: { cls: 'Barbarian', node: 'Berserker’s Cairn', kw: 'rage',               x: 'Dropping below 50% HP grants Rage (+15% damage reduction & +20% Attack Speed).' },
+  Bard:      { cls: 'Bard',      node: 'Minstrel’s Stage',  kw: 'bardic_inspiration', x: 'First cast each fight grants the closest ally a d6 Inspiration Die.' },
+  Druid:     { cls: 'Druid',     node: 'Sacred Grove',      kw: 'wild_shape',         x: 'Starts every fight with a Primal Ward (20% Max HP) that reflects Thorns.' },
+  Ranger:    { cls: 'Ranger',    node: 'Hunter’s Lodge',    kw: 'hunters_mark',       x: 'Every 3rd basic attack applies a stack of Hunter’s Mark (+1d4 damage per hit).' },
+  Monk:      { cls: 'Monk',      node: 'Quiet Monastery',   kw: 'ki',                 x: 'Every 4th basic attack deals +2d6 damage and Staggers the target.' },
+  Sorcerer:  { cls: 'Sorcerer',  node: 'Leyline Well',      kw: 'metamagic',          x: 'Ability damage and healing are increased by +20%.' },
+  Warlock:   { cls: 'Warlock',   node: 'Patron’s Altar',    kw: 'hex',                x: 'First attack applies Hex (+1d4 necrotic on hits; jumps to another foe on death).' }
+};
+const MULTICLASS_KEYS = Object.keys(MULTICLASS);
+
+function heroKeywords(heroOrKey) {
+  const k = typeof heroOrKey === 'string' ? heroOrKey : (heroOrKey && heroOrKey.key);
+  const base = classKwOf(k).slice();
+  const mc = typeof heroOrKey === 'object' && heroOrKey && heroOrKey.multiclass;
+  if (mc && MULTICLASS[mc] && !base.includes(MULTICLASS[mc].kw)) base.push(MULTICLASS[mc].kw);
+  return base;
+}
+
 /* ---------- Tag definitions (mechanical labels only; zero trait-counting) ---------- */
 const TAGDEF = {
   alert:   { n: 'Alert',        c: '#3d7fa8', x: 'Dodges incoming attacks and triggers counter-effects.' },
