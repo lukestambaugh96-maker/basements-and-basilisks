@@ -1,0 +1,104 @@
+{
+  "summary": {
+    "naive": {
+      "wr": 45,
+      "avgAct": 2.25,
+      "avgTier": 2.64,
+      "fights": 9.4,
+      "gold": 147,
+      "houseRules": 3.7,
+      "campRank": 1,
+      "sharedTags": 1.7
+    },
+    "naive_lateUpgrades": {
+      "wr": 45,
+      "avgAct": 2.32,
+      "avgTier": 2.67,
+      "fights": 9.7,
+      "gold": 151,
+      "houseRules": 3.8,
+      "campRank": 1,
+      "sharedTags": 1.7
+    },
+    "competent": {
+      "wr": 63.3,
+      "avgAct": 2.43,
+      "avgTier": 2.87,
+      "fights": 9.9,
+      "gold": 143,
+      "houseRules": 4.7,
+      "campRank": 2.67,
+      "sharedTags": 1.9
+    },
+    "engine": {
+      "wr": 61.7,
+      "avgAct": 2.38,
+      "avgTier": 2.8,
+      "fights": 9.9,
+      "gold": 141,
+      "houseRules": 4.6,
+      "campRank": 3.32,
+      "sharedTags": 1.9
+    },
+    "engine_noCampRank": {
+      "wr": 63.3,
+      "avgAct": 2.5,
+      "avgTier": 2.83,
+      "fights": 10.4,
+      "gold": 156,
+      "houseRules": 5,
+      "campRank": 1,
+      "sharedTags": 1.9
+    },
+    "engine_noScalingBias": {
+      "wr": 63.3,
+      "avgAct": 2.42,
+      "avgTier": 2.9,
+      "fights": 10.2,
+      "gold": 146,
+      "houseRules": 4.6,
+      "campRank": 3.32,
+      "sharedTags": 1.9
+    },
+    "engine_earlyUpgrades": {
+      "wr": 55,
+      "avgAct": 2.45,
+      "avgTier": 2.92,
+      "fights": 10.1,
+      "gold": 140,
+      "houseRules": 4.4,
+      "campRank": 3.33,
+      "sharedTags": 2.1
+    },
+    "engine_randomPath": {
+      "wr": 51.7,
+      "avgAct": 2.3,
+      "avgTier": 2.77,
+      "fights": 9.7,
+      "gold": 136,
+      "houseRules": 4.3,
+      "campRank": 3.2,
+      "sharedTags": 1.9
+    },
+    "engine_ALLfixes": {
+      "wr": 71.7,
+      "avgAct": 2.68,
+      "avgTier": 3.11,
+      "fights": 11.5,
+      "gold": 167,
+      "houseRules": 5.2,
+      "campRank": 1,
+      "sharedTags": 2.1
+    },
+    "greed": {
+      "wr": 38.3,
+      "avgAct": 2.05,
+      "avgTier": 2.34,
+      "fights": 8,
+      "gold": 108,
+      "houseRules": 4.1,
+      "campRank": 3.25,
+      "sharedTags": 1.9
+    }
+  }
+}
