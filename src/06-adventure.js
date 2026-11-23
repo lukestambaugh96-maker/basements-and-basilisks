@@ -18,8 +18,8 @@ const ECON = {
   piggyPerWin: 2,
   actIntactBonus: 3,
   interestStep: 5,
-  interestCap: 4,
-  winGold: d => 6 + Math.floor(d / 4),
+  interestCap: 5,
+  winGold: d => 6 + Math.floor(d / 3),
   lossGold: () => 0,
   heroPrice: t => [0, 4, 7, 11, 15][t] || 15,
   itemPrice: [3, 4, 6, 9, 13, 7], // Common 3, Uncommon 4, Rare 6, Very Rare 9, Legendary 13, Unique 7
@@ -35,42 +35,67 @@ const ECON = {
   shopItems: 3
 };
 
+/* ---------- v0.24 Camp / Guild Rank Progression (Immediate vs Future Power!) ---------- */
+const CAMP_RANKS = [
+  null,
+  { rank: 1, n: 'Camp Rank I',   cost: 0,  interestCap: 5,  hrSlots: 2, hrMaxR: 1, tierBonus: 0,  itemBonus: 0, freeReroll: 0, desc: '2 House Rule slots (Common/Uncommon) · Interest cap +5g' },
+  { rank: 2, n: 'Camp Rank II',  cost: 7,  interestCap: 7,  hrSlots: 2, hrMaxR: 2, tierBonus: 12, itemBonus: 2, freeReroll: 0, desc: 'Unlocks Rare House Rules · +12% T2 Hero odds · Interest cap +7g' },
+  { rank: 3, n: 'Camp Rank III', cost: 11, interestCap: 9,  hrSlots: 3, hrMaxR: 3, tierBonus: 24, itemBonus: 4, freeReroll: 0, desc: '3rd House Rule slot · Unlocks Legendary Rules & Very Rare items · Interest cap +9g' },
+  { rank: 4, n: 'Camp Rank IV',  cost: 15, interestCap: 12, hrSlots: 3, hrMaxR: 3, tierBonus: 36, itemBonus: 6, freeReroll: 1, desc: '1 Free Reroll/visit · Guaranteed Rare+ Item & Rule · Interest cap +12g' }
+];
+
 const TIERCOL = { 1: '#a8743c', 2: '#8c9aa8', 3: '#d0a02a', 4: '#8a4fb8' };
 const heroValue = t => { let v = 0; for (let i = 1; i <= t; i++) v += ECON.heroPrice(i); return v; };
-const goldInterest = run => Math.min(ECON.interestCap, Math.floor(Math.max(0, (run && run.gold) || 0) / ECON.interestStep));
+const hasHouseRule = (run, k) => !!(run && Array.isArray(run.houseRules) && run.houseRules.includes(k));
+const campRankOf = run => Math.max(1, Math.min(4, (run && run.campRank) || 1));
+const campRankDef = run => CAMP_RANKS[campRankOf(run)] || CAMP_RANKS[1];
+function campRankUpgradeCost(run) {
+  const cur = campRankOf(run);
+  if (cur >= 4) return null;
+  const next = CAMP_RANKS[cur + 1];
+  const disc = (run && run.campDiscount) || 0;
+  const qm = hasHouseRule(run, 'hr_quartermaster') ? 2 : 0;
+  return Math.max(2, next.cost - disc - qm);
+}
+function goldInterestCap(run) {
+  return campRankDef(run).interestCap + (hasHouseRule(run, 'hr_guild_treasury') ? 4 : 0);
+}
+const goldInterest = run => Math.min(goldInterestCap(run), Math.floor(Math.max(0, (run && run.gold) || 0) / ECON.interestStep));
 const actOf = run => (run && run.adv ? run.adv.act : 1);
 const encounterCount = run => Math.max(0, (run && run.stats && run.stats.won) || 0);
 const slotsOf = h => (h && h.key === 'wallaby' && h.questDone) ? 4 : 3;
 
-/* ---------- Smooth Per-Encounter Progression Curves ---------- */
-function heroTierOdds(e) {
+/* ---------- Smooth Per-Encounter Progression Curves (Boosted by Camp Rank!) ---------- */
+function heroTierOdds(e, campRank = 1) {
   const n = Math.max(0, e || 0);
-  const t3 = n < 6 ? 0 : Math.min(30, (n - 5) * 3);
-  const t2Raw = n < 1 ? 0 : Math.min(55, n * 5);
-  const t1 = Math.max(25, 100 - t2Raw - t3);
+  const tb = (CAMP_RANKS[campRank] && CAMP_RANKS[campRank].tierBonus) || 0;
+  const t3 = (n < 5 && campRank < 3) ? 0 : Math.min(42, Math.max(0, (n - 4) * 3) + Math.floor(tb * 0.45));
+  const t2Raw = (n < 1 && campRank < 2) ? 0 : Math.min(60, n * 5 + Math.floor(tb * 0.7));
+  const t1 = Math.max(15, 100 - t2Raw - t3);
   const t2 = Math.max(0, 100 - t1 - t3);
   return [t1 / 100, t2 / 100, t3 / 100];
 }
 function rollOfferTier(run, rand = Math.random) {
-  const o = heroTierOdds(encounterCount(run));
+  const o = heroTierOdds(encounterCount(run), campRankOf(run));
   let x = rand();
   for (let t = 0; t < 3; t++) { x -= o[t]; if (x <= 0) return t + 1; }
   return 1;
 }
 
-// v0.23 Smooth 5-Tier Item Rarity Curve (Common / Uncommon / Rare / Very Rare / Legendary)
+// v0.24 Smooth 5-Tier Item Rarity Curve (Common / Uncommon / Rare / Very Rare / Legendary)
 const ITEM_ODDS_TABLE = [
-  [0,  [65, 35,  0,  0, 0]],
-  [2,  [56, 36,  8,  0, 0]],
-  [4,  [46, 38, 16,  0, 0]],
-  [6,  [36, 36, 23,  5, 0]],
-  [8,  [28, 33, 27, 12, 0]],
-  [10, [20, 27, 30, 20, 3]],
-  [12, [15, 22, 30, 27, 6]],
-  [15, [10, 18, 30, 33, 9]]
+  [0,  [60, 40,  0,  0, 0]],
+  [2,  [50, 40, 10,  0, 0]],
+  [4,  [40, 40, 18,  2, 0]],
+  [6,  [32, 36, 24,  8, 0]],
+  [8,  [24, 32, 28, 15, 1]],
+  [10, [16, 26, 30, 23, 5]],
+  [12, [12, 20, 30, 29, 9]],
+  [15, [ 8, 16, 28, 34, 14]]
 ];
-function itemRarityOdds(e) {
-  const n = Math.max(0, e || 0);
+function itemRarityOdds(e, campRank = 1) {
+  const ib = (CAMP_RANKS[campRank] && CAMP_RANKS[campRank].itemBonus) || 0;
+  const n = Math.max(0, (e || 0) + ib);
   const T = ITEM_ODDS_TABLE;
   if (n <= T[0][0]) return T[0][1].map(v => v / 100);
   if (n >= T[T.length - 1][0]) return T[T.length - 1][1].map(v => v / 100);
@@ -86,7 +111,7 @@ function itemRarityOdds(e) {
   return T[0][1].map(v => v / 100);
 }
 function rollItemRarity(run, rand = Math.random, bonusEnc = 0) {
-  const o = itemRarityOdds(encounterCount(run) + bonusEnc);
+  const o = itemRarityOdds(encounterCount(run) + bonusEnc, campRankOf(run));
   let x = rand();
   for (let r = 0; r < 5; r++) { x -= o[r]; if (x <= 0) return r; }
   return 0;
@@ -103,23 +128,45 @@ function rollItemFromPool(avail, run, rand = Math.random, bonusEnc = 0, minR = 0
   return pickFrom[Math.floor(rand() * pickFrom.length)];
 }
 
-/* ---------- Difficulty Curve & Hazards ---------- */
+/* ---------- v0.24 Exponential Difficulty Curve (Balatro-Style Escalation) ----------
+   Act 1 (d 1..6): gentle flat-power friendly onboarding
+   Act 2 (d 6..11): steepening inflection point demanding synergies & House Rules
+   Act 3 (d 11..16+): true exponential endgame demanding multiplicative engines */
 const CURVE = {
   share: [.52, .68, .84, .95, 1],
-  grow: 1.162,
-  dmgGrow: 1.168,
-  ease: [0.86, 1.02, 1.15, 1.26, 1.38],
-  retry: .96
+  retry: .94
 };
 function curveAt(d) {
-  const di = Math.max(1, Math.floor(d));
+  const x = Math.max(1, d || 1);
+  const di = Math.floor(x);
   const share = CURVE.share[Math.min(di, CURVE.share.length) - 1];
-  if (d <= 5) { const e = CURVE.ease[di - 1]; return { share, hp: e, dmg: e }; }
-  return { share, hp: Math.pow(CURVE.grow, d - 5), dmg: Math.pow(CURVE.dmgGrow, d - 5) };
+  // Piecewise smooth exponential: gentle Act 1, accelerating Act 2, steep exponential Act 3!
+  if (x <= 6) {
+    const t = x - 1;
+    return {
+      share,
+      hp: +(0.74 * Math.pow(1.11, t)).toFixed(3),
+      dmg: +(0.76 * Math.pow(1.09, t)).toFixed(3)
+    };
+  }
+  if (x <= 10.5) {
+    const t = x - 6;
+    return {
+      share,
+      hp: +(1.250 * Math.pow(1.225, t)).toFixed(3),
+      dmg: +(1.170 * Math.pow(1.175, t)).toFixed(3)
+    };
+  }
+  const t = x - 10.5;
+  return {
+    share,
+    hp: +(3.115 * Math.pow(1.31, t)).toFixed(3),
+    dmg: +(2.425 * Math.pow(1.21, t)).toFixed(3)
+  };
 }
 
 const HAZARDS = {
-  steam:        { k: 'steam',        n: 'Boiling Steam',      g: '♨', x: 'All non-fireproof units take 3% Max HP fire ticks every 2s. Grants Vault Loot!' },
+  steam:        { k: 'steam',        n: 'Boiling Steam',      g: '♨', x: 'All non-fireproof units take 3% Max HP fire ticks every 3s. Grants Vault Loot!' },
   frictionless: { k: 'frictionless', n: 'Frictionless Floor', g: '❄', x: 'Push distances doubled and movement slowed 20%. Grants Vault Loot!' },
   dampener:     { k: 'dampener',     n: 'Arcane Dampener',    g: '◈', x: '35% slower Charge gain for both sides during the first 10s. Grants Vault Loot!' }
 };
@@ -127,11 +174,11 @@ const HAZARD_KEYS = Object.keys(HAZARDS);
 
 const ADV = {
   acts: 3, rows: 9, bossRow: 8,
-  depth: (act, r) => [1, 5.7, 9.0][act - 1] + r * [.62, .50, .42][act - 1],
-  bossDepth: act => [6.2, 10.0, 12.2][act - 1],
-  eliteDepth: 0.95, eliteK: 1.18, eliteGold: 5,
-  minibossDepth: 1.10, minibossK: 1.18,
-  startGold: 8
+  depth: (act, r) => [1, 5.8, 9.8][act - 1] + r * [.58, .52, .50][act - 1],
+  bossDepth: act => [5.9, 10.2, 13.8][act - 1],
+  eliteDepth: 0.90, eliteK: 1.18, eliteGold: 5,
+  minibossDepth: 1.05, minibossK: 1.20,
+  startGold: 9
 };
 
 const NODE = {
@@ -442,10 +489,14 @@ const THREAT_ORDER = Object.keys(THREATS);
 let RUN_UID = 1;
 function newRun() {
   return {
-    v: '0.23', depth: 1, shopNo: 0, endless: false, victory: false,
+    v: '0.24', depth: 1, shopNo: 0, endless: false, victory: false,
     losses: 0, piggy: 0, piggyBroken: false, gold: 0,
+    campRank: 1, campDiscount: 0, freeRerolls: 0,
+    houseRules: [],
+    hrState: { blitzStacks: 0, apprenticeWins: 0, apprenticeDone: false, bountyObjs: 0 },
+    itemStacks: {},
     team: [], stash: [],
-    shop: { heroes: [], slotKind: [], tiers: [], items: [], fresh: [], sale: null, rr: 0, frozen: false },
+    shop: { heroes: [], slotKind: [], tiers: [], items: [], houseRules: [], fresh: [], sale: null, rr: 0, visitFreeUsed: false, frozen: false },
     next: null, hist: [], log: [],
     stats: { won: 0, lost: 0, gold: 0, spent: 0, rerolls: 0 },
     firstPick: null, over: false, started: Date.now()
@@ -460,7 +511,7 @@ function newAdventure(rand = Math.random) {
     pool: [], itemPool: [...STANDARD_ITEM_KEYS],
     done: [], bosses: [], seenMc: [], seenEvents: [], seenEnc: {},
     wanderer: null, bossBuff: 0,
-    curio: null, mystery: null, retryPending: false,
+    curio: null, mystery: null, hrDraft: null, retryPending: false,
     stage: 'packs', offer: null, node: null, loot: null, trained: 0
   };
   run.gold = ADV.startGold;
@@ -473,7 +524,15 @@ const cfgOf = (h, run) => ({
   train: h.train, items: h.items, c: h.c, r: h.r,
   questActive: !!h.questActive, questDone: !!h.questDone,
   questStacks: h.questStacks || 0, questTrophies: h.questTrophies || [],
-  act: actOf(run), goldHeld: run ? run.gold : 0
+  act: actOf(run), goldHeld: run ? run.gold : 0,
+  itemStacks: (run && run.itemStacks) || {},
+  houseRules: (run && run.houseRules) || []
+});
+const battleOpts = run => ({
+  houseRules: (run && run.houseRules) || [],
+  hrState: (run && run.hrState) || {},
+  runGold: (run && run.gold) || 0,
+  act: actOf(run)
 });
 const boardHeroes = run => run.team.filter(h => h.onBoard);
 const benchHeroes = run => run.team.filter(h => !h.onBoard);
@@ -481,7 +540,22 @@ const ownedHero = (run, k) => run.team.find(h => h.key === k);
 const canAfford = (run, p) => p != null && run.gold >= p;
 const onSale = (run, kind, i) => run.shop && run.shop.sale && run.shop.sale.kind === kind && run.shop.sale.i === i;
 const itemPrice = (run, i) => { const k = run.shop.items[i]; return k ? Math.max(1, ECON.itemPrice[ITEMS[k].r] - (onSale(run, 'i', i) ? ECON.sale : 0)) : null; };
-const rerollPrice = run => ECON.reroll(run.shop.rr || 0);
+const houseRuleShopPrice = (run, i) => {
+  const k = run.shop && run.shop.houseRules && run.shop.houseRules[i];
+  if (!k || typeof HOUSE_RULES === 'undefined' || !HOUSE_RULES[k]) return null;
+  const base = HOUSE_RULE_RARITY[HOUSE_RULES[k].r].cost;
+  return Math.max(2, base - (onSale(run, 'hr', i) ? ECON.sale : 0));
+};
+function hasVisitFreeReroll(run) {
+  if (!run || !run.shop) return false;
+  if ((run.freeRerolls || 0) > 0) return true;
+  const perk = (campRankDef(run).freeReroll > 0 || hasHouseRule(run, 'hr_quartermaster'));
+  return perk && !run.shop.visitFreeUsed;
+}
+function rerollPrice(run) {
+  if (hasVisitFreeReroll(run)) return 0;
+  return ECON.reroll((run && run.shop && run.shop.rr) || 0);
+}
 const heroRefund = h => Math.max(2, Math.floor(heroValue(h.tier) * 0.7));
 function itemRefund(run, k) {
   const f = (run.shop.fresh || []).find(x => x[0] === k);
@@ -542,7 +616,116 @@ function startRunWithPacks(run, packKeys, rand = Math.random) {
   return chosen;
 }
 
-/* ---------- Camp Shop (Whole-Shop Freeze Only, Exact-Tier Upgrades, 5-Tier Items) ---------- */
+/* ---------- Camp Rank Upgrades & House Rules Shop Helpers ---------- */
+function upgradeCampRank(run) {
+  const cost = campRankUpgradeCost(run);
+  if (cost == null) return { ok: false, why: 'Already max Camp Rank IV' };
+  if (!canAfford(run, cost)) return { ok: false, why: `Need ${cost}g to upgrade Camp` };
+  run.gold -= cost;
+  run.stats.spent += cost;
+  run.campRank = campRankOf(run) + 1;
+  run.campDiscount = 0;
+  return { ok: true, rank: run.campRank, cost };
+}
+
+function rollHouseRulesForShop(run, rand = Math.random) {
+  if (typeof HOUSE_RULE_KEYS === 'undefined') return [];
+  const def = campRankDef(run);
+  const owned = new Set(run.houseRules || []);
+  const maxR = Math.min(3, Math.max(def.hrMaxR, actOf(run) >= 3 ? 3 : actOf(run) >= 2 ? 2 : 1));
+  const slots = def.hrSlots || 2;
+  const avail = HOUSE_RULE_KEYS.filter(k => !owned.has(k) && HOUSE_RULES[k].r <= maxR);
+  const picked = [];
+
+  // Rarity weights based on Camp Rank + Act
+  const rWeights = [
+    [55, 45, 0, 0],
+    [28, 38, 34, 0],
+    [14, 28, 38, 20],
+    [ 6, 20, 42, 32]
+  ][campRankOf(run) - 1] || [55, 45, 0, 0];
+
+  const pickOne = (pool, minR = 0, preferFit = false) => {
+    const cands = pool.filter(k => !picked.includes(k) && HOUSE_RULES[k].r >= minR);
+    if (!cands.length) return null;
+    if (preferFit) {
+      const fits = cands.filter(k => houseRuleFit(k, run).match);
+      if (fits.length && rand() < 0.72) {
+        return fits[Math.floor(rand() * fits.length)];
+      }
+    }
+    let rollX = rand() * 100, targetR = minR;
+    for (let r = 0; r <= maxR; r++) {
+      rollX -= rWeights[r];
+      if (rollX <= 0) { targetR = Math.max(minR, r); break; }
+    }
+    let bucket = cands.filter(k => HOUSE_RULES[k].r === targetR);
+    if (!bucket.length) bucket = cands;
+    return bucket[Math.floor(rand() * bucket.length)];
+  };
+
+  for (let i = 0; i < slots; i++) {
+    const minR = (i === 0 && campRankOf(run) >= 4) ? 2 : 0;
+    const k = pickOne(avail, minR, i === 0);
+    if (k) picked.push(k);
+  }
+  return picked;
+}
+
+function rollHouseRuleDraft(run, rand = Math.random, minR = 1) {
+  if (typeof HOUSE_RULE_KEYS === 'undefined') return [];
+  const owned = new Set(run.houseRules || []);
+  const maxR = actOf(run) >= 2 ? 3 : 2;
+  const pool = HOUSE_RULE_KEYS.filter(k => !owned.has(k) && HOUSE_RULES[k].r >= minR && HOUSE_RULES[k].r <= maxR);
+  const out = [];
+  const fits = pool.filter(k => houseRuleFit(k, run).match).sort(() => rand() - .5);
+  if (fits[0]) out.push(fits[0]);
+  const rest = pool.filter(k => !out.includes(k)).sort(() => rand() - .5);
+  while (out.length < 3 && rest.length) out.push(rest.shift());
+  return out;
+}
+
+function buyHouseRule(run, slot, replaceIdx) {
+  const k = run.shop && run.shop.houseRules && run.shop.houseRules[slot];
+  if (!k || !HOUSE_RULES[k]) return { ok: false, why: 'Sold out' };
+  run.houseRules = run.houseRules || [];
+  if (run.houseRules.includes(k)) return { ok: false, why: 'Already active' };
+  const p = houseRuleShopPrice(run, slot);
+  if (run.houseRules.length >= HOUSE_RULE_MAX) {
+    if (replaceIdx == null) return { ok: false, why: `House Rules full (${HOUSE_RULE_MAX}/${HOUSE_RULE_MAX})`, needSwap: true };
+    const oldKey = run.houseRules[replaceIdx];
+    const refund = oldKey ? houseRuleRefund(oldKey) : 0;
+    if (run.gold + refund < p) return { ok: false, why: 'Not enough gold' };
+    sellHouseRule(run, replaceIdx);
+  }
+  if (!canAfford(run, p)) return { ok: false, why: 'Not enough gold' };
+  run.gold -= p; run.stats.spent += p;
+  run.shop.houseRules[slot] = null;
+  run.houseRules.push(k);
+  return { ok: true, rule: k, price: p };
+}
+
+function addFreeHouseRule(run, ruleKey, replaceIdx) {
+  if (!ruleKey || !HOUSE_RULES[ruleKey]) return { ok: false, why: 'Invalid House Rule' };
+  run.houseRules = run.houseRules || [];
+  if (run.houseRules.includes(ruleKey)) return { ok: false, why: 'Already active' };
+  if (run.houseRules.length >= HOUSE_RULE_MAX) {
+    if (replaceIdx == null) return { ok: false, needSwap: true, why: `House Rules full (${HOUSE_RULE_MAX}/${HOUSE_RULE_MAX})` };
+    sellHouseRule(run, replaceIdx);
+  }
+  run.houseRules.push(ruleKey);
+  return { ok: true, rule: ruleKey };
+}
+
+function sellHouseRule(run, idx) {
+  if (!run.houseRules || !run.houseRules[idx]) return 0;
+  const k = run.houseRules.splice(idx, 1)[0];
+  const back = houseRuleRefund(k);
+  run.gold += back;
+  return back;
+}
+
+/* ---------- Camp Shop (Whole-Shop Freeze Only, Exact-Tier Upgrades, 5-Tier Items + House Rules) ---------- */
 function heroOffer(run, k, slot) {
   const o = ownedHero(run, k);
   const off = slot != null && onSale(run, 'h', slot) ? ECON.sale : 0;
@@ -558,7 +741,6 @@ function heroOffer(run, k, slot) {
 }
 
 function toggleFreeze(run) { run.shop.frozen = !run.shop.frozen; return run.shop.frozen; }
-// Backwards-compatible no-op for removed per-slot lock calls
 function toggleLock(run) { return toggleFreeze(run); }
 
 function rollShop(run, rand = Math.random, keepCount) {
@@ -594,18 +776,23 @@ function rollShop(run, rand = Math.random, keepCount) {
   const items = [];
   for (let i = 0; i < ECON.shopItems; i++) {
     const c = availItems.filter(k => ITEMS[k] && ITEMS[k].r <= 4 && !items.includes(k));
-    items.push(rollItemFromPool(c, run, rand, 0));
+    const minR = (i === 0 && campRankOf(run) >= 4) ? 2 : 0;
+    items.push(rollItemFromPool(c, run, rand, 0, minR));
   }
+
+  const houseRules = rollHouseRulesForShop(run, rand);
 
   const free = [
     ...heroes.map((k, i) => k ? ['h', i] : null),
-    ...items.map((k, i) => k ? ['i', i] : null)
+    ...items.map((k, i) => k ? ['i', i] : null),
+    ...houseRules.map((k, i) => k ? ['hr', i] : null)
   ].filter(Boolean);
   const sl = free.length ? free[Math.floor(rand() * free.length)] : null;
 
   run.shop = {
-    heroes, slotKind, tiers, items,
+    heroes, slotKind, tiers, items, houseRules,
     rr: keepCount ? (old.rr || 0) : 0,
+    visitFreeUsed: keepCount ? !!old.visitFreeUsed : false,
     frozen: false,
     fresh: keepCount ? (old.fresh || []) : [],
     sale: sl ? { kind: sl[0], i: sl[1] } : (keepCount ? old.sale : null)
@@ -614,8 +801,8 @@ function rollShop(run, rand = Math.random, keepCount) {
 
 function openShop(run, rand = Math.random) {
   run.shopNo = (run.shopNo || 0) + 1;
-  if (run.shop && run.shop.frozen && (run.shop.heroes.some(Boolean) || run.shop.items.some(Boolean))) {
-    run.shop.frozen = false; run.shop.rr = 0; run.shop.fresh = [];
+  if (run.shop && run.shop.frozen && (run.shop.heroes.some(Boolean) || run.shop.items.some(Boolean) || (run.shop.houseRules || []).some(Boolean))) {
+    run.shop.frozen = false; run.shop.rr = 0; run.shop.visitFreeUsed = false; run.shop.fresh = [];
     return false;
   }
   rollShop(run, rand);
@@ -698,6 +885,13 @@ function buyItem(run, slot) {
 function reroll(run, rand = Math.random) {
   const p = rerollPrice(run);
   if (run.gold < p) return false;
+  if (p === 0) {
+    if ((run.freeRerolls || 0) > 0) run.freeRerolls--;
+    else run.shop.visitFreeUsed = true;
+    run.stats.rerolls++;
+    rollShop(run, rand, true);
+    return true;
+  }
   run.gold -= p; run.stats.spent += p; run.stats.rerolls++;
   const n = (run.shop.rr || 0) + 1;
   rollShop(run, rand, true);
@@ -914,7 +1108,191 @@ function genMap(run, act, rand = Math.random) {
     run.adv.wanderer = { r: wRow, i: wIdx, key: actMod.traversal.miniboss.key, name: actMod.traversal.miniboss.name, alive: true };
   }
 
+  // 7. v0.24 Pre-Scout Combat Nodes: assign threat, Encounter CR, lane count, and threat tag on Map!
+  rows.forEach(row => row.forEach(n => {
+    if (!['fight', 'elite', 'miniboss', 'boss'].includes(n.kind)) return;
+    if (!n.threat) {
+      if (n.kind === 'boss') n.threat = run.adv.actBoss || actMod.pools.boss[0];
+      else if (n.kind === 'miniboss') n.threat = actMod.pools.miniboss[0] || actMod.pools.dangerous[0];
+      else if (n.kind === 'elite') n.threat = pickFromBag(run, `${actMod.id}_dang`, actMod.pools.dangerous, rand);
+      else if (n.early || n.r === 0) n.threat = pickFromBag(run, `${actMod.id}_early`, actMod.pools.earlyNormal, rand);
+      else n.threat = pickFromBag(run, `${actMod.id}_norm`, actMod.pools.normal, rand);
+    }
+    const base = ENC[n.threat] || ENC.ambush;
+    const bm = base.mapKey && BATTLE_MAPS[base.mapKey];
+    n.laneCount = (base.lanes && base.lanes.length) || (bm && bm.laneCount) || 2;
+    n.threatTag = (base.q || '').split('·')[0].trim();
+    n.cr = estimateNodeCR(n, act);
+  }));
+
   return rows;
+}
+
+/* ---------- v0.24 Honest Challenge Rating (CR) & Per-Lane Matchup Engine ---------- */
+function ehpFactor(ac, sr) {
+  const k3 = MITIGATE_K * MITIGATE_K * MITIGATE_K;
+  const ehpA = 1 + (Math.pow(Math.max(5, ac || 10), 3) / k3);
+  const ehpS = 1 + (Math.pow(Math.max(5, sr || 10), 3) / k3);
+  return 0.55 * ehpA + 0.45 * ehpS;
+}
+
+function unitPowerEnemy(ek, hpSc, dmgSc) {
+  const d = E[ek];
+  if (!d) return 10;
+  const hp = d.hp * ESC.hp * (hpSc || 1) * (d.large ? LARGE_HP : 1);
+  const ehp = hp * ehpFactor(d.ac, d.sr);
+  const a = d.atk || { d: [1, 6], flat: 2, iv: 1.3, hits: 1 };
+  const avgHit = (a.d[0] * (a.d[1] + 1) / 2 + (a.flat || 0)) * (a.hits || 1);
+  const dps = (avgHit * ESC.dmg * (dmgSc || 1) / Math.max(0.4, a.iv * ENEMY_TEMPO)) * (d.abil ? 1.32 : 1.0) * (d.boss ? 1.25 : d.elite ? 1.12 : 1.0);
+  return Math.sqrt(Math.max(1, ehp * Math.max(2, dps)));
+}
+
+function unitPowerHero(cfg) {
+  const d = H[cfg.key];
+  if (!d) return 10;
+  const st = heroStats(cfg);
+  const evMult = 1 / Math.max(0.35, 1 - (st.evasion || 0) * 0.65);
+  const ehp = (st.maxHp + st.regen * 12) * ehpFactor(st.ac, st.sr) * evMult;
+  const a = st.atk || d.atk;
+  const avgDice = a.noDmg ? 4 : (a.d[0] * (st.tier || 1) * (a.d[1] + 1) / 2 + (a.flat || 0) + Math.max(0, st.mw) + (st.dmgBonus || 0));
+  const atkDps = (avgDice * (st.hits || 1) / Math.max(0.3, st.iv)) * (st.atM || 1);
+  const abilRate = st.cr / 100;
+  const odds = bandOdds(d, st);
+  const d20Quality = 0.65 * odds[1] + 1.0 * odds[2] + 1.45 * odds[3] + 2.0 * odds[4];
+  const abilDps = (14 * (st.tier || 1) + Math.max(0, st.mk) * 3) * abilRate * d20Quality * (st.abM || 1);
+  const roleBonus = st.role === 'Support' ? 1.24 : st.role === 'Tank' ? 1.12 : 1.06;
+  const metaBonus = (st.path ? 1.12 : 1) * (st.boon ? 1.24 : 1) * (st.mc ? 1.12 : 1) * (st.questDone ? 1.16 : 1);
+  return Math.sqrt(Math.max(1, ehp * Math.max(4, atkDps + abilDps))) * roleBonus * metaBonus;
+}
+
+const RAW_TO_CR = raw => Math.max(0.5, +(raw / 26).toFixed(1));
+
+function calcEncounterCR(enc) {
+  if (!enc || !enc.u || !enc.u.length) return 1;
+  const hpSc = (enc.sc && enc.sc.hp) || 1;
+  const dmgSc = (enc.sc && enc.sc.dmg) || 1;
+  let tot = 0;
+  enc.u.forEach(([ek]) => { tot += unitPowerEnemy(ek, hpSc, dmgSc); });
+  if (enc.waves && enc.waves.length) tot *= 1.14;
+  if (enc.hazard) tot *= 1.08;
+  return Math.max(1, +(RAW_TO_CR(tot)).toFixed(1));
+}
+
+function estimateNodeCR(node, act) {
+  const tk = node.threat || 'ambush';
+  const base = ENC[tk] || ENC.ambush;
+  const d = node.d || ADV.depth(act || 1, node.r || 0);
+  const cv = curveAt(d);
+  const isBoss = node.kind === 'boss';
+  const isMb = node.kind === 'miniboss';
+  const sc = base.sc || {};
+  const ek = node.kind === 'elite' ? ADV.eliteK : isMb ? ADV.minibossK : 1;
+  const hpSc = (sc.hp || 1) * cv.hp * ek * (d <= 1.2 ? .92 : 1);
+  const dmgSc = (sc.dmg || 1) * cv.dmg * ek * (d <= 1.2 ? .92 : 1);
+  const n = (isBoss || isMb) ? base.u.length : Math.max(d <= 1.2 ? 3 : 2, Math.round(base.u.length * cv.share));
+  let tot = 0;
+  base.u.slice(0, n).forEach(([k]) => { tot += unitPowerEnemy(k, hpSc, dmgSc); });
+  if (d >= 4 && base.waves && base.waves.length) tot *= 1.14;
+  if (node.hazard) tot *= 1.08;
+  return Math.max(1, +(RAW_TO_CR(tot)).toFixed(1));
+}
+
+function calcPartyCR(run) {
+  const team = boardHeroes(run);
+  if (!team.length) return { cr: 0, offense: 0, durability: 0, engine: 1 };
+  let sumP = 0, off = 0, dur = 0;
+  team.forEach(h => {
+    const cfg = cfgOf(h, run);
+    const st = heroStats(cfg);
+    sumP += unitPowerHero(cfg);
+    dur += st.maxHp * ehpFactor(st.ac, st.sr);
+    off += (st.tier * 12 + Math.max(0, st.mw) * 2 + (st.dmgBonus || 0)) / Math.max(0.35, st.iv) + st.cr * 0.45 * st.tier;
+  });
+  const hrMult = typeof houseRuleEngineMult === 'function' ? houseRuleEngineMult(run) : 1.0;
+  // Shared-role / balanced comp stability bonus
+  const hasTank = team.some(h => H[h.key].role === 'Tank');
+  const hasSup = team.some(h => H[h.key].role === 'Support');
+  const compBonus = 1 + (hasTank ? 0.06 : 0) + (hasSup ? 0.06 : 0);
+  const engine = +(hrMult * compBonus).toFixed(2);
+  const cr = +(RAW_TO_CR(sumP * Math.pow(engine, 0.78))).toFixed(1);
+  return { cr, offense: Math.round(off), durability: Math.round(dur), engine };
+}
+
+function crVerdict(partyCR, encCR) {
+  const ratio = partyCR / Math.max(0.5, encCR || 1);
+  if (ratio >= 1.18) return { label: 'Favoured', cls: 'favoured', ratio };
+  if (ratio >= 0.88) return { label: 'Even',     cls: 'even',     ratio };
+  if (ratio >= 0.68) return { label: 'Dangerous',cls: 'dangerous',ratio };
+  return { label: 'Deadly', cls: 'deadly', ratio };
+}
+
+/* Per-Lane Matchup Evaluator used live during Tactical Deployment */
+function evalLanes(run, enc) {
+  if (!enc || !run) return [];
+  const lanes = (enc.lanes && enc.lanes.length) ? enc.lanes : [{ id: 'center', n: 'Battlefield', c0: 0, c1: COLS - 1, obj: 'breach' }];
+  const hrMult = typeof houseRuleEngineMult === 'function' ? Math.pow(houseRuleEngineMult(run), 0.78) : 1.0;
+  const hs = boardHeroes(run);
+  const hpSc = (enc.sc && enc.sc.hp) || 1;
+  const dmgSc = (enc.sc && enc.sc.dmg) || 1;
+
+  return lanes.map((L, idx) => {
+    const def = (typeof LANE_OBJ !== 'undefined' && LANE_OBJ[L.obj]) || LANE_OBJ.breach;
+    const laneHeroes = hs.filter(h => h.c != null && laneOfCol(h.c, lanes) === idx);
+    const laneFoes = (enc.u || []).filter(([ek, c]) => laneOfCol(c, lanes) === idx);
+
+    let hPow = 0, ePow = 0;
+    let physHeroes = 0, magHeroes = 0, hasIntercept = false, hasBuddy = false;
+    laneHeroes.forEach(h => {
+      const cfg = cfgOf(h, run);
+      const st = heroStats(cfg);
+      hPow += unitPowerHero(cfg) * hrMult;
+      if (st.atk && st.atk.kind === 'phys') physHeroes++;
+      else magHeroes++;
+      if (st.rng <= 2 && st.m.str >= 3) hasIntercept = true;
+      if (H[h.key].targetMode === 'closest_ally' && laneHeroes.length >= 2) hasBuddy = true;
+    });
+
+    let maxAC = 0, maxSR = 0, hasCharger = false;
+    laneFoes.forEach(([ek]) => {
+      const ed = E[ek];
+      ePow += unitPowerEnemy(ek, hpSc, dmgSc);
+      if (ed) {
+        maxAC = Math.max(maxAC, ed.ac || 10);
+        maxSR = Math.max(maxSR, ed.sr || 10);
+        if (archOf(ek).includes('charger')) hasCharger = true;
+      }
+    });
+
+    const heroCR = +(RAW_TO_CR(hPow)).toFixed(1);
+    const enemyCR = +(RAW_TO_CR(ePow)).toFixed(1);
+    const verdict = laneFoes.length === 0
+      ? { label: 'Clear', cls: 'favoured' }
+      : laneHeroes.length === 0
+        ? { label: 'Empty!', cls: 'deadly' }
+        : crVerdict(heroCR, enemyCR);
+
+    const flags = [];
+    if (laneFoes.length > 0 && laneHeroes.length === 0) {
+      flags.push({ kind: 'warn', txt: L.obj === 'choke' ? '⚠ Uncontested: Enemy Ambush!' : L.obj === 'ritual' ? '⚠ Uncontested Ritual!' : '⚠ Uncontested Lane' });
+    }
+    if (maxAC >= 17 && physHeroes > 0 && magHeroes === 0) {
+      flags.push({ kind: 'warn', txt: `⚠ High AC ${maxAC} (use Pen/Magic/Radiant)` });
+    }
+    if (maxSR >= 16 && magHeroes > 0 && physHeroes === 0) {
+      flags.push({ kind: 'warn', txt: `⚠ High SR ${maxSR} (use Physical/Radiant)` });
+    }
+    if (hasCharger && hasIntercept) flags.push({ kind: 'good', txt: '✓ STR +3 Intercepts Charger' });
+    else if (hasCharger && laneHeroes.length > 0 && !hasIntercept) flags.push({ kind: 'warn', txt: '⚠ Charger dives backline' });
+    if (hasBuddy) flags.push({ kind: 'good', txt: '★ Ally Link active' });
+    if (hasHouseRule(run, 'hr_solo_vanguard') && laneHeroes.length === 1) flags.push({ kind: 'good', txt: '🛡 Hold the Line (+45% Ward)' });
+    if (hasHouseRule(run, 'hr_buddy_system') && laneHeroes.length >= 2) flags.push({ kind: 'good', txt: '🤝 Buddy System (+1 d20)' });
+
+    return {
+      idx, id: L.id, n: L.n, c0: L.c0, c1: L.c1, obj: L.obj, def,
+      heroCount: laneHeroes.length, enemyCount: laneFoes.length, maxHeroes: def.maxHeroes || 4,
+      heroCR, enemyCR, verdict, flags
+    };
+  });
 }
 
 function advanceWanderer(run, rand = Math.random) {
@@ -925,7 +1303,6 @@ function advanceWanderer(run, rand = Math.random) {
   if (!curRow || !curRow[W.i]) return;
   const curNode = curRow[W.i];
   const playerRow = run.adv.pos ? run.adv.pos.r : -1;
-  // Step forward if ahead/behind player (never into Boss row 8)
   if (W.r < 6 && (W.r <= playerRow + 1 || rand() < .6)) {
     const nx = curNode.next || [];
     if (nx.length) {
@@ -934,7 +1311,6 @@ function advanceWanderer(run, rand = Math.random) {
       return;
     }
   }
-  // Otherwise patrol sideways within the same row
   const sib = curRow.map((_, idx) => idx).filter(idx => idx !== W.i);
   if (sib.length) W.i = sib[Math.floor(rand() * sib.length)];
 }
@@ -949,10 +1325,10 @@ function startAct(run, rand = Math.random) {
   run.adv.path = [];
   run.adv.node = null;
   run.adv.loot = null;
+  run.adv.hrDraft = null;
   run.adv.curio = null;
   run.adv.mystery = null;
   run.adv.retryPending = false;
-  // v0.23 Camp Shop Flow Flip: open refreshed Camp Shop at the start of every Act!
   openShop(run, rand);
   run.adv.stage = 'shop';
 }
@@ -967,7 +1343,7 @@ function nextNodes(run) {
   return M[p.r + 1].filter(n => edges.includes(n.i));
 }
 
-/* ---------- Encounter Builder (Dynamic Pool Roll + Curated Maps + Optional Mirroring) ---------- */
+/* ---------- Encounter Builder (Soft-Lane Safe Map Selection + Mirroring + Exact CR) ---------- */
 function buildEncounter(run, rand = Math.random, opts = {}) {
   const d = run.depth;
   const tk = opts.threat || run.forceThreat || 'ambush';
@@ -977,20 +1353,31 @@ function buildEncounter(run, rand = Math.random, opts = {}) {
   const isBoss = !!opts.boss || /Boss/i.test(base.q || '');
   const isMiniboss = !!opts.miniboss || /Miniboss/i.test(base.q || '');
 
-  // Choose map: Bosses/Minibosses pin signature arena; Normal/Elite pick compatible Act map w/ 50% horizontal mirror
+  // Keep lane count identical when picking an alternate Act map so enemy lane coordinates always match!
+  const baseMap = (base.mapKey && BATTLE_MAPS[base.mapKey]) || null;
+  const baseLanes = base.lanes || (baseMap && baseMap.lanes) || [{ id: 'center', n: 'Battlefield', c0: 0, c1: base.map[0].length - 1, obj: 'breach' }];
   let mapGrid = base.map;
+  let lanes = baseLanes.map(l => ({ ...l }));
   let theme = base.theme || 'forest';
   let place = base.place;
+
   if (!isBoss && !isMiniboss && actMod.maps && actMod.maps.length && !opts.pinMap) {
-    const mk = rand() < .5 && base.mapKey ? base.mapKey : actMod.maps[Math.floor(rand() * actMod.maps.length)];
-    const bm = BATTLE_MAPS[mk];
-    if (bm) { mapGrid = bm.grid; theme = bm.theme; place = bm.n; }
+    const compat = actMod.maps.filter(mk => BATTLE_MAPS[mk] && BATTLE_MAPS[mk].grid[0].length === base.map[0].length);
+    if (compat.length) {
+      const mk = rand() < .65 && base.mapKey ? base.mapKey : compat[Math.floor(rand() * compat.length)];
+      const bm = BATTLE_MAPS[mk];
+      if (bm) { mapGrid = bm.grid; theme = bm.theme; place = bm.n; lanes = bm.lanes.map(l => ({ ...l })); }
+    }
   }
+  const mapW = mapGrid[0].length;
   const doMirror = !isBoss && !isMiniboss && rand() < .5;
-  if (doMirror) mapGrid = mirrorMap(mapGrid);
+  if (doMirror) {
+    mapGrid = mirrorMap(mapGrid);
+    lanes = mirrorLanes(lanes, mapW);
+  }
 
   let units = base.u.map((u, i) => ({
-    u: doMirror ? [u[0], (E[u[0]] && E[u[0]].large ? 8 - u[1] : 9 - u[1]), u[2]] : u,
+    u: doMirror ? [u[0], (E[u[0]] && E[u[0]].large ? mapW - 2 - u[1] : mapW - 1 - u[1]), u[2]] : u,
     i, el: E[u[0]] && (E[u[0]].elite || E[u[0]].boss)
   }));
   const n = (isBoss || isMiniboss) ? units.length : Math.max(d <= 1.2 ? 3 : 2, Math.round(units.length * cv.share));
@@ -1005,7 +1392,7 @@ function buildEncounter(run, rand = Math.random, opts = {}) {
   const bossBuff = isBoss ? (1 + (run.adv && run.adv.bossBuff ? run.adv.bossBuff : 0)) : 1;
   const enc = {
     n: base.n, place, theme, q: base.q || '', note: base.note || '',
-    map: mapGrid, u: keep,
+    map: mapGrid, lanes, u: keep,
     hazard: opts.hazard || null,
     waves: d >= 4 ? (base.waves || []) : [],
     sc: {
@@ -1014,9 +1401,10 @@ function buildEncounter(run, rand = Math.random, opts = {}) {
     },
     threat: tk, depth: d
   };
+  enc.cr = calcEncounterCR(enc);
   ENC.run = enc;
   run.next = {
-    threat: tk, n: base.n, q: base.q || '', tag: theme,
+    threat: tk, n: base.n, q: base.q || '', tag: theme, cr: enc.cr,
     boss: isBoss, miniboss: isMiniboss, elite: !!opts.elite,
     hazard: opts.hazard || null, bonusGold: opts.bonusGold || 0,
     foes: keep.map(u => u[0])
@@ -1050,6 +1438,8 @@ function buildNodeEncounter(run, node, rand = Math.random) {
   });
   if (node.kind === 'elite') { enc.sc.hp *= ADV.eliteK; enc.sc.dmg *= ADV.eliteK; }
   if (node.kind === 'miniboss' || isWandererHit) { enc.sc.hp *= ADV.minibossK; enc.sc.dmg *= ADV.minibossK; }
+  enc.cr = calcEncounterCR(enc);
+  run.next.cr = enc.cr;
   run.next.kind = isWandererHit ? 'miniboss' : node.kind;
   run.next.wanderer = isWandererHit;
   return enc;
@@ -1062,7 +1452,7 @@ function enterNode(run, node, rand = Math.random) {
   const hitWanderer = !!(W && W.alive && node.r === W.r && node.i === W.i);
   if (hitWanderer || node.kind === 'fight' || node.kind === 'elite' || node.kind === 'miniboss' || node.kind === 'boss') {
     buildNodeEncounter(run, node, rand);
-    run.adv.stage = 'battle'; // Goes directly into Tactical Deployment!
+    run.adv.stage = 'battle';
     return 'battle';
   }
   if (node.kind === 'curio') {
@@ -1120,7 +1510,6 @@ function resolveMystery(run, rand = Math.random) {
     const items = treasureOffer(run, rand);
     return { type: 'treasure', items, title: 'Hidden Treasure Cache!' };
   }
-  // 10% Wandering Curio Peddler (2 discounted Rare/Very Rare items)
   const items = [];
   for (let i = 0; i < 2; i++) {
     const k = rollItemFromPool(STANDARD_ITEM_KEYS.filter(x => !items.includes(x)), run, rand, 4, 2);
@@ -1181,23 +1570,71 @@ function applyMulticlass(run, uid, cls) {
   return true;
 }
 
-/* ---------- Placement ---------- */
+/* ---------- v0.24 Lane-Aware Smart Auto-Placement ---------- */
 function autoPlace(run, force) {
-  loadMap(ENC.run.map);
+  const enc = ENC.run;
+  loadMap(enc.map, enc.lanes);
   const spots = DEPLOY.slice();
-  const rows = [...new Set(spots.map(s => s.r))].sort((a, b) => a - b);
-  const mid = (COLS - 1) / 2;
-  const order = spots.slice().sort((a, b) => Math.abs(a.c - mid) - Math.abs(b.c - mid));
-  const front = order.filter(s => s.r === rows[0]), back = order.filter(s => s.r !== rows[0]);
   const on = boardHeroes(run);
   const used = new Set();
   const kOf = s => s.c + ',' + s.r;
-  if (!force) on.forEach(h => { if (h.c != null && spots.some(s => s.c === h.c && s.r === h.r) && !used.has(kOf(h))) used.add(kOf(h)); else h.c = null; });
-  else on.forEach(h => h.c = null);
-  on.filter(h => h.c == null).sort((a, b) => (H[a.key].role === 'Tank' ? 0 : 1) - (H[b.key].role === 'Tank' ? 0 : 1)).forEach(h => {
-    const pref = H[h.key].role === 'Tank' || H[h.key].reach === 'Melee' ? [...front, ...back] : [...back, ...front];
-    const s = pref.find(x => !used.has(kOf(x)));
-    if (s) { h.c = s.c; h.r = s.r; used.add(kOf(s)); }
+  const laneHeroCounts = LANES.map(() => 0);
+
+  if (!force) {
+    on.forEach(h => {
+      if (h.c != null && spots.some(s => s.c === h.c && s.r === h.r) && !used.has(kOf(h))) {
+        const li = laneOfCol(h.c, LANES);
+        const maxH = (LANE_OBJ[LANES[li].obj] && LANE_OBJ[LANES[li].obj].maxHeroes) || 4;
+        if (laneHeroCounts[li] < maxH) {
+          used.add(kOf(h));
+          laneHeroCounts[li]++;
+          return;
+        }
+      }
+      h.c = null;
+    });
+  } else {
+    on.forEach(h => { h.c = null; });
+  }
+
+  // Order lanes by priority (contested enemy lanes first; Boss/Breach/Ritual/Choke ahead of empty)
+  const laneEnemyCounts = LANES.map((_, idx) => (enc.u || []).filter(([, c]) => laneOfCol(c, LANES) === idx).length);
+  const toPlace = on.filter(h => h.c == null).sort((a, b) => {
+    const ra = H[a.key].role === 'Tank' ? 0 : H[a.key].reach === 'Melee' ? 1 : H[a.key].role === 'Damage' ? 2 : 3;
+    const rb = H[b.key].role === 'Tank' ? 0 : H[b.key].reach === 'Melee' ? 1 : H[b.key].role === 'Damage' ? 2 : 3;
+    return ra - rb;
+  });
+
+  toPlace.forEach(h => {
+    const d = H[h.key];
+    const isFront = d.role === 'Tank' || d.reach === 'Melee';
+    // Choose best lane with remaining capacity (spread across contested lanes first, then double up main/ritual lane)
+    const candLanes = LANES.map((L, idx) => {
+      const maxH = (LANE_OBJ[L.obj] && LANE_OBJ[L.obj].maxHeroes) || 4;
+      const full = laneHeroCounts[idx] >= maxH;
+      const foesN = laneEnemyCounts[idx];
+      let score = full ? -999 : (foesN > 0 ? 20 : 0) - laneHeroCounts[idx] * 12;
+      if (!full && d.role === 'Tank' && L.obj === 'choke' && laneHeroCounts[idx] === 0) score += 14;
+      if (!full && L.obj === 'boss' || L.obj === 'breach') score += 5;
+      if (!full && L.obj === 'ritual' && laneHeroCounts[idx] === 0) score += 8;
+      if (!full && d.targetMode === 'closest_ally' && laneHeroCounts[idx] === 1) score += 16;
+      return { idx, score };
+    }).sort((a, b) => b.score - a.score);
+
+    const pickedLane = candLanes[0] ? candLanes[0].idx : 0;
+    const lCells = laneDeployCells(pickedLane, LANES);
+    const lRows = [...new Set(lCells.map(s => s.r))].sort((a, b) => a - b);
+    const lMid = (LANES[pickedLane].c0 + LANES[pickedLane].c1) / 2;
+    const sorted = lCells.slice().sort((a, b) => Math.abs(a.c - lMid) - Math.abs(b.c - lMid));
+    const front = sorted.filter(s => s.r === lRows[0]);
+    const back = sorted.filter(s => s.r !== lRows[0]);
+    const pref = isFront ? [...front, ...back, ...spots] : [...back, ...front, ...spots];
+    const spot = pref.find(x => !used.has(kOf(x)));
+    if (spot) {
+      h.c = spot.c; h.r = spot.r;
+      used.add(kOf(spot));
+      laneHeroCounts[laneOfCol(spot.c, LANES)]++;
+    }
   });
 }
 function autoBless() {}
@@ -1223,7 +1660,7 @@ function updateHeroQuests(run, won, b) {
     const q = d && d.quest;
     const u = P.find(x => x.key === h.key);
     if (!q || !u) return;
-    if (!h.questActive && !h.questDone) return; // Opt-in only via Quest Board!
+    if (!h.questActive && !h.questDone) return;
 
     if (h.questDone) {
       if (h.key === 'faelan' && won) {
@@ -1275,10 +1712,14 @@ function updateHeroQuests(run, won, b) {
   return updates;
 }
 
-/* ---------- Post-Combat Resolution (Piggy Bank Single Free-Loss Rule!) ---------- */
+/* ---------- Post-Combat Resolution (Scaling Items, House Rules, Lane Bonuses, Piggy Bank) ---------- */
 function resolveFight(run, won, b) {
   const d = run.depth;
   let gold = 0, piggy = 0, bonusGold = 0, interest = 0;
+  const hrNotes = [];
+  run.hrState = run.hrState || { blitzStacks: 0, apprenticeWins: 0, apprenticeDone: false, bountyObjs: 0 };
+  run.itemStacks = run.itemStacks || {};
+
   if (won) {
     gold = ECON.winGold(d);
     interest = goldInterest(run);
@@ -1289,6 +1730,62 @@ function resolveFight(run, won, b) {
     if ((run.team || []).some(h => h.key === 'gains' && h.questDone)) {
       bonusGold += Math.min(5, Math.floor((run.gold || 0) * .10));
     }
+    // House Rule: Guild Treasury (+1g per win)
+    if (hasHouseRule(run, 'hr_guild_treasury')) bonusGold += 1;
+    // Scaling Investment Items: increment stacks for every equipped scaling item (+1g per win for Ledger of the Mint!)
+    const seenScale = new Set();
+    (run.team || []).forEach(h => (h.items || []).forEach(ik => {
+      const it = ITEMS[ik];
+      if (it && it.scaling && !seenScale.has(ik)) {
+        seenScale.add(ik);
+        run.itemStacks[ik] = (run.itemStacks[ik] || 0) + 1;
+        if (ik === 'ledger_mint') bonusGold += 1;
+        hrNotes.push(`🌱 ${it.n} grew to +${run.itemStacks[ik]} stacks`);
+      }
+    }));
+
+    // House Rule: Speedrun Bonus (win <15s -> +5% permanent party dmg)
+    if (hasHouseRule(run, 'hr_blitzkrieg') && b && b.time < 15) {
+      run.hrState.blitzStacks = (run.hrState.blitzStacks || 0) + 1;
+      hrNotes.push(`⏱ Speedrun Bonus: ×${Math.pow(1.05, run.hrState.blitzStacks).toFixed(2)} permanent Damage!`);
+    }
+    // House Rule: Long-Term Investment (after 3 wins -> promote lowest-tier hero + x1.22 Damage!)
+    if (hasHouseRule(run, 'hr_apprentice_pact') && !run.hrState.apprenticeDone) {
+      run.hrState.apprenticeWins = (run.hrState.apprenticeWins || 0) + 1;
+      if (run.hrState.apprenticeWins >= 3) {
+        run.hrState.apprenticeDone = true;
+        const lowH = run.team.slice().sort((a, c) => a.tier - c.tier)[0];
+        if (lowH && lowH.tier < 4) {
+          promoteHero(run, lowH.uid);
+          hrNotes.push(`🌱 Long-Term Investment matured! ${H[lowH.key].name} promoted to Tier ${lowH.tier} & ×1.22 Party Damage!`);
+        } else {
+          hrNotes.push('🌱 Long-Term Investment matured! ×1.22 Party Damage unlocked!');
+        }
+      } else {
+        hrNotes.push(`🌱 Long-Term Investment: ${run.hrState.apprenticeWins}/3 wins`);
+      }
+    }
+    // House Rule: Double Bounties (every 2 lane objectives won -> +1 Key Attribute to a hero!)
+    if (hasHouseRule(run, 'hr_bounty_board') && b && b.laneObjectivesWon > 0) {
+      run.hrState.bountyObjs = (run.hrState.bountyObjs || 0) + b.laneObjectivesWon;
+      while (run.hrState.bountyObjs >= 2) {
+        run.hrState.bountyObjs -= 2;
+        const th = run.team[Math.floor(Math.random() * run.team.length)];
+        if (th) {
+          const attr = H[th.key].pair[1];
+          th.train = th.train || {};
+          th.train[attr] = (th.train[attr] || 0) + 1;
+          hrNotes.push(`🎯 Double Bounties: ${H[th.key].name} gained +1 ${ATTR_S[attr]}!`);
+        }
+      }
+    }
+    // Supply Cart free rerolls & Camp Rank discount (-1g per combat win!)
+    if (b && b.laneBonusRerolls > 0) {
+      run.freeRerolls = (run.freeRerolls || 0) + b.laneBonusRerolls;
+      hrNotes.push(`💰 Supply Cart: +${b.laneBonusRerolls} Free Shop Reroll!`);
+    }
+    if (campRankOf(run) < 4) run.campDiscount = (run.campDiscount || 0) + 1;
+
     if (run.next && run.next.bonusGold) bonusGold += run.next.bonusGold;
     gold += interest + bonusGold;
     run.stats.won++;
@@ -1312,7 +1809,7 @@ function resolveFight(run, won, b) {
   run.hist.push(run.next ? run.next.threat : 'ambush');
   run.log.push({ d: Math.round(d), threat: run.next ? run.next.threat : 'ambush', won, gold, interest, made, piggy, time: b ? +b.time.toFixed(1) : 0 });
   if (run.losses > ECON.freeLosses) run.over = true;
-  return { won, gold, interest, made, d, piggy, bonusGold };
+  return { won, gold, interest, made, d, piggy, bonusGold, hrNotes };
 }
 
 function resolveNodeFight(run, won, b, rand = Math.random) {
@@ -1325,11 +1822,13 @@ function resolveNodeFight(run, won, b, rand = Math.random) {
     run.adv.wanderer.alive = false;
     run.gold += 10; run.stats.gold += 10;
     res.minibossGold = 10;
-    run.adv.loot = treasureOffer(run, rand, 6, 3); // Very Rare / Legendary!
+    run.adv.loot = treasureOffer(run, rand, 6, 3);
+    run.adv.hrDraft = rollHouseRuleDraft(run, rand, 2);
   } else if (won && n && n.kind === 'miniboss') {
     run.gold += 6; run.stats.gold += 6;
     res.minibossGold = 6;
-    run.adv.loot = treasureOffer(run, rand, 4, 2); // Guaranteed Rare / Very Rare!
+    run.adv.loot = treasureOffer(run, rand, 4, 2);
+    run.adv.hrDraft = rollHouseRuleDraft(run, rand, 1);
   } else if (won && n && (n.kind === 'elite' || n.hazard)) {
     const bonus = n.hazard ? 4 : ADV.eliteGold;
     run.gold += bonus; run.stats.gold += bonus;
@@ -1350,7 +1849,7 @@ function resolveNodeFight(run, won, b, rand = Math.random) {
     } else {
       run.gold += 8; run.stats.gold += 8;
       res.actBonus = 8;
-      // Act 2 Boss drops a bonus Rare/Very Rare/Legendary relic choice!
+      run.adv.hrDraft = rollHouseRuleDraft(run, rand, run.adv.act >= 2 ? 2 : 1);
       if (run.adv.act >= 2) run.adv.loot = treasureOffer(run, rand, 5, 2);
     }
   }
@@ -1365,7 +1864,6 @@ function afterNodeFight(run, res, rand = Math.random) {
     startAct(run, rand);
     return 'shop';
   }
-  // Piggy Bank retry exception: returns to Camp Shop with Retry button for that exact fight!
   if (!res.won && n) {
     buildNodeEncounter(run, n, rand);
     run.adv.retryPending = true;
@@ -1373,7 +1871,6 @@ function afterNodeFight(run, res, rand = Math.random) {
     run.adv.stage = 'shop';
     return 'shop';
   }
-  // v0.23 Camp Shop Flow Flip: after every combat win, advance position & open refreshed Camp Shop!
   clearNode(run, rand);
   openShop(run, rand);
   run.adv.stage = 'shop';
@@ -1445,27 +1942,14 @@ function treasureOffer(run, rand = Math.random, bonusEnc = 3, minR = 0) {
 }
 function takeTreasure(run, k) { if (run.stash.length < ECON.stash) run.stash.push(k); }
 
-/* ---------- Boss Readiness Forecast ---------- */
-function bossRead(run, sims = 3) {
-  const M = run.adv.map;
+/* ---------- Boss Readiness Forecast (CR-Backed + Fast Live Sim) ---------- */
+function bossRead(run) {
+  const M = run.adv && run.adv.map;
   if (!M || !run.team.length) return null;
-  const boss = M[ADV.bossRow][0];
-  const saveEnc = ENC.run, saveNext = run.next, saveDepth = run.depth, saveUid = UID;
-  let m = 0;
-  try {
-    for (let s = 0; s < sims; s++) {
-      buildNodeEncounter(run, boss);
-      const b = simulate('run', partyCfg(run), 1);
-      const P = b.units.filter(u => u.side === 'P' && !u.minion);
-      const E2 = b.units.filter(u => u.side === 'E');
-      const pHp = P.reduce((a, u) => a + (u.alive ? Math.max(0, u.hp) : 0), 0) / Math.max(1, P.reduce((a, u) => a + u.maxHp, 0));
-      const eHp = E2.reduce((a, u) => a + (u.alive ? Math.max(0, u.hp) : 0), 0) / Math.max(1, E2.reduce((a, u) => a + u.maxHp, 0));
-      m += b.winner === 'P' ? .5 + .5 * pHp : .5 * (1 - eHp);
-    }
-  } finally {
-    ENC.run = saveEnc; run.next = saveNext; run.depth = saveDepth; UID = saveUid;
-    if (saveEnc && saveEnc.map) loadMap(saveEnc.map);
-  }
-  m /= sims;
-  return { m, label: m >= .7 ? 'Favoured' : m >= .52 ? 'Even' : m >= .3 ? 'Dangerous' : 'Deadly' };
+  const boss = M[ADV.bossRow] && M[ADV.bossRow][0];
+  if (!boss) return null;
+  const pcr = calcPartyCR(run).cr;
+  const bcr = boss.cr || estimateNodeCR(boss, actOf(run));
+  const v = crVerdict(pcr, bcr);
+  return { m: v.ratio, cr: bcr, partyCR: pcr, label: v.label, cls: v.cls };
 }

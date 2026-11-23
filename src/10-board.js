@@ -127,6 +127,27 @@ function buildLayer(){
       if(t==='_'&&n!=='_'&&n!=='#'&&inb({c:cc+dc,r:r+dr})){g.strokeStyle='rgba(0,0,0,.9)';g.lineWidth=4;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke()}
       if(t==='d'&&n==='#'){g.strokeStyle='#8a6040';g.lineWidth=4;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke()}
     })}
+  // v0.24 Soft-Lane visual bands & crossover bridge guides
+  if(typeof LANES!=='undefined'&&LANES&&LANES.length>1){
+    LANES.forEach((L,idx)=>{
+      const def=(typeof LANE_OBJ!=='undefined'&&LANE_OBJ[L.obj])||{col:'#d6a531'};
+      const lx=view.pad+L.c0*T,lw=(L.c1-L.c0+1)*T;
+      g.save();
+      g.fillStyle=def.col;g.globalAlpha=.065;
+      g.fillRect(lx,view.pad,lw,ROWS*T);
+      g.globalAlpha=.34;g.strokeStyle=def.col;g.lineWidth=2;
+      g.setLineDash([6,4]);
+      g.strokeRect(lx+1,view.pad+1,lw-2,ROWS*T-2);
+      g.setLineDash([]);
+      g.restore();
+    });
+    // Subtle open-bridge arrows on rear (r=0..1) and backline (r=8..9) crossover rows
+    g.save();
+    g.fillStyle='rgba(255,235,175,.10)';
+    g.fillRect(view.pad,view.pad,COLS*T,T*1.0);
+    g.fillRect(view.pad,view.pad+(ROWS-1)*T,COLS*T,T*1.0);
+    g.restore();
+  }
   mapLayer=c;mapDirty=false;
 }
 function tileIcon(t,theme){const c=document.createElement('canvas');c.width=c.height=44;const g=c.getContext('2d');const prev=S.enc;
@@ -195,7 +216,7 @@ function handleEvents(){
   const nowS=performance.now()/1000;
   const areaSrc=new Set(evs.filter(e=>e.k==='area'&&e.shape!=='single').map(e=>e.id));
   for(const e of evs){
-    const u=e.id!==undefined?unitById(e.id):null;if(!u&&e.k!=='terrain'&&e.k!=='boom'&&e.k!=='overtime'&&e.k!=='wave')continue;
+    const u=e.id!==undefined?unitById(e.id):null;if(!u&&e.k!=='terrain'&&e.k!=='boom'&&e.k!=='overtime'&&e.k!=='wave'&&e.k!=='lane')continue;
     if(typeof pushBattleFeed==='function')pushBattleFeed(e,u);
     if(e.k==='roll'){
       const enemy=e.side==='E';
@@ -262,6 +283,15 @@ function handleEvents(){
     else if(e.k==='overtime'){if(e.lvl>0){addFx({k:'num',x:view.w/2,y:view.pad+view.T*1.1,txt:e.lvl===1?'OVERTIME: FASTER AND DEADLIER':'OVERTIME ×'+e.lvl,col:'#ffd76a',size:16,dur:1.8,up:-6});SND.tone&&S.sound&&SND.ctx&&SND.tone(220,.3,'square',.04,0,1.5)}}
     else if(e.k==='wave'){addFx({k:'num',x:view.w/2,y:view.pad+view.T*1.1,txt:'REINFORCEMENTS',col:'#ff9c94',size:16,dur:1.6,up:-6})}
     else if(e.k==='spawn'){const p=ucenter(u);u.px=p.x;u.py=p.y;addFx({k:'ring',x:p.x,y:p.y,col:'#9be38a',dur:.6,max:view.T*.75})}
+    else if(e.k==='lane'){
+      const L=LANES&&LANES[e.lane];
+      const cx=L?view.pad+((L.c0+L.c1+1)/2)*view.T:view.w/2;
+      const cy=view.pad+view.T*2.2;
+      addFx({k:'num',x:cx,y:cy,txt:e.txt||'LANE EVENT',col:e.col||'#ffd76a',size:Math.max(14,Math.round(view.T*.24)),dur:1.85,up:-16,big:1});
+      if(e.win){SND.roll(2,2,false,false)}
+      else{SND.tone&&S.sound&&SND.ctx&&SND.tone(155,.28,'sawtooth',.045,0,.65)}
+      if(typeof renderLaneHeaders==='function')renderLaneHeaders();
+    }
   }
 }
 
@@ -699,8 +729,8 @@ function drawIntent(){ctx.save();ctx.lineWidth=1.5;B.units.forEach(u=>{if(!u.ali
 /* 0.12: during placement, hovering a foe shows who it will go after first from where everyone stands */
 let _thrKey='',_thr=null;
 function previewThreats(){if(typeof partyCfg!=='function'||typeof RUN==='undefined'||!RUN)return null;const k=_setupKey;if(k===_thrKey&&_thr)return _thr;
-  const uid=UID;let out={};try{const b=newBattle(S.enc,partyCfg(RUN),ENC[S.enc].eTier||1);const E0=b.units.filter(x=>x.side==='E');
-    E0.forEach((e,i)=>{const t=pickTarget(b,e);if(t)out[i]=t.key})}catch(err){out={}}finally{UID=uid;loadMap(ENC[S.enc].map)}
+  const uid=UID;let out={};try{const opts=typeof battleOpts==='function'?battleOpts(RUN):{};const b=newBattle(S.enc,partyCfg(RUN),ENC[S.enc].eTier||1,opts);const E0=b.units.filter(x=>x.side==='E');
+    E0.forEach((e,i)=>{const t=pickTarget(b,e);if(t)out[i]=t.key})}catch(err){out={}}finally{UID=uid;loadMap(ENC[S.enc].map,ENC[S.enc].lanes)}
   _thrKey=k;_thr=out;return out}
 function drawThreat(){if(drag)return;
   let i=-1;
@@ -736,7 +766,31 @@ canvas.addEventListener('contextmenu',e=>{const p=evPos(e);const en=enemyAt(hexA
 canvas.addEventListener('pointerup',e=>{
   if(!drag)return;const p=evPos(e);const h=hexAt(p.x,p.y);const me=S.party.find(x=>x.key===drag.key);
   if(!h&&typeof dropOffBoard==='function'&&dropOffBoard(drag.key,e)){setupUnits().forEach(x=>x._hide=0);drag=null;return}
-  if(h&&isDeploy(h)&&me){const other=S.party.find(x=>x!==me&&x.c===h.c&&x.r===h.r);if(other){other.c=me.c;other.r=me.r}me.c=h.c;me.r=h.r;save()}
+  if(h&&isDeploy(h)&&me){
+    const other=S.party.find(x=>x!==me&&x.c===h.c&&x.r===h.r);
+    // v0.24 Choke Lane (maxHeroes: 1) clean swap UX
+    const tgtLaneIdx=typeof laneOfCol==='function'?laneOfCol(h.c,LANES):0;
+    const tgtLane=LANES&&LANES[tgtLaneIdx];
+    const tgtDef=tgtLane&&typeof LANE_OBJ!=='undefined'&&LANE_OBJ[tgtLane.obj];
+    if(other){
+      other.c=me.c;other.r=me.r;
+      me.c=h.c;me.r=h.r;
+    }else if(tgtDef&&tgtDef.maxHeroes===1){
+      const existing=S.party.find(x=>x!==me&&typeof laneOfCol==='function'&&laneOfCol(x.c,LANES)===tgtLaneIdx);
+      if(existing){
+        existing.c=me.c;existing.r=me.r;
+        me.c=h.c;me.r=h.r;
+        if(typeof toast==='function')toast(`${tgtLane.n} holds 1 hero — swapped with ${H[existing.key].name.split(' ')[0]}`);
+      }else{
+        me.c=h.c;me.r=h.r;
+      }
+    }else{
+      me.c=h.c;me.r=h.r;
+    }
+    _setupKey='';_thrKey='';
+    save();
+    if(typeof renderLaneHeaders==='function')renderLaneHeaders();
+  }
   setupUnits().forEach(x=>x._hide=0);drag=null;renderSide();
 });
 

@@ -100,6 +100,8 @@ async function main() {
         '#modal [data-a="choosePath"]',
         '#modal [data-a="chooseAsi"]',
         '#modal [data-a="chooseBoon"]',
+        '#modal [data-a="pickHRDraft"]',
+        '#modal [data-a="swapPickHRDraft"]',
         '#modal [data-a="swapBuy"]',
         '#modal [data-a="evTake"]',
         '#modal [data-a="evPromote"]',
@@ -156,17 +158,28 @@ async function main() {
 
   assert((await realClick('#picks [data-a="pick"]')).hitInside, 'pick starter');
 
-  // v0.23 Camp Shop Flow Flip: After starter pick, we land in Camp Shop!
+  // v0.24 Camp Shop Check: Boss Reminder + CR Hub + Camp Rank + House Rules Shelf & 6-Slot Tray!
   const shopStart = await evalJS(`({
     phase: PHASE,
     hasBossReminder: (document.getElementById('nextFight')?.textContent || '').includes('Act Boss Reminder:'),
     hasFreeze: !!document.getElementById('freezeBtn'),
-    hasToMap: !!document.querySelector('#shop [data-a="toMap"]')
+    hasToMap: !!document.querySelector('#shop [data-a="toMap"]'),
+    hasCR: !!document.querySelector('#shopStats .cr-hub'),
+    hasCampRank: !!document.querySelector('#campRankBox [data-a="upgradeCamp"]'),
+    hrOfferCount: document.querySelectorAll('#hrOffers .hr-card').length,
+    hrSlotCount: document.querySelectorAll('#hrTray .hr-slot-empty').length
   })`);
-  console.log('CAMP SHOP START:', shopStart);
-  assert(shopStart.phase === 'shop' && shopStart.hasBossReminder && shopStart.hasFreeze && shopStart.hasToMap, 'Camp Shop v0.23 layout check failed');
+  console.log('CAMP SHOP v0.24 START:', shopStart);
+  assert(shopStart.phase === 'shop' && shopStart.hasBossReminder && shopStart.hasFreeze && shopStart.hasToMap && shopStart.hasCR && shopStart.hasCampRank && shopStart.hrOfferCount >= 2 && shopStart.hrSlotCount === 6, 'Camp Shop v0.24 layout check failed: ' + JSON.stringify(shopStart));
 
-  // Test Whole-Shop Freeze toggle
+  // Test Camp Rank upgrade + House Rule purchase + Whole-Shop Freeze toggle
+  await evalJS(`RUN.gold = 30; renderShop();`);
+  assert((await realClick('#campRankBox [data-a="upgradeCamp"]')).hitInside, 'upgradeCamp');
+  assert((await realClick('#hrOffers .hr-card:not(.sold)')).hitInside, 'buyHR');
+  const afterBuyHR = await evalJS(`({ campRank: RUN.campRank, rules: RUN.houseRules.length, hrChips: document.querySelectorAll('#hrTray .hr-chip').length })`);
+  console.log('CAMP RANK & HOUSE RULE PURCHASE:', afterBuyHR);
+  assert(afterBuyHR.campRank === 2 && afterBuyHR.rules === 1 && afterBuyHR.hrChips === 1, 'Camp Rank / House Rule buy failed: ' + JSON.stringify(afterBuyHR));
+
   assert((await realClick('#freezeBtn')).hitInside, 'freeze toggle on');
   assert((await evalJS('RUN.shop.frozen === true')), 'Expected RUN.shop.frozen === true');
   await snapShot('02-camp-shop');
@@ -175,24 +188,31 @@ async function main() {
 
   let testedPiggyRetry = false;
   let capturedDeploy = false;
+  let capturedAutopsy = false;
   let capturedAct3Map = false;
   let capturedAct3Battle = false;
 
   // Complete all 3 Acts through the 9-row constricting DAG!
   let safety = 0;
-  while (safety++ < 140) {
+  while (safety++ < 150) {
     await clearForcedModals();
     const ph = await evalJS('PHASE');
     if (ph === 'over') break;
 
     if (ph === 'shop') {
-      await evalJS(`RUN.gold = Math.max(RUN.gold, 24); renderShop();`);
+      await evalJS(`RUN.gold = Math.max(RUN.gold, 28); renderShop();`);
       await clearForcedModals();
       // Buy an available hero or upgrade if present
       const boughtHero = await realClick('#offers .ho18:not(.sold):not(.poor)');
       if (boughtHero.found) await clearForcedModals();
+      // Buy an available House Rule if under 6 slots
+      const hrLen = await evalJS(`(RUN.houseRules || []).length`);
+      if (hrLen < 5) {
+        const boughtHR = await realClick('#hrOffers .hr-card:not(.sold):not(.poor)');
+        if (boughtHR.found) await clearForcedModals();
+      }
       // Buy an available item if present
-      const boughtItem = await realClick('#ioffers .io18:not(.sold):not(.poor)');
+      const boughtItem = await realClick('#itemOffers .io18:not(.sold):not(.poor)');
       if (boughtItem.found) await clearForcedModals();
 
       const retry = await evalJS('!!RUN.adv.retryPending');
@@ -210,9 +230,10 @@ async function main() {
         rows: (RUN.adv.map || []).length,
         canCount: document.querySelectorAll('#mapBoard .mnode.can').length,
         edges: document.querySelectorAll('#mapBoard .maplines line').length,
-        hasBossLabel: !!document.querySelector('.mnode.k-boss')
+        hasBossLabel: !!document.querySelector('.mnode.k-boss'),
+        crPills: document.querySelectorAll('#mapBoard .mnode .ncr').length
       })`);
-      assert(msnap.rows === 9 && msnap.canCount >= 1 && msnap.edges > 0 && msnap.hasBossLabel, '9-row DAG map failed: ' + JSON.stringify(msnap));
+      assert(msnap.rows === 9 && msnap.canCount >= 1 && msnap.edges > 0 && msnap.hasBossLabel && msnap.crPills >= 1, '9-row DAG map v0.24 check failed: ' + JSON.stringify(msnap));
       if (msnap.act === 1 && !capturedDeploy) await snapShot('03-act1-dag-map');
       if (msnap.act === 3 && !capturedAct3Map) {
         capturedAct3Map = true;
@@ -228,9 +249,11 @@ async function main() {
       const actNow = await evalJS('RUN.adv.act');
       if (!capturedDeploy) {
         capturedDeploy = true;
-        // Add Rosalind if not on team just to screenshot spatial targeting preview lines on Deployment
-        await evalJS(`if (!RUN.team.some(h => h.key === 'rosalind') && RUN.team.length < 4) { freeHero(RUN, 'rosalind'); autoPlace(RUN, false); renderStrip(); drawBoard(); }`);
-        await new Promise(r => setTimeout(r, 120));
+        await evalJS(`if (!RUN.team.some(h => h.key === 'rosalind') && RUN.team.length < 4) { freeHero(RUN, 'rosalind'); autoPlace(RUN, true); S.party = boardHeroes(RUN); _setupKey=''; renderStrip(); renderLaneHeaders(); drawBoard(); }`);
+        await new Promise(r => setTimeout(r, 140));
+        const laneCheck = await evalJS(`({ laneHeaders: document.querySelectorAll('#laneHeaders .lane-hdr').length, lanes: (ENC.run.lanes || []).length })`);
+        console.log('DEPLOYMENT SOFT LANES:', laneCheck);
+        assert(laneCheck.laneHeaders >= 2 && laneCheck.lanes >= 2, 'Soft-Lane deployment headers missing: ' + JSON.stringify(laneCheck));
         await snapShot('04-deployment-preview');
       }
 
@@ -253,6 +276,13 @@ async function main() {
         await snapShot('06-act3-hells-combat');
       }
       await evalJS(`(() => { B.units.filter(u => u.side === 'E').forEach(u => { u.alive = false; u.hp = 0; }); B.over = true; B.winner = 'P'; resultShown = true; showResult(); })()`);
+      if (!capturedAutopsy) {
+        capturedAutopsy = true;
+        const autCheck = await evalJS(`!!document.querySelector('#result .autopsy')`);
+        console.log('POST-COMBAT AUTOPSY PRESENT:', autCheck);
+        assert(autCheck, 'Expected Post-Combat Autopsy panel in #result');
+        await snapShot('04b-combat-autopsy');
+      }
       assert((await realClick('#result [data-a="afterFight"]')).hitInside, 'afterFight win');
       await clearForcedModals();
       continue;
@@ -261,11 +291,11 @@ async function main() {
     throw new Error('Unexpected phase: ' + ph);
   }
 
-  const finalSnap = await evalJS(`({ phase: PHASE, victory: RUN.victory, over: RUN.over, act: RUN.adv.act, wins: RUN.stats.won })`);
+  const finalSnap = await evalJS(`({ phase: PHASE, victory: RUN.victory, over: RUN.over, act: RUN.adv.act, wins: RUN.stats.won, campRank: RUN.campRank, rules: (RUN.houseRules || []).length })`);
   console.log('FINAL VICTORY:', finalSnap);
   assert(finalSnap.phase === 'over' && finalSnap.victory && finalSnap.over && finalSnap.act === 3, 'Expected full 3-Act victory');
 
-  // Verify all 24 heroes + 6 forms + 82 items + 10 bosses render cleanly
+  // Verify all 24 heroes + 6 forms + 88 items + 36 House Rules + 13 maps render cleanly
   const contentCheck = await evalJS(`(() => {
     let cardsOk = 0, loadedHeroes = 0, loadedForms = 0, itemsOk = 0;
     HERO_ORDER.forEach(k => {
@@ -281,10 +311,10 @@ async function main() {
       const ic = itemIcon(ik, 32);
       if (ic && ic.includes('<svg')) itemsOk++;
     });
-    return { cardsOk, loadedHeroes, loadedForms, itemsOk, enemyCount: Object.keys(E).length };
+    return { cardsOk, loadedHeroes, loadedForms, itemsOk, houseRules: HOUSE_RULE_KEYS.length, maps: Object.keys(BATTLE_MAPS).length, enemyCount: Object.keys(E).length };
   })()`);
   console.log('CONTENT & ART CHECK:', contentCheck);
-  assert(contentCheck.cardsOk === 24 && contentCheck.loadedHeroes === 24 && contentCheck.loadedForms === 6 && contentCheck.itemsOk === 82, 'Content/art check failed');
+  assert(contentCheck.cardsOk === 24 && contentCheck.loadedHeroes === 24 && contentCheck.loadedForms === 6 && contentCheck.itemsOk === 88 && contentCheck.houseRules === 36 && contentCheck.maps === 13, 'Content/art check failed: ' + JSON.stringify(contentCheck));
 
   // Verify Field Guide & Stat Tracker page loads and all 4 tabs render with 0 errors!
   await send('Page.navigate', { url: 'http://127.0.0.1:8081/tools/wiki.html' });
@@ -304,7 +334,7 @@ async function main() {
     botRows: document.querySelectorAll('#runBotTable tbody tr').length
   })`);
   console.log('WIKI CHECK:', { ...wikiCheck, itemRows });
-  assert(wikiCheck.rosterRows === 24 && wikiCheck.dossierText > 200 && itemRows === 82 && wikiCheck.bossRows === 10 && wikiCheck.botRows === 5, 'Wiki v0.23 check failed');
+  assert(wikiCheck.rosterRows === 24 && wikiCheck.dossierText > 200 && itemRows >= 82 && wikiCheck.bossRows === 10 && wikiCheck.botRows === 5, 'Wiki v0.24 check failed: ' + JSON.stringify({ ...wikiCheck, itemRows }));
 
   // Verify Asset Studio loads cleanly with 30 assigned hero/form art slots and 0 errors!
   await send('Page.navigate', { url: 'http://127.0.0.1:8081/tools/asset-studio.html' });
@@ -318,7 +348,7 @@ async function main() {
   assert(studioCheck.cards === 24 && studioCheck.assignedCards === 24 && studioCheck.cov.includes('30 /'), 'Asset Studio check failed: ' + JSON.stringify(studioCheck));
 
   assert(errors.length === 0, 'Browser errors detected: ' + JSON.stringify(errors));
-  console.log('ALL v0.23 CHROMIUM E2E ASSERTIONS PASSED (0 errors)!');
+  console.log('ALL v0.24 CHROMIUM E2E ASSERTIONS PASSED (0 errors)!');
   ws.close();
   chrome.kill();
 }

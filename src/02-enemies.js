@@ -27,102 +27,302 @@ const DICE = {
   cursed: { n: 'Cursed Die', x: '1 to 3 all fizzle with no charge back. The roll after a fizzle is always a natural 20.' }
 };
 
-/* ---------- 12 Curated 10x10 Battle Maps (4 Phandalin, 4 White Plume Mountain, 4 The Hells) ---------- */
+/* ---------- v0.24 Soft-Lane Objective Registry ---------- */
+const LANE_OBJ = {
+  breach: {
+    k: 'breach', n: 'Main Breach', g: '⚔', col: '#d6a531',
+    winTxt: 'Flank Rush (+35% spd, +20% Atk Spd 5s) as winners cross over',
+    failTxt: 'Hold the center line'
+  },
+  ritual: {
+    k: 'ritual', n: 'Dark Ritual', g: '☽', col: '#a85ad8', timer: 12,
+    winTxt: 'Interrupt <12s: +2g & Stun all remaining foes 1s',
+    failTxt: 'At 12s: All enemies gain +25% Max HP Ward!'
+  },
+  loot: {
+    k: 'loot', n: 'Supply Cart', g: '💰', col: '#e0b43a', timer: 14,
+    winTxt: 'Clear <14s: +3g (+1g/Act) & +1 Free Reroll!',
+    failTxt: 'At 14s: Cart escapes (opportunity lost)'
+  },
+  choke: {
+    k: 'choke', n: 'Duel Choke', g: '🛡', col: '#4a8ab8', maxHeroes: 1,
+    winTxt: '1 Hero max · Win: Party gains +2 AC & +2 SR',
+    failTxt: 'Left empty: Foes Ambush (+35% dmg & Haste 5s)!'
+  },
+  shrine: {
+    k: 'shrine', n: 'Battle Shrine', g: '✦', col: '#4ab87a',
+    winTxt: 'Win: All surviving allies gain Advantage & +25 Charge',
+    failTxt: 'No penalty if cleared late'
+  },
+  boss: {
+    k: 'boss', n: 'Boss Throne', g: '♛', col: '#c83a24',
+    winTxt: 'Clear side lanes to Expose the Boss (6s) & flank!',
+    failTxt: 'Defeat the Boss to win'
+  }
+};
+
+/* ---------- 13 Redesigned Soft-Lane Battle Maps (2-Lane 10x10 & 3-Lane 11x10) ----------
+   Physical terrain dividers split rows 2..6 into distinct lanes while keeping rear (r=0..1)
+   and backline (r=8..9) crossover bridges open so lane winners Breach & Flank remaining lanes! */
 const BATTLE_MAPS = {
   // Act 1: Phandalin & the Triboar Trail
   triboar_road: {
-    n: 'Triboar Trail', theme: 'forest',
+    n: 'Triboar Trail', theme: 'forest', laneCount: 2,
+    lanes: [
+      { id: 'left',  n: 'Left Road',  c0: 0, c1: 3, obj: 'choke' },
+      { id: 'right', n: 'Right Road', c0: 6, c1: 9, obj: 'ritual' }
+    ],
     grid: [
-      'vv......vv', 'v........v', '.vO....Ov.', '.vO....Ov.', 'v.O....O.v',
-      'v........v', 'PPOPPPPOPP', 'PPOPPPPOPP', 'PP.PPPP.PP', '.PPPPPPPP.'
-    ]
-  },
-  cragmaw_cave: {
-    n: 'Cragmaw Cave', theme: 'cave',
-    grid: [
-      '#........#', '#..O..O..#', '#~......~#', '#~..O...~#', '#........#',
-      '#..O..O..#', 'PP......PP', 'PPPPPPPPPP', 'PPPPPPPPPP', '#PPPPPPPP#'
+      'v........v',
+      '..........',
+      '....OO....',
+      '.,..OO..,.',
+      '....OO....',
+      'v...OO...v',
+      '....OO....',
+      'PPPP..PPPP',
+      'PPPP..PPPP',
+      'PPPP..PPPP'
     ]
   },
   tresendar_cellar: {
-    n: 'Tresendar Cellar', theme: 'dungeon',
+    n: 'Tresendar Cellar', theme: 'dungeon', laneCount: 2,
+    lanes: [
+      { id: 'left',  n: 'West Vault', c0: 0, c1: 3, obj: 'breach' },
+      { id: 'right', n: 'East Vault', c0: 6, c1: 9, obj: 'loot' }
+    ],
     grid: [
-      '#........#', '#.c....c.#', '##..dd..##', '#........#', '#..c..c..#',
-      '#........#', 'PP..dd..PP', 'PPPPPPPPPP', 'PPPPPPPPPP', '#PPPPPPPP#'
+      '..........',
+      '....dd....',
+      '....##....',
+      'c...##...c',
+      '....##....',
+      '....##....',
+      '....##....',
+      'PPPPddPPPP',
+      'PPPP..PPPP',
+      'PPPP..PPPP'
+    ]
+  },
+  cragmaw_cave: {
+    n: 'Cragmaw Cave', theme: 'cave', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'Left Tunnel',  c0: 0, c1: 2, obj: 'choke' },
+      { id: 'center', n: 'Main Cavern',  c0: 4, c1: 6, obj: 'breach' },
+      { id: 'right',  n: 'Stream Ledge', c0: 8, c1: 10, obj: 'loot' }
+    ],
+    grid: [
+      '...........',
+      '...........',
+      '...O...~...',
+      '.,.#...~...',
+      '...#...~...',
+      '...O...~...',
+      '...O...~...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   },
   thundertree_ruins: {
-    n: 'Thundertree Ruins', theme: 'forest',
+    n: 'Thundertree Ruins', theme: 'forest', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'West Ruin',   c0: 0, c1: 2, obj: 'ritual' },
+      { id: 'center', n: 'Courtyard',   c0: 4, c1: 6, obj: 'breach' },
+      { id: 'right',  n: 'East Grove',  c0: 8, c1: 10, obj: 'shrine' }
+    ],
     grid: [
-      'v........v', '..O....O..', '..,....,..', '..........', '.O......O.',
-      '..,....,..', 'PPPPPPPPPP', 'PP.PPPP.PP', 'PPPPPPPPPP', '.PPPPPPPP.'
+      'v.........v',
+      '...........',
+      '...O...O...',
+      '...O...O...',
+      '.,.O...O.,.',
+      '...O...O...',
+      '...O...O...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   },
   spider_temple: {
-    n: 'Wave Echo Sanctum', theme: 'cave',
+    n: 'Wave Echo Sanctum', theme: 'cave', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'Web Alcove',   c0: 0, c1: 2, obj: 'ritual' },
+      { id: 'center', n: 'Spider Altar', c0: 4, c1: 6, obj: 'boss' },
+      { id: 'right',  n: 'Bone Chasm',   c0: 8, c1: 10, obj: 'shrine' }
+    ],
     grid: [
-      'vv......vv', 'v...w....v', '.vO..w.Ov.', '.vO.w..Ov.', 'v.O....O.v',
-      'v...w....v', 'PPOPPPPOPP', 'PPOPPPPOPP', 'PP.PPPP.PP', '.PPPPPPPP.'
+      '...........',
+      '....w.w....',
+      '...O...O...',
+      '.w.O...O.w.',
+      '...O...O...',
+      '...O...O...',
+      '...O...O...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   },
 
   // Act 2: White Plume Mountain
   boiling_bubble: {
-    n: 'Boiling Bubble Chamber', theme: 'cave',
+    n: 'Boiling Bubble Chamber', theme: 'cave', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'Steam Vent',  c0: 0, c1: 2, obj: 'choke' },
+      { id: 'center', n: 'Bubble Core', c0: 4, c1: 6, obj: 'breach' },
+      { id: 'right',  n: 'Vault Pool',  c0: 8, c1: 10, obj: 'loot' }
+    ],
     grid: [
-      '~~......~~', '~........~', '~..^..^..~', '..........', '....,,....',
-      '~........~', 'PPPPPPPPPP', '~PPPPPPPP~', 'PPPPPPPPPP', '~~PPPPPP~~'
+      '...........',
+      '...........',
+      '...~...~...',
+      '.^.~...~.^.',
+      '...~...~...',
+      '...~...~...',
+      '...~...~...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   },
   frictionless_hall: {
-    n: 'Frictionless Hall', theme: 'dungeon',
+    n: 'Frictionless Hall', theme: 'dungeon', laneCount: 2,
+    lanes: [
+      { id: 'left',  n: 'West Gallery', c0: 0, c1: 3, obj: 'ritual' },
+      { id: 'right', n: 'East Gallery', c0: 6, c1: 9, obj: 'shrine' }
+    ],
     grid: [
-      '_#......#_', '_........_', '_#......#_', '_........_', '..........',
-      '_........_', '_PPPPPPPP_', '_PPPPPPPP_', '_PPPPPPPP_', '__PPPPPP__'
+      '..........',
+      '..........',
+      '....__....',
+      '....__....',
+      '....__....',
+      '....__....',
+      '....__....',
+      'PPPP..PPPP',
+      'PPPP..PPPP',
+      'PPPP..PPPP'
     ]
   },
   inverted_ziggurat: {
-    n: 'Inverted Ziggurat', theme: 'dungeon',
+    n: 'Inverted Ziggurat', theme: 'dungeon', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'West Tier',   c0: 0, c1: 2, obj: 'ritual' },
+      { id: 'center', n: 'Apex Shaft',  c0: 4, c1: 6, obj: 'breach' },
+      { id: 'right',  n: 'East Tier',   c0: 8, c1: 10, obj: 'shrine' }
+    ],
     grid: [
-      '~........~', '..O....O..', '..........', '...O..O...', '..........',
-      '..O....O..', 'PPPPPPPPPP', 'PPPPPPPPPP', '~PPPPPPPP~', '~~PPPPPP~~'
+      '...........',
+      '...........',
+      '...#...#...',
+      '...#...#...',
+      '...#...#...',
+      '...O...O...',
+      '...O...O...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   },
   shadow_crypt: {
-    n: 'Shadow Crypt', theme: 'cave',
+    n: 'Shadow Crypt', theme: 'cave', laneCount: 2,
+    lanes: [
+      { id: 'left',  n: 'Sarcophagi',  c0: 0, c1: 3, obj: 'choke' },
+      { id: 'right', n: 'Crypt Vault', c0: 6, c1: 9, obj: 'loot' }
+    ],
     grid: [
-      '#........#', '#..c..c..#', '#........#', '##......##', '#..c..c..#',
-      '#........#', 'PPPPPPPPPP', 'PP.PPPP.PP', 'PPPPPPPPPP', '#PPPPPPPP#'
+      '..........',
+      '..........',
+      '....##....',
+      'c...##...c',
+      '....##....',
+      '....##....',
+      '....##....',
+      'PPPP..PPPP',
+      'PPPP..PPPP',
+      'PPPP..PPPP'
     ]
   },
 
   // Act 3: The Hells
   avernus_wastes: {
-    n: 'Avernus Wastes', theme: 'hells',
+    n: 'Avernus Wastes', theme: 'hells', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'Ash Ridge',    c0: 0, c1: 2, obj: 'choke' },
+      { id: 'center', n: 'Obsidian Rift',c0: 4, c1: 6, obj: 'breach' },
+      { id: 'right',  n: 'Soul Wagon',   c0: 8, c1: 10, obj: 'loot' }
+    ],
     grid: [
-      '_........_', '..^....^..', '....,..,..', '..........', '.^......^.',
-      '..........', 'PPPPPPPPPP', '_PPPPPPPP_', 'PPPPPPPPPP', '__PPPPPP__'
+      '...........',
+      '...........',
+      '..._..._...',
+      '.^._..._.^.',
+      '..._..._...',
+      '..._..._...',
+      '..._..._...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   },
   iron_citadel: {
-    n: 'Iron Citadel', theme: 'hells',
+    n: 'Iron Citadel', theme: 'hells', laneCount: 2,
+    lanes: [
+      { id: 'left',  n: 'West Bastion', c0: 0, c1: 3, obj: 'ritual' },
+      { id: 'right', n: 'East Bastion', c0: 6, c1: 9, obj: 'breach' }
+    ],
     grid: [
-      '#........#', '#.a....a.#', '##..dd..##', '#........#', '#..O..O..#',
-      '#........#', 'PP..dd..PP', 'PPPPPPPPPP', 'PPPPPPPPPP', '#PPPPPPPP#'
+      '..........',
+      '....dd....',
+      '....##....',
+      '....aa....',
+      '....##....',
+      '....aa....',
+      '....##....',
+      'PPPP..PPPP',
+      'PPPP..PPPP',
+      'PPPP..PPPP'
     ]
   },
   styx_crossing: {
-    n: 'River Styx Crossing', theme: 'hells',
+    n: 'River Styx Crossing', theme: 'hells', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'West Bridge',   c0: 0, c1: 2, obj: 'shrine' },
+      { id: 'center', n: 'Center Bridge', c0: 4, c1: 6, obj: 'breach' },
+      { id: 'right',  n: 'East Bridge',   c0: 8, c1: 10, obj: 'ritual' }
+    ],
     grid: [
-      '..........', '..........', '..........', '~~..~~..~~', '~~..~~..~~',
-      '..........', 'PPPPPPPPPP', 'PPPPPPPPPP', 'PPPPPPPPPP', '.PPPPPPPP.'
+      '...........',
+      '...........',
+      '...~...~...',
+      '...~...~...',
+      '...~...~...',
+      '...~...~...',
+      '...~...~...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   },
   throne_ninth: {
-    n: 'Throne of the Ninth', theme: 'hells',
+    n: 'Throne of the Ninth', theme: 'hells', laneCount: 3,
+    lanes: [
+      { id: 'left',   n: 'Hellfire Wing', c0: 0, c1: 2, obj: 'ritual' },
+      { id: 'center', n: 'Ninth Throne',  c0: 4, c1: 6, obj: 'boss' },
+      { id: 'right',  n: 'Relic Wing',    c0: 8, c1: 10, obj: 'shrine' }
+    ],
     grid: [
-      '^........^', '..O....O..', '..........', '..........', '.O......O.',
-      '^........^', 'PPPPPPPPPP', 'PP.PPPP.PP', 'PPPPPPPPPP', '.PPPPPPPP.'
+      '...........',
+      '...........',
+      '...O...O...',
+      '.^.O...O.^.',
+      '...O...O...',
+      '...O...O...',
+      '...O...O...',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP',
+      'PPP.PPP.PPP'
     ]
   }
 };
@@ -812,272 +1012,302 @@ const E = {
 };
 
 /* ==========================================================================
-   ENCOUNTERS — Full 3-Act Encounter Library
+   ENCOUNTERS — Full 3-Act Soft-Lane Encounter Library
+   2-Lane coords: Left c=0..3, Right c=6..9
+   3-Lane coords: Left c=0..2, Center c=4..6, Right c=8..10
    ========================================================================== */
 const ENC = {
   /* ---------- ACT 1: PHANDALIN & THE TRIBOAR TRAIL ---------- */
   ambush: {
     n: 'Goblin Ambush', place: 'Triboar Trail', theme: 'forest', mapKey: 'triboar_road',
-    q: 'Baseline', note: 'Goblin raiders hold the road while archers and a hedge shaman back them up.',
-    map: BATTLE_MAPS.triboar_road.grid,
-    u: [['archer', 3, 1], ['archer', 6, 1], ['shaman', 5, 0], ['goblin', 3, 4], ['goblin', 5, 4], ['goblin', 6, 4], ['goblin', 0, 3]]
+    q: 'Baseline · 2 Lanes', note: 'Raiders hold the Left Choke while a Hedge Shaman & archers channel a Dark Ritual on the Right.',
+    map: BATTLE_MAPS.triboar_road.grid, lanes: BATTLE_MAPS.triboar_road.lanes,
+    u: [['goblin', 1, 4], ['goblin', 2, 4], ['archer', 1, 1], ['goblin', 7, 4], ['shaman', 8, 1], ['archer', 7, 1], ['goblin', 8, 4]]
   },
   wolves: {
     n: 'Wolf Pack', place: 'Neverwinter Woods', theme: 'forest', mapKey: 'triboar_road',
-    q: 'Needs a tank', sc: { dmg: 1.15 }, note: 'Hungry wolves prowl the flanks while a Dire Wolf leaps over the front line.',
-    map: BATTLE_MAPS.triboar_road.grid,
-    u: [['wolf', 3, 4], ['wolf', 6, 4], ['ripper', 5, 2], ['wolf', 5, 4], ['wolf', 9, 2], ['wolf', 0, 2]]
+    q: 'Chargers · 2 Lanes', sc: { dmg: 1.12 }, note: 'Hungry wolves hold the Left road while Ripper the Dire Wolf leaps from the Right.',
+    map: BATTLE_MAPS.triboar_road.grid, lanes: BATTLE_MAPS.triboar_road.lanes,
+    u: [['wolf', 1, 4], ['wolf', 2, 4], ['wolf', 2, 2], ['ripper', 7, 2], ['wolf', 7, 4], ['wolf', 8, 4]]
   },
   redbrands: {
     n: 'Redbrand Ruffians', place: 'Tresendar Cellar', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'Fast brawlers', note: 'Redbrand brigands double-strike with Armor Pen while a cult mage and crossbowman cover the rear.',
-    map: BATTLE_MAPS.tresendar_cellar.grid,
-    u: [['ruffian', 3, 3], ['ruffian', 6, 3], ['ruffian', 4, 4], ['adept', 2, 1], ['archer', 7, 1]]
+    q: 'Brawlers · 2 Lanes', note: 'Ruffians guard the West Breach while an adept and crossbowman defend the East Supply Cart.',
+    map: BATTLE_MAPS.tresendar_cellar.grid, lanes: BATTLE_MAPS.tresendar_cellar.lanes,
+    u: [['ruffian', 1, 4], ['ruffian', 2, 4], ['ruffian', 7, 4], ['adept', 7, 1], ['archer', 8, 1]]
   },
   gate: {
     n: 'Hobgoblin Patrol', place: 'Triboar Road', theme: 'forest', mapKey: 'triboar_road',
-    q: 'High AC', note: 'AC 17 Shieldbearers armor each other while archers and a hedge shaman back them up.',
-    map: BATTLE_MAPS.triboar_road.grid,
-    u: [['hobgoblin', 4, 4], ['hobgoblin', 5, 4], ['captain', 4, 3], ['archer', 3, 1], ['shaman', 6, 1], ['archer', 8, 1]]
+    q: 'High AC · 2 Lanes', note: 'AC 17 Shieldbearers anchor the Left Choke while archers & a shaman channel on the Right.',
+    map: BATTLE_MAPS.triboar_road.grid, lanes: BATTLE_MAPS.triboar_road.lanes,
+    u: [['hobgoblin', 1, 4], ['hobgoblin', 2, 4], ['captain', 2, 2], ['shaman', 7, 1], ['archer', 8, 1], ['archer', 6, 1]]
   },
   reavers: {
     n: 'Cragmaw Reavers', place: 'Cragmaw Cave', theme: 'cave', mapKey: 'cragmaw_cave',
-    q: 'Chargers', sc: { hp: .92, dmg: .92 }, note: 'Reavers leap over your frontline toward casters while a shaman mends from the rear.',
-    map: BATTLE_MAPS.cragmaw_cave.grid,
-    u: [['orc', 3, 3], ['orc', 6, 3], ['shaman', 4, 1], ['archer', 6, 1], ['orc', 8, 2], ['archer', 1, 1]]
+    q: 'Chargers · 3 Lanes', sc: { hp: .94, dmg: .94 }, note: 'Reavers charge down the tunnels while a shaman guards the center and raiders protect the Right Supply Cart.',
+    map: BATTLE_MAPS.cragmaw_cave.grid, lanes: BATTLE_MAPS.cragmaw_cave.lanes,
+    u: [['orc', 1, 4], ['orc', 5, 4], ['shaman', 5, 1], ['archer', 4, 1], ['orc', 9, 4], ['archer', 9, 1]]
   },
   blights: {
     n: 'Twig Blight Swarm', place: 'Thundertree Ruins', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Swarm', sc: { hp: 1.10, dmg: 1.10 }, note: 'Blights and venom spiders pour down the center while a Blight Caller grows more and ash zombies choke melee.',
-    map: BATTLE_MAPS.thundertree_ruins.grid,
-    u: [['blight', 3, 3], ['blight', 4, 3], ['blight', 5, 3], ['spider', 6, 3], ['ashzombie', 4, 2], ['caller', 5, 0], ['blight', 8, 3]],
-    waves: [{ at: 9, u: [['blight', 1, 1], ['blight', 8, 1], ['blight', 4, 0], ['blight', 5, 0]] }]
+    q: 'Swarm · 3 Lanes', sc: { hp: 1.08, dmg: 1.08 }, note: 'Blight Caller channels a West Ritual while swarms pour down Center and guard the East Shrine.',
+    map: BATTLE_MAPS.thundertree_ruins.grid, lanes: BATTLE_MAPS.thundertree_ruins.lanes,
+    u: [['caller', 1, 1], ['blight', 1, 4], ['ashzombie', 5, 3], ['blight', 4, 4], ['blight', 6, 4], ['spider', 9, 4], ['blight', 9, 2]],
+    waves: [{ at: 9, u: [['blight', 1, 0], ['blight', 5, 0], ['blight', 9, 0]] }]
   },
   skeleton_watch: {
     n: 'Skeleton Watch', place: 'Tresendar Cellar', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'High SR archers', note: 'Skeleton archers shrug off magic (SR 16) behind undying zombies and choking ash.',
-    map: BATTLE_MAPS.tresendar_cellar.grid,
-    u: [['skeleton', 2, 1], ['skeleton', 5, 1], ['skeleton', 7, 1], ['zombie', 4, 3], ['ashzombie', 5, 3], ['zombie', 3, 4]]
+    q: 'High SR · 2 Lanes', note: 'SR 16 Skeleton archers shoot behind undying zombies across both cellar vaults.',
+    map: BATTLE_MAPS.tresendar_cellar.grid, lanes: BATTLE_MAPS.tresendar_cellar.lanes,
+    u: [['zombie', 1, 4], ['ashzombie', 2, 4], ['skeleton', 1, 1], ['zombie', 7, 4], ['skeleton', 7, 1], ['skeleton', 8, 1]]
   },
   owlwell: {
     n: 'Old Owl Well', place: 'Ruined Watchtower', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Elite · Necrosis', sc: { dmg: .88 }, note: 'Necromancer stacks Necrosis behind zombies while a Conjurer raises skeleton archers.',
-    map: BATTLE_MAPS.thundertree_ruins.grid,
-    u: [['necromancer', 5, 0], ['conjurer', 8, 0], ['zombie', 3, 3], ['zombie', 6, 3], ['zombie', 4, 4], ['zombie', 5, 4]]
+    q: 'Elite · Necrosis · 3 Lanes', sc: { dmg: .90 }, note: 'Necromancer channels on the West Ruin while zombies anchor Center and a Conjurer guards the East Shrine.',
+    map: BATTLE_MAPS.thundertree_ruins.grid, lanes: BATTLE_MAPS.thundertree_ruins.lanes,
+    u: [['necromancer', 1, 1], ['zombie', 1, 4], ['zombie', 4, 4], ['zombie', 6, 4], ['conjurer', 9, 1], ['zombie', 9, 4]]
   },
   orcs: {
     n: 'Wyvern Tor War Band', place: 'Wyvern Tor', theme: 'cave', mapKey: 'cragmaw_cave',
-    q: 'Elite · Damage race', sc: { hp: .88, dmg: .88 }, note: 'Ogre anchors the center while a Warlord hastes leaping orc reavers.',
-    map: BATTLE_MAPS.cragmaw_cave.grid,
-    u: [['orc', 3, 3], ['orc', 6, 3], ['ogre', 4, 2], ['chief', 5, 0], ['orc', 8, 2], ['orc', 1, 2]]
+    q: 'Elite · War Band · 3 Lanes', sc: { hp: .90, dmg: .90 }, note: 'Ogre & Warlord anchor Main Cavern while Orcs press Left Choke and Right Supply Ledge.',
+    map: BATTLE_MAPS.cragmaw_cave.grid, lanes: BATTLE_MAPS.cragmaw_cave.lanes,
+    u: [['orc', 1, 4], ['ogre', 4, 2], ['chief', 5, 0], ['orc', 6, 4], ['orc', 9, 4], ['orc', 9, 2]]
   },
   owlbear: {
     n: 'Cragmaw Owlbear', place: 'Cragmaw Keep', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Elite · Attrition', note: 'Enraging 2×2 Owlbear hits 15% harder every 6s with goblin archers backing it up.',
-    map: BATTLE_MAPS.thundertree_ruins.grid,
-    u: [['owlbear', 4, 2], ['archer', 2, 1], ['archer', 7, 1], ['goblin', 3, 4], ['goblin', 7, 4]]
+    q: 'Elite · Attrition · 3 Lanes', note: 'Enraging 2×2 Owlbear dominates the Courtyard flanked by archers on the Ruins & Shrine.',
+    map: BATTLE_MAPS.thundertree_ruins.grid, lanes: BATTLE_MAPS.thundertree_ruins.lanes,
+    u: [['owlbear', 4, 2], ['archer', 1, 1], ['goblin', 1, 4], ['archer', 9, 1], ['goblin', 9, 4]]
   },
   forge: {
     n: 'Wave Echo Flameskull', place: 'Wave Echo Forge', theme: 'cave', mapKey: 'cragmaw_cave',
-    q: 'Elite · High SR / Burn', sc: { hp: .92, dmg: .88 }, note: 'SR 17 Flameskull and Cult Adepts rain Fireballs behind choking ash zombies.',
-    map: BATTLE_MAPS.cragmaw_cave.grid,
-    u: [['flameskull', 5, 1], ['adept', 1, 0], ['adept', 8, 0], ['ashzombie', 3, 3], ['ashzombie', 6, 3], ['zombie', 4, 4]]
+    q: 'Elite · High SR / Burn · 3 Lanes', sc: { hp: .92, dmg: .90 }, note: 'SR 17 Flameskull anchors Center behind ash zombies while Cult Adepts hold the flank tunnels.',
+    map: BATTLE_MAPS.cragmaw_cave.grid, lanes: BATTLE_MAPS.cragmaw_cave.lanes,
+    u: [['adept', 1, 1], ['ashzombie', 1, 4], ['flameskull', 5, 1], ['ashzombie', 5, 4], ['adept', 9, 1], ['zombie', 9, 4]]
   },
   klarg: {
     n: 'Klarg’s Hideout', place: 'Cragmaw Hideout', theme: 'cave', mapKey: 'cragmaw_cave',
-    q: 'Miniboss', sc: { hp: .92, dmg: .88 }, note: 'Klarg the Bugbear Chief, his Dire Wolf Ripper, and goblin raiders guard stolen Rare loot!',
-    map: BATTLE_MAPS.cragmaw_cave.grid,
-    u: [['klarg', 4, 2], ['ripper', 6, 2], ['goblin', 3, 4], ['goblin', 6, 4], ['archer', 2, 0], ['archer', 7, 0]]
+    q: 'Miniboss · 3 Lanes', sc: { hp: .94, dmg: .90 }, note: 'Klarg anchors Center, Ripper stalks the Left Choke, and raiders guard Klarg’s Supply Cart on the Right!',
+    map: BATTLE_MAPS.cragmaw_cave.grid, lanes: BATTLE_MAPS.cragmaw_cave.lanes,
+    u: [['klarg', 5, 3], ['goblin', 4, 4], ['ripper', 1, 3], ['archer', 1, 1], ['goblin', 9, 4], ['archer', 9, 1]]
   },
   nezznar: {
     n: 'Nezznar, the Black Spider', place: 'Wave Echo Sanctum', theme: 'cave', mapKey: 'spider_temple',
-    q: 'Act 1 Boss', sc: { hp: .98, dmg: .90 }, note: 'Boss: Necrosis, rooting webs, and Giant Spider summons. Bring Ward or fast burst.',
-    map: BATTLE_MAPS.spider_temple.grid,
-    u: [['nezznar', 4, 0], ['spider', 2, 2], ['spider', 7, 2], ['goblin', 4, 4], ['skeleton', 7, 1]]
+    q: 'Act 1 Boss · 3 Lanes', sc: { hp: .98, dmg: .90 }, note: 'Boss: Nezznar holds the Center Altar; clear the Web Ritual & Bone Shrine to Expose him!',
+    map: BATTLE_MAPS.spider_temple.grid, lanes: BATTLE_MAPS.spider_temple.lanes,
+    u: [['nezznar', 5, 1], ['goblin', 5, 4], ['spider', 1, 3], ['spider', 9, 3], ['skeleton', 9, 1]]
   },
   venomfang: {
     n: 'Venomfang, Green Dragon', place: 'Thundertree Ruins', theme: 'forest', mapKey: 'thundertree_ruins',
-    q: 'Act 1 Boss', sc: { hp: .92, dmg: .84 }, note: 'Boss (2×2 Dragon): Twin venomous claws, Poison Breath cones, Wing Buffet knockback & AC 17 scales.',
+    q: 'Act 1 Boss · 3 Lanes', sc: { hp: .94, dmg: .86 }, note: 'Boss (2×2 Dragon): Venomfang rules the Center Courtyard flanked by Cult Ritualists and Blights.',
     map: BATTLE_MAPS.thundertree_ruins.grid,
-    u: [['venomfang', 4, 1], ['adept', 1, 0], ['adept', 8, 0], ['blight', 3, 4], ['blight', 6, 4]]
+    lanes: [
+      { id: 'left',   n: 'Cult Ritual',   c0: 0, c1: 2, obj: 'ritual' },
+      { id: 'center', n: 'Dragon Throne', c0: 4, c1: 6, obj: 'boss' },
+      { id: 'right',  n: 'East Shrine',   c0: 8, c1: 10, obj: 'shrine' }
+    ],
+    u: [['venomfang', 4, 2], ['adept', 1, 1], ['blight', 1, 4], ['adept', 9, 1], ['blight', 9, 4]]
   },
   glasstaff: {
     n: 'Glasstaff, Redbrand Mage', place: 'Tresendar Manor', theme: 'dungeon', mapKey: 'tresendar_cellar',
-    q: 'Act 1 Boss', sc: { hp: 1.00, dmg: .93 }, note: 'Boss: Arcane Wards, twin arcane bolts, piercing Lightning Bolts & Hold Person behind Redbrands.',
+    q: 'Act 1 Boss · 2 Lanes', sc: { hp: 1.00, dmg: .93 }, note: 'Boss: Glasstaff channels Arcane Wards in the West Vault while Redbrands guard the East Vault.',
     map: BATTLE_MAPS.tresendar_cellar.grid,
-    u: [['glasstaff', 5, 0], ['hobgoblin', 3, 3], ['hobgoblin', 6, 3], ['ruffian', 4, 4], ['skeleton', 2, 1], ['skeleton', 7, 1]]
+    lanes: [
+      { id: 'left',  n: 'Mage Sanctum', c0: 0, c1: 3, obj: 'boss' },
+      { id: 'right', n: 'Redbrand Wing',c0: 6, c1: 9, obj: 'shrine' }
+    ],
+    u: [['glasstaff', 1, 1], ['hobgoblin', 1, 4], ['ruffian', 2, 4], ['hobgoblin', 7, 4], ['skeleton', 7, 1], ['skeleton', 8, 1]]
   },
 
   /* ---------- ACT 2: WHITE PLUME MOUNTAIN ---------- */
   kelpie_mire: {
     n: 'Kelpie & Mire Stalkers', place: 'Flooded Grotto', theme: 'cave', mapKey: 'boiling_bubble',
-    q: 'Control & Charm', note: 'Kelpies lure and Root heroes while gargoyles hold the water’s edge.',
-    map: BATTLE_MAPS.boiling_bubble.grid,
-    u: [['kelpie', 3, 1], ['kelpie', 6, 1], ['gargoyle', 4, 3], ['gargoyle', 5, 3], ['steam_mephit', 2, 2]]
+    q: 'Control · 3 Lanes', note: 'Gargoyles anchor the Steam Vent & Bubble Core while Kelpies charm across the water.',
+    map: BATTLE_MAPS.boiling_bubble.grid, lanes: BATTLE_MAPS.boiling_bubble.lanes,
+    u: [['gargoyle', 1, 4], ['kelpie', 5, 1], ['gargoyle', 5, 4], ['kelpie', 9, 1], ['steam_mephit', 9, 4]]
   },
   gargoyle_hall: {
     n: 'Gargoyle Sentinels', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'High AC stone wall', note: 'AC 17 Gargoyles guard stepped stone tiers while Manticores pepper from above.',
-    map: BATTLE_MAPS.inverted_ziggurat.grid,
-    u: [['gargoyle', 3, 3], ['gargoyle', 5, 3], ['gargoyle', 6, 3], ['manticore', 2, 0], ['manticore', 7, 0]]
+    q: 'High AC · 3 Lanes', note: 'AC 17 Gargoyles hold every tier while Manticores pepper from the wings.',
+    map: BATTLE_MAPS.inverted_ziggurat.grid, lanes: BATTLE_MAPS.inverted_ziggurat.lanes,
+    u: [['gargoyle', 1, 4], ['manticore', 1, 1], ['gargoyle', 5, 4], ['gargoyle', 9, 4], ['manticore', 9, 1]]
   },
   flesh_lab: {
     n: 'Flesh Golem & Cultists', place: 'Shadow Crypt', theme: 'cave', mapKey: 'shadow_crypt',
-    q: 'Brute + Casters', note: 'A hulking Flesh Golem anchors the doorway while Cult Adepts lob Fireballs.',
-    map: BATTLE_MAPS.shadow_crypt.grid,
-    u: [['flesh_golem', 4, 3], ['adept', 2, 0], ['adept', 7, 0], ['steam_mephit', 3, 2], ['steam_mephit', 6, 2]]
+    q: 'Brute + Casters · 2 Lanes', note: 'A hulking Flesh Golem plugs the Left Choke while Adepts & Mephits guard the Right Vault.',
+    map: BATTLE_MAPS.shadow_crypt.grid, lanes: BATTLE_MAPS.shadow_crypt.lanes,
+    u: [['flesh_golem', 1, 3], ['steam_mephit', 2, 1], ['adept', 7, 1], ['adept', 8, 1], ['steam_mephit', 7, 4]]
   },
   manticore_brood: {
     n: 'Manticore Brood', place: 'Frictionless Hall', theme: 'dungeon', mapKey: 'frictionless_hall',
-    q: 'Ranged volley', note: 'Three Manticores unleash twin tail spikes down the long corridor.',
-    map: BATTLE_MAPS.frictionless_hall.grid,
-    u: [['manticore', 3, 1], ['manticore', 5, 0], ['manticore', 6, 1], ['gargoyle', 4, 3], ['gargoyle', 5, 3]]
+    q: 'Ranged Volley · 2 Lanes', note: 'Manticores unleash twin tail spikes across the chasm behind stone gargoyles.',
+    map: BATTLE_MAPS.frictionless_hall.grid, lanes: BATTLE_MAPS.frictionless_hall.lanes,
+    u: [['gargoyle', 1, 4], ['manticore', 1, 1], ['manticore', 2, 1], ['gargoyle', 7, 4], ['manticore', 8, 1]]
   },
   wight_pack: {
     n: 'Wight & Ghoul Pack', place: 'Shadow Crypt', theme: 'cave', mapKey: 'shadow_crypt',
-    q: 'Necrosis & Poison', note: 'Wights inflict Necrosis while fast Ghouls rush with paralytic venom.',
-    map: BATTLE_MAPS.shadow_crypt.grid,
-    u: [['wight', 3, 3], ['wight', 6, 3], ['ghoul', 2, 4], ['ghoul', 4, 4], ['ghoul', 5, 4], ['ghoul', 7, 4]]
+    q: 'Necrosis & Poison · 2 Lanes', note: 'Wights inflict Necrosis while fast Ghouls rush both crypt corridors.',
+    map: BATTLE_MAPS.shadow_crypt.grid, lanes: BATTLE_MAPS.shadow_crypt.lanes,
+    u: [['wight', 1, 3], ['ghoul', 1, 4], ['ghoul', 2, 4], ['wight', 7, 3], ['ghoul', 7, 4], ['ghoul', 8, 4]]
   },
   shadow_ambush: {
     n: 'Shadow Assassins', place: 'Frictionless Hall', theme: 'dungeon', mapKey: 'frictionless_hall',
-    q: 'Backline divers', note: 'Shadow Assassins leap past your tanks straight at fragile backliners.',
-    map: BATTLE_MAPS.frictionless_hall.grid,
-    u: [['shadow_assassin', 2, 2], ['shadow_assassin', 7, 2], ['shadow_assassin', 5, 1], ['wight', 4, 3], ['wight', 5, 3]]
+    q: 'Backline Divers · 2 Lanes', note: 'Shadow Assassins leap past your frontline on both galleries.',
+    map: BATTLE_MAPS.frictionless_hall.grid, lanes: BATTLE_MAPS.frictionless_hall.lanes,
+    u: [['wight', 1, 4], ['shadow_assassin', 1, 2], ['shadow_assassin', 2, 2], ['wight', 7, 4], ['shadow_assassin', 8, 2]]
   },
   ctenmiir_crypt: {
     n: 'Ctenmiir the Vampire', place: 'Vampire Vault', theme: 'cave', mapKey: 'shadow_crypt',
-    q: 'Elite · Lifesteal & Necrosis', note: 'Ctenmiir drains HP and stacks Necrosis alongside Wight retainers.',
-    map: BATTLE_MAPS.shadow_crypt.grid,
-    u: [['ctenmiir', 4, 2], ['wight', 3, 3], ['wight', 6, 3], ['ghoul', 2, 3], ['ghoul', 7, 3]]
+    q: 'Elite · Lifesteal · 2 Lanes', note: 'Ctenmiir drains HP in the Left Choke while Wights & Ghouls guard the Right Crypt Vault.',
+    map: BATTLE_MAPS.shadow_crypt.grid, lanes: BATTLE_MAPS.shadow_crypt.lanes,
+    u: [['ctenmiir', 1, 3], ['ghoul', 2, 4], ['wight', 7, 3], ['wight', 8, 3], ['ghoul', 7, 4]]
   },
   efreeti_guard: {
     n: 'Efreeti Guard', place: 'Boiling Bubble', theme: 'cave', mapKey: 'boiling_bubble',
-    q: 'Elite · Fire AoE', note: 'An Efreeti fire genie blasts Flame Waves flanked by scalding Steam Mephits.',
-    map: BATTLE_MAPS.boiling_bubble.grid,
-    u: [['efreeti', 4, 1], ['steam_mephit', 2, 2], ['steam_mephit', 7, 2], ['gargoyle', 4, 3], ['gargoyle', 5, 3]]
+    q: 'Elite · Fire AoE · 3 Lanes', note: 'Efreeti blasts Flame Waves from Center while Mephits & Gargoyles hold the flank vents.',
+    map: BATTLE_MAPS.boiling_bubble.grid, lanes: BATTLE_MAPS.boiling_bubble.lanes,
+    u: [['gargoyle', 1, 4], ['steam_mephit', 1, 1], ['efreeti', 5, 2], ['gargoyle', 5, 4], ['steam_mephit', 9, 2]]
   },
   chain_vault: {
     n: 'Chain Golem & Mephits', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Elite · AC 18 + Root', note: '2×2 Chain Golem Roots and lashes your frontline while Mephits burn.',
-    map: BATTLE_MAPS.inverted_ziggurat.grid,
-    u: [['chain_golem', 4, 2], ['steam_mephit', 2, 1], ['steam_mephit', 7, 1], ['gargoyle', 3, 4]]
+    q: 'Elite · AC 18 + Root · 3 Lanes', note: '2×2 Chain Golem anchors Center Apex flanked by burning Mephits & Gargoyles.',
+    map: BATTLE_MAPS.inverted_ziggurat.grid, lanes: BATTLE_MAPS.inverted_ziggurat.lanes,
+    u: [['chain_golem', 4, 2], ['steam_mephit', 1, 1], ['gargoyle', 1, 4], ['steam_mephit', 9, 1]]
   },
   oni_enforcers: {
     n: 'Ogre Mage Enforcers', place: 'Frictionless Hall', theme: 'dungeon', mapKey: 'frictionless_hall',
-    q: 'Elite · Frost & Regen', note: 'Pair of Frost-casting Ogre Mages supported by Shadow Assassins.',
-    map: BATTLE_MAPS.frictionless_hall.grid,
-    u: [['ogre_mage', 3, 1], ['ogre_mage', 6, 1], ['shadow_assassin', 4, 3], ['shadow_assassin', 5, 3]]
+    q: 'Elite · Frost & Regen · 2 Lanes', note: 'Twin Frost-casting Ogre Mages supported by Shadow Assassins on each gallery.',
+    map: BATTLE_MAPS.frictionless_hall.grid, lanes: BATTLE_MAPS.frictionless_hall.lanes,
+    u: [['ogre_mage', 1, 1], ['shadow_assassin', 2, 3], ['ogre_mage', 8, 1], ['shadow_assassin', 7, 3]]
   },
   keraptis: {
     n: 'Simulacrum of Keraptis', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: 1.14, dmg: 1.04 }, note: 'Boss: Archmage of White Plume weaving Arcane Wards, twin bolts, Elemental Novas & constructs.',
+    q: 'Act 2 Boss · 3 Lanes', sc: { hp: 1.12, dmg: 1.02 }, note: 'Boss: Archmage holds the Apex Throne; clear West Ritual & East Shrine to Expose him!',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
-    u: [['keraptis', 5, 0], ['gargoyle', 3, 3], ['gargoyle', 6, 3], ['steam_mephit', 2, 1], ['steam_mephit', 7, 1]]
+    lanes: [
+      { id: 'left',   n: 'Arcane Ritual', c0: 0, c1: 2, obj: 'ritual' },
+      { id: 'center', n: 'Keraptis Apex', c0: 4, c1: 6, obj: 'boss' },
+      { id: 'right',  n: 'East Shrine',   c0: 8, c1: 10, obj: 'shrine' }
+    ],
+    u: [['keraptis', 5, 1], ['gargoyle', 1, 4], ['steam_mephit', 1, 1], ['gargoyle', 9, 4], ['steam_mephit', 9, 1]]
   },
   blackrazor_boss: {
     n: 'Wielder of Blackrazor', place: 'Shadow Crypt', theme: 'cave', mapKey: 'shadow_crypt',
-    q: 'Act 2 Boss', sc: { hp: .96, dmg: .85 }, note: 'Boss: Gains Ward, Haste & Damage whenever ANY unit dies — focus him down fast!',
+    q: 'Act 2 Boss · 2 Lanes', sc: { hp: .98, dmg: .88 }, note: 'Boss: Gains Ward & Haste whenever ANY unit dies — hold or race his Crypt lanes wisely!',
     map: BATTLE_MAPS.shadow_crypt.grid,
-    u: [['blackrazor_wielder', 4, 2], ['ghoul', 2, 3], ['ghoul', 7, 3], ['wight', 4, 3], ['shadow_assassin', 6, 1]]
+    lanes: [
+      { id: 'left',  n: 'Soul Throne', c0: 0, c1: 3, obj: 'boss' },
+      { id: 'right', n: 'Crypt Shrine',c0: 6, c1: 9, obj: 'shrine' }
+    ],
+    u: [['blackrazor_wielder', 1, 3], ['ghoul', 2, 4], ['wight', 7, 3], ['ghoul', 7, 4], ['shadow_assassin', 8, 1]]
   },
   gynosphinx: {
     n: 'Gynosphinx', place: 'Inverted Ziggurat', theme: 'dungeon', mapKey: 'inverted_ziggurat',
-    q: 'Act 2 Boss', sc: { hp: 1.08, dmg: .94 }, note: 'Boss (2×2): Twin claws, Roar of Ages drains Charge & Staggers; Temporal Shift cleanses debuffs.',
+    q: 'Act 2 Boss · 3 Lanes', sc: { hp: 1.08, dmg: .94 }, note: 'Boss (2×2): Roar of Ages drains Charge from Center while sentinels guard the side tiers.',
     map: BATTLE_MAPS.inverted_ziggurat.grid,
-    u: [['gynosphinx', 4, 1], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['manticore', 5, 0]]
+    lanes: [
+      { id: 'left',   n: 'Riddle Ritual', c0: 0, c1: 2, obj: 'ritual' },
+      { id: 'center', n: 'Sphinx Dais',   c0: 4, c1: 6, obj: 'boss' },
+      { id: 'right',  n: 'East Shrine',   c0: 8, c1: 10, obj: 'shrine' }
+    ],
+    u: [['gynosphinx', 4, 2], ['gargoyle', 1, 4], ['gargoyle', 9, 4], ['manticore', 9, 1]]
   },
   giant_crab: {
     n: 'Giant Crab of the Bubble', place: 'Boiling Bubble Chamber', theme: 'cave', mapKey: 'boiling_bubble',
-    q: 'Act 2 Boss', sc: { hp: 1.10, dmg: .98 }, note: 'Boss (2×2): High-AC carapace, Twin Crushing Claws, Root & Boiling Splash fire AoE.',
+    q: 'Act 2 Boss · 3 Lanes', sc: { hp: 1.10, dmg: .98 }, note: 'Boss (2×2): Armored Titan rules the Center Core while Kelpies & Mephits flank the bubble.',
     map: BATTLE_MAPS.boiling_bubble.grid,
-    u: [['giant_crab', 4, 2], ['gargoyle', 2, 3], ['gargoyle', 7, 3], ['kelpie', 5, 0], ['steam_mephit', 1, 1]]
+    lanes: [
+      { id: 'left',   n: 'Steam Choke',  c0: 0, c1: 2, obj: 'choke' },
+      { id: 'center', n: 'Titan Core',   c0: 4, c1: 6, obj: 'boss' },
+      { id: 'right',  n: 'Vault Pool',   c0: 8, c1: 10, obj: 'loot' }
+    ],
+    u: [['giant_crab', 4, 2], ['gargoyle', 1, 4], ['steam_mephit', 1, 1], ['gargoyle', 9, 4], ['kelpie', 9, 1]]
   },
 
   /* ---------- ACT 3: THE HELLS ---------- */
   bearded_phalanx: {
     n: 'Bearded Devil Phalanx', place: 'Iron Citadel', theme: 'hells', mapKey: 'iron_citadel',
-    q: 'Armored Infernal Line', note: 'Disciplined Bearded Devils hold the iron choke while Spined Devils fire behind.',
-    map: BATTLE_MAPS.iron_citadel.grid,
-    u: [['bearded_devil', 3, 3], ['bearded_devil', 5, 3], ['bearded_devil', 6, 3], ['spined_devil', 2, 1], ['spined_devil', 7, 1]]
+    q: 'Armored Line · 2 Lanes', note: 'Disciplined Bearded Devils hold both iron bastions backed by Spined Devils.',
+    map: BATTLE_MAPS.iron_citadel.grid, lanes: BATTLE_MAPS.iron_citadel.lanes,
+    u: [['bearded_devil', 1, 4], ['bearded_devil', 2, 4], ['spined_devil', 1, 1], ['bearded_devil', 7, 4], ['spined_devil', 8, 1]]
   },
   hell_hounds: {
     n: 'Hell Hound Pack', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Fiery Chargers', note: 'Blazing Hell Hounds leap at your backline alongside a fiery Cambion.',
-    map: BATTLE_MAPS.avernus_wastes.grid,
-    u: [['hell_hound', 2, 3], ['hell_hound', 4, 3], ['hell_hound', 6, 3], ['hell_hound', 7, 3], ['cambion', 5, 0]]
+    q: 'Fiery Chargers · 3 Lanes', note: 'Blazing Hell Hounds charge all 3 obsidian lanes led by a Cambion in the Center.',
+    map: BATTLE_MAPS.avernus_wastes.grid, lanes: BATTLE_MAPS.avernus_wastes.lanes,
+    u: [['hell_hound', 1, 4], ['hell_hound', 4, 4], ['hell_hound', 6, 4], ['cambion', 5, 1], ['hell_hound', 9, 4]]
   },
   spined_volley: {
     n: 'Spined Devil Volley', place: 'River Styx Crossing', theme: 'hells', mapKey: 'styx_crossing',
-    q: 'Ranged Fire Volley', note: 'Spined Devils fire across the River Styx while Bearded Devils guard the bridges.',
-    map: BATTLE_MAPS.styx_crossing.grid,
-    u: [['spined_devil', 2, 0], ['spined_devil', 5, 0], ['spined_devil', 7, 0], ['bearded_devil', 3, 2], ['bearded_devil', 6, 2]]
+    q: 'Ranged Volley · 3 Lanes', note: 'Spined Devils shoot across all three Styx bridges while Bearded Devils anchor the span.',
+    map: BATTLE_MAPS.styx_crossing.grid, lanes: BATTLE_MAPS.styx_crossing.lanes,
+    u: [['spined_devil', 1, 1], ['bearded_devil', 5, 4], ['spined_devil', 5, 1], ['bearded_devil', 9, 4], ['spined_devil', 9, 1]]
   },
   cambion_coven: {
     n: 'Imp & Cambion Coven', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Charm & Venom', note: 'Cambions unleash fire rays and Charm behind a swarm of stinging Imps.',
-    map: BATTLE_MAPS.avernus_wastes.grid,
-    u: [['cambion', 3, 0], ['cambion', 6, 0], ['imp', 2, 3], ['imp', 4, 3], ['imp', 5, 3], ['imp', 7, 3]]
+    q: 'Charm & Venom · 3 Lanes', note: 'Cambions unleash hellfire behind stinging Imps across the ridge & Soul Wagon.',
+    map: BATTLE_MAPS.avernus_wastes.grid, lanes: BATTLE_MAPS.avernus_wastes.lanes,
+    u: [['cambion', 1, 1], ['imp', 1, 4], ['imp', 4, 4], ['imp', 6, 4], ['cambion', 9, 1], ['imp', 9, 4]]
   },
   bone_guard: {
     n: 'Bone Devil Guard', place: 'Iron Citadel', theme: 'hells', mapKey: 'iron_citadel',
-    q: 'Reach & Poison', note: 'Bone Devils strike from reach with venomous polearms alongside Chain Devils.',
-    map: BATTLE_MAPS.iron_citadel.grid,
-    u: [['bone_devil', 3, 2], ['bone_devil', 6, 2], ['chain_devil', 4, 3], ['spined_devil', 5, 0]]
+    q: 'Reach & Poison · 2 Lanes', note: 'Bone Devils strike with venomous polearms while Chain Devils hold the East Bastion.',
+    map: BATTLE_MAPS.iron_citadel.grid, lanes: BATTLE_MAPS.iron_citadel.lanes,
+    u: [['bone_devil', 1, 3], ['spined_devil', 2, 1], ['bone_devil', 7, 3], ['chain_devil', 8, 4]]
   },
   narzugon_riders: {
     n: 'Narzugon Riders', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Heavy Chargers', note: 'Armored Narzugon hell-knights charge with flaming lances.',
-    map: BATTLE_MAPS.avernus_wastes.grid,
-    u: [['narzugon', 3, 2], ['narzugon', 6, 2], ['hell_hound', 4, 3], ['spined_devil', 5, 0]]
+    q: 'Heavy Chargers · 3 Lanes', note: 'Armored Narzugon hell-knights charge Left & Right while hounds guard Center.',
+    map: BATTLE_MAPS.avernus_wastes.grid, lanes: BATTLE_MAPS.avernus_wastes.lanes,
+    u: [['narzugon', 1, 3], ['hell_hound', 5, 4], ['spined_devil', 5, 1], ['narzugon', 9, 3]]
   },
   erinyes_exec: {
     n: 'Erinyes Executioners', place: 'Iron Citadel', theme: 'hells', mapKey: 'iron_citadel',
-    q: 'Elite · Lethal Archers', note: 'Winged Erinyes focus down your lowest-HP hero with venomous longbows.',
-    map: BATTLE_MAPS.iron_citadel.grid,
-    u: [['erinyes', 2, 0], ['erinyes', 7, 0], ['bearded_devil', 4, 3], ['bearded_devil', 5, 3]]
+    q: 'Elite · Lethal Archers · 2 Lanes', note: 'Winged Erinyes snipe from behind Bearded Devil shieldlines across both bastions.',
+    map: BATTLE_MAPS.iron_citadel.grid, lanes: BATTLE_MAPS.iron_citadel.lanes,
+    u: [['erinyes', 1, 1], ['bearded_devil', 1, 4], ['erinyes', 8, 1], ['bearded_devil', 7, 4]]
   },
   horned_legion: {
     n: 'Horned Devil & Chains', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Elite · 2×2 Fiend + Root', note: '2×2 Horned Devil hurls fire while Chain Devils pin your frontline.',
-    map: BATTLE_MAPS.avernus_wastes.grid,
-    u: [['horned_devil', 4, 2], ['chain_devil', 2, 3], ['chain_devil', 7, 3], ['spined_devil', 5, 0]]
+    q: 'Elite · 2×2 Fiend · 3 Lanes', note: '2×2 Horned Devil dominates the Obsidian Rift while Chain Devils pin the flanks.',
+    map: BATTLE_MAPS.avernus_wastes.grid, lanes: BATTLE_MAPS.avernus_wastes.lanes,
+    u: [['horned_devil', 4, 2], ['chain_devil', 1, 4], ['chain_devil', 9, 4], ['spined_devil', 9, 1]]
   },
   ice_wardens: {
     n: 'Ice Devil & Wardens', place: 'River Styx Crossing', theme: 'hells', mapKey: 'styx_crossing',
-    q: 'Elite · SR 18 Freeze', note: 'Gelugon Ice Devil freezes and staggers across the Styx backed by Bone Devils.',
-    map: BATTLE_MAPS.styx_crossing.grid,
-    u: [['ice_devil', 4, 1], ['bone_devil', 2, 2], ['bone_devil', 7, 2], ['imp', 5, 2]]
+    q: 'Elite · SR 18 Freeze · 3 Lanes', note: 'Gelugon Ice Devil freezes Center Bridge backed by Bone Devils on the flanks.',
+    map: BATTLE_MAPS.styx_crossing.grid, lanes: BATTLE_MAPS.styx_crossing.lanes,
+    u: [['ice_devil', 5, 2], ['imp', 5, 4], ['bone_devil', 1, 3], ['bone_devil', 9, 3]]
   },
   blood_war: {
     n: 'Blood War Incursion', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Elite · Demon Rush', note: 'Twin Vrock demons dive and stun-screech alongside frenzied Hell Hounds.',
-    map: BATTLE_MAPS.avernus_wastes.grid,
-    u: [['vrock', 3, 2], ['vrock', 6, 2], ['hell_hound', 2, 3], ['hell_hound', 7, 3], ['cambion', 5, 0]]
+    q: 'Elite · Demon Rush · 3 Lanes', note: 'Twin Vrock demons dive the flanks while a Cambion commands the Rift.',
+    map: BATTLE_MAPS.avernus_wastes.grid, lanes: BATTLE_MAPS.avernus_wastes.lanes,
+    u: [['vrock', 1, 3], ['hell_hound', 1, 4], ['cambion', 5, 1], ['vrock', 9, 3], ['hell_hound', 9, 4]]
   },
   pit_fiend: {
     n: 'Pit Fiend Enforcer', place: 'Avernus Wastes', theme: 'hells', mapKey: 'avernus_wastes',
-    q: 'Act 3 Wandering Miniboss', sc: { hp: .94, dmg: .82 }, note: 'Wandering Miniboss (2×2): Infernal fire/poison lord guarded by Bearded Devils. Drops Very Rare/Legendary loot!',
-    map: BATTLE_MAPS.avernus_wastes.grid,
-    u: [['pit_fiend', 4, 1], ['bearded_devil', 2, 3], ['bearded_devil', 7, 3], ['spined_devil', 5, 0]]
+    q: 'Act 3 Wandering Miniboss · 3 Lanes', sc: { hp: .96, dmg: .84 }, note: 'Wandering Miniboss (2×2): Infernal lord holds the Center Rift; win the Soul Wagon for huge loot!',
+    map: BATTLE_MAPS.avernus_wastes.grid, lanes: BATTLE_MAPS.avernus_wastes.lanes,
+    u: [['pit_fiend', 4, 2], ['bearded_devil', 1, 4], ['bearded_devil', 9, 4], ['spined_devil', 9, 1]]
   },
   orcus: {
     n: 'Orcus, Prince of Undeath', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: 1.02, dmg: .88 }, note: 'Final Boss (2×2): Twin Wand of Orcus strikes deal massive Necrosis waves and raise relentless undead.',
-    map: BATTLE_MAPS.throne_ninth.grid,
-    u: [['orcus', 4, 1], ['wight', 2, 3], ['wight', 7, 3], ['bone_devil', 5, 3]]
+    q: 'Act 3 Final Boss · 3 Lanes', sc: { hp: 1.02, dmg: .90 }, note: 'Final Boss (2×2): Orcus channels Necrosis from the Ninth Throne; clear the wings to Expose him!',
+    map: BATTLE_MAPS.throne_ninth.grid, lanes: BATTLE_MAPS.throne_ninth.lanes,
+    u: [['orcus', 4, 2], ['wight', 1, 4], ['bone_devil', 5, 4], ['wight', 9, 4]]
   },
   asmodeus: {
     n: 'Asmodeus, Lord of the Ninth', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: .96, dmg: .84 }, note: 'Final Boss: Twin Ruby Rod hellfire beams, Infernal Command, and Wards behind Hell guards.',
-    map: BATTLE_MAPS.throne_ninth.grid,
-    u: [['asmodeus', 5, 0], ['narzugon', 3, 3], ['bearded_devil', 6, 3], ['spined_devil', 2, 1], ['spined_devil', 7, 1]]
+    q: 'Act 3 Final Boss · 3 Lanes', sc: { hp: .98, dmg: .86 }, note: 'Final Boss: Asmodeus commands Hellfire from the Ninth Throne flanked by Narzugons & Devils.',
+    map: BATTLE_MAPS.throne_ninth.grid, lanes: BATTLE_MAPS.throne_ninth.lanes,
+    u: [['asmodeus', 5, 1], ['narzugon', 1, 4], ['spined_devil', 1, 1], ['bearded_devil', 9, 4], ['spined_devil', 9, 1]]
   },
   tiamat: {
     n: 'Tiamat, Queen of Dragons', place: 'Throne of the Ninth', theme: 'hells', mapKey: 'throne_ninth',
-    q: 'Act 3 Final Boss', sc: { hp: 1.15, dmg: 1.04 }, note: 'Final Boss (2×2): Ferocious Five-Headed bites & all Five Chromatic Breath Weapons!',
-    map: BATTLE_MAPS.throne_ninth.grid,
-    u: [['tiamat', 4, 1], ['cambion', 2, 0], ['cambion', 7, 0], ['bearded_devil', 3, 4], ['bearded_devil', 6, 4]]
+    q: 'Act 3 Final Boss · 3 Lanes', sc: { hp: 1.12, dmg: 1.02 }, note: 'Final Boss (2×2): Five Chromatic Breaths from the Ninth Throne flanked by Infernal guards!',
+    map: BATTLE_MAPS.throne_ninth.grid, lanes: BATTLE_MAPS.throne_ninth.lanes,
+    u: [['tiamat', 4, 2], ['cambion', 1, 1], ['bearded_devil', 1, 4], ['cambion', 9, 1], ['bearded_devil', 9, 4]]
   }
 };
 

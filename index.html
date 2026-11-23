@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Basements &amp; Basilisks 0.23 · 3-Act Campaign, 24 Reworked Heroes &amp; 82 Items</title>
-  <meta name="description" content="Basements & Basilisks v0.23 roguelike auto-battler with 3 full Acts (Phandalin, White Plume Mountain, The Hells), 10 rotating bosses, 9-row constricting DAG map, 24 reworked heroes, 82 six-tier D&D items, Tier IV Epic Boons, and Multiclass nodes." />
+  <title>Basements &amp; Basilisks 0.24 · Soft Lanes, House Rules, Camp Rank &amp; CR Diagnostics</title>
+  <meta name="description" content="Basements & Basilisks v0.24 roguelike auto-battler with 3 full Acts, Soft Lanes (Breach & Flank), 36 shop-offered House Rules (6-slot cap), Camp Rank future-power economy, Challenge Rating (CR) diagnostics, 24 heroes, and 88 D&D items." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
@@ -14,14 +14,14 @@
 <!-- title -->
 <section class="screen" id="start">
   <div class="title-wrap">
-    <div class="ver">Version 0.23 · 3 Acts · 10 Bosses · 24 Heroes · 82 Canonical D&amp;D Items</div>
+    <div class="ver">Version 0.24 · Soft Lanes · 36 House Rules · Camp Rank · CR Diagnostics · 88 Items</div>
     <h1>Basements <span class="amp">&amp;</span> Basilisks</h1>
     <div class="parade" id="parade"></div>
     <div class="title-btns">
       <button class="btn primary big" data-a="newrun">New run</button>
       <button class="btn big" data-a="continue" id="contBtn" hidden>Continue</button>
       <div class="row" style="justify-content:center">
-        <button class="btn" data-a="changelog">What’s new in 0.23</button>
+        <button class="btn" data-a="changelog">What’s new in 0.24</button>
         <a class="btn" id="wikiLink" href="tools/wiki.html" style="text-decoration:none">Field Guide &amp; Stat Tracker</a>
         <a class="btn" id="assetStudioLink" href="tools/asset-studio.html" style="text-decoration:none">Asset Studio</a>
       </div>
@@ -33,14 +33,14 @@
 <!-- intro -->
 <section class="screen" id="intro" hidden>
   <div class="intro frame">
-    <h2>The Adventure (v0.23)</h2>
+    <h2>The Adventure (v0.24)</h2>
     <p class="goal">Three Acts — Phandalin, White Plume Mountain, and The Hells. Four heroes. Ten rotating bosses.</p>
     <ul>
-      <li><b>3-Act Campaign &amp; 9-Row Constricting Map.</b> Chart non-crossing routes through Phandalin (Klarg miniboss), White Plume Mountain (Dungeon Hazards &amp; Vault Loot), and The Hells (Wandering Pit Fiend &amp; Devil’s Bargains).</li>
-      <li><b>24 Reworked Heroes &amp; 13 Canonical Class Keywords.</b> Clean Tier I cards with strict progressive disclosure, strictly 1-line Tier II Specializations, universal Tier IV <b>Epic Boons</b> (pick 1 of 3), opt-in <b>Quest Board (❖)</b> quests, and 12 single-class named <b>Multiclass (✧)</b> shrines.</li>
-      <li><b>82 Canonical D&amp;D Items Across 6 Tiers.</b> 58 Universal Standard Shop items (Common → Legendary) with exact 6-attribute parity, plus 24 <b>Unique</b> Class-Keyword relics (2 per class) sold at the <b>Curio Merchant (⚖)</b>.</li>
-      <li><b>Cubed AC/SR Curve, Universal Evasion &amp; Radiant Damage.</b> Every point of AC/SR matters inside bounded accuracy (10–20), countered by Armor/Spell Pen, rare Radiant true damage, and multiplicative Evasion.</li>
-      <li><b>Camp Shop Flow Flip &amp; Piggy Bank.</b> Visit the Camp Shop between fights (with Whole-Shop Freeze and an Act Boss Reminder), jump straight into Tactical Deployment on combat nodes, and rely on your Piggy Bank for one free retry on your first loss.</li>
+      <li><b>Soft Lanes (Breach &amp; Flank):</b> All 13 battle maps split into 2 or 3 tactical lanes with distinct objectives (<i>Dark Ritual</i>, <i>Supply Cart</i>, <i>Duel Choke</i>, <i>Battle Shrine</i>, <i>Boss Throne</i>). Win a lane and your heroes cross open bridges to flank the rest!</li>
+      <li><b>36 Shop-Offered House Rules (6-Slot Cap):</b> Build multiplicative party-wide engines around Class Keywords, d20 manipulation, lanes, and economy — supercharged by <b>Multiclass (✧)</b> shrines to beat the exponential Act 3 curve.</li>
+      <li><b>Immediate Power vs. Future Power Shop:</b> Spend gold now on heroes &amp; gear, or invest in <b>Camp Rank (I → IV)</b>, higher <b>Gold Interest</b> (up to +12g/win), and 6 <b>🌱 Scaling</b> investment items that grow after every victory.</li>
+      <li><b>Challenge Rating (CR) &amp; Combat Autopsy:</b> Compare your live <b>Party CR</b> against pre-scouted Map Nodes and per-lane matchups before fighting, then inspect lane outcomes, House Rule output, AC/SR loss, and your <b>d20 Luck Audit</b> after every fight.</li>
+      <li><b>All 24 Heroes &amp; 88 Canonical D&amp;D Items Intact:</b> 13 Class Keywords, 1-line Tier II Specializations, Tier IV Epic Boons, Opt-In Quests, Cubed AC/SR math, and 100% hands-off autobattling.</li>
     </ul>
     <div class="row" style="justify-content:center">
       <button class="btn primary big" data-a="begin">Choose hero packs</button>
@@ -54,7 +54,7 @@
   <div class="pickhead">
     <div class="lbl" id="packLbl">Before your adventure</div>
     <h2>Enable Hero Packs</h2>
-    <p class="mute">Toggle any combination of the 6 Packs on or off. Enabled heroes populate shop Recruit Slots; all 58 Standard items &amp; 24 Curio Uniques are always unlocked.</p>
+    <p class="mute">Toggle any combination of the 6 Packs on or off. Enabled heroes populate shop Recruit Slots; all 64 Standard items, 24 Curio Uniques, and 36 House Rules are always unlocked.</p>
   </div>
   <div class="packbar" id="packControls"></div>
   <div class="packs" id="packList"></div>
@@ -81,7 +81,7 @@
 <section class="screen" id="shop" hidden>
   <div class="vellum">
     <div class="topbar">
-      <h1>Basements &amp; Basilisks<small>0.23 · Camp Shop</small></h1>
+      <h1>Basements &amp; Basilisks<small>0.24 · Camp Shop</small></h1>
       <div class="stats" id="shopStats"></div>
       <button class="btn sm" data-a="title">Save and quit</button>
     </div>
@@ -89,6 +89,10 @@
     <div class="shop18">
       <section class="sh-main">
         <div class="sh-offers" id="offers"></div>
+        <div class="hr-shop-wrap">
+          <div class="sh-pl"><span class="lbl">House Rules · Party Modifiers</span><span class="small mute" id="hrShopSub"></span></div>
+          <div class="sh-hrs" id="hrOffers"></div>
+        </div>
         <div class="sh-bar">
           <span class="small mute" id="shopNote"></span>
           <span class="row">
@@ -99,6 +103,7 @@
         </div>
       </section>
       <aside class="sh-side">
+        <div class="camp-rank-box" id="campRankBox"></div>
         <div class="lbl">Shop Items</div>
         <div class="sh-items" id="itemOffers"></div>
         <div class="lbl">Stash <span id="stashCount"></span></div>
@@ -108,7 +113,11 @@
       </aside>
     </div>
     <section class="sh-party">
-      <div class="sh-pl"><span class="lbl">Your party</span> <span class="lbl" id="boardCount"></span></div>
+      <div class="hr-tray-wrap">
+        <div class="sh-pl"><span class="lbl">Active House Rules</span> <span class="lbl" id="hrCount"></span></div>
+        <div class="hr-tray" id="hrTray"></div>
+      </div>
+      <div class="sh-pl" style="margin-top:8px"><span class="lbl">Your party</span> <span class="lbl" id="boardCount"></span></div>
       <div class="sh-slots" id="slots"></div>
       <div class="sh-ptags" id="partyTags"></div>
     </section>
@@ -120,6 +129,7 @@
   <div class="cstage">
     <div id="boardWrap">
       <canvas id="board"></canvas>
+      <div class="lane-headers" id="laneHeaders"></div>
       <div class="c-ov c-ov-tl">
         <div class="cbar-title"><h2 id="cTitle"></h2><div class="q" id="cSub"></div></div>
       </div>
@@ -128,6 +138,7 @@
       </div>
       <div class="c-ov c-ov-left" id="cWingLeft">
         <div class="strip" id="strip"></div>
+        <div class="c-hr-bar" id="cHrBar"></div>
         <div class="pbench" id="pbench" data-drop="pbench" hidden></div>
       </div>
       <div class="c-ov c-ov-br">
@@ -159,6 +170,7 @@
 <script src="src/02-enemies.js"></script>
 <script src="src/03-heroes.js"></script>
 <script src="src/04-items.js"></script>
+<script src="src/04b-house-rules.js"></script>
 <script src="src/05-engine.js"></script>
 <script src="src/06-adventure.js"></script>
 <script src="src/07-glossary.js"></script>

@@ -117,6 +117,37 @@ const ITEMS = {
     n: 'Ring of Protection', r: 1, ic: 'ring',
     a: { con: 2 }, s: { ac: 1 }
   },
+  /* --- v0.24 Scaling Investment Items (6 items, 1 per attribute — Future Power!) --- */
+  whetstone_growth: {
+    n: 'Whetstone of Growth', r: 1, ic: 'whetstone', scaling: 1,
+    a: { str: 2 }, s: { scaleKey: 'whetstone_growth' },
+    x: 'Future Power: gains +2 Dmg & +4% melee Damage permanently after every combat win.'
+  },
+  quicksilver_vial: {
+    n: 'Quicksilver Vial', r: 1, ic: 'vial', scaling: 1,
+    a: { dex: 2 }, s: { scaleKey: 'quicksilver_vial' },
+    x: 'Future Power: gains +5% Attack Speed & +2% Evasion permanently after every combat win.'
+  },
+  heartwood_seed: {
+    n: 'Heartwood Seed', r: 1, ic: 'leaf', scaling: 1,
+    a: { con: 2 }, s: { scaleKey: 'heartwood_seed' },
+    x: 'Future Power: gains +22 Max HP & +0.7 Regen permanently after every combat win.'
+  },
+  tome_compounding: {
+    n: 'Tome of Compounding', r: 1, ic: 'tome', scaling: 1,
+    a: { int: 2 }, s: { scaleKey: 'tome_compounding' },
+    x: 'Future Power: gains +5% Charge Speed & +5% Ability Damage permanently after every combat win.'
+  },
+  owls_astrolabe: {
+    n: 'Owl’s Astrolabe', r: 1, ic: 'orb', scaling: 1,
+    a: { wis: 2 }, s: { scaleKey: 'owls_astrolabe' },
+    x: 'Future Power: gains +1 SR every 2 wins and +1 ability d20 roll every 2 wins.'
+  },
+  ledger_mint: {
+    n: 'Ledger of the Mint', r: 1, ic: 'scales', scaling: 1,
+    a: { cha: 2 }, s: { scaleKey: 'ledger_mint' },
+    x: 'Future Power: grants +1g after every win and +5% Buff/Ward potency permanently per win.'
+  },
   wand_magic_missiles: {
     n: 'Wand of Magic Missiles', r: 1, ic: 'wand', t: 'ranged',
     a: { int: 2 }, s: { spen: 2 }
@@ -586,12 +617,14 @@ const ITEM_EVASION = new Set(['evasion', 'startEvasion']);
 function combineItems(keys) {
   const list = (keys || []).map(k => ITEMS[k]).filter(Boolean);
   if (!list.length) return null;
-  if (list.length === 1) return list[0];
   const a = {}, s = {}, set = {};
+  const scaleKeys = [];
   list.forEach(it => {
+    if (it.s && it.s.scaleKey) scaleKeys.push(it.s.scaleKey);
     Object.entries(it.a || {}).forEach(([k, v]) => a[k] = (a[k] || 0) + v);
     Object.entries(it.set || {}).forEach(([k, v]) => set[k] = Math.max(set[k] || 0, v));
     Object.entries(it.s || {}).forEach(([k, v]) => {
+      if (k === 'scaleKey') return;
       if (Array.isArray(v)) s[k] = [...(s[k] || []), ...v];
       else if (typeof v === 'object') {
         const o = s[k] ? { ...s[k] } : {};
@@ -604,5 +637,6 @@ function combineItems(keys) {
       else s[k] = (s[k] || 0) + v;
     });
   });
-  return { n: list.map(i => i.n).join(', '), r: Math.max(...list.map(i => i.r)), a, s, set, combined: 1 };
+  if (scaleKeys.length) s.scaleKeys = scaleKeys;
+  return { n: list.map(i => i.n).join(', '), r: Math.max(...list.map(i => i.r)), a, s, set, combined: list.length > 1 ? 1 : 0 };
 }

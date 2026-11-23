@@ -20,10 +20,45 @@ let COLS=12,ROWS=11;const TICK=0.05;
 */
 const BLOCK_MOVE='#O~_cxa',BLOCK_LOS='#O';
 const COVER_SQ='k',COVER_ARMOR=2;
-let MAP=null,DEPLOY=[];
-function loadMap(rows){MAP=rows.map(r=>r.split(''));ROWS=MAP.length;COLS=MAP[0].length;DEPLOY=[];
-  MAP.forEach((row,r)=>row.forEach((t,c)=>{if(t==='P'){DEPLOY.push({c,r});row[c]='.'}}))}
+let MAP=null,DEPLOY=[],LANES=[];
+function loadMap(rows,lanes){
+  MAP=rows.map(r=>r.split(''));ROWS=MAP.length;COLS=MAP[0].length;DEPLOY=[];
+  MAP.forEach((row,r)=>row.forEach((t,c)=>{if(t==='P'){DEPLOY.push({c,r});row[c]='.'}}));
+  LANES=(lanes&&lanes.length)?lanes.map((l,idx)=>({idx,...l})):[{idx:0,id:'center',n:'Center',c0:0,c1:COLS-1,obj:'breach'}];
+}
 function mirrorMap(rows){return rows.map(r=>r.split('').reverse().join(''))}
+function mirrorLanes(lanes,cols){
+  if(!lanes||!lanes.length)return [];
+  const w=cols||COLS;
+  return lanes.slice().reverse().map((l,idx)=>({
+    ...l,idx,
+    c0:w-1-l.c1,c1:w-1-l.c0,
+    n:l.n==='Left Flank'?'Right Flank':l.n==='Right Flank'?'Left Flank':l.n
+  }));
+}
+function laneOfCol(c,lanes){
+  const list=(lanes&&lanes.length)?lanes:LANES;
+  if(!list||!list.length)return 0;
+  for(let i=0;i<list.length;i++)if(c>=list[i].c0&&c<=list[i].c1)return i;
+  let best=0,bd=99;
+  for(let i=0;i<list.length;i++){
+    const mid=(list[i].c0+list[i].c1)/2;
+    const d=Math.abs(c-mid);
+    if(d<bd){bd=d;best=i}
+  }
+  return best;
+}
+function laneOfUnit(u,lanes){
+  if(!u||u.c==null)return 0;
+  const cx=u.c+(szOf(u)-1)/2;
+  return laneOfCol(cx,lanes);
+}
+function laneDeployCells(laneIdx,lanes){
+  const list=(lanes&&lanes.length)?lanes:LANES;
+  const L=list&&list[laneIdx];
+  if(!L)return DEPLOY.slice();
+  return DEPLOY.filter(h=>h.c>=L.c0&&h.c<=L.c1);
+}
 const inb=h=>h.c>=0&&h.c<COLS&&h.r>=0&&h.r<ROWS;
 const tile=h=>MAP&&inb(h)?MAP[h.r][h.c]:'#';
 const passable=h=>inb(h)&&!BLOCK_MOVE.includes(tile(h));

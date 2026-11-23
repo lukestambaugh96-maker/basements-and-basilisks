@@ -91,21 +91,32 @@ function heroStats(cfg) {
 
   // 1. STR: Melee Armor Penetration (+1 AC ignored per positive STR)
   const strPen = (d.rng <= 2 || d.atk.thrown) ? Math.max(0, m.str) : 0;
+  // v0.24 Scaling Investment Items (accrued per combat win on cfg.itemStacks)
+  const ist = cfg.itemStacks || {};
+  const sks = (s.scaleKeys || []);
+  const scWhet = sks.includes('whetstone_growth') ? (ist.whetstone_growth || 0) : 0;
+  const scQuick = sks.includes('quicksilver_vial') ? (ist.quicksilver_vial || 0) : 0;
+  const scSeed = sks.includes('heartwood_seed') ? (ist.heartwood_seed || 0) : 0;
+  const scTome = sks.includes('tome_compounding') ? (ist.tome_compounding || 0) : 0;
+  const scOwl = sks.includes('owls_astrolabe') ? (ist.owls_astrolabe || 0) : 0;
+  const scMint = sks.includes('ledger_mint') ? (ist.ledger_mint || 0) : 0;
+
   // 2. DEX: Linear Attack Speed (+6%/DEX if weapon attr, +4%/DEX otherwise)
   const dexHaste = (pr[0] === 'dex' ? 6 : 4) * m.dex;
   // 3. CON: Linear Max HP (+18/CON) & regen
   const fortMult = boon === 'fortitude' ? 1.4 : 1;
-  const baseMaxHp = Math.round((d.hp + 18 * m.con + (s.hp || 0)) * hpx * (isLarge ? LARGE_HP : 1) * fortMult);
+  const baseMaxHp = Math.round((d.hp + 18 * m.con + (s.hp || 0) + scSeed * 22) * hpx * (isLarge ? LARGE_HP : 1) * fortMult);
   // 4. INT: Linear Charge Speed (+10% per positive INT)
   const intChargePct = Math.max(0, m.int) * 10;
   // 5. WIS: Spell Resistance (+1 SR/WIS) + Minimum Natural d20 Roll Floor (1 + WIS, cap 10)
   const d20Floor = Math.min(10, 1 + Math.max(0, m.wis));
   // 6. CHA: Commanding Presence (+8% linear potency/duration on buffs & debuffs)
-  const chaPotency = +(1 + 0.08 * Math.max(0, m.cha)).toFixed(2);
+  const chaPotency = +(1 + 0.08 * Math.max(0, m.cha) + scMint * 0.05).toFixed(2);
 
   // Dual-Attribute Split: High-roll threshold shift driven by Key Attribute
   const mk = m[pr[1]];
-  const hiShift = Math.floor(Math.max(0, mk) / 2);
+  const hrList = cfg.houseRules || [];
+  const hiShift = Math.floor(Math.max(0, mk) / 2) + (hrList.includes('hr_astral_dice') ? 2 : 0);
   // Gilthrax Gilded Hoard: +2 AC per item (doubled for Rare/Very Rare/Legendary/Unique)
   const hoardAC = f.gildedHoard
     ? rawItems.reduce((sum, ik) => sum + ((ITEMS[ik] && ITEMS[ik].r >= 2) ? 4 : 2), 0)
@@ -116,6 +127,7 @@ function heroStats(cfg) {
     f.baseEvasion || 0,
     f.specEvasion || 0,
     s.evasion || 0,
+    scQuick * 0.02,
     boon === 'night_spirit' ? 0.25 : 0
   );
 
@@ -124,13 +136,15 @@ function heroStats(cfg) {
     sz: isLarge ? 2 : 1,
     maxHp: baseMaxHp,
     ac: d.ac + m.dex + (s.ac || 0) + hoardAC,
-    sr: d.sr + m.wis + (s.sr || 0),
+    sr: d.sr + m.wis + (s.sr || 0) + Math.floor(scOwl / 2),
     evasion,
     ft: d.ft + (s.ft || 0),
     rng: d.rng + (s.rng || 0),
-    dmgBonus: s.dmg || 0,
-    regen: +((0.5 + 0.5 * Math.max(0, m.con) + (s.regen || 0)) * hpx).toFixed(2),
-    haste: dexHaste + (f.haste || 0) + (s.haste || 0) + (boon === 'speed' ? 35 : 0),
+    dmgBonus: (s.dmg || 0) + scWhet * 2,
+    scaleMeleeMult: +(1 + scWhet * 0.04).toFixed(2),
+    scaleAbilMult: +(1 + scTome * 0.05).toFixed(2),
+    regen: +((0.5 + 0.5 * Math.max(0, m.con) + (s.regen || 0) + scSeed * 0.7) * hpx).toFixed(2),
+    haste: dexHaste + (f.haste || 0) + (s.haste || 0) + scQuick * 5 + (boon === 'speed' ? 35 : 0),
     intChargePct,
     d20Floor,
     chaPotency,
@@ -152,21 +166,21 @@ function heroStats(cfg) {
   st.hits = A0.hits || 1;
   st.style = (path && path.style) || d.style || null;
   const sty = STYLE[st.style] || {};
-  st.abM = (sty.ab || 1) * (mc === 'Sorcerer' ? 1.2 : 1);
-  st.atM = sty.atk || 1;
+  st.abM = (sty.ab || 1) * (mc === 'Sorcerer' ? 1.2 : 1) * st.scaleAbilMult;
+  st.atM = (sty.atk || 1) * (d.rng <= 2 ? st.scaleMeleeMult : 1);
   st.hidCr = sty.hid || 1;
   st.role = (path && path.role) || d.role;
   st.abil = (cfg.key === 'arthur' && cfg.questDone)
     ? { ...AB, n: 'Gauntlet Blast', one: 'Frontline fire cone hitting nearest foes with Burn; High grants +25% Evasion, Nat 20 grants party +35% Evasion.' }
     : AB;
 
-  const chgMult = 1 + (intChargePct + (s.crPct || 0) + (boon === 'speed' ? 25 : 0)) / 100;
+  const chgMult = 1 + (intChargePct + (s.crPct || 0) + scTome * 5 + (boon === 'speed' ? 25 : 0)) / 100;
   st.cr = (sty.cr || 1) * AB.cr * chgMult;
   st.chgX = chgMult;
   st.trig = (path && path.trig) || d.trig || TRIG_ROLE[st.role] || 'striking';
 
   // d20 Band Layout (Key Attribute adds to roll and shifts High band)
-  st.rb = st.mk + (s.rollBonus || 0) + interestBonus;
+  st.rb = st.mk + (s.rollBonus || 0) + interestBonus + Math.floor(scOwl / 2);
   const cut = AB.cut;
   let hiStart = Math.min(19, cut[1] + 1 + ROLL_SHIFT - st.hiShift);
   hiStart = Math.max(cut[0] + ROLL_SHIFT + 2, hiStart);
@@ -219,7 +233,7 @@ const freshSt = () => ({
   stag: 0, exp: 0, fear: 0, charm: 0,
   mark: null, markStacks: 0, hex: null, hexStacks: 0, hexJump: 0, hexSlow: 0,
   radHex: 0, radHexBy: null,
-  cut: 0, vow: null, duelCrusade: 0, mockT: 0, srShred: 0, gilded: null
+  cut: 0, vow: null, duelCrusade: 0, mockT: 0, srShred: 0, gilded: null, acShred: 0
 });
 
 function mkHero(cfg, side = 'P') {
@@ -229,7 +243,7 @@ function mkHero(cfg, side = 'P') {
   const u = {
     id: UID++, key: d.key, side, name: d.name, cls: d.cls, role: st.role,
     hidCr: st.hidCr, vet: 0, streak: 0, bounce: 0, verse: 0, reach: d.reach,
-    c: cfg.c, r: cfg.r, sz: st.sz,
+    c: cfg.c, r: cfg.r, sz: st.sz, lane: 0,
     maxHp: st.maxHp, hp: st.maxHp, ac: st.ac, sr: st.sr, evasion: st.evasion || 0,
     tempEvasion: 0, tempEvasionT: 0, partyEvasion: 0, partyEvasionT: 0,
     regen: st.regen, ward: 0, wardStored: 0, nec: 0,
@@ -336,10 +350,33 @@ function threatOf(x) {
   const avg = (a.d[0] * diceMult(x) * (a.d[1] + 1) / 2 + (a.flat || 0)) * (a.hits || 1);
   return avg * x.dm / x.iv * (x.boss ? 1.6 : x.elite ? 1.3 : 1) + (x.abil ? 3 : 0);
 }
-const curAC = (b, t) => (t.st.exp > 0 ? -2 : 0) + t.ac + (t.st.acBT > 0 ? t.st.acB : 0) + t.st.acS - t.st.acid + (t.auraAC || 0);
-const curSR = (b, t) => t.sr + (t.auraSR || 0) - (t.st.exp > 0 ? 2 : 0) - (t.st.srShred || 0);
+const curAC = (b, t) => (t.st.exp > 0 ? -2 : 0) + t.ac + (t.st.acBT > 0 ? t.st.acB : 0) + t.st.acS - t.st.acid - (t.st.acShred || 0) + (t.auraAC || 0) + ((b && t.side === 'P' && b.chokeBuff) || 0);
+const curSR = (b, t) => t.sr + (t.auraSR || 0) - (t.st.exp > 0 ? 2 : 0) - (t.st.srShred || 0) + ((b && t.side === 'P' && b.chokeBuff) || 0);
 
-/* ---------- Unified 12-Class Keyword Event Bus & Helpers (v0.23) ---------- */
+/* ---------- v0.24 House Rules Combat Engine Helpers ---------- */
+const hasHR = (b, k) => !!(b && b.hrSet && b.hrSet.has(k));
+function hrRecord(b, k, multInc = 1, stacksInc = 1) {
+  if (!b) return;
+  b.hrStats = b.hrStats || {};
+  const st = b.hrStats[k] || (b.hrStats[k] = { stacks: 0, mult: 1 });
+  st.stacks += stacksInc;
+  st.mult = +(st.mult * multInc).toFixed(2);
+}
+function hrBump(b, k, field, factor, cap = 8.0) {
+  if (!b || !b.mult) return;
+  const prev = b.mult[field] || 1;
+  const next = Math.min(cap, prev * factor);
+  b.mult[field] = next;
+  hrRecord(b, k, next / Math.max(0.01, prev), 1);
+}
+function hrAdd(b, k, field, delta, cap = 240) {
+  if (!b || !b.mult) return;
+  const prev = b.mult[field] || 0;
+  b.mult[field] = Math.min(cap, prev + delta);
+  hrRecord(b, k, 1, 1);
+}
+
+/* ---------- Unified 12-Class Keyword Event Bus & Helpers (v0.23 + v0.24 House Rules) ---------- */
 function emitClassKw(b, actor, kwKey, ctx = {}) {
   if (!b || !actor) return;
   b.kwCounts = b.kwCounts || {};
@@ -358,11 +395,24 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
         hit(b, actor, tgt, roll(2, 6), { kind: 'magic', el: 'fire', ty: 'fire', noBonus: 1, onhit: 1 });
         if (tgt.alive) applyStatus(b, actor, tgt, 'burn', 5 * chaK(actor));
       }
+      // House Rule: Rule of Momentum (Action Surge)
+      if (hasHR(b, 'hr_action_surge') && (b._hrAsN || 0) < 12) {
+        b._hrAsN = (b._hrAsN || 0) + 1;
+        hrAdd(b, 'hr_action_surge', 'haste', 10, 180);
+        hrBump(b, 'hr_action_surge', 'dmg', 1.06, 8.0);
+      }
     } else if (kwKey === 'channel_divinity') {
       // Staff of Healing (v0.23 Unique): Channel Divinity also grants affected allies a 20% Max HP Ward
       if (actor.it && actor.it.cdWardPct) {
         const list = (ctx.affected && ctx.affected.length) ? ctx.affected : friends(b, actor).filter(a => !a.minion && hd(a, actor) <= 3);
         list.forEach(a => { if (a.alive) addWard(b, a, Math.round(a.maxHp * actor.it.cdWardPct), a.maxHp * .5, actor); });
+      }
+      // House Rule: Miracle at the Table (Channel Divinity)
+      if (hasHR(b, 'hr_channel_divinity') && b.time >= (b._hrCdT || 0)) {
+        b._hrCdT = b.time + 0.5;
+        P.filter(a => !a.minion).forEach(a => heal(b, actor, a, Math.round(a.maxHp * .20), { raw: 1 }));
+        hrBump(b, 'hr_channel_divinity', 'dmg', 1.22, 8.0);
+        hrBump(b, 'hr_channel_divinity', 'ward', 1.22, 5.0);
       }
     } else if (kwKey === 'smite') {
       // Sun Blade (v0.23 Unique): Smites deal +1d8 Radiant and heal adjacent allies (1s CD)
@@ -370,6 +420,11 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
         actor._sbCd = b.time + 1.0;
         if (tgt && tgt.alive) hit(b, actor, tgt, roll(1, 8), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 });
         friends(b, actor).filter(a => !a.minion && hd(a, actor) <= 1).forEach(a => heal(b, actor, a, Math.round(a.maxHp * .08), { raw: 1 }));
+      }
+      // House Rule: Crusader's Vow (Smite)
+      if (hasHR(b, 'hr_smite')) {
+        hrBump(b, 'hr_smite', 'radiant', 1.12, 8.0);
+        hrBump(b, 'hr_smite', 'dmg', 1.05, 8.0);
       }
     } else if (kwKey === 'arcane_recovery') {
       // Gains Spec 2 Liquid Assets: Arcane Recovery also grants +10 Charge to all allies
@@ -382,6 +437,11 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
         actor.nextBonus = Math.min(6, (actor.nextBonus || 0) + actor.it.arcRecRoll);
         status(b, actor, 'GRIMOIRE +1 d20', '#8fb4e6');
       }
+      // House Rule: Leyline Overcharge (Arcane Recovery)
+      if (hasHR(b, 'hr_arcane_recovery')) {
+        hrBump(b, 'hr_arcane_recovery', 'abil', 1.09, 8.0);
+        hrBump(b, 'hr_arcane_recovery', 'ward', 1.09, 5.0);
+      }
     } else if (kwKey === 'rage') {
       // Zark Spec 2 Totem Roar: whenever Zark gains Rage, adjacent allies gain +25% Attack Speed for 4s
       if (actor.f.totemRoar) {
@@ -391,11 +451,24 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
         });
         status(b, actor, 'TOTEM ROAR', '#ffd27a');
       }
+      // House Rule: Bloodfury Pact (Rage)
+      if (hasHR(b, 'hr_rage')) {
+        hrBump(b, 'hr_rage', 'dmg', 1.05, 8.0);
+        b.mult.dr = Math.min(0.45, (b.mult.dr || 0) + 0.03);
+      }
     } else if (kwKey === 'sneak_attack') {
       // Dagger of Venom (v0.23 Unique): Sneak Attacks apply 2 Poison & Exposed (3s)
       if (tgt && tgt.alive && actor.it && actor.it.sneakVenom) {
         applyStatus(b, actor, tgt, 'poison', 2);
         expose(b, tgt, 3);
+      }
+      // House Rule: Exposed Flanks (Sneak Attack)
+      if (hasHR(b, 'hr_sneak_attack')) {
+        if (tgt && tgt.alive) {
+          tgt.st.acShred = Math.min(8, (tgt.st.acShred || 0) + 1);
+          tgt.st.srShred = Math.min(8, (tgt.st.srShred || 0) + 1);
+        }
+        hrBump(b, 'hr_sneak_attack', 'dmg', 1.06, 8.0);
       }
     } else if (kwKey === 'ki' || kwKey === 'ki_ability') {
       // Naill Spec 2 Flowing Leaves: Open Hand Strike also Staggers adjacent foes
@@ -411,16 +484,39 @@ function emitClassKw(b, actor, kwKey, ctx = {}) {
           }
         });
       }
+      // House Rule: Flowing Ki Tempo (Ki)
+      if (hasHR(b, 'hr_ki') && kwKey === 'ki') {
+        P.filter(a => !a.minion).forEach(a => giveCharge(b, a, 10, 1));
+        hrAdd(b, 'hr_ki', 'haste', 8, 180);
+        hrBump(b, 'hr_ki', 'dmg', 1.07, 8.0);
+      }
     } else if (kwKey === 'bardic_inspiration' && ctx.action === 'spend') {
       // Horn of Valhalla (v0.23 Unique): allies spending your Bardic Inspiration gain 20% Max HP Ward
       const giver = ctx.giver;
       if (giver && giver.it && giver.it.inspWardPct && actor.alive) {
         addWard(b, actor, Math.round(actor.maxHp * giver.it.inspWardPct), actor.maxHp * .5, giver);
       }
+      // House Rule: Tabletop Encore (Bardic Inspiration)
+      if (hasHR(b, 'hr_bardic_inspiration')) {
+        P.filter(a => !a.minion).forEach(a => { a.nextBonus = Math.min(8, (a.nextBonus || 0) + 1); });
+        hrBump(b, 'hr_bardic_inspiration', 'abil', 1.10, 8.0);
+      }
+    } else if (kwKey === 'wild_shape') {
+      // House Rule: Primal Pack Law (Wild Shape)
+      if (hasHR(b, 'hr_wild_shape') && b.time >= (b._hrWsT || 0)) {
+        b._hrWsT = b.time + 0.8;
+        P.filter(a => !a.minion).forEach(a => addWard(b, a, Math.round(a.maxHp * .15), a.maxHp * .6, actor));
+        hrBump(b, 'hr_wild_shape', 'dmg', 1.10, 8.0);
+      }
     } else if (kwKey === 'metamagic') {
       // Wand of Fireballs (v0.23 Unique): triggering Metamagic also applies Exposed (4s) to hit foes
       if (actor.it && actor.it.metaExpose && ctx.hitFoes) {
         ctx.hitFoes.forEach(x => { if (x.alive) expose(b, x, 4); });
+      }
+      // House Rule: Twin-Spell Resonance (Metamagic)
+      if (hasHR(b, 'hr_metamagic')) {
+        hrBump(b, 'hr_metamagic', 'abil', 1.15, 8.0);
+        hrBump(b, 'hr_metamagic', 'dot', 1.15, 4.0);
       }
     }
   } finally {
@@ -847,6 +943,12 @@ function gainGold(b, u, v, why) {
   alive(b, 'P').filter(x => x.f.transmuter).forEach(g => {
     triggerArcaneRecovery(b, g, 15, 'GOLD');
   });
+  // House Rule: Golden Aegis (every +1g in combat grants party 5% Max HP Ward & x1.06 Damage)
+  if (hasHR(b, 'hr_golden_aegis')) {
+    const P = alive(b, 'P').filter(a => !a.minion);
+    P.forEach(a => addWard(b, a, Math.round(a.maxHp * 0.05 * got), a.maxHp * .75, u));
+    hrBump(b, 'hr_golden_aegis', 'dmg', Math.pow(1.06, got), 8.0);
+  }
   return got;
 }
 
@@ -1024,17 +1126,41 @@ function hit(b, src, t, amt, o = {}) {
     let mul = src.dm * (1 + .15 * otLevel(b)) * (o.mul || 1) * (o.ab ? src.abM || 1 : o.strike ? src.atM || 1 : 1);
     if (src.st.mockT > 0) mul *= .80;
     if (src.inspAmpT > 0) mul *= 1.25;
+    if (src._ambushT > 0) mul *= 1.35; // Uncontested Choke lane ambush burst
     // Staff of Withering (v0.23 Unique): enemies with holder's Hex take +20% damage from spells & Radiant hits
     if ((o.kind === 'magic' || isRadiant(o)) && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.it && x.it.hexSpellAmp)) {
       mul *= 1.20;
     }
+    // v0.24 House Rules multiplicative offense engines
+    if (src.side === 'P' && b.mult) {
+      mul *= (b.mult.dmg || 1);
+      if (o.ab) mul *= (b.mult.abil || 1);
+      if (isRadiant(o)) mul *= (b.mult.radiant || 1);
+      if (src._hrDmgMult) mul *= src._hrDmgMult;
+      if (hasHR(b, 'hr_aura') && src.auraDane) mul *= 1.18;
+      if (hasHR(b, 'hr_hex') && (t.st.hex || t.st.radHex > 0)) mul *= 1.18;
+      if (hasHR(b, 'hr_hunters_mark') && (t.st.markStacks || 0) >= 2) {
+        mul *= Math.pow(1.12, Math.min(6, Math.floor((t.st.markStacks || 0) / 2)));
+      }
+      if (b.mult.vuln && b.mult.vuln > 1 && t.side === 'E') mul *= b.mult.vuln;
+    }
     raw *= mul;
   }
 
+  if (o.dot && src && src.side === 'P' && b.mult) {
+    raw *= (b.mult.dot || 1) * Math.min(2.5, 1 + ((b.mult.dmg || 1) - 1) * 0.5);
+    if (b.mult.vuln && b.mult.vuln > 1 && t.side === 'E') raw *= b.mult.vuln;
+  }
   if (o.dot && o.ty === 'poison' && t.st.root > 0 && alive(b, 'P').some(x => x.f.overgrowth)) raw *= 1.5;
   if (o.dot && o.ty === 'fire' && (t.st.hex || t.st.radHex > 0) && alive(b, 'P').some(x => x.f.finePrint)) raw *= 1.5;
 
-  let dmg = Math.max(amt > 0 ? 1 : 0, Math.round(mitigate(b, src, t, raw, o)));
+  const mitigated = mitigate(b, src, t, raw, o);
+  if (src && src.side === 'P' && t.side === 'E' && raw > mitigated && b.mitLost) {
+    const lost = raw - mitigated;
+    if (o.kind === 'magic') b.mitLost.magic += lost;
+    else if (!isRadiant(o) && !o.dot) b.mitLost.phys += lost;
+  }
+  let dmg = Math.max(amt > 0 ? 1 : 0, Math.round(mitigated));
 
   // Ring of Evasion (v0.23 Very Rare): first enemy ability that hits you deals 50% less damage
   if (o.ab && !o.dot && dmg > 0 && t.it && t.it.firstAbilHalf && !t._ringEvUsed) {
@@ -1045,6 +1171,7 @@ function hit(b, src, t, amt, o = {}) {
   if (t.stealthShield && !o.dot && dmg > 0) { t.stealthShield = 0; dmg = Math.round(dmg * .5); status(b, t, 'GLANCING', '#c48fe6'); }
   if (t.bearRage > 0 && !o.dot && dmg > 0) { dmg = Math.max(1, Math.round(dmg * (1 - Math.min(.55, t.bearRage * .06)))); }
   if (t.mcRage > 0 && !o.dot && dmg > 0) { dmg = Math.max(1, Math.round(dmg * .85)); }
+  if (t.side === 'P' && b.mult && b.mult.dr > 0 && !o.dot && dmg > 0) { dmg = Math.max(1, Math.round(dmg * (1 - b.mult.dr))); }
 
   const pre = dmg;
   const hadWard = t.ward > 0;
@@ -1356,6 +1483,9 @@ function addNec(b, src, t, amt) {
   if (v <= 0) return;
   t.nec = Math.min(t.maxHp, t.nec + v);
   if (src) src.stats.nec += v;
+  if (src && src.side === 'P' && t.side === 'E' && hasHR(b, 'hr_cataclysm')) {
+    hrBump(b, 'hr_cataclysm', 'vuln', 1.03, 3.0);
+  }
   status(b, t, 'NECROSIS +' + Math.round(v), '#9be38a');
 }
 
@@ -1365,7 +1495,7 @@ function kill(b, t, src, o) {
     t.hp = Math.max(1, Math.round(t.nec) + 1);
     return;
   }
-  // Lethal-Damage Revive Priority Order (v0.23 locked spec):
+  // Lethal-Damage Revive Priority Order (v0.23 locked spec + v0.24 Death Saves Off House Rule):
   //   1. Relentless Endurance (Zark passive) -> 1 HP
   if (t.f.relentlessEndurance && !t._relentlessUsed && t.side === 'P') {
     t._relentlessUsed = 1;
@@ -1386,6 +1516,17 @@ function kill(b, t, src, o) {
     t.nec = 0;
     t.hp = Math.max(1, Math.round(t.maxHp * .50));
     callout(b, t, 'BOON OF RECOVERY!', '#ffe9a0');
+    return;
+  }
+  //   4. House Rule: Death Saves Off (prevent death once per hero with 35% Ward & x1.25 Damage)
+  if (t.side === 'P' && !t.minion && !t._hrVigilUsed && hasHR(b, 'hr_eternal_vigil')) {
+    t._hrVigilUsed = 1;
+    t.nec = 0;
+    t.hp = Math.max(1, Math.round(t.maxHp * .20));
+    addWard(b, t, Math.round(t.maxHp * .35), t.maxHp * .75, t);
+    t._hrDmgMult = (t._hrDmgMult || 1) * 1.25;
+    hrRecord(b, 'hr_eternal_vigil', 1.25, 1);
+    callout(b, t, 'DEATH SAVES OFF!', '#ffe9a0');
     return;
   }
   // Undying enemies (blocked by Radiant damage or Necrosis)
@@ -1425,10 +1566,17 @@ function kill(b, t, src, o) {
       if (!gotG && gainer.alive && gainer.f.transmuter) triggerArcaneRecovery(b, gainer, 15, 'GILDED KILL');
     }
 
-    // Hunter's Mark death triggers
+    // Hunter's Mark death triggers (+ House Rule: Pack Quarry spreads Marks on death!)
     if (t.st.mark) {
       const lorcan = alive(b, 'P').find(x => x.key === 'lorcan');
       if (lorcan) lorcan.stats.markedKills = (lorcan.stats.markedKills || 0) + 1;
+      if (hasHR(b, 'hr_hunters_mark')) {
+        const nx = alive(b, 'E').sort((a, c) => hd(a, t) - hd(c, t))[0];
+        if (nx) {
+          markFoe(b, t.st.mark, nx, Math.max(1, Math.min(4, t.st.markStacks || 1)));
+          hrRecord(b, 'hr_hunters_mark', 1.12, 1);
+        }
+      }
     }
 
     // Lorcan Favoured Enemy quest: killing an Elite or Boss permanently grants +1 DEX
@@ -1444,6 +1592,11 @@ function kill(b, t, src, o) {
         lm.permHaste = Math.min(120, (lm.permHaste || 0) + 18);
         status(b, lm, 'SEARING +18% SPD', '#ffe9a0');
       });
+    }
+
+    // House Rule: Hexbound Covenant (each Hex death stacks x1.12 party Damage!)
+    if ((t.st.hex || t.st.radHex > 0) && hasHR(b, 'hr_hex')) {
+      hrBump(b, 'hr_hex', 'dmg', 1.12, 8.0);
     }
 
     // Nettle Infernal Hex / Warlock Multiclass Hex death explosion & jump
@@ -1489,6 +1642,21 @@ function triggerSunlitCenser(b, holder) {
   if (near) later(b, 0, () => { if (holder.alive && near.alive) hit(b, holder, near, roll(1, 6), { kind: 'radiant', ty: 'radiant', noBonus: 1, onhit: 1 }); });
 }
 
+function onTitanicTick(b, amt) {
+  if (!hasHR(b, 'hr_titanic_vanguard') || !(amt > 0)) return;
+  b._titanicAcc = (b._titanicAcc || 0) + amt;
+  while (b._titanicAcc >= 150 && (b._titanicN || 0) < 12) {
+    b._titanicAcc -= 150;
+    b._titanicN = (b._titanicN || 0) + 1;
+    hrBump(b, 'hr_titanic_vanguard', 'dmg', 1.07, 8.0);
+    alive(b, 'P').filter(a => !a.minion).forEach(a => {
+      const addHp = Math.round(a.maxHp * 0.07);
+      a.maxHp += addHp;
+      a.hp = Math.min(a.maxHp, a.hp + addHp);
+    });
+  }
+}
+
 function heal(b, src, t, amt, o = {}) {
   if (!t || !t.alive) return 0;
   let v = amt;
@@ -1497,6 +1665,7 @@ function heal(b, src, t, amt, o = {}) {
     v *= src.dm;
   }
   if (src && src.mc === 'Sorcerer' && src._casting) v *= 1.2;
+  if (t.side === 'P' && b.mult && b.mult.heal > 1) v *= b.mult.heal;
   const ot = otLevel(b);
   if (ot > 0) v *= Math.max(.4, 1 - .15 * ot);
   v = Math.round(v);
@@ -1505,6 +1674,7 @@ function heal(b, src, t, amt, o = {}) {
   const over = Math.max(0, v - room);
   t.hp += got;
   t.stats.healIn = (t.stats.healIn || 0) + got;
+  if (got > 0 && t.side === 'P') onTitanicTick(b, got);
   if (got > 0 && t.side === 'P' && !o.raw) {
     const sh = watchShare(b, t);
     for (const a of b.units) {
@@ -1544,6 +1714,10 @@ function heal(b, src, t, amt, o = {}) {
 
 function addWard(b, t, v, cap, giver, o = {}) {
   if (!t || !t.alive) return;
+  if (t.side === 'P' && b.mult) {
+    v *= (b.mult.ward || 1);
+    if (hasHR(b, 'hr_aura') && t.auraDane) v *= 1.15;
+  }
   const ot = otLevel(b);
   if (ot > 0) v *= Math.max(.4, 1 - .15 * ot);
   v = Math.round(v);
@@ -1552,12 +1726,22 @@ function addWard(b, t, v, cap, giver, o = {}) {
   t.ward += v;
   if (t.f && t.f.gilthraxWard) t.wardStored = Math.min(cap || t.maxHp * 1.1, (t.wardStored || 0) + v);
   t.stats.wardIn = (t.stats.wardIn || 0) + v;
+  if (t.side === 'P') onTitanicTick(b, v);
   if (giver) {
     t._wardBy = giver;
     if (giver.stats) giver.stats.ward = (giver.stats.ward || 0) + v;
     triggerSunlitCenser(b, giver);
   }
   b.events.push({ k: 'ward', id: t.id, v });
+  // House Rule: Buddy System (same-lane allies share 25% of Ward gained)
+  if (!o.bondShare && !o.buddyShare && t.side === 'P' && !t.minion && hasHR(b, 'hr_buddy_system')) {
+    const share = Math.round(v * .25);
+    if (share > 0) {
+      friends(b, t).filter(a => a !== t && !a.minion && a.startLane === t.startLane).forEach(a => {
+        addWard(b, a, share, a.maxHp * .65, giver, { buddyShare: 1 });
+      });
+    }
+  }
   // Brother Jamison Emboldening Bond: bonded allies share 30% (50% Shared Grace) of Wards
   if (!o.bondShare && t.bonded && t.bonded.alive) {
     const jm = t.bonded;
@@ -1684,8 +1868,16 @@ function castAbility(b, u, isRecall = false) {
 
     if (nat === 1) {
       u.charge = 50; u.stats.rolls[0]++;
+      if (u.side === 'P' && b.d20Log) b.d20Log.push({ nat, floor: u.d20Floor || 1, band: -1 });
       b.events.push({ k: 'roll', id: u.id, nat, band: -1, name: A.n, side: u.side });
       status(b, u, 'FIZZLE', '#ff9c94');
+      // House Rule: Merciful DM (Nat 1 grants 30% Max HP Ward & Advantage on next cast)
+      if (u.side === 'P' && hasHR(b, 'hr_fumble_grace')) {
+        addWard(b, u, Math.round(u.maxHp * .30), u.maxHp * .65, u);
+        u.advantage = 1;
+        hrRecord(b, 'hr_fumble_grace', 1, 1);
+        status(b, u, 'MERCIFUL DM!', '#9be38a');
+      }
       return;
     } else if (nat >= nat20Threshold) {
       P = 3;
@@ -1704,7 +1896,28 @@ function castAbility(b, u, isRecall = false) {
 
   if (!isRecall) u.charge = 0;
   u.stats.rolls[P + 1]++;
+  if (u.side === 'P' && b.d20Log) b.d20Log.push({ nat, floor: u.d20Floor || 1, band: P });
   b.events.push({ k: 'roll', id: u.id, nat, band: Math.min(P, 2), name: A.n + (P === 3 ? '' : ' · ' + BAND_N[P]), side: u.side, bonus });
+
+  // v0.24 House Rules on-cast triggers (Hot Dice, Action Economy, Loaded Twenty)
+  if (!isRecall && u.side === 'P') {
+    if (hasHR(b, 'hr_loaded_tray')) {
+      if (P === 3) hrBump(b, 'hr_loaded_tray', 'dmg', 1.20, 8.0);
+      else if (P === 2) hrBump(b, 'hr_loaded_tray', 'dmg', 1.06, 8.0);
+    }
+    if (hasHR(b, 'hr_grand_tactician')) {
+      hrBump(b, 'hr_grand_tactician', 'dmg', 1.06, 8.0);
+      hrBump(b, 'hr_grand_tactician', 'heal', 1.06, 4.0);
+    }
+    if (P === 3 && hasHR(b, 'hr_astral_dice') && b.time >= (b._hrAstralCd || 0)) {
+      b._hrAstralCd = b.time + 1.0;
+      const buddy = friends(b, u).filter(a => a !== u && !a.minion && a.abil).sort((a, c) => hd(a, u) - hd(c, u))[0];
+      if (buddy) {
+        hrRecord(b, 'hr_astral_dice', 1.15, 1);
+        later(b, .14, () => { if (buddy.alive && !b.over) { status(b, buddy, 'LOADED 20 ECHO!', '#ffd76a'); castAbility(b, buddy, true); } });
+      }
+    }
+  }
 
   // Unified Bardic Inspiration Spend (Lore Die OR Creation Mote)
   const spentInspiration = !!(usedInsp || usedMote);
@@ -1854,7 +2067,15 @@ function pickTarget(b, u) {
   if (cur) return cur;
   const field = walkField(b, u);
   const W = new Map(fs.map(x => [x, walkTo(u, field, x)]));
-  const w = x => (W.get(x) >= 1e9 ? 60 : W.get(x)) + Math.abs(x.c - u.c) * LANE_W;
+  // v0.24 Soft-Lane Affinity: units prioritize enemies inside their own lane until that lane is cleared!
+  const uLane = (b.lanes && b.lanes.length > 1) ? laneOfUnit(u, b.lanes) : -1;
+  const laneActive = uLane >= 0 && b.lanes[uLane] && b.lanes[uLane].state === 'active';
+  const sameLaneFoes = laneActive && fs.some(x => laneOfUnit(x, b.lanes) === uLane);
+  const w = x => {
+    const base = (W.get(x) >= 1e9 ? 60 : W.get(x)) + Math.abs(x.c - u.c) * LANE_W;
+    if (sameLaneFoes && laneOfUnit(x, b.lanes) !== uLane) return base + 22;
+    return base;
+  };
   return fs.slice().sort((a, c) => (w(a) - w(c)) || (a.hp - c.hp))[0];
 }
 
@@ -1933,11 +2154,12 @@ function attackIv(b, u) {
   const rageHaste = u.mcRage ? 20 : 0;
   const hexStacks = (u.key === 'lumen' && u.target && u.target.st) ? ((u.target.st.radHex || 0) + (u.target.st.hex ? 2 : 0)) : 0;
   const radHexHaste = hexStacks > 0 ? Math.min(120, hexStacks * 12) : 0;
-  const h = u.haste + (u.permHaste || 0) + (u.auraHaste || 0) + (u.tempHasteT > 0 ? u.tempHaste : 0) + rageHaste + radHexHaste;
+  const hrHaste = (u.side === 'P' && b && b.mult ? (b.mult.haste || 0) : 0) + (u._flankT > 0 ? 20 : 0) + (u._ambushT > 0 ? 35 : 0);
+  const h = u.haste + (u.permHaste || 0) + (u.auraHaste || 0) + (u.tempHasteT > 0 ? u.tempHaste : 0) + rageHaste + radHexHaste + hrHaste;
   const slow = (u.st.stag > 0 ? 1.3 : 1) * (u.st.hexSlow > 0 ? 1.25 : 1) * (u.st.chillT > 0 ? 1.15 : 1);
   return u.iv / Math.max(.4, 1 + h / 100) * (1 + Math.min(50, u.st.frz / 2) / 100) * slow / (1 + .2 * otLevel(b));
 }
-const moveTime = (b, u) => .42 * COMBAT_TEMPO * 30 / u.ft * (u.st.stag > 0 ? 1.3 : 1) * (b.hazard === 'frictionless' ? 1.2 : 1) / (1 + .2 * otLevel(b));
+const moveTime = (b, u) => .42 * COMBAT_TEMPO * 30 / (u.ft * (u._flankT > 0 ? 1.35 : 1) * (u._ambushT > 0 ? 1.35 : 1)) * (u.st.stag > 0 ? 1.3 : 1) * (b.hazard === 'frictionless' ? 1.2 : 1) / (1 + .2 * otLevel(b));
 
 function doAttack(b, u) {
   if (u.st.fear > 0) return false;
@@ -2163,38 +2385,254 @@ function postStrikeHooks(b, u, t, got) {
     u.ki = Math.min(KI_MAX, (u.ki || 0) + 1);
     if (u.ki >= KI_MAX) fireNaillKiStrike(b, u, t);
   }
+  // House Rule: Rule of Cool (every 5th basic attack by any hero triggers a free Action Surge & x1.06 party dmg)
+  if (u.side === 'P' && !u.minion && hasHR(b, 'hr_endless_surges') && u._stkCnt % 5 === 0) {
+    hrBump(b, 'hr_endless_surges', 'dmg', 1.06, 8.0);
+    triggerActionSurge(b, u, { target: t, label: 'RULE OF COOL!' });
+  }
 }
 
 function later(b, dt, f) { (b.later = b.later || []).push({ at: b.time + dt, f }); }
 
+/* ---------- v0.24 Soft-Lane Objective Resolution ---------- */
+function onLaneWon(b, lane) {
+  if (!lane || lane.state === 'won') return;
+  lane.state = 'won';
+  const obj = typeof LANE_OBJ !== 'undefined' && LANE_OBJ[lane.obj];
+  const P = alive(b, 'P').filter(x => !x.minion);
+  const inLane = P.filter(x => laneOfUnit(x, b.lanes) === lane.idx || x.startLane === lane.idx);
+  const bountyMult = hasHR(b, 'hr_bounty_board') ? 2 : 1;
+  const gEarner = inLane[0] || P[0];
+
+  // Surviving heroes in the cleared lane get Flank Rush as they cross over!
+  inLane.forEach(h => { h._flankT = Math.max(h._flankT || 0, 5.0); });
+
+  if (lane.obj === 'ritual' && !lane.objFailed) {
+    const g = 2 * bountyMult;
+    if (gEarner) gainGold(b, gEarner, g, 'RITUAL BROKEN');
+    alive(b, 'E').forEach(e => stun(b, e, 1.0));
+    b.laneObjectivesWon = (b.laneObjectivesWon || 0) + 1;
+    lane.resultTxt = `Interrupted (+${g}g & Stun)`;
+    callout(b, gEarner, `RITUAL BROKEN +${g}g!`, '#d89eff');
+  } else if (lane.obj === 'loot' && !lane.objFailed) {
+    const g = (2 + (b.act || 1)) * bountyMult;
+    if (gEarner) gainGold(b, gEarner, g, 'SUPPLY CART');
+    b.laneBonusRerolls = (b.laneBonusRerolls || 0) + 1;
+    b.laneObjectivesWon = (b.laneObjectivesWon || 0) + 1;
+    lane.resultTxt = `Looted (+${g}g & Free Reroll)`;
+    callout(b, gEarner, `CART LOOTED +${g}g!`, '#ffd76a');
+  } else if (lane.obj === 'choke' && !lane.uncontested) {
+    b.chokeBuff = Math.min(4, (b.chokeBuff || 0) + 2);
+    b.laneObjectivesWon = (b.laneObjectivesWon || 0) + 1;
+    lane.resultTxt = 'Held (+2 AC & SR)';
+    callout(b, gEarner, 'CHOKE HELD (+2 AC/SR)!', '#8fd0ff');
+  } else if (lane.obj === 'shrine') {
+    P.forEach(a => { a.advantage = 1; giveCharge(b, a, 25, 1); });
+    b.laneObjectivesWon = (b.laneObjectivesWon || 0) + 1;
+    lane.resultTxt = 'Claimed (Adv & +25 Chg)';
+    callout(b, gEarner, 'SHRINE CLAIMED!', '#8ef09e');
+  } else if (lane.obj === 'breach') {
+    lane.resultTxt = 'Breached (Flank Rush)';
+    if (inLane.length) callout(b, inLane[0], 'LANE BREACHED!', '#ffd76a');
+  } else {
+    lane.resultTxt = 'Cleared';
+  }
+
+  // Clearing a side lane during a Boss fight Exposes the Boss for 6s!
+  if (lane.obj !== 'boss' && b.lanes.some(l => l.obj === 'boss')) {
+    alive(b, 'E').filter(e => e.boss).forEach(boss => {
+      expose(b, boss, 6.0);
+      status(b, boss, 'FLANK EXPOSED!', '#ff9cd0');
+    });
+  }
+
+  // House Rule: Flank & Conquer (winning a lane grants x1.28 Damage & +30% Haste)
+  if (hasHR(b, 'hr_flank_conquer')) {
+    hrBump(b, 'hr_flank_conquer', 'dmg', 1.28, 8.0);
+    hrAdd(b, 'hr_flank_conquer', 'haste', 30, 180);
+  }
+  // House Rule: Dragon's Tax (winning a lane applies 6 Burn to all foes)
+  if (hasHR(b, 'hr_dragonfire_hoard')) {
+    const src = gEarner || P[0];
+    alive(b, 'E').forEach(e => applyStatus(b, src, e, 'burn', 6));
+    hrRecord(b, 'hr_dragonfire_hoard', 1, 1);
+  }
+
+  b.events.push({ k: 'lane', lane: lane.idx, state: 'won', txt: lane.resultTxt || (obj && obj.n) || 'Lane Won' });
+  // Retarget heroes so winners immediately flank across crossover bridges
+  P.forEach(h => { if (!h.target || !h.target.alive) h.target = null; });
+}
+
+function tickLanes(b) {
+  if (!b.lanes || b.lanes.length <= 1) return;
+  const E0 = alive(b, 'E');
+  b.lanes.forEach(lane => {
+    const laneFoes = E0.filter(e => e.startLane === lane.idx);
+    if (lane.state === 'active' && lane.enemyCount > 0 && laneFoes.length === 0) {
+      onLaneWon(b, lane);
+      return;
+    }
+    if (lane.state !== 'active' || laneFoes.length === 0) return;
+    // Countdown objectives (Ritual 12s, Supply Cart 14s)
+    if (lane.timer && !lane.objFailed && b.time >= lane.timer) {
+      lane.objFailed = true;
+      if (lane.obj === 'ritual') {
+        lane.resultTxt = 'Ritual Completed (Enemy +25% Ward!)';
+        E0.forEach(e => addWard(b, e, Math.round(e.maxHp * .25), e.maxHp * .6, e));
+        callout(b, laneFoes[0], 'DARK RITUAL COMPLETE!', '#c48fe6');
+        b.events.push({ k: 'lane', lane: lane.idx, state: 'failed', txt: lane.resultTxt });
+      } else if (lane.obj === 'loot') {
+        lane.resultTxt = 'Cart Escaped';
+        callout(b, laneFoes[0], 'SUPPLY CART ESCAPED!', '#c8b48a');
+        b.events.push({ k: 'lane', lane: lane.idx, state: 'failed', txt: lane.resultTxt });
+      }
+    }
+    // Uncontested Choke Lane ambush at 2.2s
+    if (lane.obj === 'choke' && lane.uncontested && !lane.ambushFired && b.time >= 2.2) {
+      lane.ambushFired = true;
+      lane.objFailed = true;
+      lane.resultTxt = 'Uncontested (Enemy Ambush!)';
+      laneFoes.forEach(e => { e._ambushT = 5.0; e.target = null; });
+      callout(b, laneFoes[0], 'CHOKE BREACHED · AMBUSH!', '#ff6a4a');
+      b.events.push({ k: 'lane', lane: lane.idx, state: 'failed', txt: lane.resultTxt });
+    }
+  });
+}
+
 /* ---------- Battle Setup & Main Loop ---------- */
-function newBattle(encKey, party, eTier) {
+function newBattle(encKey, party, eTier, opts = {}) {
   const enc = ENC[encKey];
-  loadMap(enc.map);
+  const mapLanes = (enc && enc.lanes) || (enc && enc.mapKey && BATTLE_MAPS[enc.mapKey] && BATTLE_MAPS[enc.mapKey].lanes) || null;
+  loadMap(enc.map, mapLanes);
   UID = 1;
+  const hrList = (opts && opts.houseRules) ? opts.houseRules.slice() : [];
   const b = {
     time: 0, units: [], events: [], over: false, winner: null,
     enc: encKey, eTier: eTier || 1, gold: 0, goodberries: 0, kwCounts: {},
     hazard: (enc && enc.hazard) || null,
-    waves: (enc.waves || []).map(w => ({ ...w, done: 0 }))
+    waves: (enc.waves || []).map(w => ({ ...w, done: 0 })),
+    lanes: LANES.map((l, idx) => {
+      const def = (typeof LANE_OBJ !== 'undefined' && LANE_OBJ[l.obj]) || { timer: 0 };
+      return {
+        idx, id: l.id, n: l.n, c0: l.c0, c1: l.c1, obj: l.obj || 'breach',
+        timer: def.timer || 0, state: 'active', objFailed: false, ambushFired: false,
+        heroCount: 0, enemyCount: 0, uncontested: false, resultTxt: ''
+      };
+    }),
+    houseRules: hrList,
+    hrSet: new Set(hrList),
+    hrState: (opts && opts.hrState) || {},
+    hrStats: {},
+    mult: { dmg: 1, abil: 1, ward: 1, heal: 1, radiant: 1, dot: 1, haste: 0, crPct: 0, dr: 0, vuln: 1 },
+    runGold: (opts && opts.runGold) || 0,
+    act: (opts && opts.act) || 1,
+    d20Log: [],
+    mitLost: { phys: 0, magic: 0 },
+    laneBonusRerolls: 0,
+    laneObjectivesWon: 0,
+    chokeBuff: 0
   };
   const usedDep = new Set(party.filter(c => c.c != null && c.r != null).map(c => c.c + ',' + c.r));
   let depIdx = 0;
   party.forEach(cfg => {
-    let useCfg = cfg;
-    if (cfg.c == null || cfg.r == null) {
+    let useCfg = { ...cfg, houseRules: hrList };
+    if (useCfg.c == null || useCfg.r == null) {
       while (depIdx < DEPLOY.length && usedDep.has(DEPLOY[depIdx].c + ',' + DEPLOY[depIdx].r)) depIdx++;
       const sp = DEPLOY[depIdx] || DEPLOY[0] || { c: 1, r: Math.max(0, ROWS - 2) };
       usedDep.add(sp.c + ',' + sp.r);
-      useCfg = { ...cfg, c: sp.c, r: sp.r };
+      useCfg = { ...useCfg, c: sp.c, r: sp.r };
     }
-    b.units.push(mkHero(useCfg));
+    const hu = mkHero(useCfg);
+    hu.startLane = hu.lane = laneOfUnit(hu, b.lanes);
+    b.units.push(hu);
   });
-  enc.u.forEach(([k, c, r]) => b.units.push(mkEnemy(k, c, r, eTier || 1, enc)));
+  enc.u.forEach(([k, c, r]) => {
+    const eu = mkEnemy(k, c, r, eTier || 1, enc);
+    eu.startLane = eu.lane = laneOfUnit(eu, b.lanes);
+    b.units.push(eu);
+  });
   settleLarge(b.units.filter(x => x.side === 'E'));
   settleLarge(b.units.filter(x => x.side === 'P'));
+  // Re-sync starting lanes after large-unit settle & count per-lane populations
+  b.units.forEach(u => {
+    u.startLane = u.lane = laneOfUnit(u, b.lanes);
+    const L = b.lanes[u.startLane];
+    if (L) {
+      if (u.side === 'P') L.heroCount++;
+      else L.enemyCount++;
+    }
+  });
+  b.lanes.forEach(L => {
+    L.uncontested = L.enemyCount > 0 && L.heroCount === 0;
+    if (L.enemyCount === 0) { L.state = 'empty'; L.resultTxt = 'No foes'; }
+  });
 
   const P = alive(b, 'P');
+  // v0.24 Start-of-Combat House Rules
+  if (hasHR(b, 'hr_motley_crew')) {
+    const cls = new Set(P.map(u => u.cls));
+    if (cls.size === P.length && P.length >= 2) {
+      hrBump(b, 'hr_motley_crew', 'dmg', 1.22, 8.0);
+      hrAdd(b, 'hr_motley_crew', 'crPct', 22, 160);
+    }
+  }
+  if (hasHR(b, 'hr_guild_brotherhood')) {
+    const kwc = {};
+    P.forEach(u => Object.keys(u.kw || {}).forEach(kw => { kwc[kw] = (kwc[kw] || 0) + 1; }));
+    const shared = Object.values(kwc).filter(v => v >= 2).length;
+    if (shared > 0) {
+      hrBump(b, 'hr_guild_brotherhood', 'dmg', Math.pow(1.16, shared), 8.0);
+      const hpMult = 1 + 0.12 * shared;
+      P.forEach(u => { u.maxHp = Math.round(u.maxHp * hpMult); u.hp = u.maxHp; });
+    }
+  }
+  if (hasHR(b, 'hr_blitzkrieg') && (b.hrState.blitzStacks || 0) > 0) {
+    hrBump(b, 'hr_blitzkrieg', 'dmg', Math.pow(1.05, b.hrState.blitzStacks), 8.0);
+  }
+  if (hasHR(b, 'hr_apprentice_pact') && b.hrState.apprenticeDone) {
+    hrBump(b, 'hr_apprentice_pact', 'dmg', 1.22, 8.0);
+  }
+  if (hasHR(b, 'hr_compound_coffers') && b.runGold > 0) {
+    const g = Math.min(40, b.runGold);
+    hrBump(b, 'hr_compound_coffers', 'dmg', Math.min(2.2, Math.pow(1.03, g)), 8.0);
+    hrBump(b, 'hr_compound_coffers', 'ward', Math.min(2.0, Math.pow(1.02, g)), 5.0);
+  }
+  if (hasHR(b, 'hr_multiclass_crown')) {
+    const mcs = P.filter(u => u.mc).length;
+    if (mcs > 0) {
+      hrBump(b, 'hr_multiclass_crown', 'dmg', Math.pow(1.30, mcs), 8.0);
+      hrBump(b, 'hr_multiclass_crown', 'ward', Math.pow(1.20, mcs), 5.0);
+      hrAdd(b, 'hr_multiclass_crown', 'crPct', 15 * mcs, 160);
+    }
+  }
+  if (hasHR(b, 'hr_overclocked_arsenal')) {
+    const eq = P.reduce((a, u) => a + (u.items || []).length, 0);
+    if (eq > 0) {
+      hrBump(b, 'hr_overclocked_arsenal', 'dmg', Math.pow(1.07, eq), 8.0);
+      hrAdd(b, 'hr_overclocked_arsenal', 'haste', 3 * eq, 180);
+    }
+  }
+  if (hasHR(b, 'hr_dragonfire_hoard')) {
+    const rareEq = P.reduce((a, u) => a + (u.items || []).filter(ik => ITEMS[ik] && ITEMS[ik].r >= 2).length, 0);
+    if (rareEq > 0) hrBump(b, 'hr_dragonfire_hoard', 'dmg', 1 + 0.15 * rareEq, 8.0);
+  }
+  if (hasHR(b, 'hr_grand_tactician')) {
+    P.forEach(u => { u.charge = Math.max(u.charge || 0, 40); });
+  }
+  // Per-Lane Start-of-Combat House Rules (Solo Vanguard & Buddy System)
+  P.forEach(u => {
+    const L = b.lanes[u.startLane];
+    if (hasHR(b, 'hr_solo_vanguard') && L && L.heroCount === 1) {
+      addWard(b, u, Math.round(u.maxHp * .45), u.maxHp * .85, u);
+      u._hrDmgMult = (u._hrDmgMult || 1) * 1.25;
+      hrRecord(b, 'hr_solo_vanguard', 1.25, 1);
+    }
+    if (hasHR(b, 'hr_buddy_system') && L && L.heroCount >= 2) {
+      u.rollBonus += 1;
+      hrRecord(b, 'hr_buddy_system', 1, 1);
+    }
+  });
+
   // Start-of-combat Epic Boons, Multiclass dips, Hero Passives, Items & Quests
   P.forEach(u => {
     // Tier IV Epic Boon combat-start hooks
@@ -2309,6 +2747,7 @@ function tick(b, dt) {
   }
 
   applyAuras(b);
+  tickLanes(b);
   for (const w of b.waves) if (!w.done && b.time >= w.at) spawnWave(b, w);
   if (b.later && b.later.length) {
     const due = b.later.filter(x => x.at <= b.time);
@@ -2349,6 +2788,8 @@ function tick(b, dt) {
     u.radiantSoulT = Math.max(0, (u.radiantSoulT || 0) - dt);
     u.arcaneReflectT = Math.max(0, (u.arcaneReflectT || 0) - dt);
     u.wildShapeT = Math.max(0, (u.wildShapeT || 0) - dt);
+    u._flankT = Math.max(0, (u._flankT || 0) - dt);
+    u._ambushT = Math.max(0, (u._ambushT || 0) - dt);
 
     // Staff of the Woodlands (v0.23 Unique · Wild Shape): while in Wild Shape, Roots a nearby enemy every 3s
     if (u.it && u.it.woodlandRoot && (u.wildShapeT > 0 || (u.beast && u.beast.hp > 0) || u._primalWard) && b.time >= (u._woodT || 3)) {
@@ -2366,7 +2807,7 @@ function tick(b, dt) {
     if (tile(u) === '^' && !u.f.fireproof) { s.burn = Math.max(s.burn, 8); s.burnT = s.burnT || .5; }
     if (u.f.enrage && b.time >= (u._enr || (u._enr = u.f.enrage))) { u._enr += u.f.enrage; u.dm *= 1.15; status(b, u, 'ENRAGED', '#ff9c94'); }
 
-    // Burn ticks (every 0.5s) — feeds Cinder Spec 1 Draconic Surge!
+    // Burn ticks (every 0.5s) — feeds Cinder Spec 1 Draconic Surge & Elemental Cascade!
     if (s.burn >= 1) {
       s.burnT -= dt;
       if (s.burnT <= 0) {
@@ -2375,6 +2816,7 @@ function tick(b, dt) {
         s.burn *= .65;
         hit(b, s.burnBy || null, u, v, { dot: 1, ty: 'fire' });
         if (u.side === 'E') {
+          if (hasHR(b, 'hr_cataclysm')) hrBump(b, 'hr_cataclysm', 'vuln', 1.03, 3.0);
           alive(b, 'P').filter(x => x.f.draconicSurge).forEach(c => {
             c._dsTicks = (c._dsTicks || 0) + 1;
             if (c._dsTicks % 3 === 0) {
@@ -2397,6 +2839,7 @@ function tick(b, dt) {
           const v = Math.floor(s.poisonAcc);
           s.poisonAcc -= v;
           hit(b, s.poisonBy || null, u, v, { dot: 1, ty: 'poison' });
+          if (u.side === 'E' && hasHR(b, 'hr_cataclysm')) hrBump(b, 'hr_cataclysm', 'vuln', 1.03, 3.0);
           if (!u.alive) continue;
         }
       }
@@ -2424,7 +2867,7 @@ function tick(b, dt) {
         if (alive(b, 'E').filter(x => x._summoned === u).length < S.cap) {
           for (let i = 0; i < S.n; i++) {
             const m = spawn(b, S.k, u.c + (i ? 1 : -1), u.r);
-            if (m) { m._summoned = u; m.dm = u.dm * (S.dm || 1); m.maxHp = m.hp = Math.round(m.maxHp * (S.hp || 1)); }
+            if (m) { m._summoned = u; m.startLane = m.lane = u.startLane; m.dm = u.dm * (S.dm || 1); m.maxHp = m.hp = Math.round(m.maxHp * (S.hp || 1)); }
           }
           status(b, u, 'SUMMONS', '#c48fe6');
         }
@@ -2450,7 +2893,8 @@ function tick(b, dt) {
     if (u.abil && !(u.st.charm > 0) && !(u.st.fear > 0)) {
       const quickenMult = (u.it && u.it.quickenFirst && !(u._casts > 0)) ? 2.0 : 1.0;
       const damp = (b.hazard === 'dampener' && b.time < 10) ? .65 : 1.0;
-      const gain = u.cr * dt * (1 + (u.auraCr || 0) / 100) * quickenMult * damp;
+      const hrCr = (u.side === 'P' && b.mult ? (b.mult.crPct || 0) : 0);
+      const gain = u.cr * dt * (1 + ((u.auraCr || 0) + hrCr) / 100) * quickenMult * damp;
       const wasFull = u.charge >= 100;
       u.charge = Math.min(100, u.charge + gain);
 
@@ -2478,12 +2922,13 @@ function tick(b, dt) {
       u.mt += dt;
       if (u.mt >= moveTime(b, u)) {
         const s = moveStep(b, u);
-        if (s && s !== 'wait') { u.c = s.c; u.r = s.r; u.mt = 0; terrainEnter(b, u); }
+        if (s && s !== 'wait') { u.c = s.c; u.r = s.r; u.lane = laneOfUnit(u, b.lanes); u.mt = 0; terrainEnter(b, u); }
         else u.mt = moveTime(b, u) * .6;
       }
     } else u.mt = 0;
   }
 
+  tickLanes(b);
   checkOver(b);
 }
 
@@ -2494,8 +2939,8 @@ function checkOver(b) {
   else if (b.time >= TIME_LIMIT) { b.over = true; b.winner = 'E'; b.timeout = 1; }
 }
 
-function simulate(encKey, party, eTier) {
-  const b = newBattle(encKey, party, eTier);
+function simulate(encKey, party, eTier, opts) {
+  const b = newBattle(encKey, party, eTier, opts);
   while (!b.over) { tick(b, TICK); b.events.length = 0; }
   return b;
 }

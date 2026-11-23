@@ -1,15 +1,14 @@
-/* ================= 0.23 GAME SHELL UI =================
-   Title, Intro, Pack Toggles, First Pick, Camp Shop (Boss Reminder + Whole-Shop Freeze),
-   9-Row Constricting DAG Map (Curio, Single-Class Multiclass, Opt-In Quest Board, ? Mystery Events,
-   Dungeon Hazards, Stationary & Wandering Miniboss), Tier II Specialization / Tier III ASI /
-   Tier IV Epic Boon pickers, Tactical Deployment, Combat, and Results.
+/* ================= 0.24 GAME SHELL UI =================
+   Soft Lanes (Breach & Flank), 36 Shop-Offered House Rules (6-slot cap), Camp Rank & Interest
+   Future-Power Economy, Challenge Rating (CR) & Per-Lane Diagnostics, Post-Combat Autopsy,
+   3-Act 9-Row DAG Map, 24 Heroes, and 88 Canonical D&D Items.
 */
 
 const TIER_COL = { 1: '#d8d0bc', 2: '#7fd08f', 3: '#7fb4f0', 4: '#c49af0' };
 let S = { enc: 'run', eTier: 1, party: [], sel: null, selE: null, speed: 1, sound: true };
 let mapLayer = null, mapDirty = true;
 let RUN = null, PHASE = 'title';
-const SAVE_KEY = 'bb023.run', BEST_KEY = 'bb023.best';
+const SAVE_KEY = 'bb024.run', BEST_KEY = 'bb024.best';
 const rom = ['', 'I', 'II', 'III', 'IV'];
 const short = n => n.replace(/^(Sir|Sister|Brother) /, '').split(' ')[0];
 
@@ -21,7 +20,7 @@ function saveRun() {
 function loadRun() {
   try {
     const r = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
-    if (r && r.v === '0.23' && !r.over) {
+    if (r && r.v === '0.24' && !r.over) {
       r.team = r.team.filter(h => H[h.key]);
       RUN_UID = Math.max(1, ...r.team.map(h => h.uid + 1));
       if (r.adv) {
@@ -30,9 +29,16 @@ function loadRun() {
         if (r.adv.pos && r.adv.pos.r >= ADV.bossRow) { r.adv.pos = null; r.adv.path = []; }
         r.adv.itemPool = [...STANDARD_ITEM_KEYS];
       }
+      r.campRank = Math.max(1, Math.min(4, r.campRank || 1));
+      r.campDiscount = r.campDiscount || 0;
+      r.freeRerolls = r.freeRerolls || 0;
+      r.houseRules = Array.isArray(r.houseRules) ? r.houseRules.filter(k => HOUSE_RULES[k]).slice(0, HOUSE_RULE_MAX) : [];
+      r.hrState = r.hrState || { blitzStacks: 0, apprenticeWins: 0, apprenticeDone: false, bountyObjs: 0 };
+      r.itemStacks = r.itemStacks || {};
       if (Array.isArray(r.stash)) r.stash = r.stash.filter(k => ITEMS[k]);
       if (Array.isArray(r.team)) r.team.forEach(h => { if (Array.isArray(h.items)) h.items = h.items.filter(k => ITEMS[k]); });
       if (r.shop && Array.isArray(r.shop.items)) r.shop.items = r.shop.items.map(k => (k && ITEMS[k]) ? k : null);
+      if (r.shop && Array.isArray(r.shop.houseRules)) r.shop.houseRules = r.shop.houseRules.map(k => (k && HOUSE_RULES[k]) ? k : null);
       return r;
     }
   } catch (e) {}
@@ -63,6 +69,23 @@ const goldHub = (n, { dark = false, sm = false, extra = '' } = {}) =>
 const piggyTxt = () => RUN.piggyBroken
   ? '<i class="pig broke" title="Piggy Bank broken: your next loss ends the run">Broken</i>'
   : `<i class="pig" title="Wins fill the Piggy Bank. Your first loss breaks it, pays out all saved gold, and lets you shop and retry.">${gold(RUN.piggy)}</i>`;
+
+function partyCrHtml(run, dark = false) {
+  if (!run || !run.team || !run.team.length) return '';
+  const p = calcPartyCR(run);
+  const tip = `Party Challenge Rating: ${p.cr} | Offense ${p.offense} · Durability ${p.durability} · Engine ×${p.engine.toFixed(2)}`;
+  return `<div class="cr-hub${dark ? ' dark' : ''}" title="${esc(tip)}" data-tn="Party Challenge Rating (${p.cr})" data-tip="${esc(`Offense ${p.offense} · Durability ${p.durability} · House Rule Engine ×${p.engine.toFixed(2)}. Compare against Map Node CR and Lane CR!`)}"><span class="cr-lbl">CR</span><b>${p.cr.toFixed(1)}</b><span class="cr-eng">×${p.engine.toFixed(2)}</span></div>`;
+}
+
+function hrChipHtml(k, idx, { removable = false, compact = false } = {}) {
+  const hr = HOUSE_RULES[k];
+  if (!hr) return '';
+  const R = HOUSE_RULE_RARITY[hr.r] || HOUSE_RULE_RARITY[0];
+  const kwNote = hr.kw && CLASS_KW[hr.kw] ? ` [${CLASS_KW[hr.kw].n}]` : '';
+  const actAttr = removable ? ` data-a="sellHR" data-i="${idx}"` : '';
+  const sellHint = removable ? ` (Click to sell for +${houseRuleRefund(k)}g)` : '';
+  return `<button type="button" class="hr-chip${compact ? ' sm' : ''}${removable ? ' can-sell' : ''}" style="--hrc:${R.col}"${actAttr} data-tn="${esc(hr.n)} (${R.n}${kwNote})" data-tip="${esc(hr.x + sellHint)}"><span class="hr-g">${hr.glyph || '✦'}</span><span class="hr-n">${esc(hr.n)}</span>${removable ? `<span class="hr-x">×</span>` : ''}</button>`;
+}
 
 function openModal(html, after, forced) {
   const m = $('modal'); m.querySelector('.mbody').innerHTML = html; m.hidden = false;
@@ -212,22 +235,31 @@ function confirmPacks() {
    ========================================================================== */
 const nodeTitle = (n, isWanderer) => {
   if (isWanderer) return `⚑ Wandering Miniboss: ${RUN.adv.wanderer.name}`;
-  if (n.kind === 'boss' && n.threat && ENC[n.threat]) return `Act Boss: ${ENC[n.threat].n}`;
-  if (n.kind === 'miniboss' && n.label) return `Optional Miniboss: ${n.label}`;
+  if (n.kind === 'boss' && n.threat && ENC[n.threat]) return `Act Boss: ${ENC[n.threat].n} (CR ${n.cr || '?'})`;
+  if (n.kind === 'miniboss' && n.label) return `Optional Miniboss: ${n.label} (CR ${n.cr || '?'})`;
   if (n.kind === 'multiclass' && n.mcClass) return `${n.label} (${n.mcClass} Multiclass)`;
+  if ((n.kind === 'fight' || n.kind === 'elite') && n.threat && ENC[n.threat]) {
+    return `${NODE[n.kind].n}: ${ENC[n.threat].n} (CR ${n.cr || '?'})`;
+  }
   return NODE[n.kind].n;
 };
 const nodeTip = (n, isWanderer) => {
-  if (isWanderer) return 'Pit Fiend Enforcer prowls this lane! Defeat it for +10g and a guaranteed Very Rare/Legendary relic, or route around it.';
+  if (isWanderer) return 'Pit Fiend Enforcer prowls this lane! Defeat it for +10g, a House Rule Draft, and a Very Rare/Legendary relic, or route around it.';
   const haz = n.hazard && HAZARDS[n.hazard] ? ` Hazard: ${HAZARDS[n.hazard].n} — ${HAZARDS[n.hazard].x}` : '';
-  if (n.kind === 'boss' && n.threat && ENC[n.threat]) return `${ENC[n.threat].note}`;
-  if (n.kind === 'miniboss') return `Optional Act Miniboss! Grants +6g and guaranteed Rare/Very Rare loot.${haz}`;
-  if (n.kind === 'multiclass' && n.mcClass) return `Single-Class Dip (${n.mcClass} · ${CLASS_KW[MULTICLASS[n.mcClass].kw].n}): ${MULTICLASS[n.mcClass].x} (or fallback +4g / +1 Attr).`;
+  const enc = n.threat && ENC[n.threat];
+  const pcr = calcPartyCR(RUN).cr;
+  const crInfo = n.cr ? ` [CR ${n.cr.toFixed(1)} · ${crVerdict(pcr, n.cr).label} · ${n.laneCount || 2} Lanes]` : '';
+  if (n.kind === 'boss' && enc) return `${enc.note}${crInfo}`;
+  if (n.kind === 'miniboss') return `Optional Act Miniboss! Grants +6g, a 1-of-3 House Rule Draft, and Rare/Very Rare loot.${crInfo}${haz}`;
+  if (n.kind === 'multiclass' && n.mcClass) return `Single-Class Dip (${n.mcClass} · ${CLASS_KW[MULTICLASS[n.mcClass].kw].n}): ${MULTICLASS[n.mcClass].x} Supercharges Class-Keyword House Rules!`;
+  if ((n.kind === 'fight' || n.kind === 'elite') && enc) {
+    return `${enc.note || (n.kind === 'elite' ? 'Dangerous Elite fight with bonus gold & Treasure!' : 'Standard combat encounter.')}${crInfo}${haz}`;
+  }
   return ({
-    fight: `Standard combat encounter from this Act’s pool.${haz}`,
-    elite: `Dangerous Elite fight! Grants bonus gold and a Treasure draft.${haz}`,
+    fight: `Standard combat encounter from this Act’s pool.${crInfo}${haz}`,
+    elite: `Dangerous Elite fight! Grants bonus gold and a Treasure draft.${crInfo}${haz}`,
     mystery: 'Mystery stop: Act choice event (55%), surprise ambush (20%), hidden treasure (15%), or wandering peddler (10%).',
-    curio: 'Curio Merchant: 3 Unique Class-Keyword items (5g) filtered to your party’s keywords (+1 reroll for 2g).',
+    curio: 'Curio Merchant: 3 Unique Class-Keyword items (7g) filtered to your party’s keywords (+1 reroll for 2g).',
     train: 'Promote a hero +1 Tier for free, or drill +1 permanent attribute.',
     quest: 'Opt-In Quest Board: accept a hero’s personal Quest, accelerate an active Quest (+35%), or claim +4g bounty.',
     rest: 'Retrain any Tier II+ hero’s Specialization freely, reinforce Piggy Bank (+4g), or forage (+4g).',
@@ -237,8 +269,8 @@ const nodeTip = (n, isWanderer) => {
 
 let _bossRead = null, _bossKey = '';
 function bossReadCached() {
-  const key = RUN.adv.act + '|' + (RUN.adv.actBoss || '') + '|' + RUN.team.map(h => h.key + h.tier + (h.path || '') + (h.boon || '') + (h.multiclass || '') + h.items.join('') + (h.questDone ? 'Q' : '') + JSON.stringify(h.train || {})).join(',');
-  if (key !== _bossKey || !_bossRead) { _bossKey = key; try { _bossRead = bossRead(RUN, 3); } catch (e) { _bossRead = null; } }
+  const key = RUN.adv.act + '|' + (RUN.adv.actBoss || '') + '|' + (RUN.houseRules || []).join(',') + '|' + RUN.campRank + '|' + RUN.team.map(h => h.key + h.tier + (h.path || '') + (h.boon || '') + (h.multiclass || '') + h.items.join('') + (h.questDone ? 'Q' : '') + JSON.stringify(h.train || {})).join(',');
+  if (key !== _bossKey || !_bossRead) { _bossKey = key; try { _bossRead = bossRead(RUN); } catch (e) { _bossRead = null; } }
   return _bossRead;
 }
 
@@ -253,7 +285,6 @@ function renderMap() {
   if (A.pos) visited.add(A.pos.r + ',' + A.pos.i);
 
   const lines = [];
-  // Draw ALL explicit non-crossing DAG edges
   for (let r = 0; r < M.length - 1; r++) {
     M[r].forEach(a => {
       (a.next || []).forEach(j => {
@@ -267,6 +298,7 @@ function renderMap() {
     });
   }
 
+  const pcr = calcPartyCR(RUN).cr;
   const BR = bossReadCached();
   const Wn = A.wanderer && A.wanderer.alive ? A.wanderer : null;
 
@@ -281,19 +313,25 @@ function renderMap() {
     else if (n.kind === 'multiclass' && n.label) lbl = n.label;
     if (isWand) { glyph = '⚑'; lbl = 'Pit Fiend!'; }
     const hazBadge = n.hazard && HAZARDS[n.hazard] ? `<span class="hazbadge" title="${esc(HAZARDS[n.hazard].n)}">${HAZARDS[n.hazard].g}</span>` : '';
-    const bossTag = n.kind === 'boss' && BR ? `<span class="read r-${BR.label.toLowerCase()}">${BR.label}</span>` : '';
-    return `<button class="mnode k-${n.kind}${can ? ' can' : ''}${been ? ' been' : ''}${isCurPos ? ' here' : ''}${isWand ? ' wanderer' : ''}${n.hazard ? ' has-haz' : ''}" style="left:${x(n)}px;top:${y(n.r)}px" ${can ? `data-a="node" data-r="${n.r}" data-i="${n.i}"` : 'disabled'} data-tn="${esc(nodeTitle(n, isWand))}" data-tip="${esc(nodeTip(n, isWand))}"><span class="g">${glyph}</span><span class="nl">${esc(lbl)}</span>${hazBadge}${bossTag}</button>`;
+    let crPill = '';
+    if (n.kind === 'boss' && BR) {
+      crPill = `<span class="read r-${BR.cls || BR.label.toLowerCase()}">CR ${BR.cr ? BR.cr.toFixed(0) : (n.cr || 1).toFixed(0)} · ${BR.label}</span>`;
+    } else if (n.cr && ['fight', 'elite', 'miniboss'].includes(n.kind) && !been) {
+      const v = crVerdict(pcr, n.cr);
+      crPill = `<span class="ncr r-${v.cls}">CR ${n.cr.toFixed(0)} · ${n.laneCount || 2}L</span>`;
+    }
+    return `<button class="mnode k-${n.kind}${can ? ' can' : ''}${been ? ' been' : ''}${isCurPos ? ' here' : ''}${isWand ? ' wanderer' : ''}${n.hazard ? ' has-haz' : ''}" style="left:${x(n)}px;top:${y(n.r)}px" ${can ? `data-a="node" data-r="${n.r}" data-i="${n.i}"` : 'disabled'} data-tn="${esc(nodeTitle(n, isWand))}" data-tip="${esc(nodeTip(n, isWand))}"><span class="g">${glyph}</span><span class="nl">${esc(lbl)}</span>${hazBadge}${crPill}</button>`;
   }).join('');
 
   $('mapBoard').innerHTML = `<svg class="maplines" viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}">${lines.join('')}</svg>${nodes}`;
   $('mapHead').innerHTML = `<div><div class="lbl">Act ${A.act} of ${ADV.acts} · ${esc(actMod.sub)}</div><h2>${esc(actMod.name)}</h2></div>
     <div class="maphead-center">
+      ${partyCrHtml(RUN)}
       ${goldHub(RUN.gold)}
-      <div class="hud-submeta"><span title="Piggy Bank (single free loss)">Piggy: ${piggyTxt()}</span><span>${RUN.stats.won} wins</span></div>
+      <div class="hud-submeta"><span title="Camp Rank">Rank ${rom[campRankOf(RUN)]}</span><span>Piggy: ${piggyTxt()}</span><span>${RUN.stats.won} wins</span></div>
     </div>
     <div class="maphead-act"><button class="btn primary" data-a="openCampShop">Open Camp Shop</button></div>`;
 
-  // Sidebar: only display accepted / completed quests (strict progressive disclosure!)
   const activeQs = RUN.team.filter(h => (h.questActive || h.questDone) && H[h.key].quest);
   const qsHtml = activeQs.length ? activeQs.map(h => {
     const q = H[h.key].quest;
@@ -304,11 +342,16 @@ function renderMap() {
   const bossKey = A.actBoss || M[ADV.bossRow][0].threat;
   const bossEnc = ENC[bossKey];
   const bossUnitKey = bossEnc && bossEnc.u && bossEnc.u[0] ? bossEnc.u[0][0] : 'nezznar';
+  const hrs = RUN.houseRules || [];
+  const hrSideHtml = hrs.length
+    ? `<div class="hr-side-list">${hrs.map((k, idx) => hrChipHtml(k, idx, { compact: true })).join('')}</div>`
+    : `<div class="small mute">No House Rules yet — buy them in the Camp Shop!</div>`;
 
   $('mapSide').innerHTML = `<div class="lbl">Your party (${RUN.team.length}/4)</div>
     <div class="mparty">${RUN.team.map(h => `<button data-a="card" data-u="${h.uid}" title="${esc(H[h.key].name)}">${iconSlot(h.key, 46)}<span>${rom[h.tier]}${h.multiclass ? '✧' : ''}${h.boon ? '★' : ''}</span></button>`).join('')}</div>
-    <div class="lbl">Act ${A.act} Boss</div>
-    <div class="bossrem-side"><img src="${portraitURL(bossUnitKey)}" alt=""><div><b>${esc(bossEnc ? bossEnc.n : bossKey)}</b>${BR ? ` <span class="read r-${BR.label.toLowerCase()}">${BR.label}</span>` : ''}<div class="small mute">${esc(bossEnc ? bossEnc.note : '')}</div></div></div>
+    <div class="lbl">House Rules (${hrs.length}/${HOUSE_RULE_MAX})</div>${hrSideHtml}
+    <div class="lbl" style="margin-top:8px">Act ${A.act} Boss</div>
+    <div class="bossrem-side"><img src="${portraitURL(bossUnitKey)}" alt=""><div><b>${esc(bossEnc ? bossEnc.n : bossKey)}</b>${BR ? ` <span class="read r-${BR.cls || BR.label.toLowerCase()}">CR ${BR.cr ? BR.cr.toFixed(0) : '?'} · ${BR.label}</span>` : ''}<div class="small mute">${esc(bossEnc ? bossEnc.note : '')}</div></div></div>
     <div class="lbl">Active Quests</div>${qsHtml}
     ${Wn ? `<div class="warnbox"><b>⚑ Wandering Miniboss</b><br><span class="small">Pit Fiend Enforcer is patrolling Row ${Wn.r + 1}!</span></div>` : ''}`;
 
@@ -484,24 +527,107 @@ function enterShop(alreadyOpen) {
   renderShop(); show('shop'); saveRun();
 }
 
+function renderCampRankBox(R) {
+  const box = $('campRankBox'); if (!box) return;
+  const rank = campRankOf(R);
+  const def = campRankDef(R);
+  const cost = campRankUpgradeCost(R);
+  const next = rank < 4 ? CAMP_RANKS[rank + 1] : null;
+  const intCap = goldInterestCap(R);
+  const disc = R.campDiscount || 0;
+  box.innerHTML = `<div class="crank-head">
+      <div><div class="lbl">Future Power</div><b>${esc(def.n)}</b></div>
+      <span class="crank-cap" title="Interest cap: +1g per ${ECON.interestStep}g held on win">Max +${intCap}g/win</span>
+    </div>
+    <div class="small mute crank-desc">${esc(next ? `Next: ${next.desc}` : def.desc)}</div>
+    ${next
+      ? `<button class="btn ${R.gold >= cost ? 'primary' : ''} sm crank-btn" data-a="upgradeCamp" ${R.gold < cost ? 'disabled' : ''}>Upgrade → Rank ${rom[rank + 1]} · ${gold(cost)}${disc ? ` <small>(-${disc}g win disc.)</small>` : ''}</button>`
+      : `<div class="crank-max">★ Max Camp Rank · Free Reroll/visit</div>`}`;
+}
+
+function hrOfferCard(k, i) {
+  if (!k || !HOUSE_RULES[k]) return `<div class="hr-card sold"><span class="small mute">Rule Slot · Sold</span></div>`;
+  const hr = HOUSE_RULES[k];
+  const R = HOUSE_RULE_RARITY[hr.r] || HOUSE_RULE_RARITY[0];
+  const p = houseRuleShopPrice(RUN, i);
+  const fit = houseRuleFit(k, RUN);
+  const can = RUN.gold >= p;
+  const full = (RUN.houseRules || []).length >= HOUSE_RULE_MAX;
+  const sale = RUN.shop && RUN.shop.hrSale === i;
+  return `<div class="hr-card${RUN.shop.frozen ? ' locked' : ''}${fit.match ? ' match' : ''}${can ? '' : ' poor'}" style="--hrc:${R.col}" data-a="buyHR" data-i="${i}" title="${esc(hr.n)}: ${esc(hr.x)}">
+    <div class="hr-top">
+      <span class="hr-glyph">${hr.glyph || '✦'}</span>
+      <div class="hr-head">
+        <div class="hr-name">${esc(hr.n)}</div>
+        <div class="hr-rar" style="color:${R.col}">${R.n}${hr.kw && CLASS_KW[hr.kw] ? ` · ${CLASS_KW[hr.kw].n}` : ''}</div>
+      </div>
+      <div class="hr-price">${sale ? `<span class="hr-sale">SALE</span>` : ''}<b>${gold(p)}</b></div>
+    </div>
+    <div class="hr-desc">${esc(hr.x)}</div>
+    <div class="hr-foot">${fit.match && fit.reason ? `<span class="hr-fit">★ ${esc(fit.reason)}</span>` : `<span class="small mute">${full ? 'Swap 1 of 6' : 'Party-wide passive'}</span>`}</div>
+  </div>`;
+}
+
+function hrSwapModal(shopIdx, draftKey) {
+  const newKey = draftKey || (RUN.shop && RUN.shop.houseRules && RUN.shop.houseRules[shopIdx]);
+  const newHr = HOUSE_RULES[newKey];
+  if (!newHr) return;
+  const act = draftKey ? 'swapPickHRDraft' : 'swapBuyHR';
+  openModal(`<div class="mpanel"><div class="lbl">House Rules Full (${HOUSE_RULE_MAX}/${HOUSE_RULE_MAX})</div>
+    <h2>Replace which Rule with ${esc(newHr.n)}?</h2>
+    <div class="hr-preview"><b>${newHr.glyph || '✦'} ${esc(newHr.n)}</b> — ${esc(newHr.x)}</div>
+    <p class="small mute">Replaced House Rule refunds 50% of its base price.</p>
+    <div class="evquests">${RUN.houseRules.map((k, idx) => {
+      const hr = HOUSE_RULES[k];
+      const R = HOUSE_RULE_RARITY[hr.r] || HOUSE_RULE_RARITY[0];
+      return `<button class="evquest" data-a="${act}" data-i="${idx}" data-p="${draftKey ? esc(draftKey) : shopIdx}"><span><b style="color:${R.col}">${hr.glyph || '✦'} ${esc(hr.n)}</b> <small class="mute">(+${houseRuleRefund(k)}g refund)</small><br><span class="small">${esc(hr.x)}</span></span></button>`;
+    }).join('')}</div>
+    <div class="row" style="justify-content:center;margin-top:8px"><button class="btn" data-a="closeModal">Cancel</button></div></div>`);
+}
+
+function hrDraftModal() {
+  const draft = RUN && RUN.adv && RUN.adv.hrDraft;
+  if (!draft || !draft.length) return;
+  const full = (RUN.houseRules || []).length >= HOUSE_RULE_MAX;
+  openModal(`<div class="mpanel"><div class="lbl">★ Boss Spoils · House Rule Draft (1 of 3)</div>
+    <h2>Adopt a New House Rule</h2>
+    <p class="small mute">${full ? `All ${HOUSE_RULE_MAX} slots are filled — choosing one will let you replace an existing rule.` : `Pick one permanent party-wide House Rule for free (${RUN.houseRules.length}/${HOUSE_RULE_MAX} slots used).`}</p>
+    <div class="boonopts">${draft.map(k => {
+      const hr = HOUSE_RULES[k];
+      if (!hr) return '';
+      const R = HOUSE_RULE_RARITY[hr.r] || HOUSE_RULE_RARITY[0];
+      const fit = houseRuleFit(k, RUN);
+      return `<button class="boonopt hr-draft-opt" style="border-color:${R.col}" data-a="pickHRDraft" data-p="${esc(k)}">
+        <b style="color:${R.col}">${hr.glyph || '✦'} ${esc(hr.n)} <small>(${R.n})</small></b>
+        <span>${esc(hr.x)}</span>
+        ${fit.match && fit.reason ? `<span class="hr-fit">★ ${esc(fit.reason)}</span>` : ''}
+      </button>`;
+    }).join('')}</div>
+    <div class="row" style="justify-content:center"><button class="btn" data-a="skipHRDraft">Skip (+4g instead)</button></div></div>`, null, true);
+}
+
 function renderShop() {
   const R = RUN;
   if (SHOP_SEL_ITEM != null && !R.stash[SHOP_SEL_ITEM]) SHOP_SEL_ITEM = null;
   const actMod = currentActModule(R);
   const intVal = goldInterest(R);
-  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div>${goldHub(R.gold)}<div class="stat" title="Interest: +1g per ${ECON.interestStep}g held on combat win (max +${ECON.interestCap}g)"><b>+${intVal}g</b><span>Interest</span></div><div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div>`;
+  const intCap = goldInterestCap(R);
+  $('shopStats').innerHTML = `<div class="stat"><b>${actOf(R)}</b><span>Act</span></div><div class="stat"><b>${R.stats.won}</b><span>Wins</span></div>${partyCrHtml(R)}${goldHub(R.gold)}<div class="stat" title="Interest: +1g per ${ECON.interestStep}g held on combat win (max +${intCap}g at Camp Rank ${rom[campRankOf(R)]})"><b>+${intVal}g</b><span>Interest /${intCap}</span></div><div class="stat"><b>${piggyTxt()}</b><span>Piggy Bank</span></div>`;
 
-  // v0.23 Camp Shop Flow Flip: Act Boss Reminder banner (NO combat spoiler!) — except Piggy Bank Retry!
+  // Act Boss Reminder banner (with CR verdict!) — or Piggy Bank Retry!
   if (R.adv && R.adv.retryPending && R.next) {
     const N = R.next;
+    const pcr = calcPartyCR(R).cr;
+    const v = N.cr ? crVerdict(pcr, N.cr) : null;
     const foesHtml = N.foes.map(k => `<img src="${portraitURL(k)}" class="${E[k].elite || E[k].boss ? 'el' : ''}" alt="${esc(E[k].name)}" title="${esc(E[k].name)}">`).join('');
-    $('nextFight').innerHTML = `<div><div class="lbl">Piggy Bank Retry (${Math.round((1 - Math.pow(CURVE.retry, R.retries || 1)) * 100)}% softer)</div><h3>Retry: ${esc(N.n)}${N.boss ? '<span class="bossb">BOSS</span>' : ''}</h3><div class="q">${esc(N.q)}</div><div class="foes">${foesHtml}</div></div>
+    $('nextFight').innerHTML = `<div><div class="lbl">Piggy Bank Retry (${Math.round((1 - Math.pow(CURVE.retry, R.retries || 1)) * 100)}% softer)</div><h3>Retry: ${esc(N.n)}${N.boss ? '<span class="bossb">BOSS</span>' : ''}${v ? ` <span class="read r-${v.cls}">CR ${N.cr.toFixed(1)} · ${v.label}</span>` : ''}</h3><div class="q">${esc(N.q)}</div><div class="foes">${foesHtml}</div></div>
       <div style="display:grid;gap:6px;justify-items:end"><button class="btn primary big" data-a="tobattle">Retry Battle →</button></div>`;
   } else {
     const bossKey = (R.adv && R.adv.actBoss) || 'nezznar';
     const bossEnc = ENC[bossKey] || ENC.nezznar;
     const bossUnit = bossEnc.u && bossEnc.u[0] ? bossEnc.u[0][0] : 'nezznar';
-    $('nextFight').innerHTML = `<div class="row" style="gap:14px;align-items:center"><img src="${portraitURL(bossUnit)}" class="el" style="width:52px;height:52px;border-radius:50%;border:2px solid #d0a02a" alt=""><div><div class="lbl">Camp Shop · Act ${actOf(R)}: ${esc(actMod.name)}</div><h3>Act Boss Reminder: ${esc(bossEnc.n)}</h3><div class="q">${esc(bossEnc.note)}</div></div></div>
+    const BR = bossReadCached();
+    $('nextFight').innerHTML = `<div class="row" style="gap:14px;align-items:center"><img src="${portraitURL(bossUnit)}" class="el" style="width:52px;height:52px;border-radius:50%;border:2px solid #d0a02a" alt=""><div><div class="lbl">Camp Shop · Act ${actOf(R)}: ${esc(actMod.name)}</div><h3>Act Boss Reminder: ${esc(bossEnc.n)}${BR ? ` <span class="read r-${BR.cls || BR.label.toLowerCase()}">CR ${BR.cr ? BR.cr.toFixed(0) : '?'} · ${BR.label}</span>` : ''}</h3><div class="q">${esc(bossEnc.note)}</div></div></div>
       <div style="display:grid;gap:6px;justify-items:end"><button class="btn primary big" data-a="toMap">Choose Next Path →</button></div>`;
   }
 
@@ -516,21 +642,35 @@ function renderShop() {
   const partyTagSet = new Set(Object.keys(tc));
   const partyKwSet = new Set(Object.keys(kc));
 
+  // Active House Rules 6-slot Tray
+  const hrs = R.houseRules || [];
+  if ($('hrCount')) $('hrCount').textContent = `${hrs.length} of ${HOUSE_RULE_MAX} slots (click rule to sell)`;
+  if ($('hrTray')) {
+    $('hrTray').innerHTML = hrs.map((k, idx) => hrChipHtml(k, idx, { removable: true })).join('')
+      + Array.from({ length: Math.max(0, HOUSE_RULE_MAX - hrs.length) }, () => `<span class="hr-slot-empty">Empty Rule Slot</span>`).join('');
+  }
+
   $('boardCount').textContent = `${on.length} of ${ECON.board}`;
   $('slots').innerHTML = on.map(h => partyChip(h, selItemKey)).join('') + Array.from({ length: Math.max(0, ECON.board - on.length) }, () => `<div class="pchip empty">Empty</div>`).join('');
   const partyKwHtml = Object.entries(kc).sort((a, b) => b[1] - a[1]).map(([kwk]) => classKwPill(kwk, false)).join('');
   const partyTagHtml = Object.entries(tc).sort((a, b) => b[1] - a[1]).map(([t, n]) => tagPill(t, n)).join('');
   $('partyTags').innerHTML = partyKwHtml + partyTagHtml;
 
+  renderCampRankBox(R);
+
   $('stashCount').textContent = `${R.stash.length} of ${ECON.stash}`;
   $('stash').innerHTML = R.stash.length
-    ? R.stash.map((k, i) => `<span class="sitem${SHOP_SEL_ITEM === i ? ' sel' : ''}" draggable="true" data-stash-i="${i}" data-a="stashSelect" data-i="${i}" title="${esc(ITEMS[k].n)}: ${esc(itemText(k))}">${itemIcon(k, 38)}</span>`).join('')
+    ? R.stash.map((k, i) => {
+      const stk = (ITEMS[k] && ITEMS[k].scaling && R.itemStacks && R.itemStacks[k]) ? ` (+${R.itemStacks[k]} stacks)` : '';
+      return `<span class="sitem${SHOP_SEL_ITEM === i ? ' sel' : ''}${ITEMS[k] && ITEMS[k].scaling ? ' scaling' : ''}" draggable="true" data-stash-i="${i}" data-a="stashSelect" data-i="${i}" title="${esc(ITEMS[k].n)}${stk}: ${esc(itemText(k))}">${itemIcon(k, 38)}</span>`;
+    }).join('')
     : `<span class="small mute">Empty</span>`;
 
   const actBox = $('shopStashAct');
   if (actBox) {
     if (selItemKey) {
-      actBox.innerHTML = `<div class="stashact"><div><b>${esc(ITEMS[selItemKey].n)}</b><div class="small mute">${esc(itemText(selItemKey))}</div></div>
+      const stk = (ITEMS[selItemKey] && ITEMS[selItemKey].scaling && R.itemStacks && R.itemStacks[selItemKey]) ? ` · 🌱 +${R.itemStacks[selItemKey]} stacks` : '';
+      actBox.innerHTML = `<div class="stashact"><div><b>${esc(ITEMS[selItemKey].n)}</b><span class="small" style="color:#2d6a3a">${stk}</span><div class="small mute">${esc(itemText(selItemKey))}</div></div>
         <div class="row" style="gap:6px;margin-top:4px"><span class="small" style="color:#2d6a3a;font-weight:700">Click a hero below to equip</span>
         <button class="btn sm" data-a="sellItem" data-i="${SHOP_SEL_ITEM}">Sell ${itemRefund(R, selItemKey)}g</button>
         <button class="btn sm" data-a="stashClear">Cancel</button></div></div>`;
@@ -540,17 +680,27 @@ function renderShop() {
   }
 
   $('offers').innerHTML = R.shop.heroes.map((k, i) => heroOfferCard(k, i, partyTagSet, partyKwSet)).join('');
+  if ($('hrOffers')) {
+    const hrList = R.shop.houseRules || [];
+    $('hrOffers').innerHTML = hrList.map((k, i) => hrOfferCard(k, i)).join('');
+    if ($('hrShopSub')) {
+      const maxRN = HOUSE_RULE_RARITY[campRankDef(R).hrMaxR].n;
+      $('hrShopSub').textContent = `Camp Rank ${rom[campRankOf(R)]} · up to ${maxRN}`;
+    }
+  }
   $('itemOffers').innerHTML = R.shop.items.map((k, i) => itemOfferCard(k, i, partyKwSet)).join('');
 
   const sp = $('shopPurse');
   if (sp) sp.innerHTML = `<span class="coin"></span><b>${R.gold}</b><span class="sp-lbl">gold</span>`;
   const rp = rerollPrice(R);
-  $('rerollBtn').innerHTML = `Reroll · ${gold(rp)}`; $('rerollBtn').disabled = R.gold < rp;
+  $('rerollBtn').innerHTML = rp === 0 ? `Reroll · <b>FREE!</b>${R.freeRerolls > 1 ? ` (${R.freeRerolls})` : ''}` : `Reroll · ${gold(rp)}`;
+  $('rerollBtn').disabled = R.gold < rp;
   $('freezeBtn').textContent = R.shop.frozen ? '❄ Shop Frozen' : 'Freeze Shop';
   $('freezeBtn').classList.toggle('primary', !!R.shop.frozen);
-  const ho = heroTierOdds(encounterCount(R)).map(x => Math.round(x * 100));
-  const io = itemRarityOdds(encounterCount(R)).map(x => Math.round(x * 100));
-  $('shopNote').innerHTML = `Heroes: T1 ${ho[0]}% · T2 ${ho[1]}% · T3 ${ho[2]}% &nbsp;|&nbsp; Items: C ${io[0]}% · U ${io[1]}% · R ${io[2]}% · VR ${io[3]}% · L ${io[4]}%`;
+  const rank = campRankOf(R);
+  const ho = heroTierOdds(encounterCount(R), rank).map(x => Math.round(x * 100));
+  const io = itemRarityOdds(encounterCount(R), rank).map(x => Math.round(x * 100));
+  $('shopNote').innerHTML = `Rank ${rom[rank]} Odds — Heroes: T1 ${ho[0]}% · T2 ${ho[1]}% · T3 ${ho[2]}% &nbsp;|&nbsp; Items: C ${io[0]}% · U ${io[1]}% · R ${io[2]}% · VR ${io[3]}% · L ${io[4]}%`;
   paintCanvases($('shop')); paintTokens($('shop'));
   document.querySelectorAll('#offers canvas[data-osplash]').forEach(c => drawSplash(c, c.dataset.osplash, 240, 200));
   checkPendingPath();
@@ -590,7 +740,7 @@ function partyChip(h, selItemKey) {
     if (fav) favBadge = `<span class="favpill">★ Synergy</span>`;
   }
   const itemsRow = `<div class="pitems">${Array.from({ length: maxS }, (_, j) => h.items[j]
-    ? `<span class="pit" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
+    ? `<span class="pit${ITEMS[h.items[j]] && ITEMS[h.items[j]].scaling ? ' scaling' : ''}" data-a="shopUnequip" data-u="${h.uid}" data-i="${j}" title="${esc(ITEMS[h.items[j]].n)}${(ITEMS[h.items[j]] && ITEMS[h.items[j]].scaling && RUN.itemStacks && RUN.itemStacks[h.items[j]]) ? ` (+${RUN.itemStacks[h.items[j]]} stacks)` : ''}: click to unequip">${itemIcon(h.items[j], 22)}</span>`
     : `<span class="pit empty" title="Empty item slot"></span>`).join('')}</div>`;
   const questRow = showQuest ? `<div class="chipq${h.questDone ? ' done' : ''}" title="${esc(q.rewardName)}: ${esc(q.rewardDesc)}"><div class="cqbar"><i style="width:${qPct}%"></i></div><span>${h.questDone ? '★ Quest Done' : `${Math.round(h.questProg || 0)}/${q.goal}`}</span></div>` : '';
   const badges = `${h.multiclass ? `<span class="mcpill" title="Multiclass: ${esc(h.multiclass)}">✧ ${esc(h.multiclass)}</span>` : ''}${h.boon ? `<span class="boonpill" title="${esc(EPIC_BOONS[h.boon].n)}">★ Boon</span>` : ''}`;
@@ -608,7 +758,8 @@ function itemOfferCard(k, i, partyKwSet) {
   const it = ITEMS[k], R = RARITY[it.r], p = itemPrice(RUN, i);
   const kwMatches = itemKwHooks(k).filter(kwk => partyKwSet && partyKwSet.has(kwk)).map(kwk => CLASS_KW[kwk].n);
   const favLine = kwMatches.length ? `<div class="iofav kw">★ Synergy: ${esc(kwMatches.slice(0, 2).join(', '))}</div>` : '';
-  return `<div class="io18${RUN.shop.frozen ? ' locked' : ''}${kwMatches.length ? ' hasfav' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div><div class="small mute">${esc(itemStatsText(it))}</div>${favLine}</div></div>`;
+  const scaleTag = it.scaling ? `<span class="scalepill">🌱 Scales</span>` : '';
+  return `<div class="io18${RUN.shop.frozen ? ' locked' : ''}${kwMatches.length ? ' hasfav' : ''}${it.scaling ? ' is-scale' : ''}" data-a="buyItem" data-i="${i}" title="${esc(it.n)}: ${esc(itemText(k))}">${itemIcon(k, 36)}<div><div class="inm">${esc(it.n)} ${scaleTag}</div><div class="rar" style="color:${R.col}">${R.n} · ${gold(p)}</div><div class="small mute">${esc(itemStatsText(it))}</div>${favLine}</div></div>`;
 }
 
 function heroCardHtml(h, extra) {
@@ -677,27 +828,97 @@ function defaultInspect() {
   return hs.length ? { kind: 'hero', key: hs[0].key } : null;
 }
 
+function renderCombatHouseRules() {
+  const el = $('cHrBar'); if (!el || !RUN) return;
+  const hrs = RUN.houseRules || [];
+  if (!hrs.length) { el.innerHTML = ''; el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<div class="c-hr-lbl">House Rules (${hrs.length}/${HOUSE_RULE_MAX})</div><div class="c-hr-list">${hrs.map((k, idx) => hrChipHtml(k, idx, { compact: true })).join('')}</div>`;
+}
+
+function renderLaneHeaders() {
+  const el = $('laneHeaders');
+  if (!el || !RUN || !ENC.run || $('combat').hidden) return;
+  const lanes = (ENC.run.lanes && ENC.run.lanes.length) ? ENC.run.lanes : LANES;
+  if (!lanes || lanes.length <= 1) { el.innerHTML = ''; el.hidden = true; return; }
+  el.hidden = false;
+
+  // Align overlay directly above the canvas's rendered columns
+  const wrap = $('boardWrap');
+  if (wrap && canvas && view.w) {
+    const cr = canvas.getBoundingClientRect();
+    const wr = wrap.getBoundingClientRect();
+    el.style.left = (cr.left - wr.left) + 'px';
+    el.style.top = Math.max(4, (cr.top - wr.top) - 52) + 'px';
+    el.style.width = view.w + 'px';
+  }
+
+  if (!B) {
+    const evals = evalLanes(RUN, ENC.run);
+    el.innerHTML = evals.map(ev => {
+      const lx = view.pad + ev.c0 * view.T;
+      const lw = (ev.c1 - ev.c0 + 1) * view.T;
+      const def = ev.def || LANE_OBJ.breach;
+      const flagsHtml = (ev.flags || []).slice(0, 2).map(f => `<span class="lflag ${f.kind}">${esc(f.txt)}</span>`).join('');
+      const tip = `${ev.n} — ${def.n}\nWin: ${def.winTxt}\nFail: ${def.failTxt}`;
+      return `<div class="lane-hdr r-${ev.verdict.cls}" style="left:${lx}px;width:${lw}px;--lc:${def.col}" title="${esc(tip)}">
+        <div class="lh-top"><span class="lh-name">${def.g} ${esc(ev.n)}</span><span class="lh-cr">${ev.heroCR.toFixed(0)} vs ${ev.enemyCR.toFixed(0)}</span></div>
+        <div class="lh-sub"><span>${esc(def.n)}${def.maxHeroes === 1 ? ' · 1 Max' : def.timer ? ` · ${def.timer}s` : ''}</span><b class="lh-v">${esc(ev.verdict.label)}</b></div>
+        ${flagsHtml ? `<div class="lh-flags">${flagsHtml}</div>` : ''}
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // Live combat lane status & countdowns
+  el.innerHTML = (B.lanes || []).map(L => {
+    const lx = view.pad + L.c0 * view.T;
+    const lw = (L.c1 - L.c0 + 1) * view.T;
+    const def = (typeof LANE_OBJ !== 'undefined' && LANE_OBJ[L.obj]) || LANE_OBJ.breach;
+    let stHtml = '';
+    let stCls = 'active';
+    if (L.won) { stHtml = `✓ WON`; stCls = 'won'; }
+    else if (L.failed) { stHtml = `✗ FAILED`; stCls = 'failed'; }
+    else if (def.timer) {
+      const left = Math.max(0, def.timer - B.time);
+      stHtml = `${def.g} ${left.toFixed(1)}s`;
+      if (left <= 4) stCls = 'urgent';
+    } else {
+      const rem = B.units.filter(u => u.alive && u.side === 'E' && u.lane === L.idx).length;
+      stHtml = `${rem} foe${rem === 1 ? '' : 's'}`;
+    }
+    return `<div class="lane-hdr live st-${stCls}" style="left:${lx}px;width:${lw}px;--lc:${def.col}">
+      <div class="lh-top"><span class="lh-name">${def.g} ${esc(L.n)}</span><b class="lh-st">${stHtml}</b></div>
+    </div>`;
+  }).join('');
+}
+
 function goPlacement() {
   clearTimeout(_resTimer); _resTimer = 0;
   B = null; running = false; paused = false; FX = []; resultShown = false; SEL_ITEM = null; BATTLE_FEED = []; _inspSig = '';
   if (typeof HOVER_HERO !== 'undefined') HOVER_HERO = null;
   if (typeof HOVER_ENEMY !== 'undefined') HOVER_ENEMY = null;
+  loadMap(ENC.run.map, ENC.run.lanes);
   autoPlace(RUN); S.party = boardHeroes(RUN); S.sel = null; S.selE = null;
-  loadMap(ENC.run.map); mapDirty = true; _setupKey = '';
+  mapDirty = true; _setupKey = ''; _thrKey = '';
   INSPECT = defaultInspect();
-  $('result').hidden = true; show('combat'); renderCombatBar(); renderStrip(); renderInspector(); renderIntel();
-  requestAnimationFrame(() => resize());
+  $('result').hidden = true; show('combat'); renderCombatBar(); renderStrip(); renderCombatHouseRules(); renderInspector(); renderIntel();
+  requestAnimationFrame(() => { resize(); renderLaneHeaders(); });
   const hazTxt = RUN.next && RUN.next.hazard && HAZARDS[RUN.next.hazard] ? ` Hazard: ${HAZARDS[RUN.next.hazard].n} (${HAZARDS[RUN.next.hazard].x})` : '';
-  $('hint').hidden = false; $('hint').textContent = 'Drag heroes onto gold deploy squares, then begin.' + hazTxt;
+  $('hint').hidden = false; $('hint').textContent = 'Drag heroes into lanes to contest objectives & match CR, then begin.' + hazTxt;
   saveRun();
 }
 
 function renderCombatBar() {
   const N = RUN.next;
+  const pcr = calcPartyCR(RUN).cr;
+  const ecr = (ENC.run && ENC.run.cr) || (N && N.cr) || 0;
+  const v = ecr ? crVerdict(pcr, ecr) : null;
   const hazChip = N && N.hazard && HAZARDS[N.hazard] ? ` <span class="hazchip">${HAZARDS[N.hazard].g} ${esc(HAZARDS[N.hazard].n)}</span>` : '';
-  $('cTitle').innerHTML = `${advLabel()} · ${esc(N.n)}${N.boss ? ' <span class="bossb">BOSS</span>' : ''}${hazChip}`;
+  const crChip = v ? ` <span class="read r-${v.cls}" title="Party CR ${pcr.toFixed(1)} vs Encounter CR ${ecr.toFixed(1)}">CR ${ecr.toFixed(1)} · ${v.label}</span>` : '';
+  $('cTitle').innerHTML = `${advLabel()} · ${esc(N.n)}${N.boss ? ' <span class="bossb">BOSS</span>' : ''}${crChip}${hazChip}`;
   $('cSub').textContent = (ENC.run && ENC.run.note) || N.q || '';
-  $('cStats').innerHTML = `${goldHub(RUN.gold, { dark: true, extra: '<span class="gh-loot" id="cGold" hidden></span>' })}<span class="cmeta"><span title="Piggy Bank">Piggy ${piggyTxt()}</span><span class="csep">·</span><span>Wins ${RUN.stats.won}</span></span>`;
+  $('cStats').innerHTML = `${partyCrHtml(RUN, true)}${goldHub(RUN.gold, { dark: true, extra: '<span class="gh-loot" id="cGold" hidden></span>' })}<span class="cmeta"><span title="Piggy Bank">Piggy ${piggyTxt()}</span><span class="csep">·</span><span>Wins ${RUN.stats.won}</span></span>`;
   const sp = [0.5, 1, 2, 4].map(v => `<button class="btn${S.speed === v ? ' on' : ''}" data-a="spd" data-v="${v}">${v}×</button>`).join('');
   $('cCtl').innerHTML = B
     ? `<span class="ctimer" id="cTimer">⏱ ${B.time.toFixed(1)}s</span>${sp}<button class="btn" data-a="pause">${paused ? 'Resume' : 'Pause'}</button><button class="btn" data-a="sound">${S.sound ? 'Sound' : 'Muted'}</button><button class="btn" data-a="btext">${BTXT === 'all' ? 'All txt' : 'Key txt'}</button>`
@@ -709,7 +930,7 @@ function startBattle() {
   if ($('pbench')) $('pbench').hidden = true;
   if (typeof HOVER_HERO !== 'undefined') HOVER_HERO = null;
   if (typeof HOVER_ENEMY !== 'undefined') HOVER_ENEMY = null;
-  B = newBattle('run', partyCfg(RUN), 1);
+  B = newBattle('run', partyCfg(RUN), 1, battleOpts(RUN));
   running = true; paused = false; resultShown = false; FX = []; simAcc = 0; BATTLE_FEED = []; _inspSig = '';
   // Carry over inspected hero, or map inspected setup enemy to live enemy unit
   if (!INSPECT) INSPECT = defaultInspect();
@@ -718,8 +939,8 @@ function startBattle() {
     const match = (INSPECT.idx != null && liveE[INSPECT.idx]) || liveE.sort((a, b) => (b.boss ? 2 : b.elite ? 1 : 0) - (a.boss ? 2 : a.elite ? 1 : 0))[0];
     INSPECT = match ? { kind: 'enemy', uid: match.id } : defaultInspect();
   }
-  $('hint').hidden = true; renderCombatBar(); renderStrip(); renderInspector(); renderIntel();
-  requestAnimationFrame(() => resize());
+  $('hint').hidden = true; renderCombatBar(); renderStrip(); renderCombatHouseRules(); renderInspector(); renderIntel();
+  requestAnimationFrame(() => { resize(); renderLaneHeaders(); });
 }
 
 function renderStrip() {
@@ -878,6 +1099,8 @@ function pushBattleFeed(e, u) {
     item = { t, col: '#ffd76a', txt: e.lvl === 1 ? 'Overtime begins!' : `Overtime ×${e.lvl}` };
   } else if (e.k === 'boom') {
     item = { t, col: '#ffb04a', txt: 'Powder barrel detonated!' };
+  } else if (e.k === 'lane') {
+    item = { t, col: e.col || '#ffd76a', txt: e.txt || 'Lane objective resolved' };
   }
   if (!item) return;
   BATTLE_FEED.unshift(item);
@@ -926,6 +1149,7 @@ function updateStrip() {
     el.classList.toggle('dead', !u.alive);
   });
   updateInspectorLive();
+  if (B) renderLaneHeaders();
 }
 setInterval(updateStrip, 120);
 
@@ -1007,9 +1231,56 @@ function showResult() {
     return `<div class="small mute" style="text-align:center">${esc(H[o.h.key].name)} Quest: ${Math.round(o.prog)}/${o.goal} (${Math.round(o.progress * 100)}%)</div>`;
   }).join('');
 
+  // v0.24 Post-Combat Autopsy: Lane Results, House Rules Engine, AC/SR Mitigation, d20 Luck Audit!
+  const lanePills = (B.lanes || []).length > 1 ? `<div class="aut-row"><span class="aut-lbl">Lanes</span><div class="aut-pills">${(B.lanes || []).map(L => {
+    const def = (typeof LANE_OBJ !== 'undefined' && LANE_OBJ[L.obj]) || LANE_OBJ.breach;
+    const cls = L.won ? 'won' : L.failed ? 'fail' : 'neut';
+    const st = L.won ? '✓ Won' : L.failed ? '✗ Failed' : '—';
+    return `<span class="aut-pill ${cls}" title="${esc(def.winTxt)}">${def.g} ${esc(L.n)}: <b>${st}</b></span>`;
+  }).join('')}</div></div>` : '';
+
+  const hrEntries = Object.entries(B.hrStats || {}).filter(([, v]) => v && (v.procs || v.val));
+  const hrPills = hrEntries.length ? `<div class="aut-row"><span class="aut-lbl">Rules</span><div class="aut-pills">${hrEntries.slice(0, 5).map(([k, v]) => {
+    const hr = HOUSE_RULES[k];
+    if (!hr) return '';
+    const txt = v.val ? `${Math.round(v.val)}` : `×${v.procs}`;
+    return `<span class="aut-pill rule" title="${esc(hr.x)}">${hr.glyph || '✦'} ${esc(hr.n)}: <b>${txt}</b></span>`;
+  }).join('')}</div></div>` : '';
+
+  const hrNoteHtml = (res.hrNotes || []).map(n => `<div class="qdone scale-note">${esc(n)}</div>`).join('');
+
+  // Mitigation diagnostic
+  let mitHtml = '';
+  const totDmg = P.reduce((a, u) => a + (u.stats.dmg || 0), 0);
+  const ml = B.mitLost || { phys: 0, magic: 0 };
+  if (totDmg > 20) {
+    const pLoss = ml.phys || 0, mLoss = ml.magic || 0;
+    const pShare = pLoss / Math.max(1, totDmg + pLoss + mLoss);
+    const mShare = mLoss / Math.max(1, totDmg + pLoss + mLoss);
+    if (pShare >= 0.30) mitHtml = `<div class="aut-tip warn">🛡 Enemy AC blocked <b>${Math.round(pLoss)}</b> physical dmg (${Math.round(pShare * 100)}%) — add Armor Pen, Magic, or Radiant!</div>`;
+    else if (mShare >= 0.30) mitHtml = `<div class="aut-tip warn">✦ Enemy SR blocked <b>${Math.round(mLoss)}</b> magic dmg (${Math.round(mShare * 100)}%) — add Spell Pen, Physical, or Radiant!</div>`;
+  }
+
+  // d20 Luck Audit
+  let luckHtml = '';
+  const rolls = (B.d20Log || []).filter(r => r.side === 'P');
+  if (rolls.length >= 2) {
+    const avg = rolls.reduce((a, r) => a + r.nat, 0) / rolls.length;
+    const highs = rolls.filter(r => r.band >= 2).length;
+    const n20 = rolls.filter(r => r.nat === 20).length;
+    const fumb = rolls.filter(r => r.band === -1).length;
+    const luckCls = avg >= 12.2 ? 'hot' : avg <= 8.8 ? 'cold' : 'fair';
+    const luckLbl = avg >= 12.2 ? 'Hot Dice' : avg <= 8.8 ? 'Cold Dice' : 'Fair Dice';
+    luckHtml = `<div class="aut-luck ${luckCls}">🎲 <b>d20 Audit (${luckLbl}):</b> ${rolls.length} rolls · avg <b>${avg.toFixed(1)}</b> (exp 10.5) · ${highs} High${n20 ? ` · <b>${n20} Nat 20!</b>` : ''}${fumb ? ` · ${fumb} Fumble` : ''}</div>`;
+  }
+
+  const autopsyHtml = (lanePills || hrPills || mitHtml || luckHtml)
+    ? `<div class="autopsy">${lanePills}${hrPills}${mitHtml}${luckHtml}</div>` : '';
+
   $('result').innerHTML = `<div class="rbox"><h2 class="${won ? 'win' : 'loss'}">${won ? (res.finished ? 'Adventure Conquered!' : res.actDone ? 'Act Boss Defeated!' : 'Fight Won') : B.timeout ? 'Out of Time' : 'Defeat'}</h2>
-    <div class="reward">${msg}</div>${madeTxt}${qTxt}
+    <div class="reward">${msg}</div>${madeTxt}${qTxt}${hrNoteHtml}
     <p class="small mute" style="text-align:center">${advLabel()}: ${esc(RUN.next.n)}, in ${B.time.toFixed(1)}s.</p>
+    ${autopsyHtml}
     <table class="rt"><tr><th>Hero</th><th>Damage</th><th>Heal / Ward</th><th>Taken</th></tr>${rows}</table>
     <div class="row" style="justify-content:center"><button class="btn primary big" data-a="afterFight">${RUN.over ? 'See run summary' : res.actDone ? `Advance to Act ${RUN.adv.act + 1}` : !won ? 'To Camp Shop & Retry' : 'To Camp Shop →'}</button></div></div>`;
   $('result').hidden = false; renderCombatBar();
@@ -1019,10 +1290,11 @@ function showResult() {
 function afterFight() {
   clearTimeout(_resTimer); _resTimer = 0;
   if (!RUN) return;
-  if (!RUN.over && !RUN.adv.loot && !RUN._res) return;
+  if (!RUN.over && !RUN.adv.loot && !RUN.adv.hrDraft && !RUN._res) return;
   B = null; $('result').hidden = true;
   if (RUN.over) { RUN._res = null; renderOver(); return; }
   if (RUN.adv.loot) { eventModal('loot'); return; }
+  if (RUN.adv.hrDraft && RUN.adv.hrDraft.length) { hrDraftModal(); return; }
   const to = afterNodeFight(RUN, RUN._res || {});
   RUN._res = null;
   _bossKey = ''; _bossRead = null;
@@ -1059,12 +1331,12 @@ function renderOver() {
   $('overBox').innerHTML = `<div class="lbl">${R.victory ? 'Victory' : 'Run Ended'}</div><h1>${R.victory ? 'All Three Acts Conquered!' : 'Fallen in the Adventure'}</h1>
     <div><div class="bigscore">${R.stats.won}</div><div class="mute">fights won</div></div>
     <div class="overteam">${R.team.map(h => `<div>${iconSlot(h.key, 64)}<b>${esc(H[h.key].name)}</b><span class="mute">Tier ${rom[h.tier]}${h.path ? ' · ' + esc(H[h.key].paths.find(p => p.k === h.path).n) : ''}${h.multiclass ? ' · ' + esc(h.multiclass) : ''}${h.boon ? ' · ★' : ''}</span></div>`).join('')}</div>
-    <p class="small mute">Gold earned ${R.stats.gold} · spent ${R.stats.spent} · rerolls ${R.stats.rerolls}</p>
+    <p class="small mute">Final Party CR ${calcPartyCR(R).cr.toFixed(1)} · Camp Rank ${rom[campRankOf(R)]} · ${(R.houseRules || []).length} House Rules · Gold earned ${R.stats.gold}</p>
     <div class="row" style="justify-content:center"><button class="btn primary big" data-a="newrun">New run</button><button class="btn" data-a="title">Title</button></div>`;
   paintTokens($('overBox')); show('over');
 }
 
-function changelogModal() { openModal(`<div class="mpanel" style="max-width:740px"><h2>What’s new in 0.23</h2><div class="changelog">${CHANGELOG_HTML}</div></div>`); }
+function changelogModal() { openModal(`<div class="mpanel" style="max-width:740px"><h2>What’s new in 0.24</h2><div class="changelog">${CHANGELOG_HTML}</div></div>`); }
 
 /* ---------- Global Click & Keyboard Input ---------- */
 document.addEventListener('click', e => {
@@ -1095,7 +1367,7 @@ document.addEventListener('click', e => {
       clearTimeout(_resTimer); _resTimer = 0; B = null; running = false; resultShown = false;
       _bossKey = ''; _bossRead = null; _setupKey = ''; _thrKey = '';
       RUN = loadRun(); if (!RUN) return renderTitle(); ENC.run = RUN.encSnap;
-      if (RUN._res || RUN.adv.loot) { afterFight(); break; }
+      if (RUN._res || RUN.adv.loot || (RUN.adv.hrDraft && RUN.adv.hrDraft.length)) { afterFight(); break; }
       const st = RUN.adv.stage;
       if (st === 'packs') renderPacks();
       else if (!RUN.team.length) { RUN.firstPick = (RUN.firstPick && RUN.firstPick.length) ? RUN.firstPick : firstPickFromPacks(RUN.adv.packs); renderPick(); }
@@ -1225,7 +1497,7 @@ document.addEventListener('click', e => {
     case 'tobattle':
       if (RUN.team.some(x => (x.tier >= 2 && !x.path) || (x.tier >= 3 && !x.asi) || (x.tier >= 4 && !x.boon))) { checkPendingPath(); return; }
       goPlacement(); break;
-    case 'autoplace': autoPlace(RUN, true); S.party = boardHeroes(RUN); _setupKey = ''; saveRun(); break;
+    case 'autoplace': autoPlace(RUN, true); S.party = boardHeroes(RUN); _setupKey = ''; _thrKey = ''; renderLaneHeaders(); saveRun(); break;
     case 'begin-battle': startBattle(); break;
     case 'afterFight': afterFight(); break;
     case 'spd': S.speed = +el.dataset.v; renderCombatBar(); break;
@@ -1312,6 +1584,75 @@ document.addEventListener('click', e => {
     case 'chooseBoon': closeModal(true); if (h && chooseHeroBoon(RUN, uid, el.dataset.p)) { delete h._boonOffer; toast(`★ ${H[h.key].name} gained ${EPIC_BOONS[h.boon].n}!`); } if (PHASE === 'shop') renderShop(); else renderMap(); saveRun(); checkPendingPath(); break;
     case 'sell': if (h) { openModal(`<div class="mpanel"><h2>Sell ${esc(H[h.key].name)}?</h2><p>Refunds full worth (${gold(heroValue(h.tier))}) and returns items to stash.</p><div class="row"><button class="btn primary" data-a="sellYes" data-u="${uid}">Sell for ${heroValue(h.tier)}g</button><button class="btn" data-a="closeModal">Keep</button></div></div>`); } break;
     case 'sellYes': { const back = sellHero(RUN, uid); closeModal(); toast(`Sold for ${back}g`); renderShop(); saveRun(); break; }
+    case 'upgradeCamp': {
+      const r = upgradeCampRank(RUN);
+      if (!r.ok) return toast(r.why);
+      toast(`★ Camp upgraded to Rank ${rom[r.rank]}!`);
+      renderShop(); saveRun();
+      break;
+    }
+    case 'buyHR': {
+      const r = buyHouseRule(RUN, i);
+      if (!r.ok && r.needSwap) { hrSwapModal(i, null); break; }
+      if (!r.ok) return toast(r.why);
+      toast(`Adopted House Rule: ${HOUSE_RULES[r.rule].n}!`);
+      renderShop(); saveRun();
+      break;
+    }
+    case 'swapBuyHR': {
+      const shopIdx = +el.dataset.p;
+      const r = buyHouseRule(RUN, shopIdx, i);
+      closeModal(true);
+      if (!r.ok) return toast(r.why);
+      toast(`Adopted ${HOUSE_RULES[r.rule].n}${r.refund ? ` (+${r.refund}g refund)` : ''}!`);
+      renderShop(); saveRun();
+      break;
+    }
+    case 'sellHR': {
+      const k = RUN.houseRules && RUN.houseRules[i];
+      if (!k || !HOUSE_RULES[k]) break;
+      const hr = HOUSE_RULES[k];
+      openModal(`<div class="mpanel"><h2>Drop House Rule: ${esc(hr.n)}?</h2><p>${esc(hr.x)}</p><p class="small mute">Refunds ${gold(houseRuleRefund(k))} and frees a House Rule slot.</p><div class="row" style="justify-content:center"><button class="btn primary" data-a="sellHRYes" data-i="${i}">Drop for +${houseRuleRefund(k)}g</button><button class="btn" data-a="closeModal">Keep</button></div></div>`);
+      break;
+    }
+    case 'sellHRYes': {
+      const r = sellHouseRule(RUN, i);
+      closeModal(true);
+      if (r.ok) { toast(`Dropped ${HOUSE_RULES[r.rule].n} (+${r.refund}g)`); renderShop(); saveRun(); }
+      break;
+    }
+    case 'pickHRDraft': {
+      const dk = el.dataset.p;
+      if (!dk || !HOUSE_RULES[dk]) break;
+      if ((RUN.houseRules || []).length >= HOUSE_RULE_MAX) { hrSwapModal(null, dk); break; }
+      const r = addFreeHouseRule(RUN, dk);
+      if (r.ok) {
+        RUN.adv.hrDraft = null;
+        closeModal(true);
+        toast(`★ Adopted House Rule: ${HOUSE_RULES[dk].n}!`);
+        afterFight();
+      }
+      break;
+    }
+    case 'swapPickHRDraft': {
+      const dk = el.dataset.p;
+      const r = addFreeHouseRule(RUN, dk, i);
+      if (r.ok) {
+        RUN.adv.hrDraft = null;
+        closeModal(true);
+        toast(`★ Adopted ${HOUSE_RULES[dk].n}${r.refund ? ` (+${r.refund}g refund)` : ''}!`);
+        afterFight();
+      }
+      break;
+    }
+    case 'skipHRDraft': {
+      RUN.adv.hrDraft = null;
+      RUN.gold += 4; RUN.stats.gold += 4;
+      closeModal(true);
+      toast('Skipped House Rule Draft (+4g)');
+      afterFight();
+      break;
+    }
   }
 });
 
@@ -1377,7 +1718,7 @@ if (_wr) {
 function resize() {
   const wrap = $('boardWrap');
   view.pad = 10;
-  const W = Math.max(260, wrap.clientWidth - 12), Hh = Math.max(240, (wrap.clientHeight || window.innerHeight - 12) - 12);
+  const W = Math.max(260, wrap.clientWidth - 20), Hh = Math.max(240, (wrap.clientHeight || window.innerHeight - 12) - 68);
   view.T = Math.max(26, Math.min(144, Math.floor(Math.min((W - view.pad * 2) / COLS, (Hh - view.pad * 2) / ROWS))));
   view.R = view.T * .64;
   view.w = view.T * COLS + view.pad * 2; view.h = view.T * ROWS + view.pad * 2;
@@ -1385,6 +1726,7 @@ function resize() {
   canvas.width = view.w * dpr; canvas.height = view.h * dpr;
   canvas.style.width = view.w + 'px'; canvas.style.height = view.h + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); mapDirty = true;
+  if (typeof renderLaneHeaders === 'function') renderLaneHeaders();
 }
 
 /* ---------- Boot ---------- */

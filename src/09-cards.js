@@ -379,20 +379,17 @@ function enemyCard(u, b, compact) {
   return `<div class="ecard">${head}${stats}${atk}${ab}${tr}${live.length ? `<div class="elive">${live.join(' · ')}</div>` : ''}</div>`;
 }
 
-/* ---------- v0.23 Changelog ---------- */
+/* ---------- v0.24 Changelog ---------- */
 const CHANGELOG_HTML = `
-<div><h3>3-Act Campaign, 9-Row Constricting DAG &amp; 10 Rotating Bosses</h3><ul>
-<li><b>Act 1 — Phandalin &amp; the Triboar Trail:</b> 4 curated maps, Klarg’s Hideout optional miniboss, and 3 rotating bosses (<i>Nezznar</i>, <i>Venomfang</i> 2×2 Dragon, <i>Glasstaff</i>).</li>
-<li><b>Act 2 — White Plume Mountain:</b> 4 dungeon maps, visible <b>Dungeon Hazards</b> (Boiling Steam, Frictionless Floor, Arcane Dampener) with Vault Loot, and 4 rotating bosses (<i>Keraptis</i>, <i>Blackrazor</i>, <i>Gynosphinx</i>, <i>Giant Crab</i>).</li>
-<li><b>Act 3 — The Hells:</b> New volcanic <code>hells</code> board theme, <b>Wandering Pit Fiend</b> miniboss stepping across lanes, Devil’s Bargain <code>?</code> events, and 3 endgame bosses (<i>Orcus</i>, <i>Asmodeus</i>, <i>Tiamat</i>).</li>
-<li><b>Camp Shop Flow Flip &amp; Whole-Shop Freeze:</b> Camp Shop opens after wins and at Act start with an Act Boss Reminder and Whole-Shop Freeze; combat nodes jump straight to Tactical Deployment.</li>
+<div><h3>v0.24 Core Loop Overhaul: Soft Lanes, House Rules, Camp Rank &amp; CR</h3><ul>
+<li><b>Soft Lanes (Breach &amp; Flank) &amp; 13 Redesigned Maps:</b> Every battle map is now a 2-lane (10×10) or 3-lane (11×10) arena with distinct objectives (<i>Dark Ritual</i>, <i>Supply Cart</i>, <i>Duel Choke</i>, <i>Battle Shrine</i>, <i>Boss Throne</i>). Lane winners gain Flank Rush and cross open bridges to flank remaining lanes!</li>
+<li><b>36 Shop-Offered House Rules (6-Slot Cap):</b> Build multiplicative party-wide engines across 13 Class-Keyword rules, 8 Composition/Lane/d20 rules, 6 Economy rules, and 9 Legendary Capstones (with sell &amp; replace flow + Boss/Miniboss 1-of-3 Drafts).</li>
+<li><b>Immediate Power vs. Future Power Shop Economy:</b> Upgrade <b>Camp Rank (I → IV)</b> (discounts −1g per win) to boost Hero/Item/House Rule odds and raise your <b>Gold Interest</b> cap up to +12g/win, plus 6 new <b>🌱 Scaling</b> investment items (1 per attribute; 88 total items).</li>
+<li><b>Challenge Rating (CR) Diagnostics &amp; Post-Combat Autopsy:</b> See your live <b>Party CR</b> vs. pre-scouted Map Node CR, live per-lane CR &amp; matchup flags during Deployment, and a post-combat autopsy covering Lane results, House Rule output, AC/SR mitigation loss, and a <b>d20 Luck Audit</b>.</li>
+<li><b>Balatro-Style Exponential Act 3 Scaling:</b> Flat stats carry Act 1, tighten in Act 2, and give way to multiplicative House Rule &amp; Multiclass engines in Act 3.</li>
 </ul></div>
-<div><h3>Complete 24-Hero Rework, Strict Progressive Disclosure, Epic Boons &amp; Multiclass</h3><ul>
-<li><b>24 Reworked Heroes &amp; 13 Canonical Class Keywords:</b> Lumen reborn as a <b>Celestial Warlock</b>, Mother Laurel as a frontline Cleave Drain Tank, Arthur on universal <b>Evasion</b> + Action Surge, Zoe tossing any random Common item, Gilthrax unleashing Gold Dragon Fire Breath, Toot dancing for bounty Motes, and live spatial targeting lines for Rosalind, Toot &amp; Brother Jamison!</li>
-<li><b>Tier II Specializations &amp; Tier IV Universal Epic Boons:</b> Strictly 1-line Specializations hidden until Tier II, plus a shared 9-card Tier IV Epic Boon deck (pick 1 of 3).</li>
-<li><b>12 Single-Class Named Multiclass Nodes (✧) &amp; Opt-In Quest Board (❖):</b> Visit unique locations like <i>Oath Shrine</i> or <i>Arcane Study</i> to dip a second class &amp; unlock its Curio items, and opt into personal Hero Quests on the Quest Board.</li>
-</ul></div>
-<div><h3>82-Item Six-Tier Catalog &amp; Cubed AC/SR Combat Math</h3><ul>
-<li><b>58 Universal Standard Items (5 Tiers) + 24 Unique Class-Keyword Items:</b> Common (2g), Uncommon (3g), Rare (4g), Very Rare (6g), Legendary (10g) with exact per-tier 6-attribute parity, plus 24 Unique items (2 per class) sold at the <b>Curio Merchant (⚖)</b>.</li>
-<li><b>Cubed AC/SR Curve (K = 14), Multiplicative Evasion &amp; Radiant Damage:</b> Bounded accuracy where every point of AC/SR (10–20) feels impactful, counterable by Armor/Spell Pen, scarce Radiant true damage, and universal Evasion.</li>
+<div><h3>v0.23 Foundation (All Preserved Intact)</h3><ul>
+<li><b>3-Act Campaign, 9-Row DAG &amp; 10 Rotating Bosses:</b> Phandalin (Klarg), White Plume Mountain (Hazards &amp; Vault Loot), and The Hells (Wandering Pit Fiend).</li>
+<li><b>24 Reworked Heroes &amp; 13 Class Keywords:</b> Clean Tier I cards, 1-line Tier II Specializations, Tier IV universal Epic Boons, 12 single-class Multiclass shrines, and Opt-In Hero Quests.</li>
+<li><b>88 Canonical D&amp;D Items &amp; Cubed AC/SR Combat Math:</b> 64 Standard items (exact 6-attribute parity) + 24 Curio Uniques, Cubed AC/SR (K=16), Universal Evasion, and Radiant true damage.</li>
 </ul></div>`;

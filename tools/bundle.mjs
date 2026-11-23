@@ -1,7 +1,7 @@
 /**
- * bundle.mjs — Bundles the modular Basements & Basilisks v0.23 codebase AND all mapped
+ * bundle.mjs — Bundles the modular Basements & Basilisks v0.24 codebase AND all mapped
  * custom art assets from assets/manifest.json into a single truly self-contained offline
- * HTML prototype at dist/Basements_&_Basilisks_0.23.html.
+ * HTML prototype at dist/Basements_&_Basilisks_0.24.html.
  */
 
 import fs from 'node:fs';
@@ -18,6 +18,7 @@ const scriptOrder = [
   'src/02-enemies.js',
   'src/03-heroes.js',
   'src/04-items.js',
+  'src/04b-house-rules.js',
   'src/05-engine.js',
   'src/06-adventure.js',
   'src/07-glossary.js',
@@ -113,7 +114,7 @@ if (startIdx < 0 || endIdx <= startIdx) {
 
 out = out.slice(0, startIdx) + `<script>\n${bundledJs}\n</script>` + out.slice(endIdx);
 
-const distPath = path.join(root, 'dist', 'Basements_&_Basilisks_0.23.html');
+const distPath = path.join(root, 'dist', 'Basements_&_Basilisks_0.24.html');
 fs.mkdirSync(path.dirname(distPath), { recursive: true });
 fs.writeFileSync(distPath, out, 'utf8');
 console.log(`Bundled single-file HTML -> ${distPath} (${(out.length / 1024).toFixed(1)} KB, ${assetCount} embedded assets via ${assetMode})`);
