@@ -1,5 +1,7 @@
 # Basements & Basilisks v0.24 — Handoff for a New AI Chat
 
+> **v0.25 redesign in progress:** see [`docs/v0.25_design_direction.md`](v0.25_design_direction.md). Where it disagrees with this file, the v0.25 doc wins (its §14 lists every superseded rule).
+
 **Date:** 2026-11-23
 **Repo:** https://github.com/lukestambaugh96-maker/basements-and-basilisks (branch `main`, commit `2bfbdc5`)
 **Art repo:** https://github.com/lukestambaugh96-maker/basements-basilisks-art (source PNGs, commit `2b8143f`)
