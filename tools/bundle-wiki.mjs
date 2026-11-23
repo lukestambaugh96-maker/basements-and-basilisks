@@ -1,7 +1,7 @@
 /**
- * bundle-wiki.mjs — Bundles tools/wiki.html + src/00..08 + data/wiki-meta-stats.js
+ * bundle-wiki.mjs — Bundles tools/wiki.html + src/00..08 + src/04b-house-rules.js + data/wiki-meta-stats.js
  * + 24 hero WebP portraits into a single self-contained offline HTML artifact at
- * dist/Basements_&_Basilisks_0.23_Field_Guide.html.
+ * dist/Basements_&_Basilisks_0.24_Field_Guide.html.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,6 +16,7 @@ const scripts = [
   'src/02-enemies.js',
   'src/03-heroes.js',
   'src/04-items.js',
+  'src/04b-house-rules.js',
   'src/05-engine.js',
   'src/06-adventure.js',
   'src/07-glossary.js',
@@ -69,7 +70,7 @@ if (sIdx < 0 || eIdx <= sIdx) throw new Error('Could not locate wiki script bloc
 
 html = html.slice(0, sIdx) + `<script>\n${bundledJs}\n</script>` + html.slice(eIdx);
 
-const outPath = path.join(root, 'dist', 'Basements_&_Basilisks_0.23_Field_Guide.html');
+const outPath = path.join(root, 'dist', 'Basements_&_Basilisks_0.24_Field_Guide.html');
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, html, 'utf8');
 console.log(`Bundled self-contained Field Guide -> ${outPath} (${(html.length / 1024).toFixed(1)} KB, ${Object.keys(heroMap).length} embedded WebP heroes)`);

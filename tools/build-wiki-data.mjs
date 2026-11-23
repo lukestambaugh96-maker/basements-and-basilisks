@@ -1,7 +1,7 @@
 /**
- * build-wiki-data.mjs — Live v0.23 Simulation & Field Guide Telemetry Builder.
- * Runs deterministic headless v0.23 benchmarks across all 24 reworked heroes, 48 Specializations,
- * 82 six-tier items, 12 signature comps, 10 rotating Act bosses, and 5 campaign personas,
+ * build-wiki-data.mjs — Live v0.24 Simulation & Field Guide Telemetry Builder.
+ * Runs deterministic headless v0.24 benchmarks across all 24 heroes, 48 Specializations,
+ * 88 six-tier items, 36 House Rules, 12 signature comps, 10 rotating Act bosses, and 5 v0.24 personas,
  * then writes data/wiki-meta-stats.js powering tools/wiki.html.
  */
 import fs from 'node:fs';
@@ -13,7 +13,7 @@ const root = path.resolve(__dirname, '..');
 
 const engineCode = [
   'src/01-geo.js', 'src/02-enemies.js', 'src/03-heroes.js',
-  'src/04-items.js', 'src/05-engine.js', 'src/06-adventure.js',
+  'src/04-items.js', 'src/04b-house-rules.js', 'src/05-engine.js', 'src/06-adventure.js',
 ].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
 
 // Load v0.22 rank baseline if present for rank-delta comparison
@@ -264,7 +264,7 @@ const simData = new Function(engineCode + `
   Math.random = rand;
 
   function placeParty(party) {
-    loadMap(ENC.run.map);
+    loadMap(ENC.run.map, ENC.run.lanes);
     const spots = DEPLOY.slice();
     const rows = [...new Set(spots.map(s => s.r))].sort((a, b) => a - b);
     const mid = (COLS - 1) / 2;
@@ -285,7 +285,7 @@ const simData = new Function(engineCode + `
     const r = newAdventure(rand);
     r.depth = depth;
     buildEncounter(r, rand, { threat, depth });
-    const b = simulate('run', placeParty(party), 1);
+    const b = simulate('run', placeParty(party), 1, battleOpts(r));
     const P = b.units.filter(u => u.side === 'P' && !u.minion);
     const E2 = b.units.filter(u => u.side === 'E');
     const pHp = P.reduce((a, u) => a + (u.alive ? Math.max(0, u.hp) : 0), 0) / Math.max(1, P.reduce((a, u) => a + u.maxHp, 0));
@@ -500,45 +500,64 @@ const simData = new Function(engineCode + `
   }).sort((a, b) => b.avgScore - a.avgScore);
   console.log('  [4/4] 12 signature comps done');
 
-  return { heroBench, pathBench, partnerMap, heroItemsOut, allItemsOut, compsOut };
+  // 5. Direct 10-Boss Benchmark (Act 1-3 bosses at canonical depths with balanced T1/T2/T3 test squads)
+  const BOSS_LIST = [
+    { act: 1, key: 'glasstaff', d: 5.5, t: 1 }, { act: 1, key: 'nezznar', d: 5.5, t: 1 }, { act: 1, key: 'venomfang', d: 5.5, t: 1 },
+    { act: 2, key: 'blackrazor_boss', d: 9.6, t: 2 }, { act: 2, key: 'giant_crab', d: 9.6, t: 2 }, { act: 2, key: 'gynosphinx', d: 9.6, t: 2 }, { act: 2, key: 'keraptis', d: 9.6, t: 2 },
+    { act: 3, key: 'asmodeus', d: 13.5, t: 3 }, { act: 3, key: 'orcus', d: 13.5, t: 3 }, { act: 3, key: 'tiamat', d: 13.5, t: 3 }
+  ];
+  const BOSS_SQUADS = [
+    ['dane', 'bram', 'cinder', 'rosalind'],
+    ['gilthrax', 'arthur', 'zoe', 'faelan'],
+    ['mother_laurel', 'kaska', 'juniper', 'velith'],
+    ['zark', 'corvin', 'lorcan', 'naill'],
+    ['pillar', 'lumen', 'nettle', 'jamison']
+  ];
+  const bossOut = BOSS_LIST.map(bInfo => {
+    let won = 0;
+    const items = bInfo.t >= 3 ? ['ring_protection', 'boots_speed'] : bInfo.t === 2 ? ['ring_protection'] : [];
+    for (const sq of BOSS_SQUADS) {
+      const party = sq.map(hk => ({ key: hk, tier: bInfo.t, path: bInfo.t >= 2 ? H[hk].paths[0].k : null, asi: bInfo.t >= 3 ? H[hk].pair[1] : null, items, act: bInfo.act, goldHeld: 18 }));
+      const res = fight(bInfo.key, bInfo.d, party);
+      if (res.won) won++;
+    }
+    return { act: bInfo.act, key: bInfo.key, won, fought: BOSS_SQUADS.length, winRate: +(100 * won / BOSS_SQUADS.length).toFixed(1) };
+  });
+
+  return { heroBench, pathBench, partnerMap, heroItemsOut, allItemsOut, compsOut, bossOut };
 `)();
 
-// Run a quick 20-run/persona 3-Act campaign summary for the Meta & Difficulty Overview tab (uses current calibrated src/)
+// Run v0.24 5-persona 3-Act campaign calibration + CR diagnostics
 import { execFileSync } from 'node:child_process';
-let campaignSummary = null;
-let bossSummary = [];
+let v24Report = null;
 try {
-  const out = execFileSync('node', [path.join(root, 'tools/verify-v023.mjs'), '25'], { encoding: 'utf8', cwd: root, maxBuffer: 10 * 1024 * 1024 });
-  const m = out.match(/\{[\s\S]*?\n\}/);
-  if (m) campaignSummary = JSON.parse(m[0]);
-  const bossLines = out.split('\n').filter(l => /^Act \d/.test(l));
-  bossSummary = bossLines.map(l => {
-    const mm = l.match(/^Act (\d) · (\S+)\s+:\s+(\d+)\/(\d+) \(([\d.]+)%\)/);
-    if (!mm) return null;
-    return { act: Number(mm[1]), key: mm[2], won: Number(mm[3]), fought: Number(mm[4]), winRate: Number(mm[5]) };
-  }).filter(Boolean);
+  const out = execFileSync('node', [path.join(root, 'tools/verify-v024.mjs'), '15'], { encoding: 'utf8', cwd: root, maxBuffer: 10 * 1024 * 1024 });
+  v24Report = JSON.parse(out);
 } catch (e) {
-  console.warn('Warning: could not capture live campaign summary:', e.message);
+  console.warn('Warning: could not capture live v0.24 campaign summary:', e.message);
 }
 
 const PERSONA_LABELS = {
-  zero_item: 'Zero-Item / Naive (0 Items Bought)',
-  casual: 'Casual Player (Random Path & ~45% Items)',
-  competent: 'Competent Tactician (Balanced & Geared)',
-  synergy: 'Synergy Drafter (Keyword + Role Focus)',
-  greed: 'Pack 5 Market Greed (Zoe/Toot/Gilthrax/Gains)'
+  naive: 'Naive / Zero-Engine (Random Pick & Minimal Items)',
+  flat_only: 'Flat-Stats Only (Ignores Scaling Items & House Rules)',
+  competent: 'Competent Tactician (Balanced Squad, Camp Rank & Gear)',
+  engine: 'Engine Drafter (Keyword Synergy + Scaling + House Rules)',
+  greed: 'Pack 5 Market Greed (Economy Snowball + Camp Rank)'
 };
 const TARGET_GATES = {
-  zero_item: '< 15% WR',
-  casual: '25–45% WR',
-  competent: '55–70% WR (40–65% Piggy)',
-  synergy: '55–70% WR (40–65% Piggy)',
-  greed: '≤ 70% WR'
+  naive: '< 15% WR',
+  flat_only: '15–35% WR',
+  competent: '50–70% WR',
+  engine: '55–75% WR',
+  greed: '≤ 75% WR'
 };
-const botsOut = campaignSummary ? Object.entries(campaignSummary).map(([id, v]) => ({
+const botsOut = v24Report && v24Report.summary ? Object.entries(v24Report.summary).map(([id, v]) => ({
   id, label: PERSONA_LABELS[id] || id, target: TARGET_GATES[id] || '—',
-  liveWR: v.winRate, act1Clear: v.act1Clear, act2Clear: v.act2Clear,
-  piggyBreak: v.piggyBreakRate, avgGold: v.avgGold, avgFights: v.avgFights
+  liveWR: v.wr,
+  act1Clear: Math.round(100 - (v.deaths[0] / 15) * 100),
+  act2Clear: Math.round(100 - ((v.deaths[0] + v.deaths[1]) / 15) * 100),
+  piggyBreak: v.piggyPct, avgGold: v.avgGold,
+  avgCampRank: v.avgCampRank, avgHouseRules: v.avgHouseRules, avgEndCR: v.avgEndCR
 })) : [];
 
 function explainPairing(h1, h2, sharedKw) {
@@ -574,33 +593,32 @@ simData.heroBench.forEach((h, idx) => {
 
 const globalChanges = {
   combat: [
-    { type: 'rebal', tag: 'Cubed AC/SR', text: 'Defense mitigation now follows `1 / (1 + (Eff / 14)^3)` — AC 10 blocks 26.7%, AC 14 blocks 50.0%, AC 20 blocks 74.5%, countered by Armor Pen & Spell Pen.' },
-    { type: 'buff', tag: 'Radiant True Dmg', text: 'Radiant damage (Sir Dane Smite, Lumen Celestial bolts, Sun Blade, Holy Avenger) bypasses both AC and SR completely.' },
-    { type: 'buff', tag: 'Universal Evasion', text: 'All Evasion sources combine multiplicatively (`1 - Π(1 - e_i)`) and trigger Arthur’s Action Surge counter-strikes.' },
-    { type: 'rebal', tag: '9 Epic Boons', text: 'Tier IV replaces per-path upgrades with a universal 1-of-3 **Epic Boon** picker (Combat Prowess, Fortitude, Irresistible Offense, Recovery, Spell Recall, Fate, Speed, Truesight, Energy Resistance).' },
-    { type: 'rebal', tag: '12 Multiclass Dips', text: 'Single-class named shrines (`✧`, no repeats per run) grant a hero a secondary Class Keyword and unlock Curio Uniques for that class.' },
-    { type: 'fix', tag: 'Lethal Priority', text: 'Strict lethal-hit rescue order: `Zealot → Relentless Endurance (1 HP) → Cleric MC (25%) → Boon of Recovery (50%)`.' }
+    { type: 'buff', tag: 'Soft Lanes', text: 'Battlefields now feature **2–3 tactical Soft Lanes** with lane-aligned deployment zones, flank routing, and unobstructed arena readability.' },
+    { type: 'buff', tag: '36 House Rules', text: 'Brand-new **House Rules** system (`6-slot cap` per run) offering run-defining passives, cross-class bridges, and rule twists across all 3 Acts.' },
+    { type: 'rebal', tag: 'Camp Rank & CR', text: 'Upgradeable **Camp Rank** progression in the Camp Shop unlocks higher-tier shop odds & scaling, paired with live **Party CR vs. Encounter CR** diagnostics.' },
+    { type: 'rebal', tag: 'Cubed AC/SR K=16', text: 'Defense curve recalibrated to `1 / (1 + (Eff / 16)^3)` alongside Cantrip tier-dice scaling (`1×/2×/3×/4×`), kit-scaled Charge, and systemic Burn/Poison scaling.' },
+    { type: 'rebal', tag: '9 Epic Boons', text: 'Tier IV universal 1-of-3 **Epic Boon** picker + **12 Single-Class Multiclass Shrines** (`✧`) with no repeats per run.' }
   ],
   enemy: [
-    { type: 'buff', tag: '3 Full Acts', text: 'Act 1 **Phandalin** (Klarg Miniboss, 3 bosses), Act 2 **White Plume Mountain** (Dungeon Hazards + Vault Loot, 4 bosses), Act 3 **The Hells** (Wandering Pit Fiend + Devil’s Bargains, 3 Final Bosses: Orcus, Asmodeus, Tiamat).' },
-    { type: 'rebal', tag: '9-Row DAG Map', text: 'Constricting non-crossing 9-row DAG (`3→3→3→3→3→2→2→2→1`) with Camp Shop Flow Flip, Act Boss Reminder, and Whole-Shop Freeze.' },
-    { type: 'buff', tag: '82 Six-Tier Items', text: '58 Universal Standard Shop items (`Common 2g → Legendary 10g`) with exact 6-attribute parity (`+1/+2/+3/+4/+6`), plus 24 **Unique (5g)** Class-Keyword relics at the Curio Merchant (`⚖`).' },
-    { type: 'rebal', tag: 'Strict Disclosure', text: 'Tier I hero cards hide Specializations, Quests, Boons, and Multiclass boxes until unlocked; all 48 Specializations are strictly 1-line rules.' }
+    { type: 'buff', tag: '88 Six-Tier Items', text: '64 Standard Shop items (including **6 new Uncommon Scaling items** with exact `+1/+3/+3/+4/+6` 6-attribute parity) + 24 **Curio Unique (5g)** relics.' },
+    { type: 'buff', tag: '3 Full Acts', text: 'Act 1 **Phandalin** (Klarg Miniboss, 3 bosses), Act 2 **White Plume Mountain** (Dungeon Hazards + Vault Loot, 4 bosses), Act 3 **The Hells** (Wandering Pit Fiend + Orcus, Asmodeus, Tiamat).' },
+    { type: 'rebal', tag: 'Combat UI Overhaul', text: 'Enlarged central arena, unobscured chunky health bars, left party strip, prominent **Gold Hub**, right **Unit Card + Battle Log** column, and scrollable post-fight summary.' }
   ]
 };
 
 const finalMeta = {
-  version: '0.23 Live Build',
+  version: '0.24 Live Build',
   generatedAt: new Date().toISOString().slice(0, 10),
   heroes: heroesOut,
   items: simData.allItemsOut,
   comps: simData.compsOut,
   bots: botsOut,
-  bosses: bossSummary,
+  bosses: simData.bossOut,
+  crCorr: (v24Report && v24Report.crCorr) || {},
   globalChanges
 };
 
 fs.mkdirSync(path.join(root, 'data'), { recursive: true });
-const jsContent = `/* Auto-generated v0.23 live meta telemetry & changelog for tools/wiki.html */\nwindow.WIKI_META = ${JSON.stringify(finalMeta, null, 2)};\n`;
+const jsContent = `/* Auto-generated v0.24 live meta telemetry & changelog for tools/wiki.html */\nwindow.WIKI_META = ${JSON.stringify(finalMeta, null, 2)};\n`;
 fs.writeFileSync(path.join(root, 'data/wiki-meta-stats.js'), jsContent);
-console.log(`Wrote data/wiki-meta-stats.js (${(jsContent.length / 1024).toFixed(1)} KB, 24 heroes, ${simData.allItemsOut.length} items, ${simData.compsOut.length} comps, ${bossSummary.length} bosses) in ${((Date.now() - tStart) / 1000).toFixed(1)}s`);
+console.log(`Wrote data/wiki-meta-stats.js (${(jsContent.length / 1024).toFixed(1)} KB, 24 heroes, ${simData.allItemsOut.length} items, ${simData.compsOut.length} comps, ${simData.bossOut.length} bosses) in ${((Date.now() - tStart) / 1000).toFixed(1)}s`);

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Field Guide &amp; Live Stat Tracker · Basements &amp; Basilisks 0.23</title>
-  <meta name="description" content="Interactive character wiki, v0.23 rework changelog, live simulation stat tracker, 82 six-tier D&D items, 10 Act bosses, 9 Epic Boons, and 12 Multiclass dips for Basements & Basilisks v0.23." />
+  <title>Field Guide &amp; Live Stat Tracker · Basements &amp; Basilisks 0.24</title>
+  <meta name="description" content="Interactive character wiki, v0.24 core loop changelog, live simulation stat tracker, 88 six-tier D&D items, 36 House Rules, Soft Lanes, Camp Rank, 10 Act bosses, 9 Epic Boons, and 12 Multiclass dips for Basements & Basilisks v0.24." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
@@ -380,7 +380,7 @@
   <header class="topbar">
     <div class="brand">
       <h1>Field Guide &amp; Live Stat Tracker</h1>
-      <div class="subline" id="metaSubline">Basements &amp; Basilisks · v0.23 Live Build · 24 Reworked Heroes · 82 Canonical D&amp;D Items · 3 Acts · 10 Bosses</div>
+      <div class="subline" id="metaSubline">Basements &amp; Basilisks · v0.24 Live Build · 24 Heroes · 88 Items · 36 House Rules · Soft Lanes &amp; Camp Rank</div>
     </div>
     <nav class="nav-actions" aria-label="Tool navigation">
       <a class="btn primary" href="../index.html">← Play Game</a>
@@ -390,9 +390,9 @@
 
   <div class="main-tabs" role="tablist" aria-label="Wiki sections">
     <button class="mtab on" data-tab="heroes" role="tab" aria-selected="true">Heroes &amp; Stat Tracker <span class="cnt">24</span></button>
-    <button class="mtab" data-tab="patch" role="tab" aria-selected="false">v0.23 Rework &amp; Changelog <span class="cnt">v0.22 → v0.23</span></button>
-    <button class="mtab" data-tab="items" role="tab" aria-selected="false">Items &amp; Best Carriers <span class="cnt">82</span></button>
-    <button class="mtab" data-tab="meta" role="tab" aria-selected="false">Meta, Bosses &amp; Boons <span class="cnt">3 Acts · 10 Bosses</span></button>
+    <button class="mtab" data-tab="patch" role="tab" aria-selected="false">v0.24 Core Loop &amp; Changelog <span class="cnt">v0.24</span></button>
+    <button class="mtab" data-tab="items" role="tab" aria-selected="false">Items &amp; Best Carriers <span class="cnt">88</span></button>
+    <button class="mtab" data-tab="meta" role="tab" aria-selected="false">Meta, Bosses &amp; House Rules <span class="cnt">36 Rules · 10 Bosses</span></button>
   </div>
 
   <!-- TAB 1: HEROES & STAT TRACKER -->
@@ -487,9 +487,9 @@
           <option value="5">Unique · Curio (5g)</option>
         </select>
         <select id="itemKwOnly">
-          <option value="all">All 82 Items</option>
+          <option value="all">All 88 Items</option>
           <option value="kw">Curio Unique Items (24)</option>
-          <option value="core">Standard Shop Items (58)</option>
+          <option value="core">Standard Shop Items (64)</option>
         </select>
       </div>
       <div class="controls-right">
@@ -1194,7 +1194,11 @@
       </div>
     `;
 
-    // 9 Epic Boons & 12 Multiclass Shrines reference
+    // 36 House Rules, 9 Epic Boons & 12 Multiclass Shrines reference
+    const hrRows = (typeof HOUSE_RULE_KEYS !== 'undefined' ? HOUSE_RULE_KEYS : []).map(hk => {
+      const hr = HOUSE_RULES[hk];
+      return `<li><b>${esc(hr.n)}</b> <span class="mute">(${esc(hr.cat || 'Rule')})</span>: ${esc(hr.x)}</li>`;
+    }).join('');
     const boonRows = (typeof EPIC_BOON_KEYS !== 'undefined' ? EPIC_BOON_KEYS : []).map(bk => {
       const b0 = EPIC_BOONS[bk];
       return `<li><b>${esc(b0.n)}:</b> ${esc(b0.x)}</li>`;
@@ -1204,7 +1208,11 @@
       return `<li><b>${esc(m0.node)} (${esc(m0.cls)}):</b> ${esc(m0.x)}</li>`;
     }).join('');
     $('boonsMcBox').innerHTML = `
-      <details class="kit-ref" open style="margin-bottom:10px">
+      ${hrRows ? `<details class="kit-ref" open style="margin-bottom:10px">
+        <summary>📜 36 House Rules (Up to 6 Active per Run)</summary>
+        <ul class="change-list" style="margin-top:8px;font-size:.86rem;max-height:240px;overflow-y:auto;padding-right:6px">${hrRows}</ul>
+      </details>` : ''}
+      <details class="kit-ref" style="margin-bottom:10px">
         <summary>★ 9 Tier IV Universal Epic Boons (Pick 1 of 3)</summary>
         <ul class="change-list" style="margin-top:8px;font-size:.88rem">${boonRows}</ul>
       </details>
@@ -1274,7 +1282,7 @@
   // Init
   if (typeof glossaryInit === 'function') glossaryInit();
   if (META.generatedAt) {
-    $('metaSubline').textContent = `Basements & Basilisks · v0.23 Live Build · 24 Reworked Heroes · 82 Canonical D&D Items · 3 Acts · 10 Bosses · Sim Verified ${META.generatedAt}`;
+    $('metaSubline').textContent = `Basements & Basilisks · v0.24 Live Build · 24 Heroes · 88 Items · 36 House Rules · Soft Lanes & Camp Rank · Sim Verified ${META.generatedAt}`;
   }
   const initialList = filteredHeroes();
   if (initialList.length) state.selectedHero = initialList[0].key;
