@@ -1,6 +1,8 @@
 # Basements & Basilisks (v0.23)
 
 > **v0.25 redesign in progress:** see [`docs/v0.25_design_direction.md`](docs/v0.25_design_direction.md). Where it disagrees with this file, the v0.25 doc wins (its §14 lists every superseded rule).
+>
+> **Act 1 prototype:** build instructions in [`docs/v0.25/ACT1_PROTOTYPE_BUILD.md`](docs/v0.25/ACT1_PROTOTYPE_BUILD.md); numbers in [`data/v0.25/`](data/v0.25/).
 
 A tabletop-inspired roguelike auto-battler built in zero-dependency vanilla HTML, CSS, and modular JavaScript.
 
