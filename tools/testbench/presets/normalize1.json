@@ -1,0 +1,33 @@
+{
+  "_about": "Normalization batch 1 (25 Nov), revised: Cinder reworked in the config (Scorching Ray), Corvin left for his ability rework, Toot switched off. Proposed, not approved.",
+  "edits": {
+    "pillar.benchJob": "brawler",
+    "pillar.chargeToCast": 180,
+    "pillar.ability.damage.dice": "7d6",
+    "arthur.chargeToCast": 180,
+    "arthur.ability.strike.dice": "4d8",
+    "velith.chargeToCast": 180,
+    "velith.ability.strike.dice": "9d4",
+    "velith.attack.interval": 1.5,
+    "kaska.chargeToCast": 180,
+    "kaska.ability.damage.dice": "7d8",
+    "lumen.chargeToCast": 180,
+    "lumen.ability.damage.dice": "9d4",
+    "gains.chargeToCast": 180,
+    "gains.ability.damage.dice": "11d8",
+    "wallaby.chargeToCast": 60,
+    "rosalind.chargeToCast": 60,
+    "faelan.chargeToCast": 100,
+    "zoe.chargeToCast": 100,
+    "zoe.ability.potion.dice": "4d6",
+    "zoe.ability.spareShield.dice": "4d6",
+    "zoe.ability.whetstone.dice": "2d6",
+    "nettle.ability.damage.dice": "2d6",
+    "naill.attack.interval": 1.15,
+    "naill.ability.strike.dice": "1d8",
+    "saint.ability.doubleSeconds": { "low": 2, "mid": 2, "high": 3 },
+    "velith.benchJob": "attacker",
+    "naill.benchJob": "attacker",
+    "corvin.benchJob": "attacker"
+  }
+}

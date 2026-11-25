@@ -29,8 +29,10 @@
     "casterIntPerModifier": 0.1,
     "chaStartChargePerModifier": 10,
     "chaStartChargeMax": 50,
-    "fizzleRefund": 50,
-    "minSecondsBetweenCasts": 1
+    "minSecondsBetweenCasts": 1,
+    "refundShare": 0.5,
+    "_refund": "A Fizzle, or a Stun during a cast, leaves the hero with this share of their charge-to-cast.",
+    "_chargeToCast": "Each hero needs chargeToCast charge to cast (default 100). Gains per job stay the same; a bigger number means a bigger, rarer ability."
   },
   "abilityRoll": { "lowAtOrBelow": 5, "highAtOrAbove": 14 },
   "statuses": {
@@ -40,5 +42,21 @@
     "bossControlShare": 0.5,
     "lastStandSeconds": 1.5
   },
-  "ward": { "stacking": "add" }
+  "ward": { "stacking": "add" },
+  "abilitySizes": {
+    "_about": "Set a hero's \"size\"; chargeToCast sets how often it casts. castsPer30s is what the engine actually delivers at tier 1 (walking and targeting included), measured 25 Nov.",
+    "small": { "chargeToCast": 60, "valuePerCast": 9, "shareOfOutput": "20-35%", "castsPer30s": 6 },
+    "medium": { "chargeToCast": 100, "valuePerCast": 20, "shareOfOutput": "35-50%", "castsPer30s": 3.5 },
+    "big": { "chargeToCast": 180, "valuePerCast": 35, "shareOfOutput": "50-60%", "castsPer30s": 2 },
+    "nuke": { "chargeToCast": 300, "valuePerCast": 70, "shareOfOutput": "60-75%", "castsPer30s": 1.2 }
+  },
+  "jobTargets": {
+    "_about": "Tier 1, no items, Act 1 regular fights. fightEhp = HP x (AC + 20) / 20 plus the Ward, healing and regen the hero gives itself in a 30-second fight. dps = the hero's own damage per second after enemy armor, ability included.",
+    "frontline": { "fightEhp": [280, 340], "dps": [2, 3] },
+    "brawler": { "fightEhp": [210, 260], "dps": [4, 5] },
+    "attacker": { "fightEhp": [160, 210], "dps": [4, 5], "abilityShareMax": 0.35 },
+    "caster": { "fightEhp": [140, 190], "dps": [4.5, 5.5], "abilityShareMin": 0.5 },
+    "support": { "fightEhp": [160, 210], "dps": [1, 2], "helpGiven": [60, 90], "partyDamage": [0.15, 0.25] },
+    "_calibrated": "Frontline effective HP is anchored to the five tanks approved 24-25 Nov (about 300); brawler to Zark and Arthur (about 220-230); the rest from the Act 1 reference fight."
+  }
 }

@@ -53,6 +53,9 @@ function loadGame(cfg) {
   const hook = `
 const _heal = heal; heal = function (F, src, t, amt) { const r = _heal(F, src, t, amt); if (src && t !== src && src.side === t.side) src.toOthers = (src.toOthers || 0) + (r || 0); return r; };
 const _aw = addWard; addWard = function (F, src, t, amt, rep) { const before = t.ward; _aw(F, src, t, amt, rep); if (src && t !== src && src.side === t.side) src.toOthers = (src.toOthers || 0) + Math.max(0, t.ward - before); };
+const _rc = resolveCast; resolveCast = function (F, u) { u._inCast = true; try { return _rc(F, u); } finally { u._inCast = false; } };
+const _heal2 = heal; heal = function (F, src, t, amt) { const r = _heal2(F, src, t, amt) || 0; if (src && src === t) src.selfSus = (src.selfSus || 0) + r; if (src && src._inCast) src.abVal = (src.abVal || 0) + r; return r; };
+const _aw2 = addWard; addWard = function (F, src, t, amt, rep) { const before = t.ward; _aw2(F, src, t, amt, rep); const g = Math.max(0, t.ward - before); if (src && src === t) src.selfSus = (src.selfSus || 0) + g; if (src && src._inCast) src.abVal = (src.abVal || 0) + g; };
 const _ff = finishFight; finishFight = function (run, F) { const extra = F.units.filter(u => u.side === 'H' && !u.summon).map(u => ({ id: u.id, casts: u.casts || 0 })); const r = _ff(run, F); r.extra = extra; r.t = F.t; return r; };
 this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, seedRng, botRun, parseDice, mod };`;
   const ctx = { console, Math, CFG: cfg }; vm.createContext(ctx);
@@ -96,6 +99,33 @@ function testHero(G, hid, N, abilityOn = true) {
     dps: res.dmg / Math.max(1, res.life), dmg: res.dmg / nReg, soak: res.taken / nReg, given: res.given / nReg, casts: res.casts / nReg, partyDps: res.partyDmg / Math.max(1, res.partyT) };
 }
 
+// Measure one hero against the job benchmark: fights 2-5, tier 1, no items, N random partner pairs. Rates are per 30 s of fight.
+function measureHero(G, cfg, hid, N) {
+  const P = partners(G, hid, N); const fights = G.ACT1.slice(1); const R = cfg.rules; const K = R.resistance.K;
+  const a = { n: 0, w: 0, dies: 0, dmg: 0, life: 0, ab: 0, val: 0, casts: 0, sus: 0, given: 0, t: 0, taken: 0 };
+  fights.forEach((enc, fi) => P.forEach(([x, y], i) => {
+    G.seedRng(90000 + fi * 1000 + i);
+    const ids = [hid, x, y]; const ps = place(G, ids, enc);
+    const units = ids.map(id => G.makeHeroUnit({ id, tier: 1, t2: null, items: [], train: {}, pos: ps[id] }));
+    const F = G.makeFight(enc, units, { headless: true }); while (!F.over) G.stepFight(F);
+    const h = units[0]; a.n++; if (F.result === 'win') a.w++; if (!h.alive) a.dies++;
+    a.dmg += h.stat.dmg; a.life += h.alive ? F.t : (h.diedAt || F.t); a.ab += h.stat.abDmg; a.val += (h.abVal || 0); a.casts += h.casts || 0;
+    a.sus += h.selfSus || 0; a.given += h.toOthers || 0; a.t += F.t; a.taken += h.stat.taken;
+  }));
+  const d = G.HEROES[hid], m = heroMath(G, hid, cfg); const per30 = v => v / a.t * 30;
+  const abTotal = a.ab + a.val;
+  return { id: hid, name: d.name, job: d.cfg.benchJob, size: d.cfg.size, chargeToCast: d.chargeToCast || 100,
+    win: 100 * a.w / a.n, dies: 100 * a.dies / a.n, ehp: m.ehpP, dpsFight: a.dmg / Math.max(1, a.t), fightEhp: m.ehpP + per30(a.sus), dps: a.dmg / Math.max(1, a.life),
+    castsPer30: per30(a.casts), valuePerCast: a.casts ? abTotal / a.casts : 0, abShare: a.dmg ? a.ab / a.dmg : 0, givenPer30: per30(a.given), takenPer30: per30(a.taken) };
+}
+function judge(v, range) { if (!range) return ''; const [lo, hi] = range; return v < lo * 0.9 ? 'LOW' : v > hi * 1.1 ? 'HIGH' : 'ok'; }
+function judgeHero(r, cfg) {
+  const T = cfg.rules.jobTargets[r.job], S = cfg.rules.abilitySizes[r.size]; const out = { ehp: judge(r.fightEhp, T.fightEhp), dps: judge(r.dps, T.dps) };
+  const tv = S.valuePerCast; out.value = r.valuePerCast < tv * 0.75 ? 'LOW' : r.valuePerCast > tv * 1.33 ? 'HIGH' : 'ok';
+  if (r.job === 'support') out.help = judge(r.givenPer30, T.helpGiven);
+  return out;
+}
+
 // ---------------- arithmetic (no simulation) ----------------
 function heroMath(G, id, cfg) {
   const d = G.HEROES[id], c = d.cfg, R = cfg.rules; const m = s => G.mod(c.stats[s]);
@@ -104,10 +134,10 @@ function heroMath(G, id, cfg) {
   const per = (a.n || 1) * (a.x + 1) / 2 + (a.flat || 0) + (a.stat ? (a.half ? Math.floor(m(a.stat) / 2) : m(a.stat)) : 0);
   const rawDps = per * (a.strikes || 1) / a.iv;
   const vsArmor = a.type === 'radiant' ? 1 : K / ((a.type === 'magic' ? 12 : 13) + K);
-  let cast = '';
-  if (d.job === 'attack') cast = `every ${Math.ceil(100 / Math.round(100 * a.iv / R.charge.attackerSecondsPerCast))} attacks (~${R.charge.attackerSecondsPerCast}s of attacking)`;
-  else if (d.job === 'hit') cast = `every ${Math.ceil(100 / (d.cHit || R.charge.perHitTaken))} hits taken`;
-  else { const s = (d.cTime || R.charge.casterBaseSeconds) / Math.max(0.5, 1 + R.charge.casterIntPerModifier * m('INT')); cast = `every ${s.toFixed(1)}s`; }
+  const need = d.chargeToCast || 100; let cast = '';
+  if (d.job === 'attack') { const per = Math.round(100 * a.iv / R.charge.attackerSecondsPerCast); const n = Math.ceil(need / per); cast = `every ${n} attacks (~${f1(n * a.iv)}s)`; }
+  else if (d.job === 'hit') cast = `every ${Math.ceil(need / (d.cHit || R.charge.perHitTaken))} hits taken`;
+  else { const s = need / (100 / (d.cTime || R.charge.casterBaseSeconds) * Math.max(0.5, 1 + R.charge.casterIntPerModifier * m('INT'))); cast = `every ${s.toFixed(1)}s`; }
   return { hp, ehpP: Math.round(hp * (d.ac + K) / K), ehpM: Math.round(hp * (d.sr + K) / K), rawDps, dps: rawDps * vsArmor, cast };
 }
 function enemyMath(G, id, cfg) {
@@ -138,6 +168,8 @@ const COMMANDS = {
   node bench.js cast [heroes...] [--n 100]  The whole cast (or the heroes named): one row each, ability on vs off.
   node bench.js try "<edits>" [heroes...]  Apply number edits, then compare before vs after (test for the named heroes, else whole run).
   node bench.js run [--n 300]             Whole Act 1 bot runs (as in the prototype notes).
+  node bench.js intro                     Each hero alone vs Fight 1 (every starter must clear it).
+  node bench.js jobs [heroes...] [--n 60]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
 
   Edits: "dane.ability.ward.dice=4d8, klarg.hp=110, rules.resistance.K=25"  (start with a hero id, an enemy id, or rules.)
   --preset prototype2   use the numbers from playable prototype 2 (before the 24-25 Nov approved changes).
@@ -145,8 +177,8 @@ const COMMANDS = {
   },
   stats() {
     const cfg = buildConfig(); const G = loadGame(cfg);
-    const hr = Object.keys(G.HEROES).map(id => { const d = G.HEROES[id], x = heroMath(G, id, cfg); return [d.name, d.role.join('/'), d.job, x.hp, d.ac, d.sr, x.ehpP, x.ehpM, f1(x.rawDps), f1(x.dps), x.cast]; });
-    console.log('HEROES (tier 1, no items)\n' + table(['Hero', 'Role', 'Job', 'HP', 'AC', 'SR', 'EHP phys', 'EHP magic', 'Attack DPS raw', 'vs AC13/SR12', 'Ability'], hr));
+    const hr = Object.keys(G.HEROES).map(id => { const d = G.HEROES[id], x = heroMath(G, id, cfg); return [d.name, d.role.join('/'), d.job, x.hp, d.ac, d.sr, x.ehpP, x.ehpM, f1(x.rawDps), f1(x.dps), d.chargeToCast || 100, x.cast]; });
+    console.log('HEROES (tier 1, no items)\n' + table(['Hero', 'Role', 'Job', 'HP', 'AC', 'SR', 'EHP phys', 'EHP magic', 'Attack DPS raw', 'vs AC13/SR12', 'Charge to cast', 'Ability'], hr));
     const er = Object.keys(G.ENEMIES).map(id => { const d = G.ENEMIES[id], x = enemyMath(G, id, cfg); return [d.name, d.rank, d.hp, d.ac, d.sr, x.ehpP, x.ehpM, f1(x.rawDps), f1(x.vsTank), d.ab ? d.ab.name : '']; });
     console.log('\nENEMIES\n' + table(['Enemy', 'Rank', 'HP', 'AC', 'SR', 'EHP phys', 'EHP magic', 'Attack DPS raw', 'vs AC17', 'Ability'], er));
     console.log('\nEHP = HP x (resistance + K) / K, K = ' + cfg.rules.resistance.K + '. Attack DPS is basic attacks only (abilities not included).');
@@ -191,6 +223,26 @@ const COMMANDS = {
     } else { const n = +opt.n || 300; console.log('Before:'); runReport(GB, n); console.log('\nAfter:'); runReport(GA, n); }
   },
   run() { const cfg = buildConfig(); const G = loadGame(cfg); runReport(G, +opt.n || 300); },
+  intro() {
+    const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg); const rows = [];
+    for (const id of Object.keys(G.HEROES)) { let w = 0; const ts = [];
+      for (let i = 0; i < 50; i++) { G.seedRng(5000 + i); const u = G.makeHeroUnit({ id, tier: 1, items: [], train: {}, pos: { x: 2, y: 2 } }); const F = G.makeFight(G.ACT1[0], [u], { headless: true }); while (!F.over) G.stepFight(F); if (F.result === 'win') { w++; ts.push(F.t); } }
+      ts.sort((a, b) => a - b); rows.push([G.HEROES[id].name, (100 * w / 50).toFixed(0) + '%', ts.length ? f1(ts[Math.floor((ts.length - 1) / 2)]) + 's' : '-']); }
+    console.log('Each hero alone vs Fight 1 (Goblin Ambush), 50 tries:\n' + table(['Hero', 'Wins', 'Median length'], rows));
+  },
+  jobs() {
+    const N = +opt.n || 60; const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg); const rows = []; const js = [];
+    for (const id of heroList(G)) { const r = measureHero(G, cfg, id, N); const j = judgeHero(r, cfg); js.push(Object.assign(r, { judge: j })); process.stderr.write('.'); }
+    process.stderr.write('\n');
+    if (opt.json) return console.log(JSON.stringify(js, null, 1));
+    const T = cfg.rules.jobTargets, S = cfg.rules.abilitySizes; const tag = (v, j) => v + (j && j !== 'ok' ? ' ' + j : '');
+    for (const job of ['frontline', 'brawler', 'attacker', 'caster', 'support']) {
+      const g = js.filter(r => r.job === job); if (!g.length) continue; const t = T[job];
+      console.log(`\n${job.toUpperCase()}  targets: fight EHP ${t.fightEhp.join('-')}, damage/s ${t.dps.join('-')}${t.helpGiven ? ', help given ' + t.helpGiven.join('-') : ''}`);
+      console.log(table(['Hero', 'Size', 'Charge', 'Win', 'Dies', 'Fight EHP', 'Damage/s', 'Casts/30s', 'Value/cast (target)', 'Ability share', 'Help given'],
+        g.map(r => [r.name, r.size, r.chargeToCast, f0(r.win) + '%', f0(r.dies) + '%', tag(f0(r.fightEhp), r.judge.ehp), tag(f1(r.dps), r.judge.dps), f1(r.castsPer30), tag(f0(r.valuePerCast), r.judge.value) + ' (' + S[r.size].valuePerCast + ')', f0(100 * r.abShare) + '%', tag(f0(r.givenPer30), r.judge.help)])));
+    }
+  },
 };
 function runReport(G, N) {
   const q = (a, p) => { const s = a.slice().sort((x, y) => x - y); return s[Math.floor((s.length - 1) * p)]; };

@@ -77,7 +77,8 @@ function makeHeroUnit(rec) {
   u.job = def.job || 'time';
   u.cAtk = def.cAtk !== undefined ? def.cAtk : Math.round(100 * def.atk.iv / SETTINGS.atkDiv);
   u.cHit = def.cHit || RULES.charge.perHitTaken;
-  u.cTime = def.cTime || RULES.charge.casterBaseSeconds * (1 + RULES.charge.casterIntPerModifier * Math.max(0, u.m('INT')));
+  u.cTime = def.cTime || RULES.charge.casterBaseSeconds;
+  u.maxCharge = def.chargeToCast || 100; // charge needed to cast: set per hero (ability size)
   if (rec.mc === 'Metamagic' && rec.mcMeta === 'Empowered') u.empower = true;
   if (rec.mc === 'Metamagic' && rec.mcMeta === 'Quickened') u.quick = true;
   return u;
@@ -88,12 +89,12 @@ function makeEnemyUnit(id, x, y) {
   const u = Object.assign(baseUnit(), { side: 'E', def, id, name: def.name, x, y, tier: 1, boss: def.rank === 'Boss', elite: def.rank === 'Elite' });
   u.maxHp = def.hp; u.hp = def.hp; u.ac = def.ac; u.sr = def.sr; u.range = def.range || 1;
   u.atk = Object.assign({}, def.atk); u.ab = def.ab || null; u.as = 0; u.cr = 0; u.rollB = 0; u.dieUp = 0; u.flat = def.atk.flat || 0; u.pen = 0; u.spen = 0; u.regen = 0;
-  u.atkIvBase = def.atk.iv; u.ratio = 1; u.job = def.ab ? (def.ab.job || 'time') : 'none'; u.cAtk = def.ab && def.ab.perAtk || 0; u.cHit = 0; u.cTime = def.ab ? def.ab.iv : 99; u.stats = { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 }; u.m = () => 0; u.keyMod = def.keyMod || 0;
+  u.atkIvBase = def.atk.iv; u.ratio = 1; u.job = def.ab ? (def.ab.job || 'time') : 'none'; u.cAtk = def.ab && def.ab.perAtk || 0; u.cHit = 0; u.cTime = def.ab ? def.ab.iv : 99; u.stats = { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 }; u.m = () => 0; u.maxCharge = 100; u.keyMod = def.keyMod || 0;
   return u;
 }
 
 function startUnit(F, u) {
-  u.charge = Math.min(100, (u.sc || 0) + (u.side === 'H' ? Math.min(RULES.charge.chaStartChargeMax, Math.max(0, RULES.charge.chaStartChargePerModifier * u.m('CHA'))) : 0));
+  u.charge = Math.min(u.maxCharge, (u.sc || 0) + (u.side === 'H' ? Math.min(RULES.charge.chaStartChargeMax, Math.max(0, RULES.charge.chaStartChargePerModifier * u.m('CHA'))) : 0));
   u.atkT = atkIv(u) * 0.5;
   if (u.side === 'H') {
     if (u.it.boots_elvenkind || u.it.glamoured) u.st.stealth = 2.5;
@@ -152,7 +153,7 @@ function applyControl(F, src, t, kind, dur, extra) {
   if (t.def && t.def.immune && t.def.immune.includes(kind)) return false;
   if (t.boss) dur *= RULES.statuses.bossControlShare;
   if (src && t.side !== src.side && RULES.resistance.controlReadsSr) dur *= (1 - resist(t.sr));
-  if (kind === 'stun') { if (t.st.stunImm > 0) return false; t.st.stun = Math.max(t.st.stun, dur); t.st.stunImm = dur + RULES.statuses.stunImmunityAfter; if (t.casting) { t.casting = false; t.charge = Math.max(t.charge, 50); } fx(F, t, 'stun', '#ffd75e'); }
+  if (kind === 'stun') { if (t.st.stunImm > 0) return false; t.st.stun = Math.max(t.st.stun, dur); t.st.stunImm = dur + RULES.statuses.stunImmunityAfter; if (t.casting) { t.casting = false; t.charge = Math.max(t.charge, t.maxCharge * RULES.charge.refundShare); } fx(F, t, 'stun', '#ffd75e'); }
   else if (kind === 'root') { t.st.root = Math.max(t.st.root, dur); }
   else if (kind === 'taunt') { t.st.taunt = dur; t.st.tauntSrc = src; t.target = src; }
   else if (kind === 'slow') { if (extra >= t.st.slow || t.st.slowT <= 0) { t.st.slow = extra; t.st.slowT = dur; } else t.st.slowT = Math.max(t.st.slowT, dur); }
@@ -216,7 +217,7 @@ function dealDamage(F, src, t, raw, type, o = {}) {
   if (src && src !== t && t.alive === false && src.alive) onKill(F, src, t, type);
   return amt + absorbed;
 }
-function addCharge(u, amt) { if (!u.ab || u.st.stun > 0 || u.casting) return; const m = (1 + (u.cr || 0)) * (u.encore > 0 && u.st.inspired > 0 ? 1 + u.encore : 1); u.charge = Math.min(100, u.charge + amt * m); }
+function addCharge(u, amt) { if (!u.ab || u.st.stun > 0 || u.casting) return; const m = (1 + (u.cr || 0)) * (u.encore > 0 && u.st.inspired > 0 ? 1 + u.encore : 1); u.charge = Math.min(u.maxCharge, u.charge + amt * m); }
 function hitCharge(t) { if (t.job === 'hit') addCharge(t, t.cHit); }
 function ev(F, e) { if (!F.headless) { e.t0 = F.t; F.ev.push(e); } }
 function fireHalf(F, t) {
@@ -236,7 +237,7 @@ function die(F, t, src, type) {
   }
   if (t.onGone) t.onGone(F, t, true);
 }
-function onGoldDrop(F) { for (const h of F.units) if (h.alive && h.id === 'gains' && h.t2 != null) { const g = h.def.cfg.t2; h.charge = Math.min(100, h.charge + g.chargePerGoldDrop); if (h.t2 === 1) for (const a of alliesOf(F, h)) if (a !== h) a.charge = Math.min(100, a.charge + g.liquidAssets.allyCharge); } }
+function onGoldDrop(F) { for (const h of F.units) if (h.alive && h.id === 'gains' && h.t2 != null) { const g = h.def.cfg.t2; h.charge = Math.min(h.maxCharge, h.charge + g.chargePerGoldDrop); if (h.t2 === 1) for (const a of alliesOf(F, h)) if (a !== h) a.charge = Math.min(a.maxCharge, a.charge + g.liquidAssets.allyCharge); } }
 function onKill(F, u, t, type) {
   if (u.def.onKill) u.def.onKill(F, u, t, type);
   if (t.side === 'E' && t.pickpocket) { F.gold++; fx(F, t, '+1g', '#ffd75e'); onGoldDrop(F); }
@@ -307,7 +308,7 @@ function atkIv(u) {
   return Math.max(0.3, iv);
 }
 function basicAttack(F, u, t) {
-  const a = u.atk; const strikes = a.strikes || 1;
+  const a = u.atk; const strikes = u.def.strikesVs ? u.def.strikesVs(F, u, t) : (a.strikes || 1);
   if (u.st.stealth > 0) { u.st.stealth = 0; u.stealthStrike = true; }
   for (let i = 0; i < strikes; i++) { if (!t.alive) break; strike(F, u, t, {}); }
   if (u.def.onAttack) u.def.onAttack(F, u, t);
@@ -425,10 +426,10 @@ function tickUnit(F, u) {
   if (S.stun > 0) return;
   if (u.ab && !u.casting && u.job === 'time') {
     const intMod = u.side === 'H' ? u.m('INT') : 0;
-    addCharge(u, (100 / u.cTime) * Math.max(0.5, 1 + 0.1 * intMod) * DT);
+    addCharge(u, (100 / u.cTime) * Math.max(0.5, 1 + RULES.charge.casterIntPerModifier * intMod) * DT);
   }
   if (u.casting) { u.castT -= DT; if (u.castT <= 0) { u.casting = false; resolveCast(F, u); } return; }
-  if (u.ab && u.charge >= 100 && F.t - u.lastCast >= RULES.charge.minSecondsBetweenCasts && (!u.ab.can || u.ab.can(F, u))) {
+  if (u.ab && u.charge >= u.maxCharge && F.t - u.lastCast >= RULES.charge.minSecondsBetweenCasts && (!u.ab.can || u.ab.can(F, u))) {
     u.charge = 0; u.lastCast = F.t; if (S.stealth > 0 && !u.ab.keepStealth) { S.stealth = 0; u.stealthStrike = true; }
     const ct = u.quick ? 0 : (u.ab.ct || 0);
     if (ct > 0) { u.casting = true; u.castT = ct; u.castT0 = ct; } else resolveCast(F, u);
@@ -453,12 +454,12 @@ function resolveCast(F, u) {
   const r = abilityRoll(F, u);
   u.atkT = atkIv(u);
   ev(F, { k: 'd20', u, nat: r.nat });
-  if (r.fizzle) { u.charge = RULES.charge.fizzleRefund; u.fizzles = (u.fizzles || 0) + 1; return; }
+  if (r.fizzle) { u.charge = u.maxCharge * RULES.charge.refundShare; u.fizzles = (u.fizzles || 0) + 1; return; }
   u.casts = (u.casts || 0) + 1;
   if (u.mote && !u.def.dmgAb) { const t = acquire(F, u) || nearest(tfoes(F, u), u); if (t) { dealDamage(F, u, t, rollDice(u.mote.n, u.mote.x || 8, r.crit) + u.mote.flat, 'magic', { ability: true, crit: r.crit }); motePop(F, u, r); } u.mote = null; }
   u.ab.cast(F, u, r);
   if (u.mote && r) u.mote = null;
-  if (u.gk.has('Arcane Recovery') || (u.it && u.it.grimoire)) u.charge = Math.min(100, u.charge + 15);
+  if (u.gk.has('Arcane Recovery') || (u.it && u.it.grimoire)) u.charge = Math.min(u.maxCharge, u.charge + 15);
   if (u.gk.has('Bardic Inspiration') || (u.it && u.it.bard_instrument)) { const a = nearest(alliesOf(F, u).filter(o => o !== u && o.ab), u); if (a) a.inspireDie = 6; }
   if (u.side === 'H') for (const a of alliesOf(F, u)) if (a.def.onAllyCast) a.def.onAllyCast(F, a, u, r);
 }
@@ -469,7 +470,7 @@ function summonDouble(F, src, ally, life, hpShare = 0.2) {
   const dbl = Object.assign(baseUnit(), { side: 'H', def: ally.def, id: ally.id, name: ally.name + "'s Double", summon: true, isDouble: true, tier: ally.tier, x: c.x, y: c.y, life });
   dbl.stats = Object.assign({}, ally.stats); dbl.m = k => mod(dbl.stats[k]); dbl.ac = ally.ac; dbl.sr = ally.sr; dbl.as = ally.as; dbl.cr = 0; dbl.rollB = 0; dbl.dieUp = ally.dieUp; dbl.flat = ally.flat; dbl.pen = ally.pen; dbl.spen = 0; dbl.regen = 0;
   dbl.range = ally.range; dbl.atk = Object.assign({}, ally.atk); dbl.ab = null; dbl.atkIvBase = ally.atkIvBase; dbl.ratio = ally.ratio; dbl.key = ally.key;
-  dbl.maxHp = Math.max(5, Math.floor(ally.maxHp * hpShare)); dbl.hp = dbl.maxHp; dbl.lastStand = true; dbl.atkT = 0.3; dbl.onHitItems = [];
+  dbl.maxCharge = 100; dbl.maxHp = Math.max(5, Math.floor(ally.maxHp * hpShare)); dbl.hp = dbl.maxHp; dbl.lastStand = true; dbl.atkT = 0.3; dbl.onHitItems = [];
   addUnit(F, dbl);
   return dbl;
 }
