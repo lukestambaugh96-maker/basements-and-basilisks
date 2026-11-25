@@ -13,6 +13,41 @@
     "heroes.jamison.ability.allies": { "low": 1, "mid": 1, "high": 2 },
     "heroes.jamison.ability.ward": null,
     "rules.statuses.restrained.attackSlow": 0,
-    "rules.ward.stacking": "biggest wins"
+    "rules.ward.stacking": "biggest wins",
+    "heroes.faelan.castSeconds": 6.5,
+    "heroes.faelan.chargeToCast": 100,
+    "heroes.rosalind.castSeconds": 5,
+    "heroes.rosalind.chargeToCast": 100,
+    "heroes.jamison.castSeconds": 5,
+    "heroes.jamison.chargeToCast": 100,
+    "heroes.zoe.castSeconds": 5.5,
+    "heroes.zoe.chargeToCast": 100,
+    "heroes.toot.castSeconds": 5,
+    "heroes.toot.chargeToCast": 100,
+    "heroes.cinder.castSeconds": 8,
+    "heroes.cinder.chargeToCast": 100,
+    "heroes.gains.castSeconds": 6.5,
+    "heroes.gains.chargeToCast": 100,
+    "heroes.saint.castSeconds": 5,
+    "heroes.saint.chargeToCast": 100,
+    "heroes.toot.enabled": true,
+    "heroes.cinder.ability": {
+      "name": "Fireball",
+      "castTime": 1.25,
+      "damage": { "dice": "4d6", "perTier": true },
+      "type": "magic",
+      "radius": { "low": 0, "mid": 1, "high": 2 }
+    },
+    "heroes.cinder.t2": {
+      "feature": "Metamagic",
+      "twinnedSpell": { "damage": { "dice": "2d6", "perTier": true } },
+      "empoweredSpell": { "rerollUpTo": 2 }
+    },
+    "heroes.corvin.startCharge": 50,
+    "heroes.corvin.attack.bonus": "DEX",
+    "heroes.corvin.ability.strike.dice": "1d8",
+    "heroes.corvin.attack.strikes": 2,
+    "heroes.corvin.attack.strikesVsMarked": null,
+    "heroes.corvin.ability.marksTarget": false
   }
 }
