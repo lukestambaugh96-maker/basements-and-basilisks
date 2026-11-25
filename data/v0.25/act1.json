@@ -1,0 +1,391 @@
+{
+ "_about": "Act 1 (Lost Mine of Phandelver) first pass, from the balance sheet 'Act 1 Phandelver' tab. Rules: docs/v0.25/act1-phandelver-encounters.md.",
+ "enemies": [
+  {
+   "key": "goblin",
+   "name": "Goblin",
+   "rank": "Regular",
+   "hp": 26,
+   "ac": 12,
+   "sr": 10,
+   "dice": 1,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 1.4,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Melee only in the intro fight."
+  },
+  {
+   "key": "goblin_archer",
+   "name": "Goblin Archer",
+   "rank": "Regular",
+   "hp": 30,
+   "ac": 12,
+   "sr": 10,
+   "dice": 1,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 1.8,
+   "damageType": "Physical",
+   "range": 4,
+   "trait": "Shoots from range 4."
+  },
+  {
+   "key": "ripper",
+   "name": "Ripper (Klarg's wolf)",
+   "rank": "Regular",
+   "hp": 90,
+   "ac": 13,
+   "sr": 10,
+   "dice": 1,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 1.8,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Charger: when the fight starts, leaps onto the rearmost hero (closest to the heroes' back edge)."
+  },
+  {
+   "key": "klarg",
+   "name": "Klarg (bugbear)",
+   "rank": "Elite",
+   "hp": 300,
+   "ac": 15,
+   "sr": 11,
+   "dice": 2,
+   "die": 8,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 3.2,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Surprise Attack (d20, ~12s): smashes his current target. Low 2d8+2, Mid 3d8+2, High 3d8+2 and stun 1s. No leap."
+  },
+  {
+   "key": "redbrand",
+   "name": "Redbrand Ruffian",
+   "rank": "Regular",
+   "hp": 120,
+   "ac": 14,
+   "sr": 10,
+   "dice": 1,
+   "die": 4,
+   "bonus": 0,
+   "hitsPerAttack": 2,
+   "attackInterval": 2.0,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Two strikes per attack."
+  },
+  {
+   "key": "glasstaff",
+   "name": "Glasstaff (Iarno)",
+   "rank": "Elite",
+   "hp": 240,
+   "ac": 12,
+   "sr": 16,
+   "dice": 1,
+   "die": 4,
+   "bonus": 0,
+   "hitsPerAttack": 3,
+   "attackInterval": 1.8,
+   "damageType": "Magic",
+   "range": 4,
+   "trait": "Attack: Magic Missile, 3 darts at the lowest-HP hero. Staff of Defense (d20, ~14s): Ward on himself 2d10+INT (High 3d10). Once, at half HP, teleports to the farthest corner."
+  },
+  {
+   "key": "twig_blight",
+   "name": "Twig Blight",
+   "rank": "Regular",
+   "hp": 40,
+   "ac": 12,
+   "sr": 8,
+   "dice": 1,
+   "die": 4,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 1.7,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Many small hits."
+  },
+  {
+   "key": "needle_blight",
+   "name": "Needle Blight",
+   "rank": "Regular",
+   "hp": 85,
+   "ac": 12,
+   "sr": 9,
+   "dice": 1,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 2.8,
+   "damageType": "Physical",
+   "range": 3,
+   "trait": "Range 3."
+  },
+  {
+   "key": "vine_blight",
+   "name": "Vine Blight",
+   "rank": "Elite",
+   "hp": 310,
+   "ac": 12,
+   "sr": 10,
+   "dice": 2,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 3.2,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Entangle (d20, ~12s): roots its target and heroes next to it for 1.5/2/3s, 1d6 each. Rooted heroes cast with Disadvantage."
+  },
+  {
+   "key": "ash_zombie",
+   "name": "Ash Zombie",
+   "rank": "Regular",
+   "hp": 140,
+   "ac": 9,
+   "sr": 8,
+   "dice": 1,
+   "die": 8,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 3.0,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "On death, inflicts 2 poison on adjacent heroes."
+  },
+  {
+   "key": "flameskull",
+   "name": "Flameskull",
+   "rank": "Elite",
+   "hp": 170,
+   "ac": 13,
+   "sr": 16,
+   "dice": 2,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 3.0,
+   "damageType": "Magic",
+   "range": 4,
+   "trait": "Fireball (d20, ~13s): 3d6 (High 4d6) to its target and everyone next to them. Rejuvenation (once): drops its skull (20 HP, AC 10) for 6s; destroy it or it re-forms at half HP. A Radiant killing blow skips the skull."
+  },
+  {
+   "key": "ghoul",
+   "name": "Ghoul",
+   "rank": "Regular",
+   "hp": 150,
+   "ac": 12,
+   "sr": 10,
+   "dice": 1,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 2,
+   "attackInterval": 2.7,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Two claws per attack; every 3rd hit on the same hero stuns it 0.5s."
+  },
+  {
+   "key": "nezznar",
+   "name": "Nezznar (Black Spider)",
+   "rank": "Boss",
+   "hp": 820,
+   "ac": 14,
+   "sr": 16,
+   "dice": 2,
+   "die": 8,
+   "bonus": 2,
+   "hitsPerAttack": 1,
+   "attackInterval": 2.2,
+   "damageType": "Magic",
+   "range": 4,
+   "trait": "Web (d20, ~12s): roots the 2 nearest heroes 2s/3s, 2d6 each. At half HP, Darkness: Stealth 3s, then reappears in a back corner."
+  },
+  {
+   "key": "giant_spider",
+   "name": "Giant Spider",
+   "rank": "Regular",
+   "hp": 125,
+   "ac": 14,
+   "sr": 11,
+   "dice": 1,
+   "die": 8,
+   "bonus": 1,
+   "hitsPerAttack": 1,
+   "attackInterval": 2.2,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Bite inflicts 1 poison."
+  },
+  {
+   "key": "venomfang",
+   "name": "Venomfang (green dragon)",
+   "rank": "Boss",
+   "hp": 1000,
+   "ac": 17,
+   "sr": 14,
+   "dice": 2,
+   "die": 10,
+   "bonus": 2,
+   "hitsPerAttack": 1,
+   "attackInterval": 2.6,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Large (2x2). Poison Breath (d20, ~13s): 3-square cone, 4d6 and inflict 3 poison (High 5). At half HP, Wing Buffet pushes adjacent heroes back 1 square."
+  },
+  {
+   "key": "king_grol",
+   "name": "King Grol (bugbear chief)",
+   "rank": "Boss",
+   "hp": 930,
+   "ac": 16,
+   "sr": 12,
+   "dice": 2,
+   "die": 8,
+   "bonus": 2,
+   "hitsPerAttack": 1,
+   "attackInterval": 2.8,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Brutal Charge (d20, ~12s): charges the rearmost hero within 4 squares for 4d8+3, stun 1s (High 1.5s); else smashes his target. At half HP, attacks 30% faster."
+  },
+  {
+   "key": "wolf",
+   "name": "Wolf",
+   "rank": "Regular",
+   "hp": 70,
+   "ac": 12,
+   "sr": 9,
+   "dice": 1,
+   "die": 6,
+   "bonus": 0,
+   "hitsPerAttack": 1,
+   "attackInterval": 1.8,
+   "damageType": "Physical",
+   "range": 1,
+   "trait": "Fast melee."
+  }
+ ],
+ "encounters": [
+  {
+   "fight": 1,
+   "name": "Goblin Ambush",
+   "place": "Triboar Trail",
+   "units": {
+    "goblin": 2
+   },
+   "terrain": null,
+   "targetSeconds": [
+    8,
+    14
+   ]
+  },
+  {
+   "fight": 2,
+   "name": "Klarg's Cave",
+   "place": "Cragmaw Hideout",
+   "units": {
+    "klarg": 1,
+    "ripper": 1,
+    "goblin": 2
+   },
+   "terrain": "Flood channel: at 10s water rushes down the bottom row, pushing anyone in it 2 squares left.",
+   "targetSeconds": [
+    30,
+    40
+   ]
+  },
+  {
+   "fight": 3,
+   "name": "Glasstaff's Hideout",
+   "place": "Tresendar Manor",
+   "units": {
+    "glasstaff": 1,
+    "redbrand": 2
+   },
+   "terrain": "A crevasse splits the enemy half with one bridge (1 square wide); Glasstaff starts behind it.",
+   "targetSeconds": [
+    30,
+    40
+   ]
+  },
+  {
+   "fight": 4,
+   "name": "Thundertree",
+   "place": "Thundertree Ruins",
+   "units": {
+    "vine_blight": 1,
+    "needle_blight": 2,
+    "ash_zombie": 1,
+    "twig_blight": 2
+   },
+   "terrain": "Ruined cottage walls block line of sight.",
+   "targetSeconds": [
+    35,
+    45
+   ]
+  },
+  {
+   "fight": 5,
+   "name": "Forge of Spells",
+   "place": "Wave Echo Cave",
+   "units": {
+    "flameskull": 2,
+    "ghoul": 2
+   },
+   "terrain": "The Forge: a hero adjacent to it adds +1 die to their ability.",
+   "targetSeconds": [
+    35,
+    45
+   ]
+  },
+  {
+   "fight": "boss",
+   "name": "Nezznar, the Black Spider",
+   "units": {
+    "nezznar": 1,
+    "giant_spider": 2
+   },
+   "terrain": "Webbed squares: entering one roots you 1s.",
+   "targetSeconds": [
+    45,
+    60
+   ]
+  },
+  {
+   "fight": "boss",
+   "name": "Venomfang",
+   "units": {
+    "venomfang": 1,
+    "twig_blight": 2
+   },
+   "terrain": "Ruined tower: high ground, +1 range for heroes on it.",
+   "targetSeconds": [
+    45,
+    60
+   ]
+  },
+  {
+   "fight": "boss",
+   "name": "King Grol",
+   "units": {
+    "king_grol": 1,
+    "wolf": 2,
+    "goblin_archer": 1
+   },
+   "terrain": "Castle gate: a one-at-a-time choke point.",
+   "targetSeconds": [
+    45,
+    60
+   ]
+  }
+ ]
+}

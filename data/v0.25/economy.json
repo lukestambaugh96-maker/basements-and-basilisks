@@ -1,0 +1,29 @@
+{
+ "_about": "Economy (Luke, 2026-11-23). Uncommon and class-item prices are Claude's suggestions.",
+ "startingGold": 10,
+ "starterHero": "free",
+ "heroPriceByTier": {
+  "1": 15,
+  "2": 25,
+  "3": 35,
+  "4": 45
+ },
+ "itemPriceByRarity": {
+  "Common": 5,
+  "Uncommon": 10,
+  "Rare": 15,
+  "Very Rare": 25,
+  "Legendary": 35,
+  "Unique (class)": 15
+ },
+ "sale": "25% off",
+ "sellBack": "66% of purchase price",
+ "reroll": "1 gold, +1 per reroll in the same shop",
+ "goldPerWin": {
+  "act1": 20,
+  "act2": 25
+ },
+ "bossAndRousing": 75,
+ "interest": "1 gold per 5 saved, counting savings up to 20 (max +4)",
+ "shopHeroOffers": 3
+}
