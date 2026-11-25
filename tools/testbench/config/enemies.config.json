@@ -1,0 +1,324 @@
+{
+  "_about": "Basements & Basilisks v0.25: every Act 1 enemy and encounter number (prototype 2 values, 24 Nov). Read by the test bench. Behaviour lives in testbench/behaviour.js.",
+  "_howToRead": {
+    "attack": "dice per strike, flat added, seconds between attacks (interval), strikes per attack, type physical or magic.",
+    "abilityRollBonus": "Added to the enemy's d20 ability roll (Low at 5 or less, High at 14 or more).",
+    "charge": "chargePerAttack: the ability charges from attacks. Otherwise it charges over castSeconds.",
+    "positions": "Encounter positions are { x, y } on the 8 x 6 map; heroes start on the left (columns 0-3)."
+  },
+  "enemies": {
+    "goblin": {
+      "name": "Goblin",
+      "chassis": "Swarmer",
+      "rank": "Regular",
+      "hp": 23,
+      "ac": 12,
+      "sr": 9,
+      "range": 1,
+      "attack": { "dice": "1d4+1", "interval": 1 }
+    },
+    "goblin_archer": {
+      "name": "Goblin Archer",
+      "chassis": "Shooter",
+      "rank": "Regular",
+      "hp": 30,
+      "ac": 12,
+      "sr": 10,
+      "range": 4,
+      "attack": { "dice": "2d10+4", "interval": 1.4 }
+    },
+    "ripper": {
+      "name": "Ripper",
+      "chassis": "Brute",
+      "rank": "Regular",
+      "hp": 80,
+      "ac": 13,
+      "sr": 10,
+      "range": 1,
+      "attack": { "dice": "2d6", "interval": 1.6, "strikes": 2 }
+    },
+    "klarg": {
+      "name": "Klarg",
+      "chassis": "Brute",
+      "rank": "Elite",
+      "hp": 120,
+      "ac": 13,
+      "sr": 10,
+      "range": 1,
+      "abilityRollBonus": 2,
+      "attack": { "dice": "4d6", "interval": 1.6 },
+      "ability": {
+        "name": "Crushing Swing",
+        "chargePerAttack": 25,
+        "castTime": 0,
+        "damage": { "low": "3d8+4", "mid": "3d8+4", "high": "4d8+4" },
+        "stunSeconds": { "low": 0, "mid": 1, "high": 1 }
+      }
+    },
+    "redbrand": {
+      "name": "Redbrand Ruffian",
+      "chassis": "Bulwark",
+      "rank": "Regular",
+      "hp": 100,
+      "ac": 17,
+      "sr": 12,
+      "range": 1,
+      "attack": { "dice": "1d8", "interval": 1.6, "strikes": 2 }
+    },
+    "glasstaff": {
+      "name": "Glasstaff",
+      "chassis": "Shooter",
+      "rank": "Elite",
+      "affix": "Warded",
+      "hp": 48,
+      "ac": 12,
+      "sr": 14,
+      "range": 4,
+      "abilityRollBonus": 2,
+      "attack": { "dice": "2d10+4", "interval": 1.4, "type": "magic" },
+      "ability": {
+        "name": "Magic Missile",
+        "castSeconds": 6,
+        "castTime": 0.3,
+        "darts": { "low": 2, "mid": 3, "high": 3 },
+        "dart": { "dice": "1d6+1" },
+        "highWard": { "dice": "2d10+2" }
+      }
+    },
+    "vine": {
+      "name": "Vine Blight",
+      "chassis": "Controller",
+      "rank": "Elite",
+      "hp": 120,
+      "ac": 13,
+      "sr": 13,
+      "range": 3,
+      "attack": { "dice": "2d8+1", "interval": 2, "type": "magic" },
+      "pullAtStart": { "restrainSeconds": 1.5 },
+      "restrainEveryNthHit": 3,
+      "restrainSeconds": 1.5
+    },
+    "twig": {
+      "name": "Twig Blight",
+      "chassis": "Swarmer",
+      "rank": "Regular",
+      "hp": 28,
+      "ac": 12,
+      "sr": 9,
+      "range": 1,
+      "attack": { "dice": "2d4+1", "interval": 1 }
+    },
+    "needle": {
+      "name": "Needle Blight",
+      "chassis": "Shooter",
+      "rank": "Regular",
+      "hp": 30,
+      "ac": 12,
+      "sr": 10,
+      "range": 3,
+      "attack": { "dice": "2d10", "interval": 1.4 }
+    },
+    "flameskull": {
+      "name": "Flameskull",
+      "chassis": "Artillery",
+      "rank": "Elite",
+      "hp": 120,
+      "ac": 12,
+      "sr": 16,
+      "range": 4,
+      "abilityRollBonus": 2,
+      "splash": true,
+      "attack": { "dice": "3d6", "interval": 2.5, "type": "magic" },
+      "ability": {
+        "name": "Fireball",
+        "castSeconds": 11,
+        "castTime": 0.6,
+        "damage": { "low": "3d6", "mid": "5d6", "high": "7d6" }
+      }
+    },
+    "lesser_skull": {
+      "name": "Lesser Flameskull",
+      "chassis": "Artillery",
+      "rank": "Regular",
+      "hp": 60,
+      "ac": 12,
+      "sr": 16,
+      "range": 4,
+      "splash": true,
+      "attack": { "dice": "3d6", "interval": 2.5, "type": "magic" }
+    },
+    "ghoul": {
+      "name": "Ghoul",
+      "chassis": "Brute",
+      "rank": "Regular",
+      "affix": "Stunning",
+      "hp": 60,
+      "ac": 13,
+      "sr": 10,
+      "range": 1,
+      "attack": { "dice": "2d6", "interval": 1.6, "strikes": 2 },
+      "stunEveryNthHitOnSameHero": 3,
+      "stunSeconds": 0.5
+    },
+    "venomfang": {
+      "name": "Venomfang",
+      "chassis": "Brute",
+      "rank": "Boss",
+      "hp": 490,
+      "ac": 17,
+      "sr": 14,
+      "range": 1,
+      "abilityRollBonus": 3,
+      "attack": { "dice": "4d6+4", "interval": 1.6 },
+      "halfHp": { "name": "Wing Buffet", "damage": { "dice": "2d6" }, "pushSquares": 2, "rechargesBreath": true },
+      "ability": {
+        "name": "Poison Breath",
+        "castSeconds": 7,
+        "castTime": 0.6,
+        "damage": { "low": "4d6+6", "mid": "4d6+6", "high": "4d6+6" },
+        "poison": { "low": 3, "mid": 3, "high": 5 }
+      }
+    },
+    "nezznar": {
+      "name": "Nezznar",
+      "chassis": "Controller",
+      "rank": "Boss",
+      "hp": 310,
+      "ac": 14,
+      "sr": 16,
+      "range": 4,
+      "abilityRollBonus": 3,
+      "attack": { "dice": "2d8+6", "interval": 2, "type": "magic" },
+      "halfHp": { "name": "Darkness", "seconds": 6 },
+      "ability": {
+        "name": "Web",
+        "castSeconds": 7,
+        "castTime": 0.4,
+        "heroes": 2,
+        "restrainSeconds": { "low": 2, "mid": 2, "high": 3 },
+        "damage": { "low": "2d6+2", "mid": "2d6+2", "high": "2d6+2" }
+      }
+    },
+    "giant_spider": {
+      "name": "Giant Spider",
+      "chassis": "Brute",
+      "rank": "Regular",
+      "hp": 70,
+      "ac": 13,
+      "sr": 10,
+      "range": 1,
+      "attack": { "dice": "2d6", "interval": 1.6, "strikes": 2 }
+    },
+    "grol": {
+      "name": "King Grol",
+      "chassis": "Brute",
+      "rank": "Boss",
+      "hp": 510,
+      "ac": 16,
+      "sr": 12,
+      "range": 1,
+      "abilityRollBonus": 3,
+      "attack": { "dice": "4d6", "interval": 1.6 },
+      "halfHp": { "name": "Enraged", "attackSpeedMultiplier": 0.7 },
+      "ability": {
+        "name": "Brutal Charge",
+        "castSeconds": 10,
+        "castTime": 0.3,
+        "damage": { "low": "3d8+4", "mid": "4d8+4", "high": "4d8+4" },
+        "stunSeconds": { "low": 0, "mid": 1, "high": 1.5 }
+      }
+    },
+    "wolf": {
+      "name": "Cragmaw Wolf",
+      "chassis": "Swarmer",
+      "rank": "Regular",
+      "affix": "Pack",
+      "hp": 28,
+      "ac": 12,
+      "sr": 9,
+      "range": 1,
+      "moveSeconds": 0.35,
+      "attack": { "dice": "2d4+1", "interval": 1 },
+      "packAttackSpeed": 0.15
+    },
+    "bugbear": {
+      "name": "Bugbear",
+      "chassis": "Brute",
+      "rank": "Elite",
+      "hp": 130,
+      "ac": 13,
+      "sr": 10,
+      "range": 1,
+      "abilityRollBonus": 2,
+      "attack": { "dice": "4d6", "interval": 1.6 },
+      "ability": {
+        "name": "Crushing Swing",
+        "chargePerAttack": 25,
+        "castTime": 0,
+        "damage": { "low": "3d8+4", "mid": "3d8+4", "high": "4d8+4" },
+        "stunSeconds": { "low": 0, "mid": 1, "high": 1 }
+      }
+    }
+  },
+  "encounters": [
+    {
+      "id": "goblins",
+      "name": "Goblin Ambush",
+      "enemies": [["goblin", 5, 2], ["goblin", 5, 3]],
+      "terrain": []
+    },
+    {
+      "id": "klarg",
+      "name": "Klarg's Cave",
+      "enemies": [["klarg", 5, 3], ["ripper", 5, 4], ["goblin_archer", 7, 0]],
+      "terrain": [["rock", 5, 1], ["rock", 6, 1], ["rock", 7, 1]]
+    },
+    {
+      "id": "glasstaff",
+      "name": "Glasstaff's Hideout",
+      "enemies": [["glasstaff", 7, 2], ["redbrand", 5, 2], ["redbrand", 4, 2]],
+      "terrain": [["chasm", 5, 0], ["chasm", 5, 1], ["chasm", 5, 3], ["chasm", 5, 4], ["chasm", 5, 5]]
+    },
+    {
+      "id": "thundertree",
+      "name": "Thundertree",
+      "enemies": [["vine", 7, 2], ["twig", 6, 1], ["twig", 7, 1], ["twig", 6, 3], ["twig", 7, 3], ["needle", 6, 5]],
+      "terrain": [
+        ["wall", 5, 0],
+        ["wall", 6, 0],
+        ["wall", 7, 0],
+        ["wall", 5, 1],
+        ["wall", 5, 3],
+        ["wall", 5, 4],
+        ["wall", 6, 4],
+        ["wall", 7, 4]
+      ]
+    },
+    {
+      "id": "forge",
+      "name": "Forge of Spells",
+      "enemies": [["flameskull", 7, 1], ["lesser_skull", 7, 4], ["ghoul", 5, 2], ["ghoul", 5, 3]],
+      "terrain": [["forge", 3, 2]]
+    }
+  ],
+  "bosses": [
+    {
+      "id": "venomfang",
+      "name": "Venomfang",
+      "enemies": [["venomfang", 6, 2]],
+      "terrain": [["tower", 1, 2], ["tower", 1, 3]]
+    },
+    {
+      "id": "nezznar",
+      "name": "Nezznar, the Black Spider",
+      "enemies": [["nezznar", 7, 2], ["giant_spider", 5, 1], ["giant_spider", 5, 3], ["giant_spider", 5, 5]],
+      "terrain": [["web", 4, 1], ["web", 4, 2], ["web", 4, 4], ["web", 3, 3], ["web", 5, 4]]
+    },
+    {
+      "id": "grol",
+      "name": "King Grol",
+      "enemies": [["grol", 6, 2], ["wolf", 5, 1], ["wolf", 5, 3]],
+      "terrain": [["gate", 4, 0], ["gate", 4, 1], ["gate", 4, 3], ["gate", 4, 4], ["gate", 4, 5]]
+    }
+  ]
+}

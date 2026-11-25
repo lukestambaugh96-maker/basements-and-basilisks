@@ -1,0 +1,18 @@
+{
+  "_about": "The numbers as they were in playable prototype 2 (24 Nov), before tonight's approved changes. Use with --preset prototype2 to compare against it.",
+  "edits": {
+    "heroes.dane.ability.ward": null,
+    "heroes.dane.ability.smite": { "dice": "1d6", "perTier": true },
+    "heroes.gilthrax.ability.ward": { "dice": "1d10", "perTier": true, "bonus": "CON" },
+    "heroes.juniper.ability.wardPerFoe": null,
+    "heroes.bram.ability.heal": { "dice": "2d8", "perTier": true, "bonus": "WIS", "high": "+1" },
+    "heroes.bram.ability.selfHealShare": 0.5,
+    "heroes.laurel.ability.healShareOfDamage": 0.5,
+    "heroes.rosalind.ability.attackSpeed": 0.15,
+    "heroes.rosalind.ability.target": "closest ally",
+    "heroes.jamison.ability.allies": { "low": 1, "mid": 1, "high": 2 },
+    "heroes.jamison.ability.ward": null,
+    "rules.statuses.restrained.attackSlow": 0,
+    "rules.ward.stacking": "biggest wins"
+  }
+}
