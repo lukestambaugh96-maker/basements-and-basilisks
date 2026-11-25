@@ -1,0 +1,44 @@
+{
+  "_about": "Game-wide rules and numbers that aren't one hero's or enemy's. Approved changes through 25 Nov are in.",
+  "map": { "columns": 8, "rows": 6 },
+  "fight": { "tickSeconds": 0.05, "timeoutSeconds": 120 },
+  "hp": {
+    "base": 60,
+    "hitDiceAtTier": 8,
+    "hitDie": {
+      "Fighter": 10,
+      "Paladin": 10,
+      "Ranger": 10,
+      "Barbarian": 12,
+      "Cleric": 8,
+      "Druid": 8,
+      "Monk": 8,
+      "Rogue": 8,
+      "Bard": 8,
+      "Warlock": 8,
+      "Wizard": 6,
+      "Sorcerer": 6
+    }
+  },
+  "resistance": { "formula": "R / (R + K)", "K": 20, "minimumDamage": 1, "controlReadsSr": true },
+  "charge": {
+    "attackerSecondsPerCast": 5,
+    "_attacker": "charge per basic attack = 100 x attack interval / attackerSecondsPerCast",
+    "perHitTaken": 15,
+    "casterBaseSeconds": 5,
+    "casterIntPerModifier": 0.1,
+    "chaStartChargePerModifier": 10,
+    "chaStartChargeMax": 50,
+    "fizzleRefund": 50,
+    "minSecondsBetweenCasts": 1
+  },
+  "abilityRoll": { "lowAtOrBelow": 5, "highAtOrAbove": 14 },
+  "statuses": {
+    "restrained": { "attackSlow": 0.5, "noMove": true, "castsWithDisadvantage": true },
+    "stunImmunityAfter": 1,
+    "burnSeconds": 3,
+    "bossControlShare": 0.5,
+    "lastStandSeconds": 1.5
+  },
+  "ward": { "stacking": "add" }
+}
