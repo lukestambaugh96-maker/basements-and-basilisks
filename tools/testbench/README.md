@@ -33,7 +33,10 @@ node bench.js bots --place best           bots place by trying every formation o
 node bench.js itemoff --n 60 --reps 3     each fight replayed with no items, and with each item removed one at a time
 node bench.js castoff --n 60 --reps 3     each fight replayed with each hero's ability turned off
 node bench.js placement --n 60 --reps 3   each fight replayed in 8 formations; Best / Worst shows how much placement can swing it
-  (these three: --bots sensible,engine  --fight 3,4  --seed  --edits; --reps replays each variant from several seeds to cut dice noise)
+node bench.js luck --n 60                 each fight once on average dice vs 5 times on normal dice: how often the dice decide it
+  (these four: --bots sensible,engine  --fight 3,4  --seed  --edits; --reps replays each variant from several seeds to cut dice noise)
+--dice average                            any command: every damage, heal, Ward and bonus die rolls its average (d20 stays random)
+--dice average-all                        any command: the d20 rolls its average too (10.5; Advantage 13.8, Disadvantage 7.2)
 --preset prototype2                       use prototype 2's numbers
 ```
 
@@ -41,8 +44,8 @@ node bench.js placement --n 60 --reps 3   each fight replayed in 8 formations; B
 Every job gains charge the same way (attacks: 100 per 5s of attacking; hits: 15 per hit; time: 100 per 5s, faster with INT). Each hero's `chargeToCast` (default 100) sets how big and rare their ability is: about 60 small, 100 medium, 180 big, 300 nuke (`abilitySizes` in rules.config.json). Casters' old per-hero cast speeds became chargeToCast (Faelan 130, Zoe 110, Gains 130, Cinder 160); the prototype2 preset restores the old values.
 
 ## Checks (25 Nov)
-- `node bench.js run --preset prototype2 --n 300` reproduces prototype 2's saved notes exactly: 47.0% cleared, losses ending at fights {1:129, 2:7, 3:16, 4:3, 5:4}.
-- `node bench.js test jamison --n 250` reproduces the 25 Nov Jamison test exactly (fights 50/42/8/45, bosses 36/32/48, dies 83% vs allies 66%).
+- `node bench.js run --preset prototype2 --n 300` reproduces prototype 2's saved notes exactly: 47.0% cleared (the preset also reverts normalization batch 1 and encounter pass 1; re-checked 26 Nov), losses ending at fights {1:129, 2:7, 3:16, 4:3, 5:4}.
+- `node bench.js test jamison --n 250` reproduced the 25 Nov Jamison test exactly with the configs of that day (before normalization batch 1 and encounter pass 1); it no longer will on today's configs (fights 50/42/8/45, bosses 36/32/48, dies 83% vs allies 66%).
 
 ## Rulings
 Approve or reject proposed changes on the review page (B&B design review, https://claude.ai/artifact/DrhsxE5uoUjnm6bjQQrpXy). Approved numbers go into the configs.
@@ -59,3 +62,7 @@ Approve or reject proposed changes on the review page (B&B design review, https:
 `itemoff`, `castoff` and `placement` take every fight the chosen bots walked into (a snapshot of the party: heroes, tiers, items, positions) and replay it with one thing changed, from the same seed as the full-build replay. Removing an item can shift which dice land where, so read drops under about 5 points, or items held fewer than 20 times, as noise; `--reps 3` or more smooths it.
 Formations: `bot` (how the bots place: melee front, ranged back), `smart` (frontliners centre front, melee beside them, ranged behind, towers first), `swapped` (ranged front, melee behind), `tight`, `spread`, `wall` (all front), `back` (all back), `random`.
 First results (sensible + engine, 60 runs each): removing all items drops late fights 20-40 points (Forge 80% -> 52%, Grol 68% -> 29%); turning off Saint's, Faelan's or Cinder's ability drops their parties 37-45 points, Pillar's or Zark's 5-6; the best formation per party wins 95% vs 48% for the worst and 77% for the bots' own placement. With `--place best`, sensible clears 81% and engine 88% (default placement: 50% / 61%).
+
+## Average dice (26 Nov)
+`rules.config.json` `dice.mode` (or `--dice`): `random` is normal play; `average` makes every damage, heal, Ward and bonus die roll its average while the d20 ability roll stays random; `average-all` fixes the d20 too, so abilities never crit or fizzle. Damage still rounds once per hit, as in normal play. Other randomness (shop offers, ties in targeting) stays.
+First results (300 runs per bot, `--seed 20000`): cleared never-buy 0 / 0 / 0%, sensible 50 / 52 / 51%, engine 61 / 63 / 63% (random / average / average-all), so runs are decided by the build, not luck. `luck` (sensible + engine, 60 runs each): 11% of fights are coin flips on normal dice; bad luck loses a fight average dice win 6% of the time, good luck saves one 3%; Nezznar is the most luck-driven (24% coin flips).

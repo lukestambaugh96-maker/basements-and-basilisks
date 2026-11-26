@@ -44,6 +44,7 @@ function buildConfig(extraEdits) {
   const cfg = loadConfig();
   if (opt.preset) applyEdits(cfg, readJson(`presets/${opt.preset}.json`).edits);
   if (extraEdits) applyEdits(cfg, extraEdits);
+  if (opt.dice) { if (!['random', 'average', 'average-all'].includes(opt.dice)) throw new Error('--dice must be random, average or average-all'); cfg.rules.dice = Object.assign({}, cfg.rules.dice, { mode: opt.dice }); }
   return cfg;
 }
 
@@ -173,11 +174,14 @@ const COMMANDS = {
   node bench.js itemoff [--bots sensible,engine] [--n 60]    Replay each fight with no items, and with each item removed one at a time.
   node bench.js castoff [--bots sensible,engine] [--n 60]    Replay each fight with each hero's ability turned off.
   node bench.js placement [--bots sensible,engine] [--n 60]  Replay each fight in different formations (same party, same dice).
-    (itemoff, castoff, placement: --reps 3 replays each variant from 3 seeds; --fight 3,4 limits to those fights)
+  node bench.js luck [--bots sensible,engine] [--n 60]       Each fight on average dice vs normal dice: how often the dice decide it.
+    (itemoff, castoff, placement, luck: --reps 3 replays each variant from 3 seeds; --fight 3,4 limits to those fights)
   node bench.js jobs [heroes...] [--n 60]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
 
   Edits: "dane.ability.ward.dice=4d8, klarg.hp=110, rules.resistance.K=25"  (start with a hero id, an enemy id, or rules.)
   --preset prototype2   use the numbers from playable prototype 2 (before the 24-25 Nov approved changes).
+  --dice average        every damage, heal, Ward and bonus die rolls its average (the d20 ability roll stays random).
+  --dice average-all    the d20 rolls its average too (10.5; Advantage 13.8, Disadvantage 7.2): no Low, crit or fizzle luck.
   --json                print machine-readable results.`);
   },
   stats() {
@@ -254,7 +258,7 @@ const COMMANDS = {
     for (const b of ids) out[b] = botReport(G, b, N, +opt.seed || 1000);
     if (opt.json) return console.log(JSON.stringify(out, null, 1));
     const names = ['Goblin Ambush', "Klarg's Cave", "Glasstaff's Hideout", 'Thundertree', 'Forge of Spells', 'Boss'];
-    console.log(`Bot players, ${N} whole Act 1 runs each (same seeds). Placement: ${opt.place || 'bot'}.\n`);
+    console.log(`Bot players, ${N} whole Act 1 runs each (same seeds). Placement: ${opt.place || 'bot'}. Dice: ${opt.dice || 'random'}.\n`);
     console.log(table(['Bot', 'Cleared', 'Run ends at (fight 1-5, B)', 'Median end', 'Free loss used', ...names.map(n => n.split(/[ ']/)[0]), 'HP lost F2-5', 'Items@F5', 'T2@F5'],
       ids.map(b => { const r = out[b]; return [BOTS_LABEL[b] || b, f0(r.clear) + '%', r.ends, r.medianEnd, f0(r.freeLoss) + '%', ...names.map((n, i) => r.win[i] == null ? '-' : f0(r.win[i]) + '%'), f0(r.hpLost) + '%', f1(r.itemsF5), f1(r.t2F5)]; })));
     console.log('\nWin % per fight counts every attempt (a retry after the free loss is a second attempt). Run ends: how many runs ended at each fight; B = boss, W = cleared.');
@@ -307,6 +311,22 @@ const COMMANDS = {
     const rows = Object.keys(per).sort().map(k => { const p = per[k]; return [k, p.n, ...F.map(f => pc(p[f] || 0, p.n)), pc(p.best, p.n), pc(p.worst, p.n)]; });
     rows.push(['All', all.n, ...F.map(f => pc(all[f] || 0, all.n)), pc(all.best, all.n), pc(all.worst, all.n)]);
     console.log(table(['Fight', 'Fights', ...F, 'Best', 'Worst'], rows));
+  },
+  luck() {
+    // Same snapshots, two engines: one rolling average dice (everything, d20 included), one rolling normal dice --reps times (default 5).
+    if (!opt.reps) opt.reps = 5; const R = +opt.reps;
+    const { G, snaps } = collectSnaps(); const cfgA = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); cfgA.rules.dice = { mode: String(opt.dice && opt.dice !== 'random' ? opt.dice : 'average-all') }; const GA = loadGame(cfgA);
+    const per = {}, all = { n: 0 };
+    for (const s of snaps) {
+      const k = fightKey(G, s); const a = GA.replayFight(s); const r = replayAvg(G, s);
+      for (const p of [per[k] = per[k] || { n: 0 }, all]) { p.n++; p.avgWin = (p.avgWin || 0) + a.win; p.randWin = (p.randWin || 0) + r.win; p.coin = (p.coin || 0) + (r.win > 0.2 && r.win < 0.8);
+        p.upset = (p.upset || 0) + (a.win && r.win < 0.5); p.rescue = (p.rescue || 0) + (!a.win && r.win >= 0.5); p.hpA = (p.hpA || 0) + a.hpLost; p.hpR = (p.hpR || 0) + r.hpLost; }
+    }
+    if (opt.json) return console.log(JSON.stringify({ per, all }, null, 1));
+    console.log(`Luck test: ${snaps.length} fights from ${opt.bots || 'sensible,engine'} runs. Each fight played once with average dice (${cfgA.rules.dice.mode}) and ${R} times with normal dice.`);
+    console.log('Coin flip = normal dice win it between 20% and 80% of the time. Upset = average dice win, normal dice lose most tries. Rescue = the reverse.\n');
+    const rows = Object.keys(per).sort().map(k => [k, per[k]]).concat([['All', all]]).map(([k, p]) => [k, p.n, pc(p.avgWin, p.n), pc(p.randWin, p.n), pc(p.coin, p.n), pc(p.upset, p.n), pc(p.rescue, p.n), pc(p.hpA, p.n), pc(p.hpR, p.n)]);
+    console.log(table(['Fight', 'Fights', 'Win, average dice', 'Win, normal dice', 'Coin flip', 'Upset', 'Rescue', 'HP lost avg', 'HP lost normal'], rows));
   },
 };
 const BOTS_LABEL = { bare: 'Never buys', sensible: 'Buys sensibly', engine: 'Builds an engine' };

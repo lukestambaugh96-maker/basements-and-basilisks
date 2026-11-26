@@ -10,11 +10,14 @@ const BASE_HP = RULES.hp.base;
 
 let RNG = Math.random;
 function seedRng(seed) { let s = seed >>> 0; RNG = function () { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-const d = x => 1 + Math.floor(RNG() * x);
+// Dice mode (rules.config.json "dice.mode"): random (normal play); average = every damage, heal, Ward and bonus die rolls its average,
+// the d20 ability roll stays random; average-all = the d20 rolls its average too (10.5; with Advantage 13.825, with Disadvantage 7.175).
+const DICE_MODE = (RULES.dice && RULES.dice.mode) || 'random';
+const d = x => DICE_MODE === 'random' || (x === 20 && DICE_MODE === 'average') ? 1 + Math.floor(RNG() * x) : (x + 1) / 2;
 // "2d8+3" -> { n: 2, x: 8, flat: 3 }
 function parseDice(s) { const m = /^(\d+)d(\d+)([+-]\d+)?$/.exec(String(s).replace(/\s/g, '')); if (!m) throw new Error('Bad dice: ' + s); return { n: +m[1], x: +m[2], flat: m[3] ? +m[3] : 0 }; }
 const mod = s => Math.floor((s - 10) / 2);
-function rollDice(n, x, crit, emp) { n = Math.max(0, n | 0); const c = crit ? n * 2 : n; let t = 0; for (let i = 0; i < c; i++) { let r = d(x); if (emp && r <= 2) r = d(x); t += r; } return t; }
+function rollDice(n, x, crit, emp) { n = Math.max(0, n | 0); const c = crit ? n * 2 : n; if (DICE_MODE !== 'random') return c * (emp ? (x + 1 + x * (x + 1) / 2 - 3) / x : (x + 1) / 2); let t = 0; for (let i = 0; i < c; i++) { let r = d(x); if (emp && r <= 2) r = d(x); t += r; } return t; }
 const RESIST_K = RULES.resistance.K;
 const resist = R => { R = Math.max(0, R); return R / (R + RESIST_K); };
 const SETTINGS = { atkDiv: RULES.charge.attackerSecondsPerCast, restrain: RULES.statuses.restrained.attackSlow };
@@ -268,6 +271,7 @@ function abilityRoll(F, u) {
   if (u.boss && (adv || dis)) { u.counters.halfToggle = !u.counters.halfToggle; if (!u.counters.halfToggle) { adv = false; dis = false; } }
   const a = d(20), b = d(20);
   let nat = a; if (adv && !dis) nat = Math.max(a, b); else if (dis && !adv) nat = Math.min(a, b);
+  if (DICE_MODE === 'average-all') nat = adv && !dis ? 13.825 : dis && !adv ? 7.175 : 10.5;
   const r = { nat, xd: 0, crit: false, fizzle: false, adv: adv && !dis, dis: dis && !adv };
   if (nat === 1) { r.fizzle = true; return r; }
   let bonus = (u.side === 'H' ? u.m(u.key) : u.keyMod) + (u.rollB || 0);
