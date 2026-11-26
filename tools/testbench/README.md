@@ -71,3 +71,6 @@ First results (300 runs per bot, `--seed 20000`): cleared never-buy 0 / 0 / 0%, 
 
 ## One boss (26 Nov, proposed)
 Act 1 has one boss, Nezznar: the check for entering Act 2. Venomfang and King Grol stay in `enemies.config.json` with `"active": false`; edit paths like `bosses.grol.active=true` turn them back on (the prototype2 preset does). `bosscheck`: all tier 2 with items on one hero 84%, two tier 2 with items 73% (84% with frontliner + damage + support), one tier 2 33%.
+
+## Shop odds (26 Nov, proposed)
+`rules.config.json` `shop.ownedHeroWeight` 0.75: a hero you already own is offered 75% as often as one you don't, until the hero pool grows (Luke, 26 Nov). Rerolls are unchanged: 1 gold, then 1 more for each reroll in the same shop. `bots` now reports rank-ups bought per run, the share found after a reroll, and rerolls per run. At 300 runs per bot (`--seed 20000`): weight 1: sensible 62% / engine 70% cleared, 1.5 rank-ups, 34% after a reroll; 0.75: 55% / 65%, 1.3, 41%; 0.65: 51% / 65%, 1.2, 42%; 0.5: 45% / 61%, 1.0, 45%.

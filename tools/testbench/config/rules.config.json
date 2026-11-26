@@ -35,6 +35,7 @@
     "_chargeToCast": "Each hero needs chargeToCast charge to cast (default 100). Gains per job stay the same; a bigger number means a bigger, rarer ability."
   },
   "abilityRoll": { "lowAtOrBelow": 5, "highAtOrAbove": 14 },
+  "shop": { "ownedHeroWeight": 0.75, "_ownedHeroWeight": "How likely a hero you already own is to be offered, next to one you don't (1 = equally likely, 0.5 = half as likely). Rerolls cost 1 gold, then 1 more for each reroll in the same shop (run.js)." },
   "dice": { "mode": "random", "_modes": "random = normal play. average = every damage, heal, Ward and bonus die rolls its average; the d20 ability roll stays random. average-all = the d20 rolls its average too (10.5; Advantage 13.825, Disadvantage 7.175). The bench option --dice overrides this." },
   "statuses": {
     "restrained": { "attackSlow": 0.5, "noMove": true, "castsWithDisadvantage": true },

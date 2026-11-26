@@ -262,8 +262,8 @@ const COMMANDS = {
     if (opt.json) return console.log(JSON.stringify(out, null, 1));
     const names = ['Goblin Ambush', "Klarg's Cave", "Glasstaff's Hideout", 'Thundertree', 'Forge of Spells', 'Boss'];
     console.log(`Bot players, ${N} whole Act 1 runs each (same seeds). Placement: ${opt.place || 'bot'}. Dice: ${opt.dice || 'random'}.\n`);
-    console.log(table(['Bot', 'Cleared', 'Run ends at (fight 1-5, B)', 'Median end', 'Free loss used', ...names.map(n => n.split(/[ ']/)[0]), 'HP lost F2-5', 'Items@F5', 'T2@F5'],
-      ids.map(b => { const r = out[b]; return [BOTS_LABEL[b] || b, f0(r.clear) + '%', r.ends, r.medianEnd, f0(r.freeLoss) + '%', ...names.map((n, i) => r.win[i] == null ? '-' : f0(r.win[i]) + '%'), f0(r.hpLost) + '%', f1(r.itemsF5), f1(r.t2F5)]; })));
+    console.log(table(['Bot', 'Cleared', 'Run ends at (fight 1-5, B)', 'Median end', 'Free loss used', ...names.map(n => n.split(/[ ']/)[0]), 'HP lost F2-5', 'Items@F5', 'T2@F5', 'Rank-ups bought', 'After a reroll', 'Rerolls/run'],
+      ids.map(b => { const r = out[b]; return [BOTS_LABEL[b] || b, f0(r.clear) + '%', r.ends, r.medianEnd, f0(r.freeLoss) + '%', ...names.map((n, i) => r.win[i] == null ? '-' : f0(r.win[i]) + '%'), f0(r.hpLost) + '%', f1(r.itemsF5), f1(r.t2F5), f1(r.rankUps), f0(r.rankUpsAfterReroll) + '%', f1(r.rerolls)]; })));
     console.log('\nWin % per fight counts every attempt (a retry after the free loss is a second attempt). Run ends: how many runs ended at each fight; B = boss, W = cleared.');
   },
   itemoff() {
@@ -413,9 +413,9 @@ function collectSnaps() {
   return { G, snaps };
 }
 function botReport(G, b, N, seed0) {
-  const ends = {}; let clear = 0, free = 0, hp = 0, hpN = 0, itF5 = 0, t2F5 = 0, nF5 = 0; const att = [0, 0, 0, 0, 0, 0], won = [0, 0, 0, 0, 0, 0]; const endIdx = [];
+  const ends = {}; let clear = 0, free = 0, hp = 0, hpN = 0, itF5 = 0, t2F5 = 0, nF5 = 0, ru = 0, ruR = 0, rr = 0; const att = [0, 0, 0, 0, 0, 0], won = [0, 0, 0, 0, 0, 0]; const endIdx = [];
   for (let i = 0; i < N; i++) {
-    const { run, fights } = G.policyRun(seed0 + i, b); if (run.won) clear++; if (run.freeLossUsed) free++;
+    const { run, fights } = G.policyRun(seed0 + i, b); if (run.won) clear++; if (run.freeLossUsed) free++; ru += run.rankUps || 0; ruR += run.rankUpsAfterReroll || 0; rr += run.rerollsTotal || 0;
     const last = fights[fights.length - 1]; const k = run.won ? 'W' : (last.fight === 5 ? 'B' : String(last.fight + 1)); ends[k] = (ends[k] || 0) + 1; endIdx.push(run.won ? 7 : last.fight + 1);
     let seenF5 = false;
     for (const f of fights) { att[f.fight]++; if (f.result === 'win') won[f.fight]++; if (f.fight >= 1 && f.fight <= 4) { hp += f.hpLostPct; hpN++; } if (f.fight === 4 && !seenF5) { seenF5 = true; itF5 += f.items; t2F5 += f.t2; nF5++; } }
@@ -423,7 +423,7 @@ function botReport(G, b, N, seed0) {
   endIdx.sort((a, c) => a - c); const med = endIdx[Math.floor((N - 1) / 2)];
   const order = ['1', '2', '3', '4', '5', 'B', 'W'];
   return { clear: 100 * clear / N, freeLoss: 100 * free / N, ends: order.filter(k => ends[k]).map(k => k + ':' + ends[k]).join(' '), endsRaw: ends, medianEnd: med === 7 ? 'cleared' : med === 6 ? 'boss' : 'fight ' + med,
-    win: att.map((a, i) => a ? 100 * won[i] / a : null), hpLost: hpN ? 100 * hp / hpN : 0, itemsF5: nF5 ? itF5 / nF5 : NaN, t2F5: nF5 ? t2F5 / nF5 : NaN };
+    win: att.map((a, i) => a ? 100 * won[i] / a : null), hpLost: hpN ? 100 * hp / hpN : 0, itemsF5: nF5 ? itF5 / nF5 : NaN, t2F5: nF5 ? t2F5 / nF5 : NaN, rankUps: ru / N, rankUpsAfterReroll: ru ? 100 * ruR / ru : 0, rerolls: rr / N };
 }
 
 try { (COMMANDS[cmd] || COMMANDS.help)(); } catch (e) { console.error('Error: ' + e.message); process.exit(1); }

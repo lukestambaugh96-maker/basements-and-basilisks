@@ -108,6 +108,7 @@
     "enemies.grol.ability.damage.high": "4d8+4",
     "enemies.wolf.attack.dice": "2d4+1",
     "enemies.nezznar.ability.heroes": 2,
+    "rules.shop.ownedHeroWeight": 1,
     "bosses.venomfang.active": true,
     "bosses.grol.active": true
   }
