@@ -49,7 +49,7 @@ function buildConfig(extraEdits) {
 
 // ---------------- load the engine into a fresh context ----------------
 function loadGame(cfg) {
-  const src = ['engine.js', 'behaviour.js', 'run.js', 'bot.js'].map(f => fs.readFileSync(path.join(DIR, f), 'utf8')).join('\n');
+  const src = ['engine.js', 'behaviour.js', 'run.js', 'bot.js', 'bots.js'].map(f => fs.readFileSync(path.join(DIR, f), 'utf8')).join('\n');
   const hook = `
 const _heal = heal; heal = function (F, src, t, amt) { const r = _heal(F, src, t, amt); if (src && t !== src && src.side === t.side) src.toOthers = (src.toOthers || 0) + (r || 0); return r; };
 const _aw = addWard; addWard = function (F, src, t, amt, rep) { const before = t.ward; _aw(F, src, t, amt, rep); if (src && t !== src && src.side === t.side) src.toOthers = (src.toOthers || 0) + Math.max(0, t.ward - before); };
@@ -57,7 +57,7 @@ const _rc = resolveCast; resolveCast = function (F, u) { u._inCast = true; try {
 const _heal2 = heal; heal = function (F, src, t, amt) { const r = _heal2(F, src, t, amt) || 0; if (src && src === t) src.selfSus = (src.selfSus || 0) + r; if (src && src._inCast) src.abVal = (src.abVal || 0) + r; return r; };
 const _aw2 = addWard; addWard = function (F, src, t, amt, rep) { const before = t.ward; _aw2(F, src, t, amt, rep); const g = Math.max(0, t.ward - before); if (src && src === t) src.selfSus = (src.selfSus || 0) + g; if (src && src._inCast) src.abVal = (src.abVal || 0) + g; };
 const _ff = finishFight; finishFight = function (run, F) { const extra = F.units.filter(u => u.side === 'H' && !u.summon).map(u => ({ id: u.id, casts: u.casts || 0 })); const r = _ff(run, F); r.extra = extra; r.t = F.t; return r; };
-this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, seedRng, botRun, parseDice, mod };`;
+this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, seedRng, botRun, parseDice, mod, policyRun, BOTS, replayFight, formation, FORMATIONS, ITEMS, setPlace };`;
   const ctx = { console, Math, CFG: cfg }; vm.createContext(ctx);
   vm.runInContext(src + '\n' + hook, ctx);
   return ctx.G;
@@ -169,6 +169,11 @@ const COMMANDS = {
   node bench.js try "<edits>" [heroes...]  Apply number edits, then compare before vs after (test for the named heroes, else whole run).
   node bench.js run [--n 300]             Whole Act 1 bot runs (as in the prototype notes).
   node bench.js intro                     Each hero alone vs Fight 1 (every starter must clear it).
+  node bench.js bots [bare sensible engine] [--n 60] [--place bot|best|smart|...] [--edits "..."]   The three bot players, whole Act 1 runs each (same seeds).
+  node bench.js itemoff [--bots sensible,engine] [--n 60]    Replay each fight with no items, and with each item removed one at a time.
+  node bench.js castoff [--bots sensible,engine] [--n 60]    Replay each fight with each hero's ability turned off.
+  node bench.js placement [--bots sensible,engine] [--n 60]  Replay each fight in different formations (same party, same dice).
+    (itemoff, castoff, placement: --reps 3 replays each variant from 3 seeds; --fight 3,4 limits to those fights)
   node bench.js jobs [heroes...] [--n 60]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
 
   Edits: "dane.ability.ward.dice=4d8, klarg.hp=110, rules.resistance.K=25"  (start with a hero id, an enemy id, or rules.)
@@ -243,7 +248,68 @@ const COMMANDS = {
         g.map(r => [r.name, r.size, r.chargeToCast, f0(r.win) + '%', f0(r.dies) + '%', tag(f0(r.fightEhp), r.judge.ehp), tag(f1(r.dps), r.judge.dps), f1(r.castsPer30), tag(f0(r.valuePerCast), r.judge.value) + ' (' + S[r.size].valuePerCast + ')', f0(100 * r.abShare) + '%', tag(f0(r.givenPer30), r.judge.help)])));
     }
   },
+  bots() {
+    const N = +opt.n || 60; const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg);
+    const ids = pos.length ? pos : ['bare', 'sensible', 'engine']; const out = {}; G.setPlace(opt.place || 'bot', +opt.trials || 0);
+    for (const b of ids) out[b] = botReport(G, b, N, +opt.seed || 1000);
+    if (opt.json) return console.log(JSON.stringify(out, null, 1));
+    const names = ['Goblin Ambush', "Klarg's Cave", "Glasstaff's Hideout", 'Thundertree', 'Forge of Spells', 'Boss'];
+    console.log(`Bot players, ${N} whole Act 1 runs each (same seeds). Placement: ${opt.place || 'bot'}.\n`);
+    console.log(table(['Bot', 'Cleared', 'Run ends at (fight 1-5, B)', 'Median end', 'Free loss used', ...names.map(n => n.split(/[ ']/)[0]), 'HP lost F2-5', 'Items@F5', 'T2@F5'],
+      ids.map(b => { const r = out[b]; return [BOTS_LABEL[b] || b, f0(r.clear) + '%', r.ends, r.medianEnd, f0(r.freeLoss) + '%', ...names.map((n, i) => r.win[i] == null ? '-' : f0(r.win[i]) + '%'), f0(r.hpLost) + '%', f1(r.itemsF5), f1(r.t2F5)]; })));
+    console.log('\nWin % per fight counts every attempt (a retry after the free loss is a second attempt). Run ends: how many runs ended at each fight; B = boss, W = cleared.');
+  },
+  itemoff() {
+    const { G, snaps } = collectSnaps(); const per = {}, items = {};
+    for (const s of snaps) {
+      const k = fightKey(G, s); const base = replayAvg(G, s), none = replayAvg(G, s, { noItems: true });
+      const p = per[k] = per[k] || { n: 0, full: 0, none: 0, one: 0, oneN: 0, hpFull: 0, hpNone: 0 };
+      p.n++; p.full += base.win; p.none += none.win; p.hpFull += base.hpLost; p.hpNone += none.hpLost;
+      for (const r of s.recs) r.items.forEach((ir, i) => { const v = replayAvg(G, s, { drop: [r.uid, i] }); p.one += v.win; p.oneN++;
+        const key = ir.id; const o = items[key] = items[key] || { n: 0, w: 0, wo: 0, name: (G.ITEMS[key] || {}).name || key }; o.n++; o.w += base.win; o.wo += v.win; });
+    }
+    if (opt.json) return console.log(JSON.stringify({ per, items }, null, 1));
+    console.log(`Item-off test (${+opt.reps || 1} replay${(+opt.reps || 1) > 1 ? 's' : ''} each): ${snaps.length} fights from ${opt.bots || 'sensible,engine'} runs, each replayed from the same dice.\n`);
+    console.log(table(['Fight', 'Fights', 'Full build', 'One item removed', 'No items', 'HP lost full', 'HP lost no items'], Object.keys(per).sort().map(k => { const p = per[k];
+      return [k, p.n, pc(p.full, p.n), p.oneN ? pc(p.one, p.oneN) : '-', pc(p.none, p.n), pc(p.hpFull, p.n), pc(p.hpNone, p.n)]; })));
+    console.log('\nEach item: win with it vs the same fight with only it removed (fights it was held in).\n');
+    console.log(table(['Item', 'Held', 'With', 'Without', 'Drop'], Object.values(items).filter(o => o.n >= (+opt.min || 10)).sort((a, b) => (b.w - b.wo) / b.n - (a.w - a.wo) / a.n)
+      .map(o => [o.name, o.n, pc(o.w, o.n), pc(o.wo, o.n), f0(100 * (o.w - o.wo) / o.n)])));
+  },
+  castoff() {
+    const { G, snaps } = collectSnaps(); const heroes = {}, per = {};
+    for (const s of snaps) {
+      const k = fightKey(G, s); const base = replayAvg(G, s); const p = per[k] = per[k] || { n: 0, w: 0, off: 0, offN: 0 }; p.n++; p.w += base.win;
+      for (const r of s.recs) { const v = replayAvg(G, s, { noAbility: r.uid }); p.off += v.win; p.offN++;
+        const o = heroes[r.id] = heroes[r.id] || { n: 0, w: 0, wo: 0, dies: 0, diesOff: 0, name: G.HEROES[r.id].name, job: G.HEROES[r.id].cfg.benchJob };
+        o.n++; o.w += base.win; o.wo += v.win; o.dies += base.deadOf(r.uid); o.diesOff += v.deadOf(r.uid); }
+    }
+    if (opt.json) return console.log(JSON.stringify({ per, heroes }, null, 1));
+    console.log(`Cast-off test (${+opt.reps || 1} replay${(+opt.reps || 1) > 1 ? 's' : ''} each): ${snaps.length} fights from ${opt.bots || 'sensible,engine'} runs, each replayed with one hero's ability turned off.\n`);
+    console.log(table(['Fight', 'Fights', 'Win', 'One ability off (avg)'], Object.keys(per).sort().map(k => { const p = per[k]; return [k, p.n, pc(p.w, p.n), pc(p.off, p.offN)]; })));
+    console.log('\nEach hero: party win with vs without that hero\'s ability. A big drop means the party leans on that hero.\n');
+    console.log(table(['Hero', 'Job', 'Fights', 'With', 'Without', 'Drop', 'Hero dies (with / without)'], Object.values(heroes).sort((a, b) => (b.w - b.wo) / b.n - (a.w - a.wo) / a.n)
+      .map(o => [o.name, o.job, o.n, pc(o.w, o.n), pc(o.wo, o.n), f0(100 * (o.w - o.wo) / o.n), pc(o.dies, o.n) + ' / ' + pc(o.diesOff, o.n)])));
+  },
+  placement() {
+    const { G, snaps } = collectSnaps(); const F = (opt.formations ? String(opt.formations).split(',') : G.FORMATIONS); const per = {}, all = { n: 0, best: 0, worst: 0 };
+    let seed = 7; const rng = () => (seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296;
+    for (const s of snaps) {
+      const k = fightKey(G, s); const p = per[k] = per[k] || { n: 0, best: 0, worst: 0 }; p.n++; all.n++; const res = [];
+      for (const f of F) { const v = replayAvg(G, s, { pos: G.formation(s, f, rng) }); p[f] = (p[f] || 0) + v.win; all[f] = (all[f] || 0) + v.win; res.push(v.win); }
+      const b = Math.max(...res), w = Math.min(...res); p.best += b; p.worst += w; all.best += b; all.worst += w;
+    }
+    if (opt.json) return console.log(JSON.stringify(per, null, 1));
+    console.log(`Placement test (${+opt.reps || 1} replay${(+opt.reps || 1) > 1 ? 's' : ''} each): ${snaps.length} fights from ${opt.bots || 'sensible,engine'} runs, the same party and dice in each formation.`);
+    console.log('bot = how the bots place; smart = frontliners centre front, melee beside them, ranged behind (towers first); swapped = ranged in front, melee behind;');
+    console.log('tight = clumped centre; spread = rows far apart; wall = everyone in front; back = everyone at the back; random = random cells.');
+    console.log("Best / Worst = each party's best and worst formation, fight by fight (averaged over --reps): how much placement can swing a fight.\n");
+    const rows = Object.keys(per).sort().map(k => { const p = per[k]; return [k, p.n, ...F.map(f => pc(p[f] || 0, p.n)), pc(p.best, p.n), pc(p.worst, p.n)]; });
+    rows.push(['All', all.n, ...F.map(f => pc(all[f] || 0, all.n)), pc(all.best, all.n), pc(all.worst, all.n)]);
+    console.log(table(['Fight', 'Fights', ...F, 'Best', 'Worst'], rows));
+  },
 };
+const BOTS_LABEL = { bare: 'Never buys', sensible: 'Buys sensibly', engine: 'Builds an engine' };
 function runReport(G, N) {
   const q = (a, p) => { const s = a.slice().sort((x, y) => x - y); return s[Math.floor((s.length - 1) * p)]; };
   const per = {}; let wins = 0; const reached = {};
@@ -254,6 +320,33 @@ function runReport(G, N) {
   }
   console.log(`Runs: ${N}   Act 1 cleared: ${(100 * wins / N).toFixed(1)}%   lost runs ended at fight: ${JSON.stringify(reached)}`);
   console.log(table(['Fight', 'Played', 'Win', 'Length p10/med/p90', 'HP lost'], Object.keys(per).sort().map(k => { const p = per[k]; return [k, p.n, f0(100 * p.w / p.n) + '%', `${f0(q(p.t, .1))}/${f0(q(p.t, .5))}/${f0(q(p.t, .9))}s`, f0(100 * p.lost.reduce((a, b) => a + b, 0) / p.n) + '%']; })));
+}
+
+const pc = (a, n) => n ? f0(100 * a / n) + '%' : '-';
+const FIGHT_NAMES = ['1 Goblin Ambush', "2 Klarg's Cave", "3 Glasstaff", '4 Thundertree', '5 Forge of Spells'];
+function fightKey(G, s) { return s.fight < 5 ? FIGHT_NAMES[s.fight] : '6 Boss ' + s.bossId; }
+// Snapshots of every fight (2 onward) the chosen bots walked into, from --n whole runs each.
+// Replay a snapshot --reps times from different seeds and average (wins and HP lost become fractions).
+function replayAvg(G, s, mod) { const R = +opt.reps || 1; let w = 0, hp = 0; const dead = {}; for (let j = 0; j < R; j++) { const v = G.replayFight(Object.assign({}, s, { seed: s.seed + j * 7919 }), mod); w += v.win; hp += v.hpLost; for (const u of v.dead) dead[u] = (dead[u] || 0) + 1 / R; } return { win: w / R, hpLost: hp / R, dead, deadOf: uid => dead[uid] || 0 }; }
+function collectSnaps() {
+  const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg);
+  const bots = String(opt.bots || 'sensible,engine').split(','); const N = +opt.n || 60; const seed0 = +opt.seed || 1000; const snaps = [];
+  const only = opt.fight ? String(opt.fight).split(',').map(Number) : null;
+  for (const b of bots) for (let i = 0; i < N; i++) { const { fights } = G.policyRun(seed0 + i, b); for (const f of fights) if (f.fight >= 1 && (!only || only.includes(f.fight + 1))) snaps.push(f.snap); }
+  return { G, snaps };
+}
+function botReport(G, b, N, seed0) {
+  const ends = {}; let clear = 0, free = 0, hp = 0, hpN = 0, itF5 = 0, t2F5 = 0, nF5 = 0; const att = [0, 0, 0, 0, 0, 0], won = [0, 0, 0, 0, 0, 0]; const endIdx = [];
+  for (let i = 0; i < N; i++) {
+    const { run, fights } = G.policyRun(seed0 + i, b); if (run.won) clear++; if (run.freeLossUsed) free++;
+    const last = fights[fights.length - 1]; const k = run.won ? 'W' : (last.fight === 5 ? 'B' : String(last.fight + 1)); ends[k] = (ends[k] || 0) + 1; endIdx.push(run.won ? 7 : last.fight + 1);
+    let seenF5 = false;
+    for (const f of fights) { att[f.fight]++; if (f.result === 'win') won[f.fight]++; if (f.fight >= 1 && f.fight <= 4) { hp += f.hpLostPct; hpN++; } if (f.fight === 4 && !seenF5) { seenF5 = true; itF5 += f.items; t2F5 += f.t2; nF5++; } }
+  }
+  endIdx.sort((a, c) => a - c); const med = endIdx[Math.floor((N - 1) / 2)];
+  const order = ['1', '2', '3', '4', '5', 'B', 'W'];
+  return { clear: 100 * clear / N, freeLoss: 100 * free / N, ends: order.filter(k => ends[k]).map(k => k + ':' + ends[k]).join(' '), endsRaw: ends, medianEnd: med === 7 ? 'cleared' : med === 6 ? 'boss' : 'fight ' + med,
+    win: att.map((a, i) => a ? 100 * won[i] / a : null), hpLost: hpN ? 100 * hp / hpN : 0, itemsF5: nF5 ? itF5 / nF5 : NaN, t2F5: nF5 ? t2F5 / nF5 : NaN };
 }
 
 try { (COMMANDS[cmd] || COMMANDS.help)(); } catch (e) { console.error('Error: ' + e.message); process.exit(1); }

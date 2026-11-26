@@ -22,7 +22,7 @@
       "size": "big",
       "pronouns": "he/him",
       "job": "attack",
-      "chargeToCast": 100,
+      "chargeToCast": 180,
       "startCharge": 25,
       "stats": { "STR": 16, "DEX": 12, "CON": 14, "INT": 10, "WIS": 10, "CHA": 10 },
       "key": "STR",
@@ -35,7 +35,7 @@
         "castTime": 0,
         "needsFoeWithin": 2,
         "dodgeSeconds": { "low": 0.5, "mid": 1, "high": 1.5 },
-        "strike": { "dice": "1d8", "perTier": true, "bonus": "STR" },
+        "strike": { "dice": "4d8", "perTier": true, "bonus": "STR" },
         "extraDiceIfDodged": 1,
         "extraDiceOnNatural20": 2
       },
@@ -88,7 +88,7 @@
       "size": "medium",
       "pronouns": "she/her",
       "job": "time",
-      "chargeToCast": 130,
+      "chargeToCast": 100,
       "stats": { "STR": 8, "DEX": 14, "CON": 12, "INT": 16, "WIS": 12, "CHA": 10 },
       "key": "INT",
       "ac": 12,
@@ -124,7 +124,7 @@
       "size": "small",
       "pronouns": "he/him",
       "job": "attack",
-      "chargeToCast": 100,
+      "chargeToCast": 60,
       "stats": { "STR": 10, "DEX": 16, "CON": 12, "INT": 12, "WIS": 10, "CHA": 12 },
       "key": "DEX",
       "ac": 14,
@@ -252,7 +252,7 @@
       "size": "small",
       "pronouns": "she/her",
       "job": "time",
-      "chargeToCast": 100,
+      "chargeToCast": 60,
       "stats": { "STR": 8, "DEX": 12, "CON": 12, "INT": 12, "WIS": 10, "CHA": 16 },
       "key": "CHA",
       "ac": 13,
@@ -314,7 +314,7 @@
       "class": "Monk",
       "subclass": "Way of the Open Hand",
       "role": ["Damage"],
-      "benchJob": "brawler",
+      "benchJob": "attacker",
       "size": "medium",
       "pronouns": "he/him",
       "job": "attack",
@@ -324,12 +324,12 @@
       "ac": 15,
       "sr": 13,
       "range": 1,
-      "attack": { "name": "Unarmed Strike", "dice": "1d6", "bonus": "DEX", "type": "physical", "interval": 0.95 },
+      "attack": { "name": "Unarmed Strike", "dice": "1d6", "bonus": "DEX", "type": "physical", "interval": 1.15 },
       "ability": {
         "name": "Flurry of Blows",
         "castTime": 0,
         "strikes": { "low": 2, "mid": 3, "high": 4 },
-        "strike": { "dice": "1d6", "perTier": true, "bonus": "DEX" }
+        "strike": { "dice": "1d8", "perTier": true, "bonus": "DEX" }
       },
       "t2": {
         "feature": "Ki",
@@ -359,7 +359,7 @@
       "ability": {
         "name": "Hellfire Curse",
         "castTime": 0.4,
-        "damage": { "dice": "1d6", "perTier": true, "bonus": "CHA" },
+        "damage": { "dice": "2d6", "perTier": true, "bonus": "CHA" },
         "type": "magic",
         "burnPerTier": { "low": 0, "mid": 2, "high": 2 },
         "burnHighBonus": 2
@@ -377,11 +377,11 @@
       "class": "Barbarian",
       "subclass": "Path of the Zealot",
       "role": ["Tank", "Damage"],
-      "benchJob": "frontline",
+      "benchJob": "brawler",
       "size": "big",
       "pronouns": "he/him",
       "job": "attack",
-      "chargeToCast": 100,
+      "chargeToCast": 180,
       "stats": { "STR": 18, "DEX": 8, "CON": 16, "INT": 8, "WIS": 10, "CHA": 10 },
       "key": "STR",
       "ac": 15,
@@ -401,7 +401,7 @@
         "name": "Toss",
         "castTime": 0.5,
         "throwSquares": { "low": 2, "mid": 3, "high": 3 },
-        "damage": { "dice": "2d6", "perTier": true, "high": "+1" },
+        "damage": { "dice": "7d6", "perTier": true, "high": "+1" },
         "stunSeconds": 1
       },
       "t2": {
@@ -453,7 +453,7 @@
       "size": "big",
       "pronouns": "he/him",
       "job": "attack",
-      "chargeToCast": 100,
+      "chargeToCast": 180,
       "stats": { "STR": 8, "DEX": 12, "CON": 12, "INT": 10, "WIS": 12, "CHA": 16 },
       "key": "CHA",
       "ac": 13,
@@ -463,7 +463,7 @@
       "ability": {
         "name": "Sunbeam",
         "castTime": 0.4,
-        "damage": { "dice": "2d4", "perTier": true, "low": "-1", "high": "+1" },
+        "damage": { "dice": "9d4", "perTier": true, "low": "-1", "high": "+1" },
         "type": "radiant"
       },
       "t2": {
@@ -499,7 +499,7 @@
         "abilityRollDie": 4,
         "heal": { "dice": "1d8", "perTier": true, "bonus": "CHA" },
         "ward": { "dice": "2d8", "perTier": true, "bonus": "CHA" },
-        "selfWard": null
+        "selfWard": { "dice": "1d8", "perTier": true, "bonus": "CHA" }
       },
       "t2": {
         "feature": "Channel Divinity",
@@ -517,7 +517,7 @@
       "size": "medium",
       "pronouns": "she/her",
       "job": "time",
-      "chargeToCast": 110,
+      "chargeToCast": 100,
       "stats": { "STR": 15, "DEX": 10, "CON": 14, "INT": 13, "WIS": 10, "CHA": 10 },
       "key": "INT",
       "ac": 16,
@@ -536,9 +536,9 @@
         "castTime": 0.75,
         "allies": { "low": 1, "mid": 1, "high": 2 },
         "potionBelowHp": 0.7,
-        "potion": { "dice": "2d6", "perTier": true, "bonus": "INT" },
-        "spareShield": { "dice": "2d6", "perTier": true, "bonus": "INT" },
-        "whetstone": { "dice": "1d6", "perTier": true, "attacks": 3 }
+        "potion": { "dice": "4d6", "perTier": true, "bonus": "INT" },
+        "spareShield": { "dice": "4d6", "perTier": true, "bonus": "INT" },
+        "whetstone": { "dice": "2d6", "perTier": true, "attacks": 3 }
       },
       "t2": {
         "feature": "Action Surge",
@@ -555,7 +555,7 @@
       "subclass": "College of Creation",
       "role": ["Support"],
       "benchJob": "support",
-      "size": "small",
+      "size": "medium",
       "pronouns": "he/him",
       "job": "time",
       "chargeToCast": 100,
@@ -631,11 +631,11 @@
       "class": "Rogue",
       "subclass": "Assassin",
       "role": ["Damage"],
-      "benchJob": "brawler",
+      "benchJob": "attacker",
       "size": "big",
       "pronouns": "she/her",
       "job": "attack",
-      "chargeToCast": 100,
+      "chargeToCast": 180,
       "startStealthSeconds": 3,
       "stats": { "STR": 10, "DEX": 16, "CON": 12, "INT": 10, "WIS": 12, "CHA": 12 },
       "key": "DEX",
@@ -647,14 +647,14 @@
         "dice": "1d6",
         "bonus": "DEX",
         "type": "physical",
-        "interval": 1,
+        "interval": 1.5,
         "speedScaling": 1.15
       },
       "ability": {
         "name": "Cloak of Darkness",
         "castTime": 0.2,
         "jumpReach": 4,
-        "strike": { "dice": "2d4", "perTier": true, "bonus": "DEX" },
+        "strike": { "dice": "9d4", "perTier": true, "bonus": "DEX" },
         "poisonBase": 2,
         "poisonPerTier": 1,
         "executeBelowHp": 0.25
@@ -704,7 +704,7 @@
       "size": "big",
       "pronouns": "he/him",
       "job": "time",
-      "chargeToCast": 130,
+      "chargeToCast": 180,
       "stats": { "STR": 8, "DEX": 12, "CON": 12, "INT": 16, "WIS": 10, "CHA": 10 },
       "key": "INT",
       "ac": 12,
@@ -714,7 +714,7 @@
       "ability": {
         "name": "Gilded Beam",
         "castTime": 1,
-        "damage": { "dice": "3d8", "perTier": true, "bonus": "INT" },
+        "damage": { "dice": "11d8", "perTier": true, "bonus": "INT" },
         "type": "magic"
       },
       "t2": {
@@ -793,7 +793,7 @@
         "name": "Mirror Blessing",
         "castTime": 0.3,
         "heal": { "dice": "1d8", "perTier": true, "bonus": "WIS" },
-        "doubleSeconds": { "low": 3, "mid": 3, "high": 4.5 },
+        "doubleSeconds": { "low": 2, "mid": 2, "high": 3 },
         "doubleHpShare": 0.2,
         "tauntSeconds": { "low": 0, "mid": 1.5, "high": 1.5 }
       },
@@ -813,7 +813,7 @@
       "size": "big",
       "pronouns": "she/her",
       "job": "attack",
-      "chargeToCast": 100,
+      "chargeToCast": 180,
       "lastStand": true,
       "stats": { "STR": 15, "DEX": 12, "CON": 14, "INT": 10, "WIS": 13, "CHA": 10 },
       "key": "STR",
@@ -824,7 +824,7 @@
       "ability": {
         "name": "Moonlit Pounce",
         "castTime": 0.35,
-        "damage": { "dice": "3d8", "perTier": true, "bonus": "STR" },
+        "damage": { "dice": "7d8", "perTier": true, "bonus": "STR" },
         "healShareOfDamage": 0.5,
         "restrainSeconds": { "low": 0, "mid": 0, "high": 1.5 }
       },

@@ -8,9 +8,10 @@ A permanent, headless test engine for Basements & Basilisks v0.25. Every hero, e
 - `config/rules.config.json`: game-wide numbers (resistance curve, charge, Restrained, Ward stacking, HP).
 - `engine.js`: prototype 2's fight engine; every constant comes from the rules config.
 - `behaviour.js`: how each hero and enemy acts; every number comes from the configs.
-- `run.js`, `bot.js`: items, economy and the bot that plays whole runs (not yet in config).
+- `run.js`, `bot.js`: items, economy and the original bot that plays whole runs (not yet in config).
+- `bots.js`: the three bot players for encounter tuning (25 Nov): `bare` never buys anything beyond filling the 3 party slots; `sensible` fills a balanced party, ranks heroes up and buys items that fit; `engine` builds a melee brawl engine (Rage on the front line, on-hit damage and Action Surge on a melee carry, rerolls for copies).
 - `presets/prototype2.json`: the numbers from playable prototype 2, before the 24–25 Nov approved changes.
-- `presets/normalize1.json`: normalization batch 1 (proposed 25 Nov), not yet approved.
+- `presets/normalize1.json`: normalization batch 1, approved and applied to the hero config 25 Nov (kept for reference; running it changes nothing).
 - `bench.js`: the commands.
 
 ## Setup
@@ -27,6 +28,12 @@ node bench.js try "dane.ability.ward.dice=4d8, klarg.hp=110" dane
 node bench.js run --n 300                 whole Act 1 bot runs
 node bench.js intro                       each hero alone vs Fight 1
 node bench.js jobs --n 60                 every hero vs their job and ability-size benchmark (LOW / HIGH flags)
+node bench.js bots --n 300                the three bot players, whole Act 1 runs each (same seeds); --seed, --edits, --json
+node bench.js bots --place best           bots place by trying every formation on practice dice first (also: smart, wall, ... any formation)
+node bench.js itemoff --n 60 --reps 3     each fight replayed with no items, and with each item removed one at a time
+node bench.js castoff --n 60 --reps 3     each fight replayed with each hero's ability turned off
+node bench.js placement --n 60 --reps 3   each fight replayed in 8 formations; Best / Worst shows how much placement can swing it
+  (these three: --bots sensible,engine  --fight 3,4  --seed  --edits; --reps replays each variant from several seeds to cut dice noise)
 --preset prototype2                       use prototype 2's numbers
 ```
 
@@ -41,6 +48,14 @@ Every job gains charge the same way (attacks: 100 per 5s of attacking; hits: 15 
 Approve or reject proposed changes on the review page (B&B design review, https://claude.ai/artifact/DrhsxE5uoUjnm6bjQQrpXy). Approved numbers go into the configs.
 
 ## Still open
-- Brother Jamison's self-Ward (pending on the review page): `jamison.ability.selfWard` is null until approved.
+- Encounter pass 1 (`enemies.config.json`) is proposed on the review page; if rejected, the old values are in `claude/v0.25b-encounter-pass1.md` in the project.
 - Items and the economy are still in `run.js`; the prototype doesn't read the configs yet.
-- Home: the GitHub repo, `tools/testbench/` (pull request #4, https://github.com/lukestambaugh96-maker/basements-and-basilisks/pull/4). This project copy and the bundle are for chats without the repo.
+- Home: the GitHub repo, `tools/testbench/` (on main). This project copy and the bundle are for chats without the repo.
+
+## Encounter pass 1 (25 Nov, proposed)
+`enemies.config.json` retuned with enemy damage only (no HP). `node bench.js bots --n 300 --seed 20000`: never-buy 0% cleared, runs end at fight 3 (median); sensible 50% cleared, 68% use the free loss; engine 61% cleared. The original `run` bot now clears 25%.
+
+## Replay tests (25 Nov)
+`itemoff`, `castoff` and `placement` take every fight the chosen bots walked into (a snapshot of the party: heroes, tiers, items, positions) and replay it with one thing changed, from the same seed as the full-build replay. Removing an item can shift which dice land where, so read drops under about 5 points, or items held fewer than 20 times, as noise; `--reps 3` or more smooths it.
+Formations: `bot` (how the bots place: melee front, ranged back), `smart` (frontliners centre front, melee beside them, ranged behind, towers first), `swapped` (ranged front, melee behind), `tight`, `spread`, `wall` (all front), `back` (all back), `random`.
+First results (sensible + engine, 60 runs each): removing all items drops late fights 20-40 points (Forge 80% -> 52%, Grol 68% -> 29%); turning off Saint's, Faelan's or Cinder's ability drops their parties 37-45 points, Pillar's or Zark's 5-6; the best formation per party wins 95% vs 48% for the worst and 77% for the bots' own placement. With `--place best`, sensible clears 81% and engine 88% (default placement: 50% / 61%).
