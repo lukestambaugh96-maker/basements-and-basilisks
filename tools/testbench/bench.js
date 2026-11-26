@@ -174,6 +174,7 @@ const COMMANDS = {
   node bench.js itemoff [--bots sensible,engine] [--n 60]    Replay each fight with no items, and with each item removed one at a time.
   node bench.js castoff [--bots sensible,engine] [--n 60]    Replay each fight with each hero's ability turned off.
   node bench.js placement [--bots sensible,engine] [--n 60]  Replay each fight in different formations (same party, same dice).
+  node bench.js paths [heroes...] [--n 60]  Each hero's tier 2 paths in real fights: tier 1 vs tier 2 no path vs path A vs path B.
   node bench.js luck [--bots sensible,engine] [--n 60]       Each fight on average dice vs normal dice: how often the dice decide it.
     (itemoff, castoff, placement, luck: --reps 3 replays each variant from 3 seeds; --fight 3,4 limits to those fights)
   node bench.js jobs [heroes...] [--n 60]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
@@ -328,7 +329,39 @@ const COMMANDS = {
     const rows = Object.keys(per).sort().map(k => [k, per[k]]).concat([['All', all]]).map(([k, p]) => [k, p.n, pc(p.avgWin, p.n), pc(p.randWin, p.n), pc(p.coin, p.n), pc(p.upset, p.n), pc(p.rescue, p.n), pc(p.hpA, p.n), pc(p.hpR, p.n)]);
     console.log(table(['Fight', 'Fights', 'Win, average dice', 'Win, normal dice', 'Coin flip', 'Upset', 'Rescue', 'HP lost avg', 'HP lost normal'], rows));
   },
+  paths() {
+    // Every hero's tier 2 paths, in real fights: each fight a bot party walked into (fight 3 on, items and partners as they were),
+    // replayed with one hero forced to tier 2 with no path, path A, path B, and at tier 1, all on the same dice.
+    if (!opt.fight) opt.fight = '3,4,5,6';
+    const { G, snaps } = collectSnaps(); const H = {};
+    const only = pos.filter(x => G.HEROES[x]);
+    for (const s of snaps) for (const r of s.recs) {
+      if (only.length && !only.includes(r.id)) continue;
+      const boss = s.fight === 5; const h = H[r.id] = H[r.id] || { reg: { n: 0 }, boss: { n: 0 } }; const g = boss ? h.boss : h.reg; g.n++;
+      const variant = (tier, t2) => { const c = JSON.parse(JSON.stringify(s)); const rr = c.recs.find(x => x.uid === r.uid); rr.tier = tier; rr.t2 = t2; return replayAvg(G, c).win; };
+      g.t1 = (g.t1 || 0) + variant(1, null); g.t2 = (g.t2 || 0) + variant(2, null); g.a = (g.a || 0) + variant(2, 0); g.b = (g.b || 0) + variant(2, 1);
+    }
+    if (opt.json) return console.log(JSON.stringify(H, null, 1));
+    console.log(`Specialization test (${+opt.reps || 1} replay${(+opt.reps || 1) > 1 ? 's' : ''} each): fights ${opt.fight} from ${opt.bots || 'sensible,engine'} runs (${snaps.length} fights).`);
+    console.log('Each fight a hero was in is replayed with that hero at tier 1, at tier 2 with no path, and at tier 2 with each path. Party, items and dice stay the same.');
+    console.log('Rank-up = tier 2 with no path minus tier 1. A and B = what each path adds on top of that. Flags: "flat" = path adds under 3 points; "lopsided" = paths 10+ points apart.\n');
+    const lift = (x, g) => g.n ? 100 * (x - g.t2) / g.n : NaN;
+    for (const [label, key] of [['Regular fights (Glasstaff, Thundertree, Forge)', 'reg'], ['Bosses (Grol, Nezznar, Venomfang)', 'boss']]) {
+      const rows = Object.keys(H).filter(id => H[id][key].n >= (+opt.min || 8)).sort((x, y) => G.HEROES[x].name.localeCompare(G.HEROES[y].name)).map(id => {
+        const g = H[id][key], P = PATH_NAMES[id] || ['A', 'B']; const la = lift(g.a, g), lb = lift(g.b, g); const fl = [];
+        if (la < 3) fl.push(P[0] + ' flat'); if (lb < 3) fl.push(P[1] + ' flat'); if (Math.abs(la - lb) >= 10) fl.push('lopsided');
+        return [G.HEROES[id].name, g.n, pc(g.t1, g.n), pc(g.t2, g.n), f0(100 * (g.t2 - g.t1) / g.n), P[0], pc(g.a, g.n), sg(la), P[1], pc(g.b, g.n), sg(lb), fl.join(', ')];
+      });
+      console.log(label + '\n' + table(['Hero', 'Fights', 'T1', 'T2 no path', 'Rank-up', 'Path A', 'Win', 'Adds', 'Path B', 'Win', 'Adds', 'Flags'], rows) + '\n');
+    }
+    const few = (only.length ? only : Object.keys(G.HEROES)).filter(id => !H[id] || H[id].reg.n + H[id].boss.n < (+opt.min || 8)).map(id => G.HEROES[id].name);
+    if (few.length) console.log('Too few fights to judge (bots rarely field them): ' + few.join(', ') + '. Raise --n.');
+    console.log('Not measured here: gold made in a run (Pickpocket, Gains), or anything that grows across fights.');
+  },
 };
+const sg = x => isNaN(x) ? '-' : (x >= 0 ? '+' : '') + Math.round(x);
+// Tier 2 path names, in t2 order (0 = A, 1 = B), from behaviour.js.
+const PATH_NAMES = { arthur: ['Ready First', 'Second Wind'], bram: ['Preserve Life', 'Turn the Faithless'], faelan: ['Spell Weave', 'Shared Recovery'], wallaby: ['Cutthroat', 'Pickpocket'], dane: ['Duelist', 'Retribution'], lorcan: ['Colossus Slayer', 'Horde Breaker'], juniper: ['Bramble Guard', 'Bramble Stalker'], rosalind: ['Muse', 'Encore'], zark: ['Bear Totem', 'Wolf Totem'], naill: ['Stunning Strike', 'Step of the Wind'], nettle: ["Dark One's Blessing", 'Hellfire Pact'], pillar: ['Unbreakable', 'Avalanche'], laurel: ['Ensnaring Smite', 'Warding Smite'], lumen: ['Searing Focus', 'Healing Light'], jamison: ['Balm of Peace', 'Protective Bond'], zoe: ['Rune Carver', 'Just the Thing'], gilthrax: ['Gilded Hoard', "Bodyguard's Fee"], velith: ['First Blood', 'Nightshade Vials'], cinder: ['Twinned Spell', 'Empowered Spell'], gains: ['Compound Interest', 'Liquid Assets'], corvin: ["Stalker's Flurry", 'First Strike'], saint: ['Invoke Duplicity', 'Cloak of Shadows'], kaska: ['Panther', 'Dire Bear'], toot: ["Busker's Rhythm", 'Street Performer'] };
 const BOTS_LABEL = { bare: 'Never buys', sensible: 'Buys sensibly', engine: 'Builds an engine' };
 function runReport(G, N) {
   const q = (a, p) => { const s = a.slice().sort((x, y) => x - y); return s[Math.floor((s.length - 1) * p)]; };

@@ -33,8 +33,9 @@ node bench.js bots --place best           bots place by trying every formation o
 node bench.js itemoff --n 60 --reps 3     each fight replayed with no items, and with each item removed one at a time
 node bench.js castoff --n 60 --reps 3     each fight replayed with each hero's ability turned off
 node bench.js placement --n 60 --reps 3   each fight replayed in 8 formations; Best / Worst shows how much placement can swing it
+node bench.js paths --n 150 --reps 2     every hero's tier 2 paths in real fights (fight 3 on): T1 vs T2 no path vs path A vs path B
 node bench.js luck --n 60                 each fight once on average dice vs 5 times on normal dice: how often the dice decide it
-  (these four: --bots sensible,engine  --fight 3,4  --seed  --edits; --reps replays each variant from several seeds to cut dice noise)
+  (these five: --bots sensible,engine  --fight 3,4  --seed  --edits; --reps replays each variant from several seeds to cut dice noise)
 --dice average                            any command: every damage, heal, Ward and bonus die rolls its average (d20 stays random)
 --dice average-all                        any command: the d20 rolls its average too (10.5; Advantage 13.8, Disadvantage 7.2)
 --preset prototype2                       use prototype 2's numbers
