@@ -34,6 +34,7 @@ node bench.js itemoff --n 60 --reps 3     each fight replayed with no items, and
 node bench.js castoff --n 60 --reps 3     each fight replayed with each hero's ability turned off
 node bench.js placement --n 60 --reps 3   each fight replayed in 8 formations; Best / Worst shows how much placement can swing it
 node bench.js paths --n 150 --reps 2     every hero's tier 2 paths in real fights (fight 3 on): T1 vs T2 no path vs path A vs path B
+node bench.js bosscheck --n 150          the boss as the Act 2 check: bot parties rebuilt as all tier 2 (items on one) / two tier 2 / one tier 2
 node bench.js luck --n 60                 each fight once on average dice vs 5 times on normal dice: how often the dice decide it
   (these five: --bots sensible,engine  --fight 3,4  --seed  --edits; --reps replays each variant from several seeds to cut dice noise)
 --dice average                            any command: every damage, heal, Ward and bonus die rolls its average (d20 stays random)
@@ -67,3 +68,6 @@ First results (sensible + engine, 60 runs each): removing all items drops late f
 ## Average dice (26 Nov)
 `rules.config.json` `dice.mode` (or `--dice`): `random` is normal play; `average` makes every damage, heal, Ward and bonus die roll its average while the d20 ability roll stays random; `average-all` fixes the d20 too, so abilities never crit or fizzle. Damage still rounds once per hit, as in normal play. Other randomness (shop offers, ties in targeting) stays.
 First results (300 runs per bot, `--seed 20000`): cleared never-buy 0 / 0 / 0%, sensible 50 / 52 / 51%, engine 61 / 63 / 63% (random / average / average-all), so runs are decided by the build, not luck. `luck` (sensible + engine, 60 runs each): 11% of fights are coin flips on normal dice; bad luck loses a fight average dice win 6% of the time, good luck saves one 3%; Nezznar is the most luck-driven (24% coin flips).
+
+## One boss (26 Nov, proposed)
+Act 1 has one boss, Nezznar: the check for entering Act 2. Venomfang and King Grol stay in `enemies.config.json` with `"active": false`; edit paths like `bosses.grol.active=true` turn them back on (the prototype2 preset does). `bosscheck`: all tier 2 with items on one hero 84%, two tier 2 with items 73% (84% with frontliner + damage + support), one tier 2 33%.

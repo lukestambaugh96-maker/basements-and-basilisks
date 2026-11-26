@@ -106,6 +106,9 @@
     "enemies.grol.ability.damage.low": "3d8+4",
     "enemies.grol.ability.damage.mid": "4d8+4",
     "enemies.grol.ability.damage.high": "4d8+4",
-    "enemies.wolf.attack.dice": "2d4+1"
+    "enemies.wolf.attack.dice": "2d4+1",
+    "enemies.nezznar.ability.heroes": 2,
+    "bosses.venomfang.active": true,
+    "bosses.grol.active": true
   }
 }

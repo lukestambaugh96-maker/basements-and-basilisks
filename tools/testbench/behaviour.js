@@ -353,4 +353,4 @@ for (const id in EC) {
 }
 const encFromCfg = e => ({ id: e.id, name: e.name, enemies: e.enemies.map(([id, x, y]) => ({ id, x, y })), terrain: e.terrain || [] });
 const ACT1 = CFG.enemies.encounters.map(encFromCfg);
-const BOSSES = {}; for (const b of CFG.enemies.bosses) BOSSES[b.id] = encFromCfg(b);
+const BOSSES = {}; for (const b of CFG.enemies.bosses) if (b.active !== false) BOSSES[b.id] = encFromCfg(b); // active: false keeps a boss in the config but out of runs and tests

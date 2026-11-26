@@ -27,6 +27,7 @@ function resolvePath(p, cfg) {
   if (s[0] === 'heroes' && cfg.heroes.heroes[s[1]]) return ['heroes', 'heroes', ...s.slice(1)];
   if (s[0] === 'enemies' && cfg.enemies.enemies[s[1]]) return ['enemies', 'enemies', ...s.slice(1)];
   if (s[0] === 'rules') return s;
+  if (s[0] === 'bosses') { const i = cfg.enemies.bosses.findIndex(b => b.id === s[1]); if (i < 0) throw new Error('Unknown boss: ' + s[1]); return ['enemies', 'bosses', i, ...s.slice(2)]; }
   if (cfg.heroes.heroes[s[0]]) return ['heroes', 'heroes', ...s];
   if (cfg.enemies.enemies[s[0]]) return ['enemies', 'enemies', ...s];
   throw new Error('Unknown path: ' + p + ' (start with a hero id, an enemy id, or rules.)');
@@ -175,6 +176,7 @@ const COMMANDS = {
   node bench.js castoff [--bots sensible,engine] [--n 60]    Replay each fight with each hero's ability turned off.
   node bench.js placement [--bots sensible,engine] [--n 60]  Replay each fight in different formations (same party, same dice).
   node bench.js paths [heroes...] [--n 60]  Each hero's tier 2 paths in real fights: tier 1 vs tier 2 no path vs path A vs path B.
+  node bench.js bosscheck [--n 150]           The Act 1 boss as the Act 2 check: parties rebuilt as all tier 2 / two tier 2 / one tier 2.
   node bench.js luck [--bots sensible,engine] [--n 60]       Each fight on average dice vs normal dice: how often the dice decide it.
     (itemoff, castoff, placement, luck: --reps 3 replays each variant from 3 seeds; --fight 3,4 limits to those fights)
   node bench.js jobs [heroes...] [--n 60]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
@@ -357,6 +359,28 @@ const COMMANDS = {
     const few = (only.length ? only : Object.keys(G.HEROES)).filter(id => !H[id] || H[id].reg.n + H[id].boss.n < (+opt.min || 8)).map(id => G.HEROES[id].name);
     if (few.length) console.log('Too few fights to judge (bots rarely field them): ' + few.join(', ') + '. Raise --n.');
     console.log('Not measured here: gold made in a run (Pickpocket, Gains), or anything that grows across fights.');
+  },
+  bosscheck() {
+    // The Act 1 boss as the check for Act 2. Every party the bots bring to the boss, rebuilt three ways (heroes holding the most items rank up first):
+    //   A: all three at tier 2, items on one hero only.  B: two at tier 2, the party's items.  C: one at tier 2, the party's items.
+    if (!opt.fight) opt.fight = '6'; if (!opt.reps) opt.reps = 3;
+    const { G, snaps } = collectSnaps(); const jobOf = id => G.HEROES[id].cfg.benchJob;
+    const comp = recs => { const j = recs.map(r => jobOf(r.id)); const f = j.filter(x => x === 'frontline').length, dmg = j.filter(x => ['attacker', 'brawler', 'caster'].includes(x)).length, sup = j.filter(x => x === 'support').length;
+      return !f ? 'No frontliner' : !dmg ? 'No damage dealer' : sup ? 'Frontliner + damage + support' : 'Frontliner + damage, no support'; };
+    const build = (s, kind) => { const c = JSON.parse(JSON.stringify(s)); const order = c.recs.slice().sort((a, b) => b.items.length - a.items.length || a.uid - b.uid);
+      const nT2 = kind === 'A' ? 3 : kind === 'B' ? 2 : 1;
+      order.forEach((r, i) => { r.tier = i < nT2 ? 2 : 1; if (r.tier === 2 && r.t2 == null) r.t2 = (r.uid + s.seed) % 2; if (r.tier === 1) r.t2 = null; if (kind === 'A' && i > 0) r.items = []; });
+      return c; };
+    const S = { A: 'A: all tier 2, items on one hero', B: 'B: two tier 2, with items', C: 'C: one tier 2, with items' }; const res = {}; const byComp = {};
+    for (const s of snaps) { if (s.recs.length < 3) continue; const cp = comp(s.recs);
+      for (const k of ['A', 'B', 'C']) { const v = replayAvg(G, build(s, k)); const o = res[k] = res[k] || { n: 0, w: 0, hp: 0, items: 0 }; o.n++; o.w += v.win; o.hp += v.hpLost; o.items += build(s, k).recs.reduce((a, r) => a + r.items.length, 0);
+        const c = byComp[cp] = byComp[cp] || {}; const q = c[k] = c[k] || { n: 0, w: 0 }; q.n++; q.w += v.win; } }
+    if (opt.json) return console.log(JSON.stringify({ res, byComp }, null, 1));
+    const boss = Object.keys(G.BOSSES).join(', ');
+    console.log(`Boss check (${boss}), ${+opt.reps} replays each: ${res.A ? res.A.n : 0} parties the ${opt.bots || 'sensible,engine'} bots brought to the boss, rebuilt three ways.`);
+    console.log('Targets (Luke, 26 Nov): A does well; B clears relatively well with a good team; C struggles.\n');
+    console.log(table(['Party', 'Parties', 'Win', 'HP lost', 'Items held'], ['A', 'B', 'C'].filter(k => res[k]).map(k => [S[k], res[k].n, pc(res[k].w, res[k].n), pc(res[k].hp, res[k].n), f1(res[k].items / res[k].n)])));
+    console.log('\nBy team (win %):\n' + table(['Team', 'Parties', 'A', 'B', 'C'], Object.keys(byComp).sort().map(cp => { const c = byComp[cp]; return [cp, c.A.n, pc(c.A.w, c.A.n), pc(c.B.w, c.B.n), pc(c.C.w, c.C.n)]; })));
   },
 };
 const sg = x => isNaN(x) ? '-' : (x >= 0 ? '+' : '') + Math.round(x);
