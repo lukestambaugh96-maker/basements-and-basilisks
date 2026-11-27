@@ -137,6 +137,7 @@ function startRunFight(run, opts = {}) {
   return F;
 }
 function finishFight(run, F) {
+  carryBack(F);
   const res = { fight: run.fight, name: encOf(run).name, result: F.result, t: F.t, gold: 0, interest: 0, piggy: 0, heroes: F.units.filter(u => u.side === 'H' && !u.summon).map(u => ({ name: u.name, id: u.id, dmg: u.stat.dmg, heal: u.stat.heal, ward: u.stat.ward, taken: u.stat.taken, alive: u.alive, killedBy: u.killedBy, hp: Math.max(0, u.hp), maxHp: u.maxHp, abDmg: u.stat.abDmg })) };
   const hpLeft = res.heroes.reduce((a, h) => a + h.hp, 0), hpMax = res.heroes.reduce((a, h) => a + h.maxHp, 0);
   res.hpLostPct = hpMax ? 1 - hpLeft / hpMax : 1;

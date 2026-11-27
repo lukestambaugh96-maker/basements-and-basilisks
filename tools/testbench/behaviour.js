@@ -145,12 +145,14 @@ const KITS = {
         let smite = false; if (u.smiteNext) { smite = true; u.smiteNext = false; }
         if (u.t2 === 0 && T.duelist2 && u.duelT && u.duelT.alive && (u.duelT.st.taunt > 0 || T.duelist2.untilItFalls) && (T.duelist2.anyFoe || t === u.duelT)) { u.counters.duel = (u.counters.duel || 0) + 1; if (u.counters.duel % T.duelist2.everyNthHit === 0) smite = true; }
         if (u.t2 === 1 && T.retribution2 && u.retri > 0) { u.retri = 0; smite = true; }
-        if (smite && t.alive) { const s = spec(u, c.smite); u.smites = (u.smites || 0) + 1; dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, c.smite.type || 'radiant', { crit }); }
+        if (smite && t.alive) { const s = spec(u, c.smite); u.smites = (u.smites || 0) + 1; dealDamage(F, u, t, rollDice(s.n + (u.duelStacks || 0), s.x, crit) + s.flat, c.smite.type || 'radiant', { crit }); }
         return;
       }
       if (u.t2 === 0 && t === u.duelT && t.st.taunt > 0) { u.counters.duel = (u.counters.duel || 0) + 1; if (u.counters.duel % T.duelist.everyNthHit === 0) { const s = spec(u, T.duelist.smite); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); } }
       if (u.t2 === 1 && u.retri > 0 && t.alive) { u.retri = 0; const s = spec(u, T.retribution.smite); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); }
     },
+    carryKeys: ['duelStacks'],
+    tick(F, u) { const D = c.t2.duelist3; if (u.t2 === 0 && D && u.duelT && !u.duelT.alive && !u.duelT.duelCounted) { u.duelT.duelCounted = true; if (!D.whileTaunted || u.duelT.st.taunt > 0) u.duelStacks = Math.min(D.maxDice || 99, (u.duelStacks || 0) + D.dicePerKill); } }, // Duelist (Luke, 27 Nov): each dueled foe that dies adds a die to his Smite
     onHitTaken(F, u, src) { if (u.t2 === 1 && src && src === u.duelT && (src.st.taunt > 0 || (c.t2.retribution2 && c.t2.retribution2.anyTime))) u.retri = 1; },
   }),
   lorcan: c => ({ kwMark: true,

@@ -59,6 +59,7 @@ function makeHeroUnit(rec) {
   u.stats = {}; STATS.forEach((k, i) => u.stats[k] = def.stats[i] + ((rec.train || {})[k] || 0));
   u.ac = def.ac; u.sr = def.sr; u.eva = def.evasion || 0; u.pierce = 0; u.as = 0; u.cr = 0; u.sc = def.startCharge || 0; u.rollB = 0; u.dieUp = 0; u.flat = 0; u.pen = 0; u.spen = 0; u.hpB = 0; u.regen = 0;
   u.range = def.range; u.atk = Object.assign({}, def.atk); u.ab = def.ab; u.key = def.key;
+  if (rec.carry) Object.assign(u, rec.carry); // run-long state (scaling features, 27 Nov), copied back to the rec after each fight
   let rareCount = 0;
   for (const ir of (rec.items || [])) {
     const it = ITEMS[ir.id]; if (!it) continue; u.it[it.id] = ir;
@@ -485,3 +486,5 @@ function summonDouble(F, src, ally, life, hpShare = 0.2) {
   addUnit(F, dbl);
   return dbl;
 }
+// Copy each hero's run-long state (def.carryKeys) back to their rec after a fight.
+function carryBack(F) { for (const u of F.units) if (u.side === 'H' && !u.summon && u.rec && u.def.carryKeys) { u.rec.carry = u.rec.carry || {}; for (const k of u.def.carryKeys) u.rec.carry[k] = u[k] || 0; } }

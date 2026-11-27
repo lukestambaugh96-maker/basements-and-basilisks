@@ -59,7 +59,7 @@ const _rc = resolveCast; resolveCast = function (F, u) { u._inCast = true; try {
 const _heal2 = heal; heal = function (F, src, t, amt) { const r = _heal2(F, src, t, amt) || 0; if (src && src === t) src.selfSus = (src.selfSus || 0) + r; if (src && src._inCast) src.abVal = (src.abVal || 0) + r; return r; };
 const _aw2 = addWard; addWard = function (F, src, t, amt, rep) { const before = t.ward; _aw2(F, src, t, amt, rep); const g = Math.max(0, t.ward - before); if (src && src === t) src.selfSus = (src.selfSus || 0) + g; if (src && src._inCast) src.abVal = (src.abVal || 0) + g; };
 const _ff = finishFight; finishFight = function (run, F) { const extra = F.units.filter(u => u.side === 'H' && !u.summon).map(u => ({ id: u.id, casts: u.casts || 0 })); const r = _ff(run, F); r.extra = extra; r.t = F.t; return r; };
-this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, seedRng, botRun, parseDice, mod, policyRun, BOTS, replayFight, formation, FORMATIONS, ITEMS, setPlace };`;
+this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, seedRng, carryBack, botRun, parseDice, mod, policyRun, BOTS, replayFight, formation, FORMATIONS, ITEMS, setPlace };`;
   const ctx = { console, Math, CFG: cfg }; vm.createContext(ctx);
   vm.runInContext(src + '\n' + hook, ctx);
   return ctx.G;
@@ -246,6 +246,17 @@ const COMMANDS = {
       for (let i = 0; i < 50; i++) { G.seedRng(5000 + i); const u = G.makeHeroUnit({ id, tier: 1, items: [], train: {}, pos: { x: 2, y: 2 } }); const F = G.makeFight(G.ACT1[0], [u], { headless: true }); while (!F.over) G.stepFight(F); if (F.result === 'win') { w++; ts.push(F.t); } }
       ts.sort((a, b) => a - b); rows.push([G.HEROES[id].name, (100 * w / 50).toFixed(0) + '%', ts.length ? f1(ts[Math.floor((ts.length - 1) / 2)]) + 's' : '-']); }
     console.log('Each hero alone vs Fight 1 (Goblin Ambush), 50 tries:\n' + table(['Hero', 'Wins', 'Median length'], rows));
+  },
+  // gauntlet (27 Nov): one hero (at --tier, default 2, --path) with random partners (--partnerTier, default 1) plays fights 2-5 then the boss in a row,
+  // no items, carrying run-long state (scaling features) from fight to fight. Reports win per fight.
+  gauntlet() {
+    const N = +opt.n || 200; const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg); const hid = pos[0];
+    const P = partners(G, hid, N); const encs = G.ACT1.slice(1).concat([Object.values(G.BOSSES)[0]]); const w = encs.map(() => 0); let carry = 0;
+    P.forEach(([x, y], i) => { const ids = [hid, x, y]; const recs = ids.map((id, k) => ({ uid: k, id, tier: k === 0 ? (+opt.tier || 2) : (+opt.partnerTier || 1), t2: k === 0 && opt.path != null && opt.path !== '' ? +opt.path : null, items: [], train: {} }));
+      encs.forEach((enc, fi) => { G.seedRng(70000 + i * 10 + fi); const ps = place(G, ids, enc); const units = recs.map(r => G.makeHeroUnit(Object.assign(r, { pos: ps[r.id] }))); const F = G.makeFight(enc, units, { headless: true }); while (!F.over) G.stepFight(F); G.carryBack(F); if (F.result === 'win') w[fi]++; });
+      carry += (recs[0].carry && recs[0].carry.duelStacks) || 0; });
+    const out = { n: N, perFight: w.map(v => 100 * v / N), avg: w.reduce((a, b) => a + b, 0) * 100 / N / encs.length, carryAvg: carry / N };
+    if (opt.json) return console.log(JSON.stringify(out)); console.log(out);
   },
   jobs() {
     const N = +opt.n || 60; const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg); const rows = []; const js = [];
