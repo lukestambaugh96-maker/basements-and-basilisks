@@ -344,6 +344,7 @@ function strike(F, u, t, o) {
   const dmg = dealDamage(F, u, t, amt, type, { attack: true, crit, melee });
   if (u.def.splash) for (const o of adjUnits(F, t, t.side)) dealDamage(F, u, o, rollDice(n, x, false) + flat, type, { area: true });
   itemOnHit(F, u, t, crit);
+  if (u.side === 'H' && t.marks && t.alive) applyMarks(F, u, t, crit); // Hunter's Mark (27 Nov): any hero's attack on a marked foe triggers each mark's effect
   if (u.def.onStrike) u.def.onStrike(F, u, t, dmg, crit);
   if (u.formHealPounce && dmg > 0) { const a2 = lowestPct(alliesOf(F, u)); if (a2) heal(F, u, a2, Math.floor(dmg * u.formHealPounce)); }
   return dmg;
@@ -489,3 +490,6 @@ function summonDouble(F, src, ally, life, hpShare = 0.2) {
 }
 // Copy each hero's run-long state (def.carryKeys) back to their rec after a fight.
 function carryBack(F) { for (const u of F.units) if (u.side === 'H' && !u.summon && u.rec && u.def.carryKeys) { u.rec.carry = u.rec.carry || {}; for (const k of u.def.carryKeys) u.rec.carry[k] = u[k] || 0; } }
+// Hunter's Mark (Ranger rule, 27 Nov): a mark is { src, bonus: {n,x,flat}, slow, slowSeconds }. Marks from different sources stack; one per source.
+function setMark(F, src, t, m) { if (!t || !t.alive) return; for (const o of F.units) if (o.marks) o.marks = o.marks.filter(k => k.src !== src); t.marks = (t.marks || []).concat([Object.assign({ src }, m)]); src.markOn = t; }
+function applyMarks(F, u, t, crit) { for (const m of t.marks.slice()) { if (!m.src.alive || !t.alive) continue; if (m.bonus) dealDamage(F, m.src, t, rollDice(m.bonus.n, m.bonus.x, crit) + (m.bonus.flat || 0), m.type || 'phys', { mark: true }); if (m.slow) applyControl(F, m.src, t, 'slow', m.slowSeconds || 1, m.slow); if (m.onHit) m.onHit(F, m, u, t); } }

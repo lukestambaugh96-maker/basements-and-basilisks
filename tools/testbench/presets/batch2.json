@@ -1,0 +1,101 @@
+{
+ "_about": "Batch 2 rework proposals (27 Nov): Lorcan, Corvin, Velith, Nettle, Lumen. Use with --preset batch2.",
+ "edits": {
+  "heroes.lorcan.kit2": {
+   "mark": {
+    "dice": "1d4",
+    "perTier": true
+   },
+   "t2": {
+    "colossusSlayer": {
+     "aboveHp": 0.5,
+     "bonus": {
+      "dice": "1d8",
+      "perTier": true
+     }
+    },
+    "hordeBreaker": {
+     "jumps": true
+    }
+   }
+  },
+  "heroes.corvin.kit2": {
+   "mark": {
+    "slow": 0.2,
+    "slowSeconds": 1
+   },
+   "t2": {
+    "stalkersFlurry": {
+     "everyNthAttack": 2
+    },
+    "firstStrike": {
+     "allyCharge": 15,
+     "chargeOnMarkedKill": 50
+    }
+   }
+  },
+  "heroes.corvin.ability.strike.dice": "1d10",
+  "heroes.velith.kit2": {
+   "sneakAttack": {
+    "cooldown": 4,
+    "bonus": {
+     "dice": "1d4",
+     "perTier": true
+    },
+    "poison": 1
+   },
+   "t2": {
+    "assassin": {
+     "executeBelowHp": 0.3
+    },
+    "poisoner": {
+     "spreadPoison": 4
+    }
+   },
+   "daggerPoison": 1
+  },
+  "heroes.nettle.kit2": {
+   "curseBonus": {
+    "dice": "1d6"
+   },
+   "pactWard": {
+    "dice": "2d8",
+    "perTier": true,
+    "bonus": "CHA"
+   },
+   "t2": {
+    "hellfirePact": {
+     "explosion": {
+      "dice": "2d6",
+      "perTier": true
+     }
+    },
+    "fiendsFavor": {
+     "wardMultiplier": 2,
+     "attackSpeed": 0.3,
+     "seconds": 4
+    }
+   }
+  },
+  "heroes.nettle.ability.damage.dice": "3d6",
+  "heroes.lumen.kit2": {
+   "pactHeal": {
+    "dice": "2d6",
+    "perTier": true
+   },
+   "t2": {
+    "radiantSoul": {
+     "extraDicePerFoeHit": 2,
+     "beamBonus": {
+      "dice": "1d6"
+     }
+    },
+    "healingLight": {
+     "multiplier": 3,
+     "beamHealShare": 0.5
+    }
+   }
+  },
+  "heroes.velith.attack.interval": 1.8
+ }
+}
