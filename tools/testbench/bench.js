@@ -140,7 +140,7 @@ function heroMath(G, id, cfg, tier = 1) {
   if (d.job === 'attack') { const per = Math.round(100 * a.iv / R.charge.attackerSecondsPerCast); const n = Math.ceil(need / per); cast = `every ${n} attacks (~${f1(n * a.iv)}s)`; }
   else if (d.job === 'hit') cast = `every ${Math.ceil(need / (d.cHit || R.charge.perHitTaken))} hits taken`;
   else { const s = need / (100 / (d.cTime || R.charge.casterBaseSeconds) * Math.max(0.5, 1 + R.charge.casterIntPerModifier * m('INT'))); cast = `every ${s.toFixed(1)}s`; }
-  return { hp, ehpP: Math.round(hp * (d.ac + K) / K), ehpM: Math.round(hp * (d.sr + K) / K), rawDps, dps: rawDps * vsArmor, cast };
+  const ev = 1 - Math.min(R.evasion ? R.evasion.cap : 0.5, d.evasion || 0); return { hp, ehpP: Math.round(hp * (d.ac + K) / K / ev), ehpM: Math.round(hp * (d.sr + K) / K), rawDps, dps: rawDps * vsArmor, cast };
 }
 function enemyMath(G, id, cfg) {
   const d = G.ENEMIES[id], K = cfg.rules.resistance.K, a = d.atk;

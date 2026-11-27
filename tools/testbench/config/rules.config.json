@@ -21,6 +21,8 @@
     }
   },
   "resistance": { "formula": "R / (R + K)", "K": 20, "minimumDamage": 1, "controlReadsSr": true },
+  "evasion": { "note": "chance an attack misses; attacks only, never abilities; pierce lowers it", "cap": 0.5 },
+  "attackGrowth": { "note": "extra weapon dice per tier above 1 for heroes (Luke 26 Nov: 1; 0 = old rule, only tierDice attacks grow)", "extraDicePerTier": 0 },
   "charge": {
     "attackerSecondsPerCast": 5,
     "_attacker": "charge per basic attack = 100 x attack interval / attackerSecondsPerCast",

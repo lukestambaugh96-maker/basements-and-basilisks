@@ -57,14 +57,14 @@ function makeHeroUnit(rec) {
   const def = HEROES[rec.id];
   const u = Object.assign(baseUnit(), { side: 'H', def, id: rec.id, name: def.name, rec, tier: rec.tier, t2: rec.t2, x: rec.pos ? rec.pos.x : 0, y: rec.pos ? rec.pos.y : 0 });
   u.stats = {}; STATS.forEach((k, i) => u.stats[k] = def.stats[i] + ((rec.train || {})[k] || 0));
-  u.ac = def.ac; u.sr = def.sr; u.as = 0; u.cr = 0; u.sc = def.startCharge || 0; u.rollB = 0; u.dieUp = 0; u.flat = 0; u.pen = 0; u.spen = 0; u.hpB = 0; u.regen = 0;
+  u.ac = def.ac; u.sr = def.sr; u.eva = def.evasion || 0; u.pierce = 0; u.as = 0; u.cr = 0; u.sc = def.startCharge || 0; u.rollB = 0; u.dieUp = 0; u.flat = 0; u.pen = 0; u.spen = 0; u.hpB = 0; u.regen = 0;
   u.range = def.range; u.atk = Object.assign({}, def.atk); u.ab = def.ab; u.key = def.key;
   let rareCount = 0;
   for (const ir of (rec.items || [])) {
     const it = ITEMS[ir.id]; if (!it) continue; u.it[it.id] = ir;
     if (['Rare', 'Very Rare', 'Legendary'].includes(it.rar)) rareCount++;
     for (const k in (it.stats || {})) u.stats[k] += it.stats[k];
-    u.ac += it.ac || 0; u.sr += it.sr || 0; u.as += it.as || 0; u.cr += it.cr || 0; u.sc += it.sc || 0; u.rollB += it.rollB || 0;
+    u.ac += it.ac || 0; u.sr += it.sr || 0; u.eva += it.eva || 0; u.pierce += it.pierce || 0; u.as += it.as || 0; u.cr += it.cr || 0; u.sc += it.sc || 0; u.rollB += it.rollB || 0;
     u.dieUp += it.dieUp || 0; u.flat += it.flat || 0; u.hpB += it.hp || 0; u.regen += it.regen || 0; u.spen += it.spen || 0;
     if (it.scale) { const v = Math.min(it.scale.cap, it.scale.per * (ir.wins || 0)); if (it.scale.f === 'flat') u.flat += v; if (it.scale.f === 'as') u.as += v; }
     if (it.onHit) u.onHitItems.push(it.onHit);
@@ -94,7 +94,7 @@ function makeHeroUnit(rec) {
 function makeEnemyUnit(id, x, y) {
   const def = ENEMIES[id];
   const u = Object.assign(baseUnit(), { side: 'E', def, id, name: def.name, x, y, tier: 1, boss: def.rank === 'Boss', elite: def.rank === 'Elite' });
-  u.maxHp = def.hp; u.hp = def.hp; u.ac = def.ac; u.sr = def.sr; u.range = def.range || 1;
+  u.maxHp = def.hp; u.hp = def.hp; u.ac = def.ac; u.sr = def.sr; u.eva = def.evasion || 0; u.pierce = def.pierce || 0; u.range = def.range || 1;
   u.atk = Object.assign({}, def.atk); u.ab = def.ab || null; u.as = 0; u.cr = 0; u.rollB = 0; u.dieUp = 0; u.flat = def.atk.flat || 0; u.pen = 0; u.spen = 0; u.regen = 0;
   u.atkIvBase = def.atk.iv; u.ratio = 1; u.job = def.ab ? (def.ab.job || 'time') : 'none'; u.cAtk = def.ab && def.ab.perAtk || 0; u.cHit = 0; u.cTime = def.ab ? def.ab.iv : 99; u.stats = { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 }; u.m = () => 0; u.maxCharge = 100; u.keyMod = def.keyMod || 0;
   return u;
@@ -192,8 +192,10 @@ function dealDamage(F, src, t, raw, type, o = {}) {
   if (t.st.bond > 0 && t.bondBy && t.bondBy !== t && t.bondBy.alive && t.bondBy.t2 === 1 && raw >= t.bondBy.def.cfg.t2.protectiveBond.redirectHitsOf && src && src.side !== t.side) t = t.bondBy;
   if (src && src !== t) t.lastHitBy = src;
   if (o.attack) {
-    if (t.st.dodge > 0) { t.dodged = (t.dodged || 0) + 1; hitCharge(t); ev(F, { k: 'dodge', t }); return 0; }
-    if (t.counters.displace > 0) { t.counters.displace--; hitCharge(t); ev(F, { k: 'dodge', t }); return 0; }
+    if (t.st.dodge > 0) { t.dodged = (t.dodged || 0) + 1; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); return 0; }
+    if (t.counters.displace > 0) { t.counters.displace--; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); return 0; }
+    const eva = Math.min(RULES.evasion ? RULES.evasion.cap : 0.5, (t.eva || 0) - (src ? src.pierce || 0 : 0)); // Evasion (26 Nov): attacks only
+    if (eva > 0 && RNG() < eva) { t.evaded = (t.evaded || 0) + 1; hitCharge(t); ev(F, { k: 'evade', t }); fx(F, t, 'Evaded', '#9ad'); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'evade'); return 0; }
   }
   if (o.ability && src && src.side !== t.side && t.counters.evasion > 0) { t.counters.evasion--; raw = Math.floor(raw / 2); }
   if (t.st.invuln > 0) return 0;
@@ -329,7 +331,7 @@ function strike(F, u, t, o) {
   const a = u.atk; const melee = u.range <= 1;
   let crit = !!o.crit || !!u.stealthStrike || (melee && t.st.stun > 0);
   u.stealthStrike = false;
-  let n = (a.n || 1) * (a.tierDice ? u.tier : 1); let x = upDie(a.x, u.dieUp);
+  let n = (a.n || 1) * (a.tierDice ? u.tier : 1) + (u.side === 'H' && !a.tierDice && RULES.attackGrowth ? RULES.attackGrowth.extraDicePerTier * (u.tier - 1) : 0); let x = upDie(a.x, u.dieUp);
   if (a.woundedX && t.hp < t.maxHp) x = a.woundedX;
   let flat = (a.stat ? (a.half ? Math.floor(u.m(a.stat) / 2) : u.m(a.stat)) : 0) + (a.flat || 0) + (u.flat || 0);
   if (u.side === 'E') flat = a.flat || 0;

@@ -58,8 +58,12 @@ const KITS = {
     ab: { can: (F, u) => tfoes(F, u).some(o => dist(o, u) <= c.ability.needsFoeWithin),
       cast(F, u, r) {
         const A = c.ability, w = byRoll(A.dodgeSeconds, r); u.st.dodge = w; u.dodged = 0;
-        u.pend.push({ t: w, fn: (F, u) => { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return false; const s = spec(u, A.strike); const n = s.n + A.extraDiceIfDodged * Math.min(1, u.dodged || 0) + (r.crit ? A.extraDiceOnNatural20 : 0); abHit(F, u, t, n, s.x, s.flat, 'phys', r, { crit: true }); return true; } });
+        u.pend.push({ t: w, fn: (F, u) => { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return false; const s = spec(u, A.strike); const n = s.n + (A.extraDiceIfDodged || 0) * Math.min(1, u.dodged || 0) + (A.extraDicePerDodge || 0) * Math.min(A.maxDodgeDice || 0, u.dodged || 0) + (r.crit ? (A.extraDiceOnNatural20 || 0) : 0); abHit(F, u, t, n, s.x, s.flat, 'phys', r, { crit: true }); return true; } });
       } },
+    // Action Surge: Riposte (26 Nov): when an attack misses him (evaded or dodged), an immediate Longsword attack at the attacker.
+    // Internal cooldown, except while Alert Strike's dodge is up.
+    onAvoid(F, u, src) { const R = c.riposte; if (!R || !src || !src.alive || src.side === u.side) return; const inDodge = u.st.dodge > 0 && R.noCooldownWhileDodging;
+      if (!inDodge && F.t < (u.counters.rip || -99)) return; if (!canHit(F, u, src)) return; if (!inDodge) u.counters.rip = F.t + R.cooldown; u.ripostes = (u.ripostes || 0) + 1; ev(F, { k: 'riposte', u, t: src }); strike(F, u, src, {}); },
     onStart(F, u) { if (u.t2 === 0) u.charge = Math.min(u.maxCharge, u.charge + c.t2.readyFirst.extraStartCharge); },
     onAttack(F, u, t) { if (u.t2 === 0 && !u.counters.rf) { u.counters.rf = 1; for (let i = 0; i < c.t2.readyFirst.extraStrikesOnFirstAttack; i++) { if (i > 0 && !t.alive) break; strike(F, u, t, {}); } } },
     onHalf(F, u) { if (u.t2 === 1) { const s = spec(u, c.t2.secondWind.heal); heal(F, u, u, rollDice(s.n, s.x) + s.flat); u.charge = u.maxCharge; } },
@@ -296,7 +300,7 @@ for (const id in HC) {
   const c = HC[id], k = KITS[id] ? KITS[id](c) : {};
   const def = Object.assign({
     id, cfg: c, name: c.name, anc: c.ancestry, cls: c.class, sub: c.subclass, role: c.role, pro: c.pronouns,
-    job: c.job, stats: STAT_KEYS.map(s => c.stats[s]), key: c.key, ac: c.ac, sr: c.sr, range: c.range,
+    job: c.job, stats: STAT_KEYS.map(s => c.stats[s]), key: c.key, ac: c.ac, sr: c.sr, evasion: c.evasion || 0, range: c.range,
     atk: atkFromCfg(c.attack),
   }, k);
   if (c.castSeconds != null) def.cTime = c.castSeconds;
@@ -341,7 +345,7 @@ for (const id in EC) {
   const c = EC[id], k = ENEMY_KITS[id] ? ENEMY_KITS[id](c) : {};
   const p = parseDice(c.attack.dice);
   const atk = { n: p.n, x: p.x, iv: c.attack.interval }; if (p.flat) atk.flat = p.flat; if (c.attack.strikes) atk.strikes = c.attack.strikes; if (c.attack.type === 'magic') atk.type = 'magic';
-  const def = { id, cfg: c, name: c.name, chassis: c.chassis, rank: c.rank, affix: c.affix, hp: c.hp, ac: c.ac, sr: c.sr, range: c.range, atk };
+  const def = { id, cfg: c, name: c.name, chassis: c.chassis, rank: c.rank, affix: c.affix, hp: c.hp, ac: c.ac, sr: c.sr, evasion: c.evasion || 0, pierce: c.pierce || 0, range: c.range, atk };
   if (c.abilityRollBonus) def.keyMod = c.abilityRollBonus;
   if (c.splash) def.splash = true;
   if (c.packAttackSpeed) { def.pack = true; def.packAttackSpeed = c.packAttackSpeed; }

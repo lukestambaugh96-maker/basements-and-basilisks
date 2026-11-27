@@ -78,3 +78,8 @@ Act 1 has one boss, Nezznar: the check for entering Act 2. Venomfang and King Gr
 
 ## Ability modifiers (26 Nov, Luke)
 `rules.config.json` `abilityScores.modifier` "half": each point above 10 is worth half a modifier point (15 gives +2.5), so odd scores and +1 items count; even scores are unchanged. A damage, heal or Ward amount that ends in .5 rounds up or down at random, so half a point is worth half on average. "floor" restores D&D's rounded-down modifier (the prototype2 preset uses it). Per point at tier 1: +4 HP from CON (8 hit dice), +5 starting charge from CHA, +0.5 damage per hit from an attack or ability score, +5% charge speed from INT for casters. Effect at 300 runs per bot: sensible 55% -> 60% cleared, engine 65% -> 70%; never-buy still dies at fight 3; boss check unchanged (86 / 79 / 32%). `buffs --only stat` (100 runs per bot): key +1 / +2 / +3 worth +1 / +4 / +5 points, CON +1 / +3 / +5.
+
+## Evasion and attack growth (26 Nov)
+- **Evasion:** a chance that an attack misses (attacks only, never abilities). Hard cap `rules.evasion.cap` (0.5). Sources: hero config `evasion`, item `eva`, enemy `evasion`; `pierce` lowers it. Effective HP in `stats` and `jobs` divides physical EHP by (1 − evasion).
+- **Attack growth:** `rules.attackGrowth.extraDicePerTier` adds weapon dice per tier above 1 for heroes (0 = off; Luke's rule is 1, waiting for the cast rework).
+- **Arthur's rework hooks:** `arthur.riposte` ({cooldown, noCooldownWhileDodging}) and `arthur.ability.extraDicePerDodge` / `maxDodgeDice`. Off unless set; see `claude/v0.25b-arthur-rework.md`.
