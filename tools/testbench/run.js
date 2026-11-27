@@ -98,7 +98,13 @@ function autoPlace(run, rec, forceBench) {
 function cellOpenForHero(run, x, y) { const enc = encOf(run); return !(enc.terrain || []).some(([k, tx, ty]) => tx === x && ty === y && ['wall', 'chasm', 'forge', 'gate', 'rock'].includes(k)); }
 function rollItemRarity(run) { const w = RARITY_WEIGHTS[Math.min(5, run.fight)]; let tot = 0; for (const k in w) tot += w[k]; let r = RNG() * tot; for (const k in w) { r -= w[k]; if (r <= 0) return k; } return 'Common'; }
 function rollShop(run) {
-  const heroes = shuffle(Object.keys(HEROES)).slice(0, 3).map(id => ({ kind: 'hero', id, sale: RNG() < ECON.saleChance, sold: false }));
+  // Heroes you already own show up less often (rules.config.json shop.ownedHeroWeight; 1 = every hero equally likely). Luke, 26 Nov: until the hero pool grows.
+  const w = (CFG.rules.shop && CFG.rules.shop.ownedHeroWeight != null) ? CFG.rules.shop.ownedHeroWeight : 1;
+  let ids;
+  if (w === 1) ids = shuffle(Object.keys(HEROES)).slice(0, 3);
+  else { const pool = Object.keys(HEROES).map(id => ({ id, w: run.roster.some(r => r.id === id) ? w : 1 })); ids = [];
+    for (let k = 0; k < 3 && pool.length; k++) { let t = pool.reduce((a, p) => a + p.w, 0) * RNG(); let i = 0; while (i < pool.length - 1 && (t -= pool[i].w) > 0) i++; ids.push(pool[i].id); pool.splice(i, 1); } }
+  const heroes = ids.map(id => ({ kind: 'hero', id, sale: RNG() < ECON.saleChance, sold: false }));
   const items = []; for (let i = 0; i < 3; i++) { const rar = rollItemRarity(run); const pool = ITEM_LIST.filter(it => it.rar === rar && !items.some(o => o.id === it.id)); items.push({ kind: 'item', id: pick(pool).id, sale: RNG() < ECON.saleChance, sold: false }); }
   run.offers = { heroes, items };
 }
@@ -114,14 +120,14 @@ function buyOffer(run, o, target) {
     if (!canBuyHero(run, o.id)) return { ok: false, why: 'Party full or max tier' };
     run.gold -= p; o.sold = true;
     const owned = run.roster.find(r => r.id === o.id);
-    if (owned) { owned.copies++; owned.spent += p; if (owned.copies >= 2 && owned.tier < 2) { owned.tier = 2; return { ok: true, rankUp: owned }; } return { ok: true }; }
+    if (owned) { owned.copies++; owned.spent += p; if (owned.copies >= 2 && owned.tier < 2) { owned.tier = 2; run.rankUps = (run.rankUps || 0) + 1; if (run.rerolled) run.rankUpsAfterReroll = (run.rankUpsAfterReroll || 0) + 1; return { ok: true, rankUp: owned }; } return { ok: true }; }
     addHero(run, o.id, { spent: p }); return { ok: true };
   }
   run.gold -= p; o.sold = true; run.stash.push({ id: o.id, wins: 0, paid: p }); return { ok: true };
 }
-function reroll(run) { if (run.gold < run.rerollCost) return false; run.gold -= run.rerollCost; run.rerollCost++; rollShop(run); return true; }
+function reroll(run) { if (run.gold < run.rerollCost) return false; run.gold -= run.rerollCost; run.rerollCost++; run.rerolled = true; run.rerollsTotal = (run.rerollsTotal || 0) + 1; rollShop(run); return true; }
 function equip(run, ir, rec) { if (rec.items.length >= ECON.slots) return false; const i = run.stash.indexOf(ir); if (i >= 0) run.stash.splice(i, 1); rec.items.push(ir); return true; }
-function enterShop(run) { run.rerollCost = 1; rollShop(run); run.phase = 'shop'; }
+function enterShop(run) { run.rerollCost = 1; run.rerolled = false; rollShop(run); run.phase = 'shop'; }
 
 function startRunFight(run, opts = {}) {
   const enc = encOf(run);
@@ -131,6 +137,7 @@ function startRunFight(run, opts = {}) {
   return F;
 }
 function finishFight(run, F) {
+  carryBack(F);
   const res = { fight: run.fight, name: encOf(run).name, result: F.result, t: F.t, gold: 0, interest: 0, piggy: 0, heroes: F.units.filter(u => u.side === 'H' && !u.summon).map(u => ({ name: u.name, id: u.id, dmg: u.stat.dmg, heal: u.stat.heal, ward: u.stat.ward, taken: u.stat.taken, alive: u.alive, killedBy: u.killedBy, hp: Math.max(0, u.hp), maxHp: u.maxHp, abDmg: u.stat.abDmg })) };
   const hpLeft = res.heroes.reduce((a, h) => a + h.hp, 0), hpMax = res.heroes.reduce((a, h) => a + h.maxHp, 0);
   res.hpLostPct = hpMax ? 1 - hpLeft / hpMax : 1;

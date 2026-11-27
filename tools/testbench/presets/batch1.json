@@ -1,0 +1,144 @@
+{
+ "_about": "Batch 1 rework proposals (27 Nov): Gilthrax, Zoe, Laurel, Pillar, Zark, Naill. Use with --preset batch1.",
+ "edits": {
+  "heroes.gilthrax.kit2": {
+   "ward": {
+    "dice": "1d8",
+    "perTier": true,
+    "bonus": "CON",
+    "low": "1d6",
+    "high": "2d8"
+   },
+   "wardPerItem": 5,
+   "wardPerRareItem": 5,
+   "maxSurgesPerBreak": 3,
+   "surgesBare": 0,
+   "t2": {
+    "dragonsRetort": {
+     "shareOfAbsorbed": 0.3,
+     "sharePerItem": 0.15
+    },
+    "gildedScales": {
+     "acPerItem": 2,
+     "srPerItem": 1
+    }
+   }
+  },
+  "heroes.zoe.kit2": {
+   "dicePerAllyItem": 1,
+   "t2": {
+    "runeKnight": {
+     "seconds": 4,
+     "bonus": {
+      "dice": "1d6",
+      "perTier": true
+     },
+     "ward": {
+      "dice": "2d6",
+      "perTier": true
+     }
+    },
+    "quartermaster": {
+     "extraSupplies": 1,
+     "allyCharge": 15
+    }
+   }
+  },
+  "heroes.laurel.kit2": {
+   "smite": {
+    "dice": "1d8",
+    "perTier": true
+   },
+   "hitHealShare": 0.33,
+   "t2": {
+    "warden": {
+     "everyNthHit": 3,
+     "restrainSeconds": 1.5
+    },
+    "bruiser": {
+     "selfHealShare": 0.5,
+     "attackSpeed": 0.2
+    }
+   }
+  },
+  "heroes.pillar.kit2": {
+   "maul": {
+    "hpShare": 0.01,
+    "splashShare": 0.25,
+    "slow": 0.25,
+    "slowSeconds": 1.5
+   },
+   "rage": {
+    "maxStacks": 5
+   },
+   "quake": {
+    "reach": 1,
+    "damage": {
+     "dice": "8d6",
+     "perTier": true
+    },
+    "stunSeconds": {
+     "low": 1,
+     "mid": 1.5,
+     "high": 2
+    }
+   },
+   "t2": {
+    "unbreakable": {
+     "wardShareOfHpPerFoe": 0.15,
+     "acPerStack": 2
+    },
+    "avalanche": {
+     "extraReach": 2
+    }
+   }
+  },
+  "heroes.pillar.attack.speedScaling": 0.5,
+  "heroes.zark.kit2": {
+   "rage": {
+    "hpSharePerStack": 0.15,
+    "maxStacks": 5,
+    "fadeSeconds": 4,
+    "regenPerStack": 0.1,
+    "regenPerConMod": 0.05
+   },
+   "t2": {
+    "bearTotem": {
+     "regenMultiplier": 2
+    },
+    "wolfTotem": {
+     "allyAttackSpeedPerStack": 0,
+     "swingDicePerStack": 1
+    }
+   }
+  },
+  "heroes.zark.benchJob": "frontline",
+  "heroes.naill.kit2": {
+   "ki": {
+    "max": 5,
+    "attackSpeedPerKi": 0.02,
+    "kiPerExtraStrike": 5
+   },
+   "t2": {
+    "stunningStrike": {
+     "stunSeconds": 1
+    },
+    "stepOfTheWind": {
+     "leap": true
+    }
+   }
+  },
+  "heroes.laurel.attack.interval": 2.0,
+  "heroes.laurel.ability.damage.dice": "1d8",
+  "heroes.pillar.attack.interval": 3,
+  "heroes.pillar.attack.dice": "1d8",
+  "heroes.zark.stats.STR": 12,
+  "heroes.zark.stats.CON": 18,
+  "heroes.zark.attack.dice": "1d10",
+  "heroes.naill.ability.strikes": {
+   "low": 1,
+   "mid": 2,
+   "high": 3
+  }
+ }
+}

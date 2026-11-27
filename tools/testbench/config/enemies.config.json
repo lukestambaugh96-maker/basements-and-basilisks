@@ -1,5 +1,5 @@
 {
-  "_about": "Basements & Basilisks v0.25: every Act 1 enemy and encounter number (prototype 2 values, 24 Nov). Read by the test bench. Behaviour lives in testbench/behaviour.js.",
+  "_about": "Basements & Basilisks v0.25: every Act 1 enemy and encounter number. Encounter pass 1 (25 Nov, proposed): enemy damage retuned to the run goal with the three bot players; no HP changed. Behaviour lives in testbench/behaviour.js.",
   "_howToRead": {
     "attack": "dice per strike, flat added, seconds between attacks (interval), strikes per attack, type physical or magic.",
     "abilityRollBonus": "Added to the enemy's d20 ability roll (Low at 5 or less, High at 14 or more).",
@@ -25,7 +25,7 @@
       "ac": 12,
       "sr": 10,
       "range": 4,
-      "attack": { "dice": "2d10+4", "interval": 1.4 }
+      "attack": { "dice": "2d8+2", "interval": 1.4 }
     },
     "ripper": {
       "name": "Ripper",
@@ -63,7 +63,7 @@
       "ac": 17,
       "sr": 12,
       "range": 1,
-      "attack": { "dice": "1d8", "interval": 1.6, "strikes": 2 }
+      "attack": { "dice": "1d8+2", "interval": 1.6, "strikes": 2 }
     },
     "glasstaff": {
       "name": "Glasstaff",
@@ -75,13 +75,13 @@
       "sr": 14,
       "range": 4,
       "abilityRollBonus": 2,
-      "attack": { "dice": "2d10+4", "interval": 1.4, "type": "magic" },
+      "attack": { "dice": "2d10+6", "interval": 1.4, "type": "magic" },
       "ability": {
         "name": "Magic Missile",
-        "castSeconds": 6,
+        "castSeconds": 5,
         "castTime": 0.3,
         "darts": { "low": 2, "mid": 3, "high": 3 },
-        "dart": { "dice": "1d6+1" },
+        "dart": { "dice": "2d4+2" },
         "highWard": { "dice": "2d10+2" }
       }
     },
@@ -93,7 +93,7 @@
       "ac": 13,
       "sr": 13,
       "range": 3,
-      "attack": { "dice": "2d8+1", "interval": 2, "type": "magic" },
+      "attack": { "dice": "2d8+4", "interval": 2, "type": "magic" },
       "pullAtStart": { "restrainSeconds": 1.5 },
       "restrainEveryNthHit": 3,
       "restrainSeconds": 1.5
@@ -106,7 +106,7 @@
       "ac": 12,
       "sr": 9,
       "range": 1,
-      "attack": { "dice": "2d4+1", "interval": 1 }
+      "attack": { "dice": "2d4+2", "interval": 1 }
     },
     "needle": {
       "name": "Needle Blight",
@@ -116,7 +116,7 @@
       "ac": 12,
       "sr": 10,
       "range": 3,
-      "attack": { "dice": "2d10", "interval": 1.4 }
+      "attack": { "dice": "2d10+2", "interval": 1.4 }
     },
     "flameskull": {
       "name": "Flameskull",
@@ -128,12 +128,12 @@
       "range": 4,
       "abilityRollBonus": 2,
       "splash": true,
-      "attack": { "dice": "3d6", "interval": 2.5, "type": "magic" },
+      "attack": { "dice": "3d6+8", "interval": 2.5, "type": "magic" },
       "ability": {
         "name": "Fireball",
-        "castSeconds": 11,
+        "castSeconds": 6,
         "castTime": 0.6,
-        "damage": { "low": "3d6", "mid": "5d6", "high": "7d6" }
+        "damage": { "low": "6d6", "mid": "8d6", "high": "10d6" }
       }
     },
     "lesser_skull": {
@@ -145,7 +145,7 @@
       "sr": 16,
       "range": 4,
       "splash": true,
-      "attack": { "dice": "3d6", "interval": 2.5, "type": "magic" }
+      "attack": { "dice": "3d6+6", "interval": 2.5, "type": "magic" }
     },
     "ghoul": {
       "name": "Ghoul",
@@ -156,7 +156,7 @@
       "ac": 13,
       "sr": 10,
       "range": 1,
-      "attack": { "dice": "2d6", "interval": 1.6, "strikes": 2 },
+      "attack": { "dice": "2d6+8", "interval": 1.6, "strikes": 2 },
       "stunEveryNthHitOnSameHero": 3,
       "stunSeconds": 0.5
     },
@@ -169,13 +169,13 @@
       "sr": 14,
       "range": 1,
       "abilityRollBonus": 3,
-      "attack": { "dice": "4d6+4", "interval": 1.6 },
+      "attack": { "dice": "4d6+20", "interval": 1.6 },
       "halfHp": { "name": "Wing Buffet", "damage": { "dice": "2d6" }, "pushSquares": 2, "rechargesBreath": true },
       "ability": {
         "name": "Poison Breath",
-        "castSeconds": 7,
+        "castSeconds": 5,
         "castTime": 0.6,
-        "damage": { "low": "4d6+6", "mid": "4d6+6", "high": "4d6+6" },
+        "damage": { "low": "10d6+8", "mid": "10d6+8", "high": "10d6+8" },
         "poison": { "low": 3, "mid": 3, "high": 5 }
       }
     },
@@ -188,15 +188,15 @@
       "sr": 16,
       "range": 4,
       "abilityRollBonus": 3,
-      "attack": { "dice": "2d8+6", "interval": 2, "type": "magic" },
+      "attack": { "dice": "2d8+14", "interval": 2, "type": "magic" },
       "halfHp": { "name": "Darkness", "seconds": 6 },
       "ability": {
         "name": "Web",
         "castSeconds": 7,
         "castTime": 0.4,
-        "heroes": 2,
+        "heroes": 3,
         "restrainSeconds": { "low": 2, "mid": 2, "high": 3 },
-        "damage": { "low": "2d6+2", "mid": "2d6+2", "high": "2d6+2" }
+        "damage": { "low": "7d6+8", "mid": "7d6+8", "high": "7d6+8" }
       }
     },
     "giant_spider": {
@@ -207,7 +207,7 @@
       "ac": 13,
       "sr": 10,
       "range": 1,
-      "attack": { "dice": "2d6", "interval": 1.6, "strikes": 2 }
+      "attack": { "dice": "2d6+3", "interval": 1.6, "strikes": 2 }
     },
     "grol": {
       "name": "King Grol",
@@ -218,13 +218,13 @@
       "sr": 12,
       "range": 1,
       "abilityRollBonus": 3,
-      "attack": { "dice": "4d6", "interval": 1.6 },
+      "attack": { "dice": "4d6+14", "interval": 1.6 },
       "halfHp": { "name": "Enraged", "attackSpeedMultiplier": 0.7 },
       "ability": {
         "name": "Brutal Charge",
-        "castSeconds": 10,
+        "castSeconds": 6,
         "castTime": 0.3,
-        "damage": { "low": "3d8+4", "mid": "4d8+4", "high": "4d8+4" },
+        "damage": { "low": "5d8+8", "mid": "6d8+8", "high": "6d8+8" },
         "stunSeconds": { "low": 0, "mid": 1, "high": 1.5 }
       }
     },
@@ -238,7 +238,7 @@
       "sr": 9,
       "range": 1,
       "moveSeconds": 0.35,
-      "attack": { "dice": "2d4+1", "interval": 1 },
+      "attack": { "dice": "2d4+6", "interval": 1 },
       "packAttackSpeed": 0.15
     },
     "bugbear": {
@@ -301,9 +301,11 @@
       "terrain": [["forge", 3, 2]]
     }
   ],
+  "_bosses": "Act 1 has one boss, Nezznar (Luke, 26 Nov): the check for entering Act 2. Venomfang and King Grol stay here with active: false for later acts.",
   "bosses": [
     {
       "id": "venomfang",
+      "active": false,
       "name": "Venomfang",
       "enemies": [["venomfang", 6, 2]],
       "terrain": [["tower", 1, 2], ["tower", 1, 3]]
@@ -316,6 +318,7 @@
     },
     {
       "id": "grol",
+      "active": false,
       "name": "King Grol",
       "enemies": [["grol", 6, 2], ["wolf", 5, 1], ["wolf", 5, 3]],
       "terrain": [["gate", 4, 0], ["gate", 4, 1], ["gate", 4, 3], ["gate", 4, 4], ["gate", 4, 5]]

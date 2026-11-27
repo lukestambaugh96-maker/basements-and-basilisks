@@ -44,7 +44,19 @@ function rummageFor(F, u, forced, r, used) {
   else { const s = spec(u, C.whetstone); t.whet = C.whetstone.attacks; t.whetN = s.n * mult; }
   if (u.t2 === 1) t.charge = Math.min(t.maxCharge, t.charge + T.justTheThing.allyCharge);
 }
+// Sneak Attack (base kit, 27 Nov proposal): a bonus Thrown Dagger at the foe with +bonus dice, independent of attack speed, with an internal cooldown.
+// Opportunist (passive) holds the trigger: an ally is also attacking his target. force = an effect that "triggers Sneak Attack" (skips the condition, keeps the cooldown).
+function sneakNew(F, u, t, force) {
+  const SA = u.def.cfg.sneakAttack, T = u.def.cfg.t2; if (!t || !t.alive || u.counters.sa > F.t) return;
+  const CT = u.t2 === 0 && T.cutthroat2;
+  const ok = force || F.units.some(a => a.alive && a.side === 'H' && a !== u && a.target === t) || (CT && t.hp < t.maxHp * CT.foeBelowHp);
+  if (!ok) return; u.counters.sa = F.t + (CT && CT.cooldown && t.hp < t.maxHp * CT.foeBelowHp ? CT.cooldown : SA.cooldown); u.sneaks = (u.sneaks || 0) + 1;
+  const a = u.atk, b = spec(u, CT && CT.bonus && t.hp < t.maxHp * CT.foeBelowHp ? CT.bonus : SA.bonus); const dmg = dealDamage(F, u, t, rollDice(a.n || 1, a.x) + u.m(a.stat || 'DEX') + rollDice(b.n, b.x) + b.flat, 'phys', { attack: true });
+  if (!t.alive) { u.sneakKill = true; const PP = u.t2 === 1 && T.pickpocket2; if (PP && t.side === 'E') { F.gold += PP.goldPerSneakKill; u.goldStolen = (u.goldStolen || 0) + PP.goldPerSneakKill; onGoldDrop(F); } }
+  return dmg;
+}
 function sneakW(F, u, t) {
+  if (u.def.cfg.sneakAttack) return sneakNew(F, u, t, false);
   const T = u.def.cfg.t2;
   if (u.t2 == null || !t.alive || u.counters.sa > F.t) return;
   const ok = u.t2 === 0 ? t.hp < t.maxHp * T.cutthroat.foeBelowHp : F.units.some(a => a.alive && a.side === 'H' && a !== u && a.target === t);
@@ -57,32 +69,65 @@ const KITS = {
   arthur: c => ({ dmgAb: true,
     ab: { can: (F, u) => tfoes(F, u).some(o => dist(o, u) <= c.ability.needsFoeWithin),
       cast(F, u, r) {
-        const A = c.ability, w = byRoll(A.dodgeSeconds, r); u.st.dodge = w; u.dodged = 0;
-        u.pend.push({ t: w, fn: (F, u) => { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return false; const s = spec(u, A.strike); const n = s.n + A.extraDiceIfDodged * Math.min(1, u.dodged || 0) + (r.crit ? A.extraDiceOnNatural20 : 0); abHit(F, u, t, n, s.x, s.flat, 'phys', r, { crit: true }); return true; } });
+        const A = c.ability, w = byRoll(A.dodgeSeconds, r); u.st.dodge = w; u.dodged = 0; u.dodgedBy = new Set();
+        const GS0 = c.t2.goadingStrike; // Goading Strike, 'start' version: dare every foe nearby to swing into the dodge
+        if (GS0 && u.t2 === 1 && GS0.when === 'start') for (const o of foesOf(F, u).filter(o => dist(o, u) <= GS0.reach)) applyControl(F, u, o, 'taunt', w + GS0.extraSeconds);
+        u.pend.push({ t: w, fn: (F, u) => {
+          const GS = c.t2.goadingStrike; // Goading Strike (path B, 26 Nov proposal): taunt every foe that swung during the dodge
+          if (GS && u.t2 === 1 && GS.when !== 'start') for (const o of u.dodgedBy) if (o.alive) applyControl(F, u, o, 'taunt', GS.tauntSeconds);
+          const t = acquire(F, u); if (!t || !canHit(F, u, t)) return false; const s = spec(u, A.strike);
+          const RM = c.t2.riposteMaster; const stored = RM && u.t2 === 0 ? (u.storedDice || 0) : 0; u.storedDice = 0;
+          const n = s.n + (A.extraDiceIfDodged || 0) * Math.min(1, u.dodged || 0) + (A.extraDicePerDodge || 0) * Math.min(A.maxDodgeDice || 0, u.dodged || 0) + stored + (r.crit ? (A.extraDiceOnNatural20 || 0) : 0);
+          abHit(F, u, t, n, s.x, s.flat, 'phys', r, { crit: true }); return true; } });
       } },
-    onStart(F, u) { if (u.t2 === 0) u.charge = Math.min(u.maxCharge, u.charge + c.t2.readyFirst.extraStartCharge); },
-    onAttack(F, u, t) { if (u.t2 === 0 && !u.counters.rf) { u.counters.rf = 1; for (let i = 0; i < c.t2.readyFirst.extraStrikesOnFirstAttack; i++) { if (i > 0 && !t.alive) break; strike(F, u, t, {}); } } },
-    onHalf(F, u) { if (u.t2 === 1) { const s = spec(u, c.t2.secondWind.heal); heal(F, u, u, rollDice(s.n, s.x) + s.flat); u.charge = u.maxCharge; } },
+    // Action Surge: Riposte (26 Nov): when an attack misses him (evaded or dodged), an immediate Longsword attack at the attacker.
+    // Internal cooldown, except while Alert Strike's dodge is up (if noCooldownWhileDodging).
+    onAvoid(F, u, src) { const R = c.riposte; if (!R || !src || !src.alive || src.side === u.side) return;
+      if (u.st.dodge > 0 && u.dodgedBy) u.dodgedBy.add(src);
+      const RM = c.t2.riposteMaster && u.t2 === 0 ? c.t2.riposteMaster : null; const cd = RM ? RM.riposteCooldown : R.cooldown;
+      const inDodge = u.st.dodge > 0 && R.noCooldownWhileDodging;
+      if (!inDodge && F.t < (u.counters.rip || -99)) return; let tg = acquire(F, u); if (!tg || !canHit(F, u, tg)) tg = canHit(F, u, src) ? src : null; if (!tg) return; if (!inDodge) u.counters.rip = F.t + cd;
+      // Action Surge (Luke, 27 Nov): take an extra weapon attack, at his current target. Alert holds the trigger: when he dodges an attack.
+      u.ripostes = (u.ripostes || 0) + 1; ev(F, { k: 'surge', u, t: tg }); strike(F, u, tg, { crit: !!(RM && RM.riposteCrits) });
+      if (RM) u.storedDice = Math.min(RM.maxStoredDice, (u.storedDice || 0) + 1); }, // Riposte Master: each Riposte adds a die to the next Alert Strike
+    onStart(F, u) {
+      if (u.t2 === 0 && c.t2.readyFirst && !c.t2.riposteMaster) u.charge = Math.min(u.maxCharge, u.charge + c.t2.readyFirst.extraStartCharge);
+      if (u.t2 === 1 && c.t2.goadingStrike) u.eva += c.t2.goadingStrike.evasionBonus;
+    },
+    onAttack(F, u, t) { if (u.t2 === 0 && c.t2.readyFirst && !c.t2.riposteMaster && !u.counters.rf) { u.counters.rf = 1; for (let i = 0; i < c.t2.readyFirst.extraStrikesOnFirstAttack; i++) { if (i > 0 && !t.alive) break; strike(F, u, t, {}); } } },
+    onHalf(F, u) { if (u.t2 === 1 && c.t2.secondWind && !c.t2.goadingStrike) { const s = spec(u, c.t2.secondWind.heal); heal(F, u, u, rollDice(s.n, s.x) + s.flat); u.charge = u.maxCharge; } },
   }),
   bram: c => ({
     ab: { can: (F, u) => alliesOf(F, u).some(a => a.hp < a.maxHp),
       cast(F, u, r) {
-        const inj = alliesOf(F, u).filter(a => a !== u && a.hp < a.maxHp); const t = nearest(inj, u) || u;
+        const inj = alliesOf(F, u).filter(a => a !== u && a.hp < a.maxHp); const GD0 = u.t2 === 1 && c.t2.guardian; const front = GD0 && GD0.targetFrontliner ? inj.filter(a => a.def.cfg && a.def.cfg.benchJob === 'frontline') : []; const t = (front.length ? lowestPct(front) : GD0 && GD0.targetLowest ? lowestPct(inj) : nearest(inj, u)) || u;
         const s = spec(u, c.ability.heal, r); const amt = rollDice(s.n + r.xd, s.x, r.crit, u.empower) + s.flat;
-        heal(F, u, t, amt); if (t !== u) heal(F, u, u, Math.floor(amt * c.ability.selfHealShare));
-        if (u.t2 === 1) { const b = spec(u, c.t2.turnTheFaithless.burst); for (const o of adjUnits(F, u, 'E')) dealDamage(F, u, o, rollDice(b.n, b.x, r.crit) + b.flat, 'radiant', { ability: true, area: true }); }
+        const AN = u.t2 === 0 ? c.t2.anchor : null, GD = u.t2 === 1 ? c.t2.guardian : null; // 27 Nov proposal: solo frontline / off-tank paths
+        heal(F, u, t, amt); if (t !== u) heal(F, u, u, Math.floor(amt * (AN ? AN.selfHealShare : c.ability.selfHealShare)));
+        if (AN) for (const o of foesOf(F, u).filter(o => dist(o, u) <= (AN.reach || 1))) applyControl(F, u, o, 'taunt', AN.tauntSeconds);
+        if (GD && t !== u) { addWard(F, u, t, Math.floor(amt * GD.wardShare), false); for (const o of adjUnits(F, t, 'E')) applyControl(F, u, o, 'taunt', GD.tauntSeconds); }
+        if (u.t2 === 1 && !c.t2.guardian && c.t2.turnTheFaithless) { const b = spec(u, c.t2.turnTheFaithless.burst); for (const o of adjUnits(F, u, 'E')) dealDamage(F, u, o, rollDice(b.n, b.x, r.crit) + b.flat, 'radiant', { ability: true, area: true }); }
       } },
-    tick(F, u) { const P = c.t2.preserveLife; if (u.t2 === 0 && !u.counters.pl) { const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * P.triggerBelowHp); if (lo) { u.counters.pl = 1; for (const a of alliesOf(F, u)) if (a.hp < a.maxHp * P.healsAlliesBelowHp) { const s = spec(u, P.heal); heal(F, u, a, rollDice(s.n, s.x) + s.flat); } } } },
+    // Channel Divinity (base kit, 27 Nov proposal): every fight starts with one charge, hold at most one; Disciple of Life holds the trigger.
+    onStart(F, u) { if (c.channelDivinity) u.cd = 1; },
+    tick(F, u) { const CD = c.channelDivinity;
+      if (CD && u.cd > 0) { const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * CD.triggerBelowHp); if (lo) { u.cd = 0; u.cdUses = (u.cdUses || 0) + 1; for (const a of alliesOf(F, u)) if (a.hp < a.maxHp * CD.healsAlliesBelowHp) { const s = spec(u, CD.heal); heal(F, u, a, rollDice(s.n, s.x) + s.flat); } } }
+      if (CD) return;
+      const P = c.t2.preserveLife; if (u.t2 === 0 && !u.counters.pl) { const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * P.triggerBelowHp); if (lo) { u.counters.pl = 1; for (const a of alliesOf(F, u)) if (a.hp < a.maxHp * P.healsAlliesBelowHp) { const s = spec(u, P.heal); heal(F, u, a, rollDice(s.n, s.x) + s.flat); } } } },
   }),
   faelan: c => ({
-    ab: { cast(F, u, r) { const t = lowestPctFront(F, u); const s = spec(u, c.ability.ward, r); addWard(F, u, t, rollDice(s.n + r.xd, s.x, r.crit, u.empower) + s.flat, wardReplaces()); u.weaveLeft = c.t2.absorbsCounted; } },
-    onWardAbsorb(F, u, t) { if (u.t2 == null || !(u.weaveLeft > 0)) return; u.weaveLeft--; if (u.t2 === 0) u.charge = Math.min(u.maxCharge, u.charge + c.t2.spellWeave.chargeBackPerAbsorb); else t.charge = Math.min(t.maxCharge, t.charge + c.t2.sharedRecovery.allyChargePerAbsorb); },
+    ab: { cast(F, u, r) { const t = lowestPctFront(F, u); const s = spec(u, c.ability.ward, r); const amt = rollDice(s.n + r.xd, s.x, r.crit, u.empower) + s.flat; addWard(F, u, t, amt, wardReplaces()); u.weaveLeft = c.arcaneRecovery ? c.arcaneRecovery.maxPerShield : c.t2.absorbsCounted;
+      const PW = u.t2 === 0 && c.t2.projectedWard; if (PW) { const t2 = lowestPct(alliesOf(F, u).filter(a => a !== t)); if (t2) addWard(F, u, t2, Math.floor(amt * PW.share), false); } } },
+    // Arcane Recovery (base kit, 27 Nov proposal): gain charge; Spell Weave (passive) holds the trigger: each hit one of her Wards absorbs, up to maxPerShield per Shield.
+    onWardAbsorb(F, u, t) { const AR = c.arcaneRecovery;
+      if (AR) { if (!(u.weaveLeft > 0)) return; u.weaveLeft--; u.charge = Math.min(u.maxCharge, u.charge + AR.charge); u.arUses = (u.arUses || 0) + 1; const SR = u.t2 === 1 && c.t2.sharedRecovery2; if (SR) { let a = t; if (SR.target === 'topDamage') a = alliesOf(F, u).filter(o => o !== u && o.ab).sort((x, y) => y.stat.dmg - x.stat.dmg)[0]; else if (SR.target === 'mostCharged') a = alliesOf(F, u).filter(o => o !== u && o.ab).sort((x, y) => y.charge / y.maxCharge - x.charge / x.maxCharge)[0]; if (a && a !== u) a.charge = Math.min(a.maxCharge, a.charge + SR.allyCharge); } return; }
+      if (u.t2 == null || !(u.weaveLeft > 0)) return; u.weaveLeft--; if (u.t2 === 0) u.charge = Math.min(u.maxCharge, u.charge + c.t2.spellWeave.chargeBackPerAbsorb); else t.charge = Math.min(t.maxCharge, t.charge + c.t2.sharedRecovery.allyChargePerAbsorb); },
   }),
   wallaby: c => ({ dmgAb: true,
     ab: { can: (F, u) => tfoes(F, u).some(o => dist(o, u) <= c.ability.reach),
-      cast(F, u, r) { const k = byRoll(c.ability.daggers, r); for (let i = 0; i < k; i++) { const t = lowestHp(tfoes(F, u).filter(o => dist(o, u) <= c.ability.reach)); if (!t) break; const s = spec(u, c.ability.dagger); abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); sneakW(F, u, t); } } },
+      cast(F, u, r) { const k = byRoll(c.ability.daggers, r); for (let i = 0; i < k; i++) { const t = lowestHp(tfoes(F, u).filter(o => dist(o, u) <= c.ability.reach)); if (!t) break; const s = spec(u, c.ability.dagger); abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); if (c.sneakAttack) { if (i === 0 && c.ability.triggersSneakAttack) sneakNew(F, u, t, true); } else sneakW(F, u, t); } } },
     onStrike(F, u, t) { sneakW(F, u, t); },
-    onKill(F, u, t) { const T = c.t2; if (u.t2 === 0 && !(u.counters.cutCd > F.t)) { u.counters.cutCd = F.t + T.cutthroat.killCooldown; u.charge = Math.min(u.maxCharge, u.charge + T.cutthroat.chargeOnKill); } if (u.t2 === 1 && t.side === 'E') { F.gold += T.pickpocket.goldPerKill; onGoldDrop(F); } },
+    onKill(F, u, t) { const T = c.t2; if (c.sneakAttack) { const CT = u.t2 === 0 && T.cutthroat2; if (CT && !(u.counters.cutCd > F.t)) { u.counters.cutCd = F.t + CT.killCooldown; u.charge = Math.min(u.maxCharge, u.charge + CT.chargeOnKill); } return; } if (u.t2 === 0 && !(u.counters.cutCd > F.t)) { u.counters.cutCd = F.t + T.cutthroat.killCooldown; u.charge = Math.min(u.maxCharge, u.charge + T.cutthroat.chargeOnKill); } if (u.t2 === 1 && t.side === 'E') { F.gold += T.pickpocket.goldPerKill; onGoldDrop(F); } },
   }),
   dane: c => ({
     ab: { can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= c.ability.reach),
@@ -91,13 +136,24 @@ const KITS = {
         applyControl(F, u, t, 'taunt', byRoll(A.tauntSeconds, r)); u.duelT = t; u.target = t;
         if (A.smite) { const s = spec(u, A.smite); abHit(F, u, t, s.n, s.x, s.flat, 'radiant', r); }
         if (A.ward) { const s = spec(u, A.ward, r); addWard(F, u, u, rollDice(s.n + r.xd, s.x, r.crit) + s.flat, false); }
+        if (c.smite && A.nextAttackSmites) u.smiteNext = true;
+        if (u.t2 === 0 && c.t2.duelist2 && c.t2.duelist2.lockOn) u.lockT = t; // Duelist: he fights his dueled foe until it falls
       } },
     onStrike(F, u, t, dmg, crit) {
       const T = c.t2;
+      if (c.smite) { // Smite (base kit, 27 Nov proposal): one definition; anything that calls for a smite uses it
+        let smite = false; if (u.smiteNext) { smite = true; u.smiteNext = false; }
+        if (u.t2 === 0 && T.duelist2 && u.duelT && u.duelT.alive && (u.duelT.st.taunt > 0 || T.duelist2.untilItFalls) && (T.duelist2.anyFoe || t === u.duelT)) { u.counters.duel = (u.counters.duel || 0) + 1; if (u.counters.duel % T.duelist2.everyNthHit === 0) smite = true; }
+        if (u.t2 === 1 && T.retribution2 && u.retri > 0) { u.retri = 0; smite = true; }
+        if (smite && t.alive) { const s = spec(u, c.smite); u.smites = (u.smites || 0) + 1; dealDamage(F, u, t, rollDice(s.n + (u.duelStacks || 0), s.x, crit) + s.flat, c.smite.type || 'radiant', { crit }); }
+        return;
+      }
       if (u.t2 === 0 && t === u.duelT && t.st.taunt > 0) { u.counters.duel = (u.counters.duel || 0) + 1; if (u.counters.duel % T.duelist.everyNthHit === 0) { const s = spec(u, T.duelist.smite); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); } }
       if (u.t2 === 1 && u.retri > 0 && t.alive) { u.retri = 0; const s = spec(u, T.retribution.smite); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); }
     },
-    onHitTaken(F, u, src) { if (u.t2 === 1 && src && src === u.duelT && src.st.taunt > 0) u.retri = 1; },
+    carryKeys: ['duelStacks'],
+    tick(F, u) { const D = c.t2.duelist3; if (u.t2 === 0 && D && u.duelT && !u.duelT.alive && !u.duelT.duelCounted) { u.duelT.duelCounted = true; if (!D.whileTaunted || u.duelT.st.taunt > 0) u.duelStacks = Math.min(D.maxDice || 99, (u.duelStacks || 0) + D.dicePerKill); } }, // Duelist (Luke, 27 Nov): each dueled foe that dies adds a die to his Smite
+    onHitTaken(F, u, src) { if (u.t2 === 1 && src && src === u.duelT && (src.st.taunt > 0 || (c.t2.retribution2 && c.t2.retribution2.anyTime))) u.retri = 1; },
   }),
   lorcan: c => ({ kwMark: true,
     ab: { can: (F, u) => hasTarget(F, u), cast(F, u, r) { u.twinT = F.t + byRoll(c.ability.seconds, r); u.twinCrit = r.crit; } },
@@ -275,6 +331,147 @@ const KITS = {
   }),
 };
 
+
+// ---------------- batch 1 reworks (27 Nov, proposals): used when a hero's config has "kit2"; the old kit stays for the prototype2 preset ----------------
+// Action Surge (Fighter): take an extra weapon attack at the current target.
+function actionSurge(F, u) { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return; u.surges = (u.surges || 0) + 1; ev(F, { k: 'surge', u, t }); strike(F, u, t, {}); }
+const itemsHeld = u => u.itemCount || 0;
+const KITS2 = {
+  gilthrax: c => { const K = c.kit2; return {
+    ab: { cast(F, u, r) {
+      const A = c.ability; const s = spec(u, K.ward, r); let amt = rollDice(s.n + r.xd, s.x, r.crit) + s.flat;
+      amt += K.wardPerItem * itemsHeld(u) + K.wardPerRareItem * (u.rareCount || 0); // Gilded Hoard (passive)
+      addWard(F, u, u, amt, false);
+      const dur = byRoll(A.tauntAdjacentSeconds, r); if (dur > 0) for (const o of adjUnits(F, u, 'E')) applyControl(F, u, o, 'taunt', dur);
+    } },
+    onStart(F, u) { const GS = u.t2 === 1 && K.t2.gildedScales; if (GS) { u.ac += GS.acPerItem * itemsHeld(u); u.sr += GS.srPerItem * itemsHeld(u); } },
+    // Dragon's Hoard (passive): when his Ward breaks, he triggers Action Surge once for each item he holds.
+    onWardBreak(F, u) {
+      for (let i = 0; i < Math.min(K.maxSurgesPerBreak, itemsHeld(u) + (K.surgesBare || 0)); i++) actionSurge(F, u);
+      const DR = u.t2 === 0 && K.t2.dragonsRetort; if (!DR) { u.wardAbs = 0; return; }
+      const amt = Math.floor(u.wardAbs * (DR.shareOfAbsorbed + DR.sharePerItem * itemsHeld(u))); u.wardAbs = 0; if (amt <= 0) return;
+      for (const o of foesOf(F, u)) { const dx = o.x - u.x; if (dx >= 0 && dx <= 2 && Math.abs(o.y - u.y) <= Math.max(1, dx)) dealDamage(F, u, o, amt, 'magic', { area: true }); }
+    },
+  }; },
+  zoe: c => { const K = c.kit2; return {
+    ab: { cast(F, u, r) {
+      const QM = u.t2 === 1 && K.t2.quartermaster; const k = byRoll(c.ability.allies, r) + (QM ? QM.extraSupplies : 0); const used = new Set();
+      for (let i = 0; i < k; i++) rummage2(F, u, r, used, K, QM);
+      actionSurge(F, u); // Quartermaster's Drill (passive): each Rummage triggers Action Surge
+      const RK = u.t2 === 0 && K.t2.runeKnight; if (RK) { u.giantT = F.t + RK.seconds; const w = spec(u, RK.ward); addWard(F, u, u, rollDice(w.n, w.x, r.crit) + w.flat, false); }
+    } },
+    onStrike(F, u, t, dmg, crit) { const RK = u.t2 === 0 && K.t2.runeKnight; if (RK && u.giantT > F.t && t.alive) { const s = spec(u, RK.bonus); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'phys', { crit }); } },
+  }; },
+  laurel: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => hasTarget(F, u),
+      cast(F, u, r) { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return; const s = spec(u, c.ability.damage, r); let dmg = abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); dmg += smite2(F, u, t, r.crit, K); const h = Math.floor(dmg * c.ability.healShareOfDamage); heal(F, u, u, h); for (const a of adjUnits(F, u, 'H')) heal(F, u, a, h); } },
+    onStrike(F, u, t, dmg, crit) {
+      let total = dmg; const W = u.t2 === 0 && K.t2.warden, B = u.t2 === 1 && K.t2.bruiser;
+      if (W && t.alive) { u.counters.sm = (u.counters.sm || 0) + 1; if (u.counters.sm % W.everyNthHit === 0) { total += smite2(F, u, t, crit, K); applyControl(F, u, t, 'root', W.restrainSeconds); } }
+      const h = Math.floor(total * K.hitHealShare); if (h > 0) { for (const a of adjUnits(F, u, 'H')) heal(F, u, a, h); if (B) heal(F, u, u, Math.floor(total * B.selfHealShare)); } // Ancients' Mercy (passive)
+    },
+    onStart(F, u) { const B = u.t2 === 1 && K.t2.bruiser; if (B) u.as += B.attackSpeed; },
+  }; },
+  pillar: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= K.quake.reach + (u.t2 === 1 && K.t2.avalanche ? K.t2.avalanche.extraReach : 0)),
+      cast(F, u, r) { const Q = K.quake; const reach = Q.reach + (u.t2 === 1 && K.t2.avalanche ? K.t2.avalanche.extraReach : 0); const s = spec(u, Q.damage, r); const st = byRoll(Q.stunSeconds, r); let n = 0;
+        for (const o of foesOf(F, u).filter(o => dist(o, u) <= reach)) { abHit(F, u, o, s.n, s.x, s.flat, 'phys', r, { area: true }); if (applyControl(F, u, o, 'stun', st)) n++; }
+        const UB = u.t2 === 0 && K.t2.unbreakable; if (UB && n) addWard(F, u, u, Math.floor(u.maxHp * UB.wardShareOfHpPerFoe * n), false); } },
+    // Maul: + a share of his max HP; hits every foe next to the target and Slows them. Rage: each time he's hit, +1 stack; each stack +1 Maul damage.
+    onStrike(F, u, t, dmg, crit) { const M = K.maul; const extra = Math.floor(u.maxHp * M.hpShare) + (u.rage2 || 0); if (t.alive && extra > 0) dealDamage(F, u, t, extra, 'phys', {}); if (t.alive) applyControl(F, u, t, 'slow', M.slowSeconds, M.slow);
+      for (const o of adjUnits(F, t, 'E')) { const s = rollDice(u.atk.n * u.tier, u.atk.x) + u.m('STR'); dealDamage(F, u, o, Math.floor((s + extra) * M.splashShare), 'phys', { area: true }); applyControl(F, u, o, 'slow', M.slowSeconds, M.slow); } },
+    onHitTaken(F, u) { const before = u.rage2 || 0; u.rage2 = Math.min(K.rage.maxStacks, before + 1); const UB = u.t2 === 0 && K.t2.unbreakable; if (UB && UB.acPerStack && u.rage2 > before) u.ac += UB.acPerStack; },
+  }; },
+  zark: c => { const K = c.kit2; return { dmgAb: true, lastStand: true,
+    ab: { can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= 1),
+      cast(F, u, r) { const s = spec(u, c.ability.damage, r); const WT = u.t2 === 1 && K.t2.wolfTotem; const xn = WT && WT.swingDicePerStack ? WT.swingDicePerStack * (u.rage2 || 0) : 0; for (const o of foesOf(F, u).filter(o => dist(o, u) <= 1)) abHit(F, u, o, s.n + xn, s.x, s.flat, 'phys', r, { area: true }); const sd = spec(u, c.ability.selfDamage); dealDamage(F, u, u, rollDice(sd.n, sd.x) + sd.flat, 'true', { self: true }); } },
+    // Rage: +1 stack for every rage.damagePerStack damage he takes (a share of his max HP); each stack regenerates HP each second; a stack fades every rage.fadeSeconds.
+    onHitTaken(F, u, src, raw) { const R = K.rage; u.rageDmg = (u.rageDmg || 0) + raw; const per = u.maxHp * R.hpSharePerStack; while (u.rageDmg >= per) { u.rageDmg -= per; u.rage2 = Math.min(R.maxStacks, (u.rage2 || 0) + 1); u.rageFade = F.t + R.fadeSeconds; } },
+    perSecond(F, u) { const R = K.rage; if (!(u.rage2 > 0)) return; if (F.t >= u.rageFade) { u.rage2--; u.rageFade = F.t + R.fadeSeconds; }
+      const BT = u.t2 === 0 && K.t2.bearTotem; const per = (R.regenPerStack + R.regenPerConMod * u.m('CON')) * u.tier * (BT ? BT.regenMultiplier : 1); heal(F, u, u, per * u.rage2);
+      const WT = u.t2 === 1 && K.t2.wolfTotem; if (WT) for (const a of adjUnits(F, u, 'H')) { a.st.haste = WT.allyAttackSpeedPerStack * u.rage2; a.st.hasteT = 1.1; } },
+  }; },
+  naill: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => hasTarget(F, u) || (u.t2 === 1 && (u.ki2 || 0) >= K.ki.max && tfoes(F, u).length > 0),
+      cast(F, u, r) {
+        const T = K.t2; let t = acquire(F, u); const full = (u.ki2 || 0) >= K.ki.max;
+        if (u.t2 === 1 && T.stepOfTheWind && full) { const far = tfoes(F, u).sort((a, b) => b.x - a.x)[0]; const cl = far && freeCellNear(F, far.x, far.y, 'H', 1); if (cl && dist(cl, far) <= 1) { moveTo(F, u, cl.x, cl.y); t = far; u.target = far; } }
+        const k = byRoll(c.ability.strikes, r) + Math.floor((u.ki2 || 0) / K.ki.kiPerExtraStrike); const s = spec(u, c.ability.strike);
+        for (let i = 0; i < k; i++) { if (!t || !t.alive) t = acquire(F, u); if (!t || !canHit(F, u, t)) break; abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); if (i === k - 1 && u.t2 === 0 && T.stunningStrike && full) applyControl(F, u, t, 'stun', T.stunningStrike.stunSeconds); }
+      } },
+    // Ki: +1 on every hit, up to ki.max, never spent; each Ki point: attacks ki.attackSpeedPerKi faster.
+    onStrike(F, u) { const before = u.ki2 || 0; u.ki2 = Math.min(K.ki.max, before + 1); if (u.ki2 !== before) u.as += K.ki.attackSpeedPerKi; },
+  }; },
+};
+function rummage2(F, u, r, used, K, QM) {
+  const C = u.def.cfg.ability; const al = alliesOf(F, u).filter(a => !used.has(a)); if (!al.length) return;
+  let t, kind; const low = lowestPct(al);
+  if (low && pct(low) < C.potionBelowHp) { t = low; kind = 'potion'; }
+  else { const tank = al.slice().sort((a, b) => b.stat.taken - a.stat.taken)[0]; if (tank && tank.stat.taken > 0 && tank.ward < 5) { t = tank; kind = 'shield'; } else { t = al.slice().sort((a, b) => b.stat.dmg - a.stat.dmg)[0]; kind = 'whet'; } }
+  used.add(t); const extra = K.dicePerAllyItem * (t.itemCount || 0); const crit = r && r.crit; // supplies grow with the items the ally holds
+  if (kind === 'potion') { const s = spec(u, C.potion); heal(F, u, t, rollDice(s.n + extra, s.x, crit) + s.flat); }
+  else if (kind === 'shield') { const s = spec(u, C.spareShield); addWard(F, u, t, rollDice(s.n + extra, s.x, crit) + s.flat, false); }
+  else { const s = spec(u, C.whetstone); t.whet = C.whetstone.attacks; t.whetN = s.n + extra; }
+  if (QM) t.charge = Math.min(t.maxCharge, t.charge + QM.allyCharge);
+}
+function smite2(F, u, t, crit, K) { if (!t.alive) return 0; const s = spec(u, K.smite); u.smites = (u.smites || 0) + 1; return dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); }
+
+
+// ---------------- batch 2 reworks (27 Nov, proposals) ----------------
+Object.assign(KITS2, {
+  lorcan: c => { const K = c.kit2; const markFor = (u, t) => { const CS = u.t2 === 0 && K.t2.colossusSlayer; const s = spec(u, CS && t.hp > t.maxHp * CS.aboveHp ? CS.bonus : K.mark); return { bonus: s }; };
+    return {
+    ab: { can: (F, u) => hasTarget(F, u), cast(F, u, r) { u.twinT = F.t + byRoll(c.ability.seconds, r); u.twinCrit = r.crit; } },
+    // Hunter's Mark: his attacks mark the foe; every hero attack on it deals +mark dice (credited to Lorcan).
+    onAttack(F, u, t) { if (u.twinT > F.t && t.alive) strike(F, u, t, { crit: u.twinCrit }); if (t.alive && (u.markOn !== t || !t.marks || !t.marks.some(m => m.src === u))) setMark(F, u, t, markFor(u, t)); else if (t.alive) { const m = t.marks.find(m => m.src === u); Object.assign(m, markFor(u, t)); }
+      if (u.hb && u.t2 === 1) { u.hb = 0; const a = adjUnits(F, t, 'E')[0]; if (a) strike(F, u, a, {}); } },
+    onKill(F, u, t) { const HB = u.t2 === 1 && K.t2.hordeBreaker; if (HB && u.markOn === t) { u.hb = 1; const n = nearest(tfoes(F, u), t); if (n) { setMark(F, u, n, markFor(u, n)); u.target = n; } } },
+  }; },
+  corvin: c => { const K = c.kit2; return { dmgAb: true,
+    strikesVs: (F, u, t) => (u.huntT === t && t.alive ? c.attack.strikesVsMarked : (c.attack.strikes || 1)),
+    ab: { can: (F, u) => hasTarget(F, u),
+      cast(F, u, r) { const t = acquire(F, u); if (!t) return; const k = byRoll(c.ability.strikes, r); u.huntT = t; setMark(F, u, t, { slow: K.mark.slow, slowSeconds: K.mark.slowSeconds }); const s = spec(u, c.ability.strike); for (let i = 0; i < k && t.alive; i++) abHit(F, u, t, s.n, s.x, s.flat, 'phys', r);
+        const FS = u.t2 === 1 && K.t2.firstStrike; if (FS && !u.counters.fs) { u.counters.fs = 1; for (const a of alliesOf(F, u)) if (a !== u) a.charge = Math.min(a.maxCharge, a.charge + FS.allyCharge); } } },
+    onAttack(F, u, t) { const SF = u.t2 === 0 && K.t2.stalkersFlurry; if (SF && u.huntT === t && t.alive) { u.counters.sf = (u.counters.sf || 0) + 1; if (u.counters.sf % SF.everyNthAttack === 0) strike(F, u, t, {}); } },
+    onKill(F, u, t) { const FS = u.t2 === 1 && K.t2.firstStrike; if (FS && u.huntT === t) u.charge = Math.min(u.maxCharge, u.charge + FS.chargeOnMarkedKill); },
+  }; },
+  velith: c => { const K = c.kit2; const sneak = (F, u, t) => { const SA = K.sneakAttack; if (!t || !t.alive || u.counters.sa > F.t) return; if (!(t.st.poison > 0) && !(u.st.stealth > 0)) return; u.counters.sa = F.t + SA.cooldown; u.sneaks = (u.sneaks || 0) + 1;
+      const s = spec(u, SA.bonus); const a = u.atk; dealDamage(F, u, t, rollDice(a.n || 1, a.x) + u.m('DEX') + rollDice(s.n, s.x) + s.flat, 'phys', { attack: true }); addPoison(F, u, t, SA.poison);
+      const PO = u.t2 === 1 && K.t2.poisoner; if (PO) for (const o of adjUnits(F, t, 'E')) addPoison(F, u, o, PO.spreadPoison);
+      const AS = u.t2 === 0 && K.t2.assassin; if (AS && t.alive && !t.boss && t.hp < t.maxHp * AS.executeBelowHp) dealDamage(F, u, t, t.hp + t.ward + 1, 'true', {}); };
+    return { dmgAb: true,
+    onStart(F, u) { u.st.stealth = c.startStealthSeconds; },
+    ab: { can: (F, u) => tfoes(F, u).length > 0,
+      cast(F, u, r) {
+        const A = c.ability; const pois = A.poisonBase + A.poisonPerTier * u.tier; const s = spec(u, A.strike);
+        if (r.band === 'Low') { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return; abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); addPoison(F, u, t, pois); sneak(F, u, t); return; }
+        const list = tfoes(F, u); const t = lowestHp(list.filter(o => dist(o, u) <= A.jumpReach)) || lowestHp(list); if (!t) return;
+        const cl = free(F, t.x + 1, t.y) ? { x: t.x + 1, y: t.y } : freeCellNear(F, t.x, t.y, 'E', 1); if (cl && dist(cl, t) <= 1) moveTo(F, u, cl.x, cl.y);
+        u.target = t; abHit(F, u, t, s.n, s.x, s.flat, 'phys', r, { crit: true }); addPoison(F, u, t, pois); if (r.band === 'High') addPoison(F, u, t, pois); sneak(F, u, t);
+        if (r.crit && t.alive && !t.boss && t.hp < t.maxHp * A.executeBelowHp) dealDamage(F, u, t, t.hp + t.ward + 1, 'true', {});
+      } },
+    // Sneak Attack: a bonus Venom Dagger (+bonus dice, +poison), every cooldown seconds. Assassinate (passive): she triggers it on a Poisoned foe, or from Stealth.
+    onStrike(F, u, t) { if (K.daggerPoison && t.alive) addPoison(F, u, t, K.daggerPoison); sneak(F, u, t); }, // Venom Dagger: each hit adds Poison
+  }; },
+  nettle: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => hasTarget(F, u),
+      cast(F, u, r) { const A = c.ability; const t = acquire(F, u); if (!t) return; const s = spec(u, A.damage); abHit(F, u, t, s.n, s.x, s.flat, A.type, r); const bp = byRoll(A.burnPerTier, r); if (bp > 0) addBurn(F, u, t, bp * u.tier + (r.band === 'High' ? A.burnHighBonus : 0)); u.curseT = t; t.cursedBy = u; } },
+    onStrike(F, u, t, dmg, crit) { if (t === u.curseT && t.alive) { const s = spec(u, K.curseBonus); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'magic', { crit }); } },
+    // Pact of the Fiend: whenever a foe she cursed dies, she gains a Ward.
+    tick(F, u) { const t = u.curseT; if (!t || t.alive || t.pactDone) return; t.pactDone = true; u.pacts = (u.pacts || 0) + 1;
+      const FF = u.t2 === 1 && K.t2.fiendsFavor; const w = spec(u, K.pactWard); addWard(F, u, u, (rollDice(w.n, w.x) + w.flat) * (FF ? FF.wardMultiplier : 1), false); if (FF) { u.st.haste = FF.attackSpeed; u.st.hasteT = FF.seconds; }
+      const HP = u.t2 === 0 && K.t2.hellfirePact; if (HP) { const s = spec(u, HP.explosion); for (const o of adjUnits(F, t, 'E')) dealDamage(F, u, o, rollDice(s.n, s.x) + s.flat, 'magic', { area: true }); const n = nearest(tfoes(F, u), t); if (n) { u.curseT = n; n.cursedBy = u; } } },
+  }; },
+  lumen: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => hasTarget(F, u),
+      cast(F, u, r) { const t = acquire(F, u); if (!t) return; const RS = u.t2 === 0 && K.t2.radiantSoul; const s = spec(u, c.ability.damage, r); let hits = 0;
+        for (const cl of lineCells(u, t)) { const o = unitAt(F, cl.x, cl.y); if (o && o.side === 'E') { abHit(F, u, o, s.n + (RS ? RS.extraDicePerFoeHit * hits : 0), s.x, s.flat, c.ability.type, r, { area: true }); hits++; } }
+        // Pact of the Celestial: whenever Sunbeam hits foes, his most-hurt ally heals per foe hit.
+        const HL = u.t2 === 1 && K.t2.healingLight; const a = lowestPct(alliesOf(F, u)); if (a && hits) { const h = spec(u, K.pactHeal); heal(F, u, a, (rollDice(h.n, h.x) + h.flat) * hits * (HL ? HL.multiplier : 1)); u.pacts = (u.pacts || 0) + hits; } } },
+    onStrike(F, u, t, dmg, crit) { const RS = u.t2 === 0 && K.t2.radiantSoul; if (RS && RS.beamBonus && t.alive) { const s = spec(u, RS.beamBonus); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); } const HL = u.t2 === 1 && K.t2.healingLight; if (HL && dmg > 0) { const a = lowestPct(alliesOf(F, u)); if (a) heal(F, u, a, Math.floor(dmg * HL.beamHealShare)); } },
+  }; },
+});
+
 // ---------------- build HEROES from config + kits ----------------
 const STAT_KEYS = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 function atkFromCfg(a) {
@@ -293,10 +490,10 @@ function atkFromCfg(a) {
 const HEROES = {};
 for (const id in HC) {
   if (HC[id].enabled === false) continue; // switched off (e.g. Toot, 25 Nov)
-  const c = HC[id], k = KITS[id] ? KITS[id](c) : {};
+  const c = HC[id], k = c.kit2 && KITS2[id] ? KITS2[id](c) : KITS[id] ? KITS[id](c) : {};
   const def = Object.assign({
     id, cfg: c, name: c.name, anc: c.ancestry, cls: c.class, sub: c.subclass, role: c.role, pro: c.pronouns,
-    job: c.job, stats: STAT_KEYS.map(s => c.stats[s]), key: c.key, ac: c.ac, sr: c.sr, range: c.range,
+    job: c.job, stats: STAT_KEYS.map(s => c.stats[s]), key: c.key, ac: c.ac, sr: c.sr, evasion: c.evasion || 0, range: c.range,
     atk: atkFromCfg(c.attack),
   }, k);
   if (c.castSeconds != null) def.cTime = c.castSeconds;
@@ -341,7 +538,7 @@ for (const id in EC) {
   const c = EC[id], k = ENEMY_KITS[id] ? ENEMY_KITS[id](c) : {};
   const p = parseDice(c.attack.dice);
   const atk = { n: p.n, x: p.x, iv: c.attack.interval }; if (p.flat) atk.flat = p.flat; if (c.attack.strikes) atk.strikes = c.attack.strikes; if (c.attack.type === 'magic') atk.type = 'magic';
-  const def = { id, cfg: c, name: c.name, chassis: c.chassis, rank: c.rank, affix: c.affix, hp: c.hp, ac: c.ac, sr: c.sr, range: c.range, atk };
+  const def = { id, cfg: c, name: c.name, chassis: c.chassis, rank: c.rank, affix: c.affix, hp: c.hp, ac: c.ac, sr: c.sr, evasion: c.evasion || 0, pierce: c.pierce || 0, range: c.range, atk };
   if (c.abilityRollBonus) def.keyMod = c.abilityRollBonus;
   if (c.splash) def.splash = true;
   if (c.packAttackSpeed) { def.pack = true; def.packAttackSpeed = c.packAttackSpeed; }
@@ -353,4 +550,4 @@ for (const id in EC) {
 }
 const encFromCfg = e => ({ id: e.id, name: e.name, enemies: e.enemies.map(([id, x, y]) => ({ id, x, y })), terrain: e.terrain || [] });
 const ACT1 = CFG.enemies.encounters.map(encFromCfg);
-const BOSSES = {}; for (const b of CFG.enemies.bosses) BOSSES[b.id] = encFromCfg(b);
+const BOSSES = {}; for (const b of CFG.enemies.bosses) if (b.active !== false) BOSSES[b.id] = encFromCfg(b); // active: false keeps a boss in the config but out of runs and tests

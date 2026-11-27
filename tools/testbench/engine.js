@@ -10,11 +10,18 @@ const BASE_HP = RULES.hp.base;
 
 let RNG = Math.random;
 function seedRng(seed) { let s = seed >>> 0; RNG = function () { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-const d = x => 1 + Math.floor(RNG() * x);
+// Dice mode (rules.config.json "dice.mode"): random (normal play); average = every damage, heal, Ward and bonus die rolls its average,
+// the d20 ability roll stays random; average-all = the d20 rolls its average too (10.5; with Advantage 13.825, with Disadvantage 7.175).
+const DICE_MODE = (RULES.dice && RULES.dice.mode) || 'random';
+const d = x => DICE_MODE === 'random' || (x === 20 && DICE_MODE === 'average') ? 1 + Math.floor(RNG() * x) : (x + 1) / 2;
 // "2d8+3" -> { n: 2, x: 8, flat: 3 }
 function parseDice(s) { const m = /^(\d+)d(\d+)([+-]\d+)?$/.exec(String(s).replace(/\s/g, '')); if (!m) throw new Error('Bad dice: ' + s); return { n: +m[1], x: +m[2], flat: m[3] ? +m[3] : 0 }; }
-const mod = s => Math.floor((s - 10) / 2);
-function rollDice(n, x, crit, emp) { n = Math.max(0, n | 0); const c = crit ? n * 2 : n; let t = 0; for (let i = 0; i < c; i++) { let r = d(x); if (emp && r <= 2) r = d(x); t += r; } return t; }
+// Ability modifier (rules.config.json abilityScores.modifier): "floor" = D&D's (score - 10) / 2 rounded down; "half" = every point is worth half a modifier point (Luke, 26 Nov), so 15 gives +2.5.
+const MOD_HALF = !!(RULES.abilityScores && RULES.abilityScores.modifier === 'half');
+const mod = s => MOD_HALF ? (s - 10) / 2 : Math.floor((s - 10) / 2);
+// Rounding a damage, heal or Ward amount to a whole number. With half modifiers a .5 rounds up or down at random, so half a point is worth half on average.
+const roundAmt = x => (!MOD_HALF || Number.isInteger(x)) ? Math.round(x) : Math.floor(x) + (RNG() < x - Math.floor(x) ? 1 : 0);
+function rollDice(n, x, crit, emp) { n = Math.max(0, n | 0); const c = crit ? n * 2 : n; if (DICE_MODE !== 'random') return c * (emp ? (x + 1 + x * (x + 1) / 2 - 3) / x : (x + 1) / 2); let t = 0; for (let i = 0; i < c; i++) { let r = d(x); if (emp && r <= 2) r = d(x); t += r; } return t; }
 const RESIST_K = RULES.resistance.K;
 const resist = R => { R = Math.max(0, R); return R / (R + RESIST_K); };
 const SETTINGS = { atkDiv: RULES.charge.attackerSecondsPerCast, restrain: RULES.statuses.restrained.attackSlow };
@@ -50,14 +57,15 @@ function makeHeroUnit(rec) {
   const def = HEROES[rec.id];
   const u = Object.assign(baseUnit(), { side: 'H', def, id: rec.id, name: def.name, rec, tier: rec.tier, t2: rec.t2, x: rec.pos ? rec.pos.x : 0, y: rec.pos ? rec.pos.y : 0 });
   u.stats = {}; STATS.forEach((k, i) => u.stats[k] = def.stats[i] + ((rec.train || {})[k] || 0));
-  u.ac = def.ac; u.sr = def.sr; u.as = 0; u.cr = 0; u.sc = def.startCharge || 0; u.rollB = 0; u.dieUp = 0; u.flat = 0; u.pen = 0; u.spen = 0; u.hpB = 0; u.regen = 0;
+  u.ac = def.ac; u.sr = def.sr; u.eva = def.evasion || 0; u.pierce = 0; u.as = 0; u.cr = 0; u.sc = def.startCharge || 0; u.rollB = 0; u.dieUp = 0; u.flat = 0; u.pen = 0; u.spen = 0; u.hpB = 0; u.regen = 0;
   u.range = def.range; u.atk = Object.assign({}, def.atk); u.ab = def.ab; u.key = def.key;
+  if (rec.carry) Object.assign(u, rec.carry); // run-long state (scaling features, 27 Nov), copied back to the rec after each fight
   let rareCount = 0;
   for (const ir of (rec.items || [])) {
     const it = ITEMS[ir.id]; if (!it) continue; u.it[it.id] = ir;
     if (['Rare', 'Very Rare', 'Legendary'].includes(it.rar)) rareCount++;
     for (const k in (it.stats || {})) u.stats[k] += it.stats[k];
-    u.ac += it.ac || 0; u.sr += it.sr || 0; u.as += it.as || 0; u.cr += it.cr || 0; u.sc += it.sc || 0; u.rollB += it.rollB || 0;
+    u.ac += it.ac || 0; u.sr += it.sr || 0; u.eva += it.eva || 0; u.pierce += it.pierce || 0; u.as += it.as || 0; u.cr += it.cr || 0; u.sc += it.sc || 0; u.rollB += it.rollB || 0;
     u.dieUp += it.dieUp || 0; u.flat += it.flat || 0; u.hpB += it.hp || 0; u.regen += it.regen || 0; u.spen += it.spen || 0;
     if (it.scale) { const v = Math.min(it.scale.cap, it.scale.per * (ir.wins || 0)); if (it.scale.f === 'flat') u.flat += v; if (it.scale.f === 'as') u.as += v; }
     if (it.onHit) u.onHitItems.push(it.onHit);
@@ -87,8 +95,8 @@ function makeHeroUnit(rec) {
 function makeEnemyUnit(id, x, y) {
   const def = ENEMIES[id];
   const u = Object.assign(baseUnit(), { side: 'E', def, id, name: def.name, x, y, tier: 1, boss: def.rank === 'Boss', elite: def.rank === 'Elite' });
-  u.maxHp = def.hp; u.hp = def.hp; u.ac = def.ac; u.sr = def.sr; u.range = def.range || 1;
-  u.atk = Object.assign({}, def.atk); u.ab = def.ab || null; u.as = 0; u.cr = 0; u.rollB = 0; u.dieUp = 0; u.flat = def.atk.flat || 0; u.pen = 0; u.spen = 0; u.regen = 0;
+  const ES = RULES.enemyScale || {}; u.maxHp = Math.round(def.hp * (ES.hp || 1)); u.hp = u.maxHp; u.ac = def.ac; u.sr = def.sr; u.eva = def.evasion || 0; u.pierce = def.pierce || 0; u.range = def.range || 1;
+  u.atk = Object.assign({}, def.atk); u.ab = def.ab || null; u.as = ES.attackSpeed || 0; u.cr = 0; u.rollB = 0; u.dieUp = 0; u.flat = def.atk.flat || 0; u.pen = 0; u.spen = 0; u.regen = 0;
   u.atkIvBase = def.atk.iv; u.ratio = 1; u.job = def.ab ? (def.ab.job || 'time') : 'none'; u.cAtk = def.ab && def.ab.perAtk || 0; u.cHit = 0; u.cTime = def.ab ? def.ab.iv : 99; u.stats = { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 }; u.m = () => 0; u.maxCharge = 100; u.keyMod = def.keyMod || 0;
   return u;
 }
@@ -164,13 +172,13 @@ const controlled = t => t.st.root > 0 || t.st.stun > 0 || t.st.taunt > 0 || t.st
 function addPoison(F, src, t, v) { if (!t.alive || v <= 0) return; t.st.poison += v; t.st.poisonSrc = src; }
 function addBurn(F, src, t, v) { if (!t.alive || v <= 0) return; t.st.burn = v; t.st.burnT = RULES.statuses.burnSeconds; t.st.burnSrc = src; }
 function addWard(F, src, t, amt, replaceIfBigger = true) {
-  amt = Math.max(0, Math.round(amt)); if (!t.alive) return;
+  amt = Math.max(0, roundAmt(amt)); if (!t.alive) return;
   if (replaceIfBigger) { if (amt > t.ward) { const gain = amt - t.ward; t.ward = amt; t.wardAbs = 0; t.wardSrc = src; if (src) src.stat.ward += gain; } }
   else { t.ward += amt; t.wardSrc = src; if (src) src.stat.ward += amt; }
   ev(F, { k: 'ward', t, v: amt });
 }
 function heal(F, src, t, amt) {
-  if (!t.alive || amt <= 0) return 0; amt = Math.round(amt);
+  if (!t.alive || amt <= 0) return 0; amt = roundAmt(amt);
   if (src && src.side === 'H' && src.it && src.it.holy_symbol && src !== t) amt += d(8);
   if (t.rageBar > 0) { t.rageBar += amt; if (src) src.stat.heal += amt; return amt; }
   const real = Math.min(amt, t.maxHp - t.hp); t.hp += real; if (src) src.stat.heal += real;
@@ -181,18 +189,21 @@ function heal(F, src, t, amt) {
 // ---------------- damage ----------------
 function dealDamage(F, src, t, raw, type, o = {}) {
   if (!t || !t.alive || raw <= 0) return 0;
-  raw = Math.round(raw);
+  raw = roundAmt(raw);
   if (t.st.bond > 0 && t.bondBy && t.bondBy !== t && t.bondBy.alive && t.bondBy.t2 === 1 && raw >= t.bondBy.def.cfg.t2.protectiveBond.redirectHitsOf && src && src.side !== t.side) t = t.bondBy;
   if (src && src !== t) t.lastHitBy = src;
   if (o.attack) {
-    if (t.st.dodge > 0) { t.dodged = (t.dodged || 0) + 1; hitCharge(t); ev(F, { k: 'dodge', t }); return 0; }
-    if (t.counters.displace > 0) { t.counters.displace--; hitCharge(t); ev(F, { k: 'dodge', t }); return 0; }
+    if (t.st.dodge > 0) { t.dodged = (t.dodged || 0) + 1; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); return 0; }
+    if (t.counters.displace > 0) { t.counters.displace--; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); return 0; }
+    const eva = Math.min(RULES.evasion ? RULES.evasion.cap : 0.5, (t.eva || 0) - (src ? src.pierce || 0 : 0)); // Evasion (26 Nov): attacks only
+    if (eva > 0 && RNG() < eva) { t.evaded = (t.evaded || 0) + 1; hitCharge(t); ev(F, { k: 'evade', t }); fx(F, t, 'Evaded', '#9ad'); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'evade'); return 0; }
   }
   if (o.ability && src && src.side !== t.side && t.counters.evasion > 0) { t.counters.evasion--; raw = Math.floor(raw / 2); }
   if (t.st.invuln > 0) return 0;
   let R = 0;
   if (type === 'phys') R = t.ac - (src ? src.pen || 0 : 0);
   else if (type === 'magic') R = t.sr - (src ? src.spen || 0 : 0);
+  if (src && src.side === 'E' && src !== t && RULES.enemyScale && RULES.enemyScale.damage !== 1) raw = roundAmt(raw * RULES.enemyScale.damage); // enemy buff knob (27 Nov)
   let amt = (type === 'radiant' || type === 'true') ? raw : Math.max(RULES.resistance.minimumDamage, Math.round(raw * (1 - resist(R))));
   if (o.self) amt = raw;
   if (t.formHp > 0) { const a = Math.min(t.formHp, amt); t.formHp -= a; amt -= a; if (t.formHp <= 0) endForm(F, t); }
@@ -268,6 +279,7 @@ function abilityRoll(F, u) {
   if (u.boss && (adv || dis)) { u.counters.halfToggle = !u.counters.halfToggle; if (!u.counters.halfToggle) { adv = false; dis = false; } }
   const a = d(20), b = d(20);
   let nat = a; if (adv && !dis) nat = Math.max(a, b); else if (dis && !adv) nat = Math.min(a, b);
+  if (DICE_MODE === 'average-all') nat = adv && !dis ? 13.825 : dis && !adv ? 7.175 : 10.5;
   const r = { nat, xd: 0, crit: false, fizzle: false, adv: adv && !dis, dis: dis && !adv };
   if (nat === 1) { r.fizzle = true; return r; }
   let bonus = (u.side === 'H' ? u.m(u.key) : u.keyMod) + (u.rollB || 0);
@@ -289,6 +301,7 @@ function abHit(F, u, t, n, x, flat, type, r, o = {}) {
   let nn = n; if (!r.xdUsed) { nn += r.xd; r.xdUsed = true; }
   const crit = r.crit || !!o.crit;
   let amt = rollDice(nn, x, crit, u.empower) + (flat || 0);
+  if (u.castDie) amt += rollDice(1, u.castDie, crit); // test buff: an extra die on every hit of the ability (bench `buffs`)
   if (u.mote && !o.noMote) { amt += rollDice(u.mote.n, u.mote.x || 8, crit) + u.mote.flat; motePop(F, u, r); u.mote = null; }
   if (u.st.stealth > 0 || u.stealthStrike) { u.st.stealth = 0; u.stealthStrike = false; }
   const dmg = dealDamage(F, u, t, amt, type, { ability: true, crit, area: o.area });
@@ -320,7 +333,7 @@ function strike(F, u, t, o) {
   const a = u.atk; const melee = u.range <= 1;
   let crit = !!o.crit || !!u.stealthStrike || (melee && t.st.stun > 0);
   u.stealthStrike = false;
-  let n = (a.n || 1) * (a.tierDice ? u.tier : 1); let x = upDie(a.x, u.dieUp);
+  let n = (a.n || 1) * (a.tierDice ? u.tier : 1) + (u.side === 'H' && !a.tierDice && RULES.attackGrowth ? RULES.attackGrowth.extraDicePerTier * (u.tier - 1) : 0); let x = upDie(a.x, u.dieUp);
   if (a.woundedX && t.hp < t.maxHp) x = a.woundedX;
   let flat = (a.stat ? (a.half ? Math.floor(u.m(a.stat) / 2) : u.m(a.stat)) : 0) + (a.flat || 0) + (u.flat || 0);
   if (u.side === 'E') flat = a.flat || 0;
@@ -331,6 +344,7 @@ function strike(F, u, t, o) {
   const dmg = dealDamage(F, u, t, amt, type, { attack: true, crit, melee });
   if (u.def.splash) for (const o of adjUnits(F, t, t.side)) dealDamage(F, u, o, rollDice(n, x, false) + flat, type, { area: true });
   itemOnHit(F, u, t, crit);
+  if (u.side === 'H' && t.marks && t.alive) applyMarks(F, u, t, crit); // Hunter's Mark (27 Nov): any hero's attack on a marked foe triggers each mark's effect
   if (u.def.onStrike) u.def.onStrike(F, u, t, dmg, crit);
   if (u.formHealPounce && dmg > 0) { const a2 = lowestPct(alliesOf(F, u)); if (a2) heal(F, u, a2, Math.floor(dmg * u.formHealPounce)); }
   return dmg;
@@ -474,3 +488,8 @@ function summonDouble(F, src, ally, life, hpShare = 0.2) {
   addUnit(F, dbl);
   return dbl;
 }
+// Copy each hero's run-long state (def.carryKeys) back to their rec after a fight.
+function carryBack(F) { for (const u of F.units) if (u.side === 'H' && !u.summon && u.rec && u.def.carryKeys) { u.rec.carry = u.rec.carry || {}; for (const k of u.def.carryKeys) u.rec.carry[k] = u[k] || 0; } }
+// Hunter's Mark (Ranger rule, 27 Nov): a mark is { src, bonus: {n,x,flat}, slow, slowSeconds }. Marks from different sources stack; one per source.
+function setMark(F, src, t, m) { if (!t || !t.alive) return; for (const o of F.units) if (o.marks) o.marks = o.marks.filter(k => k.src !== src); t.marks = (t.marks || []).concat([Object.assign({ src }, m)]); src.markOn = t; }
+function applyMarks(F, u, t, crit) { for (const m of t.marks.slice()) { if (!m.src.alive || !t.alive) continue; if (m.bonus) dealDamage(F, m.src, t, rollDice(m.bonus.n, m.bonus.x, crit) + (m.bonus.flat || 0), m.type || 'phys', { mark: true }); if (m.slow) applyControl(F, m.src, t, 'slow', m.slowSeconds || 1, m.slow); if (m.onHit) m.onHit(F, m, u, t); } }

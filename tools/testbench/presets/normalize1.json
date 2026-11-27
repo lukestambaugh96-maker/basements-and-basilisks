@@ -1,5 +1,5 @@
 {
-  "_about": "Normalization batch 1 (25 Nov), revised: Cinder reworked in the config (Scorching Ray), Corvin left for his ability rework, Toot switched off. Proposed, not approved.",
+  "_about": "Normalization batch 1 — APPROVED and applied to heroes.config.json on 25 Nov. Kept for reference; running it now changes nothing.",
   "edits": {
     "pillar.benchJob": "brawler",
     "pillar.chargeToCast": 180,

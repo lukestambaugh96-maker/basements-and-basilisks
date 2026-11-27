@@ -21,6 +21,9 @@
     }
   },
   "resistance": { "formula": "R / (R + K)", "K": 20, "minimumDamage": 1, "controlReadsSr": true },
+  "enemyScale": { "_about": "Act-wide enemy buff knobs (27 Nov): damage multiplier, attack speed bonus (0.1 = 10% faster), HP multiplier.", "damage": 1, "attackSpeed": 0.05, "hp": 1, "_set": "Luke, 27 Nov: a small buff after batch 1; +5% attack speed brought the never-buy wall back to fight 3." },
+  "evasion": { "note": "chance an attack misses; attacks only, never abilities; pierce lowers it", "cap": 0.5 },
+  "attackGrowth": { "note": "extra weapon dice per tier above 1 for heroes (Luke 26 Nov: 1; 0 = old rule, only tierDice attacks grow)", "extraDicePerTier": 0 },
   "charge": {
     "attackerSecondsPerCast": 5,
     "_attacker": "charge per basic attack = 100 x attack interval / attackerSecondsPerCast",
@@ -35,6 +38,9 @@
     "_chargeToCast": "Each hero needs chargeToCast charge to cast (default 100). Gains per job stay the same; a bigger number means a bigger, rarer ability."
   },
   "abilityRoll": { "lowAtOrBelow": 5, "highAtOrAbove": 14 },
+  "abilityScores": { "modifier": "half", "_modifier": "half = each point above 10 is worth half a modifier point (15 gives +2.5; Luke, 26 Nov), with .5 damage, heals and Wards rounding up or down at random. floor = D&D's rounded-down modifier (15 gives +2)." },
+  "shop": { "ownedHeroWeight": 0.75, "_ownedHeroWeight": "How likely a hero you already own is to be offered, next to one you don't (1 = equally likely, 0.5 = half as likely). Rerolls cost 1 gold, then 1 more for each reroll in the same shop (run.js)." },
+  "dice": { "mode": "random", "_modes": "random = normal play. average = every damage, heal, Ward and bonus die rolls its average; the d20 ability roll stays random. average-all = the d20 rolls its average too (10.5; Advantage 13.825, Disadvantage 7.175). The bench option --dice overrides this." },
   "statuses": {
     "restrained": { "attackSlow": 0.5, "noMove": true, "castsWithDisadvantage": true },
     "stunImmunityAfter": 1,
