@@ -36,6 +36,28 @@ node bench.js jobs arthur --n 250 --edits "$E"
 node bench.js jobs arthur --n 150 --tier 2 --edits "rules.attackGrowth.extraDicePerTier=1, $E"
 ```
 
+## Tier 2 paths (Luke picked these, 27 Nov; numbers proposed)
+- **Riposte Master (path A, damage):** Ripostes are critical hits; each Riposte adds +1d8 to his next Alert Strike (stores up to 3); Riposte cooldown 6s → 3s.
+- **Goading Strike (path B, tank):** when Alert Strike starts, every foe within 2 squares is taunted until 1s after the dodge ends, so they swing into it; Alert 25% → 35% Evasion.
+
+| Version | Win, regular | Win, Nezznar | Arthur dies | Allies die | Party HP lost |
+|---|---|---|---|---|---|
+| Tier 1 | 69% | 75% | 54% | 51% | 69% |
+| Tier 2, no path | 86% | 87% | 26% | 41% | 58% |
+| Ready First (today) | 91% | 90% | 15% | 35% | 52% |
+| Second Wind (today) | 91% | 91% | 14% | 38% | 54% |
+| Riposte Master | 89% | 97% | 18% | 39% | 56% |
+| Goading Strike | 90% | 95% | 18% | 29% | 50% |
+
+Fights 3 to Nezznar from 150 sensible + 150 engine runs, 3 replays each (`paths` now also reports party HP lost and deaths). Tier 2 damage per second: no path 7.3, Riposte Master 8.8.
+
+What didn't work: taunting only the foes who already swung at him (they were on him anyway; allies died as often), and only shortening Riposte's cooldown (Evasion limits Ripostes, not the cooldown).
+
+```
+P='arthur.t2.riposteMaster={"riposteCooldown":3,"maxStoredDice":3,"riposteCrits":true}, arthur.t2.goadingStrike={"when":"start","reach":2,"extraSeconds":1,"evasionBonus":0.1}'
+node bench.js paths arthur --n 150 --reps 3 --edits "$E, $P"
+node bench.js jobs arthur --n 200 --tier 2 --path 0 --edits "rules.attackGrowth.extraDicePerTier=1, $E, $P"
+```
+
 ## Open
-- His tier 2 specializations (Ready First, Second Wind) use the old Action Surge and need new designs.
 - `rules.attackGrowth.extraDicePerTier` is 0 (off) until the whole cast is reworked; turning it on alone makes every hero's casts and attacks grow together.

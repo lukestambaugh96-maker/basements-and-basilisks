@@ -57,16 +57,32 @@ const KITS = {
   arthur: c => ({ dmgAb: true,
     ab: { can: (F, u) => tfoes(F, u).some(o => dist(o, u) <= c.ability.needsFoeWithin),
       cast(F, u, r) {
-        const A = c.ability, w = byRoll(A.dodgeSeconds, r); u.st.dodge = w; u.dodged = 0;
-        u.pend.push({ t: w, fn: (F, u) => { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return false; const s = spec(u, A.strike); const n = s.n + (A.extraDiceIfDodged || 0) * Math.min(1, u.dodged || 0) + (A.extraDicePerDodge || 0) * Math.min(A.maxDodgeDice || 0, u.dodged || 0) + (r.crit ? (A.extraDiceOnNatural20 || 0) : 0); abHit(F, u, t, n, s.x, s.flat, 'phys', r, { crit: true }); return true; } });
+        const A = c.ability, w = byRoll(A.dodgeSeconds, r); u.st.dodge = w; u.dodged = 0; u.dodgedBy = new Set();
+        const GS0 = c.t2.goadingStrike; // Goading Strike, 'start' version: dare every foe nearby to swing into the dodge
+        if (GS0 && u.t2 === 1 && GS0.when === 'start') for (const o of foesOf(F, u).filter(o => dist(o, u) <= GS0.reach)) applyControl(F, u, o, 'taunt', w + GS0.extraSeconds);
+        u.pend.push({ t: w, fn: (F, u) => {
+          const GS = c.t2.goadingStrike; // Goading Strike (path B, 26 Nov proposal): taunt every foe that swung during the dodge
+          if (GS && u.t2 === 1 && GS.when !== 'start') for (const o of u.dodgedBy) if (o.alive) applyControl(F, u, o, 'taunt', GS.tauntSeconds);
+          const t = acquire(F, u); if (!t || !canHit(F, u, t)) return false; const s = spec(u, A.strike);
+          const RM = c.t2.riposteMaster; const stored = RM && u.t2 === 0 ? (u.storedDice || 0) : 0; u.storedDice = 0;
+          const n = s.n + (A.extraDiceIfDodged || 0) * Math.min(1, u.dodged || 0) + (A.extraDicePerDodge || 0) * Math.min(A.maxDodgeDice || 0, u.dodged || 0) + stored + (r.crit ? (A.extraDiceOnNatural20 || 0) : 0);
+          abHit(F, u, t, n, s.x, s.flat, 'phys', r, { crit: true }); return true; } });
       } },
     // Action Surge: Riposte (26 Nov): when an attack misses him (evaded or dodged), an immediate Longsword attack at the attacker.
-    // Internal cooldown, except while Alert Strike's dodge is up.
-    onAvoid(F, u, src) { const R = c.riposte; if (!R || !src || !src.alive || src.side === u.side) return; const inDodge = u.st.dodge > 0 && R.noCooldownWhileDodging;
-      if (!inDodge && F.t < (u.counters.rip || -99)) return; if (!canHit(F, u, src)) return; if (!inDodge) u.counters.rip = F.t + R.cooldown; u.ripostes = (u.ripostes || 0) + 1; ev(F, { k: 'riposte', u, t: src }); strike(F, u, src, {}); },
-    onStart(F, u) { if (u.t2 === 0) u.charge = Math.min(u.maxCharge, u.charge + c.t2.readyFirst.extraStartCharge); },
-    onAttack(F, u, t) { if (u.t2 === 0 && !u.counters.rf) { u.counters.rf = 1; for (let i = 0; i < c.t2.readyFirst.extraStrikesOnFirstAttack; i++) { if (i > 0 && !t.alive) break; strike(F, u, t, {}); } } },
-    onHalf(F, u) { if (u.t2 === 1) { const s = spec(u, c.t2.secondWind.heal); heal(F, u, u, rollDice(s.n, s.x) + s.flat); u.charge = u.maxCharge; } },
+    // Internal cooldown, except while Alert Strike's dodge is up (if noCooldownWhileDodging).
+    onAvoid(F, u, src) { const R = c.riposte; if (!R || !src || !src.alive || src.side === u.side) return;
+      if (u.st.dodge > 0 && u.dodgedBy) u.dodgedBy.add(src);
+      const RM = c.t2.riposteMaster && u.t2 === 0 ? c.t2.riposteMaster : null; const cd = RM ? RM.riposteCooldown : R.cooldown;
+      const inDodge = u.st.dodge > 0 && R.noCooldownWhileDodging;
+      if (!inDodge && F.t < (u.counters.rip || -99)) return; if (!canHit(F, u, src)) return; if (!inDodge) u.counters.rip = F.t + cd;
+      u.ripostes = (u.ripostes || 0) + 1; ev(F, { k: 'riposte', u, t: src }); strike(F, u, src, { crit: !!(RM && RM.riposteCrits) });
+      if (RM) u.storedDice = Math.min(RM.maxStoredDice, (u.storedDice || 0) + 1); }, // Riposte Master: each Riposte adds a die to the next Alert Strike
+    onStart(F, u) {
+      if (u.t2 === 0 && c.t2.readyFirst && !c.t2.riposteMaster) u.charge = Math.min(u.maxCharge, u.charge + c.t2.readyFirst.extraStartCharge);
+      if (u.t2 === 1 && c.t2.goadingStrike) u.eva += c.t2.goadingStrike.evasionBonus;
+    },
+    onAttack(F, u, t) { if (u.t2 === 0 && c.t2.readyFirst && !c.t2.riposteMaster && !u.counters.rf) { u.counters.rf = 1; for (let i = 0; i < c.t2.readyFirst.extraStrikesOnFirstAttack; i++) { if (i > 0 && !t.alive) break; strike(F, u, t, {}); } } },
+    onHalf(F, u) { if (u.t2 === 1 && c.t2.secondWind && !c.t2.goadingStrike) { const s = spec(u, c.t2.secondWind.heal); heal(F, u, u, rollDice(s.n, s.x) + s.flat); u.charge = u.maxCharge; } },
   }),
   bram: c => ({
     ab: { can: (F, u) => alliesOf(F, u).some(a => a.hp < a.maxHp),

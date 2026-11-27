@@ -108,7 +108,7 @@ function measureHero(G, cfg, hid, N, tier = 1) {
   fights.forEach((enc, fi) => P.forEach(([x, y], i) => {
     G.seedRng(90000 + fi * 1000 + i);
     const ids = [hid, x, y]; const ps = place(G, ids, enc);
-    const units = ids.map(id => G.makeHeroUnit({ id, tier, t2: null, items: [], train: {}, pos: ps[id] }));
+    const units = ids.map(id => G.makeHeroUnit({ id, tier, t2: opt.path != null && opt.path !== '' && id === hid ? +opt.path : null, items: [], train: {}, pos: ps[id] }));
     const F = G.makeFight(enc, units, { headless: true }); while (!F.over) G.stepFight(F);
     const h = units[0]; a.n++; if (F.result === 'win') a.w++; if (!h.alive) a.dies++;
     a.dmg += h.stat.dmg; a.life += h.alive ? F.t : (h.diedAt || F.t); a.ab += h.stat.abDmg; a.val += (h.abVal || 0); a.casts += h.casts || 0;
@@ -341,8 +341,11 @@ const COMMANDS = {
     for (const s of snaps) for (const r of s.recs) {
       if (only.length && !only.includes(r.id)) continue;
       const boss = s.fight === 5; const h = H[r.id] = H[r.id] || { reg: { n: 0 }, boss: { n: 0 } }; const g = boss ? h.boss : h.reg; g.n++;
-      const variant = (tier, t2) => { const c = JSON.parse(JSON.stringify(s)); const rr = c.recs.find(x => x.uid === r.uid); rr.tier = tier; rr.t2 = t2; return replayAvg(G, c).win; };
-      g.t1 = (g.t1 || 0) + variant(1, null); g.t2 = (g.t2 || 0) + variant(2, null); g.a = (g.a || 0) + variant(2, 0); g.b = (g.b || 0) + variant(2, 1);
+      const variant = (tier, t2, k) => { const c = JSON.parse(JSON.stringify(s)); const rr = c.recs.find(x => x.uid === r.uid); rr.tier = tier; rr.t2 = t2; const v = replayAvg(G, c);
+        // extra measures (27 Nov): party HP lost, this hero's deaths, allies' deaths (per ally)
+        const al = c.recs.filter(x => x.uid !== r.uid); g['hp_' + k] = (g['hp_' + k] || 0) + v.hpLost; g['die_' + k] = (g['die_' + k] || 0) + v.deadOf(r.uid); g['adie_' + k] = (g['adie_' + k] || 0) + (al.length ? al.reduce((t, x) => t + v.deadOf(x.uid), 0) / al.length : 0);
+        return v.win; };
+      g.t1 = (g.t1 || 0) + variant(1, null, 't1'); g.t2 = (g.t2 || 0) + variant(2, null, 't2'); g.a = (g.a || 0) + variant(2, 0, 'a'); g.b = (g.b || 0) + variant(2, 1, 'b');
     }
     if (opt.json) return console.log(JSON.stringify(H, null, 1));
     console.log(`Specialization test (${+opt.reps || 1} replay${(+opt.reps || 1) > 1 ? 's' : ''} each): fights ${opt.fight} from ${opt.bots || 'sensible,engine'} runs (${snaps.length} fights).`);

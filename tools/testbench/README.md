@@ -82,4 +82,5 @@ Act 1 has one boss, Nezznar: the check for entering Act 2. Venomfang and King Gr
 ## Evasion and attack growth (26 Nov)
 - **Evasion:** a chance that an attack misses (attacks only, never abilities). Hard cap `rules.evasion.cap` (0.5). Sources: hero config `evasion`, item `eva`, enemy `evasion`; `pierce` lowers it. Effective HP in `stats` and `jobs` divides physical EHP by (1 − evasion).
 - **Attack growth:** `rules.attackGrowth.extraDicePerTier` adds weapon dice per tier above 1 for heroes (0 = off; Luke's rule is 1, waiting for the cast rework).
-- **Arthur's rework hooks:** `arthur.riposte` ({cooldown, noCooldownWhileDodging}) and `arthur.ability.extraDicePerDodge` / `maxDodgeDice`. Off unless set; see `claude/v0.25b-arthur-rework.md`.
+- **`jobs --path 0|1`:** measures the hero at their path (with `--tier 2`). `paths --json` also reports party HP lost, the hero's deaths and allies' deaths.
+- **Arthur's rework hooks:** `arthur.t2.riposteMaster` / `arthur.t2.goadingStrike` replace Ready First / Second Wind when set; `arthur.riposte` ({cooldown, noCooldownWhileDodging}) and `arthur.ability.extraDicePerDodge` / `maxDodgeDice`. Off unless set; see `claude/v0.25b-arthur-rework.md`.
