@@ -66,21 +66,24 @@
       "ac": 17,
       "sr": 13,
       "range": 1,
-      "attack": { "name": "Warhammer", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 1.6 },
+      "attack": { "name": "Warhammer", "dice": "1d10", "bonus": "STR", "type": "physical", "interval": 1.6 },
+      "channelDivinity": {
+        "name": "Preserve Life",
+        "_trigger": "Disciple of Life (passive): the first time an ally drops below triggerBelowHp, Bram uses Channel Divinity. One charge per fight, nothing fires at the start.",
+        "triggerBelowHp": 0.333,
+        "healsAlliesBelowHp": 0.5,
+        "heal": { "dice": "2d8", "perTier": true, "bonus": "WIS" }
+      },
       "ability": {
         "name": "Cure Wounds",
         "castTime": 0.4,
         "heal": { "dice": "3d8", "perTier": true, "bonus": "WIS", "high": "+1" },
-        "selfHealShare": 1
+        "selfHealShare": 0.75
       },
       "t2": {
         "feature": "Channel Divinity",
-        "preserveLife": {
-          "triggerBelowHp": 0.333,
-          "healsAlliesBelowHp": 0.5,
-          "heal": { "dice": "2d8", "perTier": true, "bonus": "WIS" }
-        },
-        "turnTheFaithless": { "burst": { "dice": "2d6", "perTier": true }, "type": "radiant" }
+        "anchor": { "name": "Unyielding", "selfHealShare": 1.5, "tauntSeconds": 2, "reach": 1 },
+        "guardian": { "name": "Shield of Faith", "wardShare": 1, "tauntSeconds": 0, "targetLowest": true }
       }
     },
     "faelan": {
