@@ -104,11 +104,16 @@
       "range": 3,
       "attack": {
         "name": "Ray of Frost",
-        "dice": "1d4",
+        "dice": "1d6",
         "bonus": "INT",
         "halfBonus": true,
         "type": "magic",
         "interval": 1.7
+      },
+      "arcaneRecovery": {
+        "_trigger": "Spell Weave (passive): each hit one of her Wards absorbs triggers Arcane Recovery, up to maxPerShield times per Shield.",
+        "charge": 10,
+        "maxPerShield": 3
       },
       "ability": {
         "name": "Shield",
@@ -117,9 +122,8 @@
       },
       "t2": {
         "feature": "Arcane Recovery",
-        "absorbsCounted": 3,
-        "spellWeave": { "chargeBackPerAbsorb": 5 },
-        "sharedRecovery": { "allyChargePerAbsorb": 5 }
+        "projectedWard": { "name": "Projected Ward", "share": 0.4 },
+        "sharedRecovery2": { "name": "Shared Recovery", "allyCharge": 20, "target": "topDamage" }
       }
     },
     "wallaby": {
