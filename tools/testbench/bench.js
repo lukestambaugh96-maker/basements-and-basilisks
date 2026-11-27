@@ -177,6 +177,7 @@ const COMMANDS = {
   node bench.js placement [--bots sensible,engine] [--n 60]  Replay each fight in different formations (same party, same dice).
   node bench.js paths [heroes...] [--n 60]  Each hero's tier 2 paths in real fights: tier 1 vs tier 2 no path vs path A vs path B.
   node bench.js bosscheck [--n 150]           The Act 1 boss as the Act 2 check: parties rebuilt as all tier 2 / two tier 2 / one tier 2.
+  node bench.js buffs [heroes...] [--n 100]  What +1/2/3 key score or CON, +10/20/30% attack speed, or an extra 1d4-1d10 on attacks or abilities is worth to each hero (items removed; --keep-items).
   node bench.js luck [--bots sensible,engine] [--n 60]       Each fight on average dice vs normal dice: how often the dice decide it.
     (itemoff, castoff, placement, luck: --reps 3 replays each variant from 3 seeds; --fight 3,4 limits to those fights)
   node bench.js jobs [heroes...] [--n 60]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
@@ -381,6 +382,37 @@ const COMMANDS = {
     console.log('Targets (Luke, 26 Nov): A does well; B clears relatively well with a good team; C struggles.\n');
     console.log(table(['Party', 'Parties', 'Win', 'HP lost', 'Items held'], ['A', 'B', 'C'].filter(k => res[k]).map(k => [S[k], res[k].n, pc(res[k].w, res[k].n), pc(res[k].hp, res[k].n), f1(res[k].items / res[k].n)])));
     console.log('\nBy team (win %):\n' + table(['Team', 'Parties', 'A', 'B', 'C'], Object.keys(byComp).sort().map(cp => { const c = byComp[cp]; return [cp, c.A.n, pc(c.A.w, c.A.n), pc(c.B.w, c.B.n), pc(c.C.w, c.C.n)]; })));
+  },
+  buffs() {
+    // What small buffs are worth to each hero: every fight (fight 3 on) the bots walked into, with all items removed (--keep-items to keep them),
+    // replayed with one hero given one buff, on the same dice. Lift = win % with the buff minus without.
+    if (!opt.fight) opt.fight = '3,4,5,6'; if (!opt.reps) opt.reps = 2;
+    const { G, snaps } = collectSnaps(); const only = pos.filter(x => G.HEROES[x]);
+    const B = [['Key +1', { kind: 'stat', stat: 'key', v: 1 }], ['Key +2', { kind: 'stat', stat: 'key', v: 2 }], ['Key +3', { kind: 'stat', stat: 'key', v: 3 }],
+      ['CON +1', { kind: 'stat', stat: 'CON', v: 1 }], ['CON +2', { kind: 'stat', stat: 'CON', v: 2 }], ['CON +3', { kind: 'stat', stat: 'CON', v: 3 }],
+      ['Speed +10%', { kind: 'as', v: 0.1 }], ['Speed +20%', { kind: 'as', v: 0.2 }], ['Speed +30%', { kind: 'as', v: 0.3 }],
+      ['Attack +1d4', { kind: 'atkDie', v: 4 }], ['Attack +1d6', { kind: 'atkDie', v: 6 }], ['Attack +1d8', { kind: 'atkDie', v: 8 }], ['Attack +1d10', { kind: 'atkDie', v: 10 }],
+      ['Ability +1d4', { kind: 'castDie', v: 4 }], ['Ability +1d6', { kind: 'castDie', v: 6 }], ['Ability +1d8', { kind: 'castDie', v: 8 }], ['Ability +1d10', { kind: 'castDie', v: 10 }]];
+    const H = {}; let n = 0;
+    for (const s0 of snaps) {
+      const s = JSON.parse(JSON.stringify(s0)); if (!opt['keep-items']) for (const r of s.recs) r.items = []; n++;
+      for (const r of s.recs) { if (only.length && !only.includes(r.id)) continue; const h = H[r.id] = H[r.id] || { n: 0, base: 0, b: {} }; const base = replayAvg(G, s).win; h.n++; h.base += base;
+        for (const [name, b] of B) h.b[name] = (h.b[name] || 0) + replayAvg(G, s, { buff: Object.assign({ uid: r.uid }, b) }).win - base; }
+    }
+    if (opt.json) return console.log(JSON.stringify(H, null, 1));
+    const ids = Object.keys(H).filter(id => H[id].n >= (+opt.min || 8)).sort((a, b) => G.HEROES[a].cfg.benchJob.localeCompare(G.HEROES[b].cfg.benchJob) || G.HEROES[a].name.localeCompare(G.HEROES[b].name));
+    console.log(`Buff test (${+opt.reps} replays each): ${n} fights (fights ${opt.fight}) from ${opt.bots || 'sensible,engine'} runs, ${opt['keep-items'] ? 'items kept' : 'all items removed'}.`);
+    console.log('Each hero in each fight is replayed with one buff. Numbers = win % points the buff adds for that hero\'s party. Key = the hero\'s key score (stats.key in the config).');
+    console.log('A score only changes its modifier at even numbers (16 -> 17 does nothing, 17 -> 18 is +1), so +1 often reads as 0. Ability dice add to every hit of the ability.\n');
+    const groups = [['Ability scores', B.slice(0, 6)], ['Attack speed and attack dice', B.slice(6, 13)], ['Ability dice', B.slice(13)]];
+    for (const [title, cols] of groups) {
+      const rows = ids.map(id => { const h = H[id], d = G.HEROES[id]; return [d.name, d.cfg.benchJob, d.key + ' ' + d.cfg.stats[d.key], h.n, pc(h.base, h.n), ...cols.map(([k]) => sg(100 * h.b[k] / h.n))]; });
+      const jobs = [...new Set(ids.map(id => G.HEROES[id].cfg.benchJob))].map(j => { const g = ids.filter(id => G.HEROES[id].cfg.benchJob === j); const N = g.reduce((a, id) => a + H[id].n, 0);
+        return ['All ' + j + 's', j, '', N, pc(g.reduce((a, id) => a + H[id].base, 0), N), ...cols.map(([k]) => sg(100 * g.reduce((a, id) => a + H[id].b[k], 0) / N))]; });
+      const N = ids.reduce((a, id) => a + H[id].n, 0);
+      jobs.push(['Everyone', '', '', N, pc(ids.reduce((a, id) => a + H[id].base, 0), N), ...cols.map(([k]) => sg(100 * ids.reduce((a, id) => a + H[id].b[k], 0) / N))]);
+      console.log(title + '\n' + table(['Hero', 'Job', 'Key score', 'Fights', 'Win, no buff', ...cols.map(c => c[0])], rows.concat([['', '', '', '', '', ...cols.map(() => '')]], jobs)) + '\n');
+    }
   },
 };
 const sg = x => isNaN(x) ? '-' : (x >= 0 ? '+' : '') + Math.round(x);

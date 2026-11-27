@@ -207,10 +207,17 @@ function replayFight(snap, mod = {}) {
     if (mod.noItems) r.items = [];
     if (mod.drop && mod.drop[0] === r.uid) r.items = r.items.filter((_, i) => i !== mod.drop[1]);
     if (mod.pos && mod.pos[r.uid]) r.pos = mod.pos[r.uid];
+    if (mod.buff && mod.buff.uid === r.uid && mod.buff.kind === 'stat') { r.train = Object.assign({}, r.train); const k = mod.buff.stat === 'key' ? HEROES[r.id].key : mod.buff.stat; r.train[k] = (r.train[k] || 0) + mod.buff.v; }
   }
   seedRng(snap.seed);
   const units = recs.map(r => makeHeroUnit(r));
   if (mod.noAbility != null) for (const u of units) if (u.rec.uid === mod.noAbility) u.ab = null;
+  // test buffs (bench `buffs`): attack speed, an extra die on each attack hit (the attack's own damage type), an extra die on each ability hit
+  if (mod.buff) for (const u of units) if (u.rec.uid === mod.buff.uid) {
+    if (mod.buff.kind === 'as') u.as += mod.buff.v;
+    if (mod.buff.kind === 'atkDie') u.onHitItems.push({ n: 1, x: mod.buff.v, type: u.atk.type || 'phys' });
+    if (mod.buff.kind === 'castDie') u.castDie = mod.buff.v;
+  }
   const F = makeFight(snapEnc(snap), units, { headless: true, extraElite: snap.extraElite, campWard: snap.campWard, runGold: snap.gold });
   while (!F.over) stepFight(F);
   const hp = units.reduce((a, u) => a + Math.max(0, u.hp), 0), mx = units.reduce((a, u) => a + u.maxHp, 0);

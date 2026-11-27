@@ -293,6 +293,7 @@ function abHit(F, u, t, n, x, flat, type, r, o = {}) {
   let nn = n; if (!r.xdUsed) { nn += r.xd; r.xdUsed = true; }
   const crit = r.crit || !!o.crit;
   let amt = rollDice(nn, x, crit, u.empower) + (flat || 0);
+  if (u.castDie) amt += rollDice(1, u.castDie, crit); // test buff: an extra die on every hit of the ability (bench `buffs`)
   if (u.mote && !o.noMote) { amt += rollDice(u.mote.n, u.mote.x || 8, crit) + u.mote.flat; motePop(F, u, r); u.mote = null; }
   if (u.st.stealth > 0 || u.stealthStrike) { u.st.stealth = 0; u.stealthStrike = false; }
   const dmg = dealDamage(F, u, t, amt, type, { ability: true, crit, area: o.area });
