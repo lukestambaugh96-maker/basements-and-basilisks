@@ -19,30 +19,35 @@
       "subclass": "Battle Master",
       "role": ["Damage"],
       "benchJob": "brawler",
-      "size": "big",
+      "size": "medium",
       "pronouns": "he/him",
       "job": "attack",
-      "chargeToCast": 180,
+      "chargeToCast": 100,
       "startCharge": 25,
-      "stats": { "STR": 16, "DEX": 12, "CON": 14, "INT": 10, "WIS": 10, "CHA": 10 },
+      "stats": { "STR": 14, "DEX": 12, "CON": 14, "INT": 10, "WIS": 10, "CHA": 10 },
       "key": "STR",
-      "ac": 16,
+      "ac": 12,
       "sr": 11,
+      "evasion": 0.25,
+      "_kit": "Counter-puncher (Luke, 27 Nov). Action Surge: take an extra weapon attack. Alert: 25% Evasion; when Arthur dodges an attack (Evasion or Alert Strike), he triggers Action Surge, at most once every riposte.cooldown seconds.",
       "range": 1,
       "attack": { "name": "Longsword", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 1.5 },
+      "riposte": { "name": "Alert", "cooldown": 6, "noCooldownWhileDodging": false },
       "ability": {
         "name": "Alert Strike",
         "castTime": 0,
         "needsFoeWithin": 2,
-        "dodgeSeconds": { "low": 0.5, "mid": 1, "high": 1.5 },
-        "strike": { "dice": "4d8", "perTier": true, "bonus": "STR" },
-        "extraDiceIfDodged": 1,
-        "extraDiceOnNatural20": 2
+        "dodgeSeconds": { "low": 0.75, "mid": 1, "high": 1.25 },
+        "strike": { "dice": "1d8", "perTier": true, "bonus": "STR" },
+        "extraDiceIfDodged": 0,
+        "extraDicePerDodge": 1,
+        "maxDodgeDice": 3,
+        "extraDiceOnNatural20": 1
       },
       "t2": {
         "feature": "Action Surge",
-        "readyFirst": { "extraStartCharge": 25, "extraStrikesOnFirstAttack": 2 },
-        "secondWind": { "heal": { "dice": "2d10", "perTier": true, "bonus": "CON" } }
+        "riposteMaster": { "name": "Riposte Master", "riposteCooldown": 3, "maxStoredDice": 3, "riposteCrits": true },
+        "goadingStrike": { "name": "Goading Strike", "when": "start", "reach": 2, "extraSeconds": 1, "evasionBonus": 0.1 }
       }
     },
     "bram": {

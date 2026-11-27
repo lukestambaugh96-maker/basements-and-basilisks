@@ -1,6 +1,8 @@
-# Arthur rework: the counter-puncher (26 Nov, proposed)
+# Arthur rework: the counter-puncher (locked in by Luke, 27 Nov)
 
-Review card: "Arthur" on the B&B design review page. Nothing here is in `heroes.config.json` yet; the bench supports it through edits.
+Review cards: "Arthur" (base kit and tier 2 paths) on the B&B design review page, both applied. Everything below is in `heroes.config.json`; the prototype2 preset reverts it and still reproduces 47.0%.
+
+After locking in (300 runs per bot, seeds 20000+): never-buy 0% (dies at fight 3), sensible 61% (was 60%), engine 74% (was 70%). Boss check A / B / C: 86 / 81 / 34% (was 86 / 79 / 32%).
 
 ## Proposed kit
 - **Longsword:** 1d8 + STR every 1.5s, +1d8 per tier (Luke's attack-growth rule).
@@ -30,7 +32,7 @@ Tiers 2 / 3 / 4 with attack growth on: damage 7.2 / 9.5 / 11.4 (targets 6–7.5 
 
 Cast off: his fights drop 14 points today, 13 with the proposal. Whole runs (200 per bot): sensible 52.5 → 54.5%, engine 68.5 → 70%.
 
-## Re-run
+## Re-run (old edits, now the config's values)
 ```
 E='arthur.ac=12, arthur.evasion=0.25, arthur.size=medium, arthur.chargeToCast=100, arthur.ability.dodgeSeconds={"low":0.75,"mid":1,"high":1.25}, arthur.ability.strike.dice=1d8, arthur.ability.extraDiceIfDodged=0, arthur.ability.extraDiceOnNatural20=1, arthur.ability.extraDicePerDodge=1, arthur.ability.maxDodgeDice=3, arthur.riposte={"cooldown":6,"noCooldownWhileDodging":false}, arthur.stats.STR=14'
 node bench.js jobs arthur --n 250 --edits "$E"
