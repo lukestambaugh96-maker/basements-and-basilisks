@@ -27,7 +27,7 @@ node bench.js cast [heroes...] --n 100    one row per hero (whole cast takes a f
 node bench.js try "dane.ability.ward.dice=4d8, klarg.hp=110" dane
 node bench.js run --n 300                 whole Act 1 bot runs
 node bench.js intro                       each hero alone vs Fight 1
-node bench.js jobs --n 60                 every hero vs their job and ability-size benchmark (LOW / HIGH flags)
+node bench.js jobs --n 60 [--tier 2]      every hero vs their job and ability-size benchmark (LOW / HIGH flags); --tier measures everyone at that tier (no path)
 node bench.js bots --n 300                the three bot players, whole Act 1 runs each (same seeds); --seed, --edits, --json
 node bench.js bots --place best           bots place by trying every formation on practice dice first (also: smart, wall, ... any formation)
 node bench.js itemoff --n 60 --reps 3     each fight replayed with no items, and with each item removed one at a time

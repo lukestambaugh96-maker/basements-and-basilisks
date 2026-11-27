@@ -102,19 +102,19 @@ function testHero(G, hid, N, abilityOn = true) {
 }
 
 // Measure one hero against the job benchmark: fights 2-5, tier 1, no items, N random partner pairs. Rates are per 30 s of fight.
-function measureHero(G, cfg, hid, N) {
+function measureHero(G, cfg, hid, N, tier = 1) {
   const P = partners(G, hid, N); const fights = G.ACT1.slice(1); const R = cfg.rules; const K = R.resistance.K;
   const a = { n: 0, w: 0, dies: 0, dmg: 0, life: 0, ab: 0, val: 0, casts: 0, sus: 0, given: 0, t: 0, taken: 0 };
   fights.forEach((enc, fi) => P.forEach(([x, y], i) => {
     G.seedRng(90000 + fi * 1000 + i);
     const ids = [hid, x, y]; const ps = place(G, ids, enc);
-    const units = ids.map(id => G.makeHeroUnit({ id, tier: 1, t2: null, items: [], train: {}, pos: ps[id] }));
+    const units = ids.map(id => G.makeHeroUnit({ id, tier, t2: null, items: [], train: {}, pos: ps[id] }));
     const F = G.makeFight(enc, units, { headless: true }); while (!F.over) G.stepFight(F);
     const h = units[0]; a.n++; if (F.result === 'win') a.w++; if (!h.alive) a.dies++;
     a.dmg += h.stat.dmg; a.life += h.alive ? F.t : (h.diedAt || F.t); a.ab += h.stat.abDmg; a.val += (h.abVal || 0); a.casts += h.casts || 0;
     a.sus += h.selfSus || 0; a.given += h.toOthers || 0; a.t += F.t; a.taken += h.stat.taken;
   }));
-  const d = G.HEROES[hid], m = heroMath(G, hid, cfg); const per30 = v => v / a.t * 30;
+  const d = G.HEROES[hid], m = heroMath(G, hid, cfg, tier); const per30 = v => v / a.t * 30;
   const abTotal = a.ab + a.val;
   return { id: hid, name: d.name, job: d.cfg.benchJob, size: d.cfg.size, chargeToCast: d.chargeToCast || 100,
     win: 100 * a.w / a.n, dies: 100 * a.dies / a.n, ehp: m.ehpP, dpsFight: a.dmg / Math.max(1, a.t), fightEhp: m.ehpP + per30(a.sus), dps: a.dmg / Math.max(1, a.life),
@@ -129,9 +129,9 @@ function judgeHero(r, cfg) {
 }
 
 // ---------------- arithmetic (no simulation) ----------------
-function heroMath(G, id, cfg) {
+function heroMath(G, id, cfg, tier = 1) {
   const d = G.HEROES[id], c = d.cfg, R = cfg.rules; const m = s => G.mod(c.stats[s]);
-  const hd = R.hp.hitDie[d.cls]; const hp = R.hp.base + Math.floor(R.hp.hitDiceAtTier * (hd + 1) / 2) + m('CON') * R.hp.hitDiceAtTier;
+  const hd = R.hp.hitDie[d.cls]; const hp = R.hp.base + Math.floor(R.hp.hitDiceAtTier * tier * (hd + 1) / 2) + m('CON') * R.hp.hitDiceAtTier * tier;
   const K = R.resistance.K; const a = d.atk;
   const per = (a.n || 1) * (a.x + 1) / 2 + (a.flat || 0) + (a.stat ? (a.half ? Math.floor(m(a.stat) / 2) : m(a.stat)) : 0);
   const rawDps = per * (a.strikes || 1) / a.iv;
@@ -180,7 +180,7 @@ const COMMANDS = {
   node bench.js buffs [heroes...] [--n 100]  What +1/2/3 key score or CON, +10/20/30% attack speed, or an extra 1d4-1d10 on attacks or abilities is worth to each hero (items removed; --keep-items).
   node bench.js luck [--bots sensible,engine] [--n 60]       Each fight on average dice vs normal dice: how often the dice decide it.
     (itemoff, castoff, placement, luck: --reps 3 replays each variant from 3 seeds; --fight 3,4 limits to those fights)
-  node bench.js jobs [heroes...] [--n 60]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
+  node bench.js jobs [heroes...] [--n 60] [--tier 2]  Every hero against their job and ability-size benchmark (rules.config.json), flagged LOW/HIGH.
 
   Edits: "dane.ability.ward.dice=4d8, klarg.hp=110, rules.resistance.K=25"  (start with a hero id, an enemy id, or rules.)
   --preset prototype2   use the numbers from playable prototype 2 (before the 24-25 Nov approved changes).
@@ -245,7 +245,7 @@ const COMMANDS = {
   },
   jobs() {
     const N = +opt.n || 60; const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg); const rows = []; const js = [];
-    for (const id of heroList(G)) { const r = measureHero(G, cfg, id, N); const j = judgeHero(r, cfg); js.push(Object.assign(r, { judge: j })); process.stderr.write('.'); }
+    for (const id of heroList(G)) { const r = measureHero(G, cfg, id, N, +opt.tier || 1); const j = judgeHero(r, cfg); js.push(Object.assign(r, { judge: j })); process.stderr.write('.'); }
     process.stderr.write('\n');
     if (opt.json) return console.log(JSON.stringify(js, null, 1));
     const T = cfg.rules.jobTargets, S = cfg.rules.abilitySizes; const tag = (v, j) => v + (j && j !== 'ok' ? ' ' + j : '');
