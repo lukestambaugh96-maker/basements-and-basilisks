@@ -44,7 +44,19 @@ function rummageFor(F, u, forced, r, used) {
   else { const s = spec(u, C.whetstone); t.whet = C.whetstone.attacks; t.whetN = s.n * mult; }
   if (u.t2 === 1) t.charge = Math.min(t.maxCharge, t.charge + T.justTheThing.allyCharge);
 }
+// Sneak Attack (base kit, 27 Nov proposal): a bonus Thrown Dagger at the foe with +bonus dice, independent of attack speed, with an internal cooldown.
+// Opportunist (passive) holds the trigger: an ally is also attacking his target. force = an effect that "triggers Sneak Attack" (skips the condition, keeps the cooldown).
+function sneakNew(F, u, t, force) {
+  const SA = u.def.cfg.sneakAttack, T = u.def.cfg.t2; if (!t || !t.alive || u.counters.sa > F.t) return;
+  const CT = u.t2 === 0 && T.cutthroat2;
+  const ok = force || F.units.some(a => a.alive && a.side === 'H' && a !== u && a.target === t) || (CT && t.hp < t.maxHp * CT.foeBelowHp);
+  if (!ok) return; u.counters.sa = F.t + (CT && CT.cooldown && t.hp < t.maxHp * CT.foeBelowHp ? CT.cooldown : SA.cooldown); u.sneaks = (u.sneaks || 0) + 1;
+  const a = u.atk, b = spec(u, CT && CT.bonus && t.hp < t.maxHp * CT.foeBelowHp ? CT.bonus : SA.bonus); const dmg = dealDamage(F, u, t, rollDice(a.n || 1, a.x) + u.m(a.stat || 'DEX') + rollDice(b.n, b.x) + b.flat, 'phys', { attack: true });
+  if (!t.alive) { u.sneakKill = true; const PP = u.t2 === 1 && T.pickpocket2; if (PP && t.side === 'E') { F.gold += PP.goldPerSneakKill; u.goldStolen = (u.goldStolen || 0) + PP.goldPerSneakKill; onGoldDrop(F); } }
+  return dmg;
+}
 function sneakW(F, u, t) {
+  if (u.def.cfg.sneakAttack) return sneakNew(F, u, t, false);
   const T = u.def.cfg.t2;
   if (u.t2 == null || !t.alive || u.counters.sa > F.t) return;
   const ok = u.t2 === 0 ? t.hp < t.maxHp * T.cutthroat.foeBelowHp : F.units.some(a => a.alive && a.side === 'H' && a !== u && a.target === t);
@@ -113,9 +125,9 @@ const KITS = {
   }),
   wallaby: c => ({ dmgAb: true,
     ab: { can: (F, u) => tfoes(F, u).some(o => dist(o, u) <= c.ability.reach),
-      cast(F, u, r) { const k = byRoll(c.ability.daggers, r); for (let i = 0; i < k; i++) { const t = lowestHp(tfoes(F, u).filter(o => dist(o, u) <= c.ability.reach)); if (!t) break; const s = spec(u, c.ability.dagger); abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); sneakW(F, u, t); } } },
+      cast(F, u, r) { const k = byRoll(c.ability.daggers, r); for (let i = 0; i < k; i++) { const t = lowestHp(tfoes(F, u).filter(o => dist(o, u) <= c.ability.reach)); if (!t) break; const s = spec(u, c.ability.dagger); abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); if (c.sneakAttack) { if (i === 0 && c.ability.triggersSneakAttack) sneakNew(F, u, t, true); } else sneakW(F, u, t); } } },
     onStrike(F, u, t) { sneakW(F, u, t); },
-    onKill(F, u, t) { const T = c.t2; if (u.t2 === 0 && !(u.counters.cutCd > F.t)) { u.counters.cutCd = F.t + T.cutthroat.killCooldown; u.charge = Math.min(u.maxCharge, u.charge + T.cutthroat.chargeOnKill); } if (u.t2 === 1 && t.side === 'E') { F.gold += T.pickpocket.goldPerKill; onGoldDrop(F); } },
+    onKill(F, u, t) { const T = c.t2; if (c.sneakAttack) { const CT = u.t2 === 0 && T.cutthroat2; if (CT && !(u.counters.cutCd > F.t)) { u.counters.cutCd = F.t + CT.killCooldown; u.charge = Math.min(u.maxCharge, u.charge + CT.chargeOnKill); } return; } if (u.t2 === 0 && !(u.counters.cutCd > F.t)) { u.counters.cutCd = F.t + T.cutthroat.killCooldown; u.charge = Math.min(u.maxCharge, u.charge + T.cutthroat.chargeOnKill); } if (u.t2 === 1 && t.side === 'E') { F.gold += T.pickpocket.goldPerKill; onGoldDrop(F); } },
   }),
   dane: c => ({
     ab: { can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= c.ability.reach),

@@ -113,6 +113,7 @@ function measureHero(G, cfg, hid, N, tier = 1) {
     const h = units[0]; a.n++; if (F.result === 'win') a.w++; if (!h.alive) a.dies++;
     { const tk = units.slice(1).some(o => o.def.cfg.benchJob === 'frontline') ? 'withTank' : 'solo'; const sp = a.split = a.split || {}; const q = sp[tk] = sp[tk] || { n: 0, w: 0, dies: 0, allyDies: 0 }; q.n++; if (F.result === 'win') q.w++; if (!h.alive) q.dies++; q.allyDies += units.slice(1).filter(o => !o.alive).length / 2; }
     a.allyDies = (a.allyDies || 0) + units.slice(1).filter(o => !o.alive).length / 2;
+    a.gold = (a.gold || 0) + (F.gold || 0);
     a.dmg += h.stat.dmg; a.life += h.alive ? F.t : (h.diedAt || F.t); a.ab += h.stat.abDmg; a.val += (h.abVal || 0); a.casts += h.casts || 0;
     a.sus += h.selfSus || 0; a.given += h.toOthers || 0; a.t += F.t; a.taken += h.stat.taken;
   }));
@@ -121,7 +122,7 @@ function measureHero(G, cfg, hid, N, tier = 1) {
   return { id: hid, name: d.name, job: d.cfg.benchJob, size: d.cfg.size, chargeToCast: d.chargeToCast || 100,
     win: 100 * a.w / a.n, dies: 100 * a.dies / a.n, ehp: m.ehpP, dpsFight: a.dmg / Math.max(1, a.t), fightEhp: m.ehpP + per30(a.sus), dps: a.dmg / Math.max(1, a.life),
     castsPer30: per30(a.casts), valuePerCast: a.casts ? abTotal / a.casts : 0, abShare: a.dmg ? a.ab / a.dmg : 0, givenPer30: per30(a.given), takenPer30: per30(a.taken),
-    allyDies: 100 * (a.allyDies || 0) / a.n, split: a.split };
+    allyDies: 100 * (a.allyDies || 0) / a.n, goldPerFight: (a.gold || 0) / a.n, split: a.split };
 }
 function judge(v, range) { if (!range) return ''; const [lo, hi] = range; return v < lo * 0.9 ? 'LOW' : v > hi * 1.1 ? 'HIGH' : 'ok'; }
 function judgeHero(r, cfg) {
