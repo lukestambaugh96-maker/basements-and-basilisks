@@ -84,3 +84,5 @@ Act 1 has one boss, Nezznar: the check for entering Act 2. Venomfang and King Gr
 - **Attack growth:** `rules.attackGrowth.extraDicePerTier` adds weapon dice per tier above 1 for heroes (0 = off; Luke's rule is 1, waiting for the cast rework).
 - **`jobs --path 0|1`:** measures the hero at their path (with `--tier 2`). `paths --json` also reports party HP lost, the hero's deaths and allies' deaths.
 - **Arthur's rework hooks:** `arthur.t2.riposteMaster` / `arthur.t2.goadingStrike` replace Ready First / Second Wind when set; `arthur.riposte` ({cooldown, noCooldownWhileDodging}) and `arthur.ability.extraDicePerDodge` / `maxDodgeDice`. Off unless set; see `claude/v0.25b-arthur-rework.md`.
+- **`jobs --partnerTier 1`** (with `--tier 2`): only the measured hero is at that tier; JSON adds `allyDies` and a `split` by whether another frontliner is in the party. `paths --json` adds the same split (`regSolo`, `regTank`, `bossSolo`, `bossTank`).
+- **Bram's proposal hooks (27 Nov, off unless set):** `bram.channelDivinity` (Preserve Life in the base kit, with Disciple of Life's trigger), `bram.t2.anchor` (Unyielding), `bram.t2.guardian` (Shield of Faith).

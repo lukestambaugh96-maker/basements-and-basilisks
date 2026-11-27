@@ -108,9 +108,11 @@ function measureHero(G, cfg, hid, N, tier = 1) {
   fights.forEach((enc, fi) => P.forEach(([x, y], i) => {
     G.seedRng(90000 + fi * 1000 + i);
     const ids = [hid, x, y]; const ps = place(G, ids, enc);
-    const units = ids.map(id => G.makeHeroUnit({ id, tier, t2: opt.path != null && opt.path !== '' && id === hid ? +opt.path : null, items: [], train: {}, pos: ps[id] }));
+    const units = ids.map(id => G.makeHeroUnit({ id, tier: id === hid || !opt.partnerTier ? tier : +opt.partnerTier, t2: opt.path != null && opt.path !== '' && id === hid ? +opt.path : null, items: [], train: {}, pos: ps[id] }));
     const F = G.makeFight(enc, units, { headless: true }); while (!F.over) G.stepFight(F);
     const h = units[0]; a.n++; if (F.result === 'win') a.w++; if (!h.alive) a.dies++;
+    { const tk = units.slice(1).some(o => o.def.cfg.benchJob === 'frontline') ? 'withTank' : 'solo'; const sp = a.split = a.split || {}; const q = sp[tk] = sp[tk] || { n: 0, w: 0, dies: 0, allyDies: 0 }; q.n++; if (F.result === 'win') q.w++; if (!h.alive) q.dies++; q.allyDies += units.slice(1).filter(o => !o.alive).length / 2; }
+    a.allyDies = (a.allyDies || 0) + units.slice(1).filter(o => !o.alive).length / 2;
     a.dmg += h.stat.dmg; a.life += h.alive ? F.t : (h.diedAt || F.t); a.ab += h.stat.abDmg; a.val += (h.abVal || 0); a.casts += h.casts || 0;
     a.sus += h.selfSus || 0; a.given += h.toOthers || 0; a.t += F.t; a.taken += h.stat.taken;
   }));
@@ -118,7 +120,8 @@ function measureHero(G, cfg, hid, N, tier = 1) {
   const abTotal = a.ab + a.val;
   return { id: hid, name: d.name, job: d.cfg.benchJob, size: d.cfg.size, chargeToCast: d.chargeToCast || 100,
     win: 100 * a.w / a.n, dies: 100 * a.dies / a.n, ehp: m.ehpP, dpsFight: a.dmg / Math.max(1, a.t), fightEhp: m.ehpP + per30(a.sus), dps: a.dmg / Math.max(1, a.life),
-    castsPer30: per30(a.casts), valuePerCast: a.casts ? abTotal / a.casts : 0, abShare: a.dmg ? a.ab / a.dmg : 0, givenPer30: per30(a.given), takenPer30: per30(a.taken) };
+    castsPer30: per30(a.casts), valuePerCast: a.casts ? abTotal / a.casts : 0, abShare: a.dmg ? a.ab / a.dmg : 0, givenPer30: per30(a.given), takenPer30: per30(a.taken),
+    allyDies: 100 * (a.allyDies || 0) / a.n, split: a.split };
 }
 function judge(v, range) { if (!range) return ''; const [lo, hi] = range; return v < lo * 0.9 ? 'LOW' : v > hi * 1.1 ? 'HIGH' : 'ok'; }
 function judgeHero(r, cfg) {
@@ -340,7 +343,10 @@ const COMMANDS = {
     const only = pos.filter(x => G.HEROES[x]);
     for (const s of snaps) for (const r of s.recs) {
       if (only.length && !only.includes(r.id)) continue;
-      const boss = s.fight === 5; const h = H[r.id] = H[r.id] || { reg: { n: 0 }, boss: { n: 0 } }; const g = boss ? h.boss : h.reg; g.n++;
+      const boss = s.fight === 5; const h = H[r.id] = H[r.id] || { reg: { n: 0 }, boss: { n: 0 } }; const g0 = boss ? h.boss : h.reg; g0.n++;
+      // 27 Nov: also split by whether another frontliner is in the party (solo vs with a tank)
+      const tank = s.recs.some(x => x.uid !== r.uid && G.HEROES[x.id] && G.HEROES[x.id].cfg.benchJob === 'frontline'); const sk = (boss ? 'boss' : 'reg') + (tank ? 'Tank' : 'Solo'); const g1 = h[sk] = h[sk] || { n: 0 }; g1.n++;
+      const g = new Proxy({}, { get: (_, k) => g0[k], set: (_, k, v) => { g1[k] = (g1[k] || 0) + (v - (g0[k] || 0)); g0[k] = v; return true; } });
       const variant = (tier, t2, k) => { const c = JSON.parse(JSON.stringify(s)); const rr = c.recs.find(x => x.uid === r.uid); rr.tier = tier; rr.t2 = t2; const v = replayAvg(G, c);
         // extra measures (27 Nov): party HP lost, this hero's deaths, allies' deaths (per ally)
         const al = c.recs.filter(x => x.uid !== r.uid); g['hp_' + k] = (g['hp_' + k] || 0) + v.hpLost; g['die_' + k] = (g['die_' + k] || 0) + v.deadOf(r.uid); g['adie_' + k] = (g['adie_' + k] || 0) + (al.length ? al.reduce((t, x) => t + v.deadOf(x.uid), 0) / al.length : 0);

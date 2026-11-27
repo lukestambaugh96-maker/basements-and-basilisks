@@ -88,12 +88,20 @@ const KITS = {
   bram: c => ({
     ab: { can: (F, u) => alliesOf(F, u).some(a => a.hp < a.maxHp),
       cast(F, u, r) {
-        const inj = alliesOf(F, u).filter(a => a !== u && a.hp < a.maxHp); const t = nearest(inj, u) || u;
+        const inj = alliesOf(F, u).filter(a => a !== u && a.hp < a.maxHp); const GD0 = u.t2 === 1 && c.t2.guardian; const front = GD0 && GD0.targetFrontliner ? inj.filter(a => a.def.cfg && a.def.cfg.benchJob === 'frontline') : []; const t = (front.length ? lowestPct(front) : GD0 && GD0.targetLowest ? lowestPct(inj) : nearest(inj, u)) || u;
         const s = spec(u, c.ability.heal, r); const amt = rollDice(s.n + r.xd, s.x, r.crit, u.empower) + s.flat;
-        heal(F, u, t, amt); if (t !== u) heal(F, u, u, Math.floor(amt * c.ability.selfHealShare));
-        if (u.t2 === 1) { const b = spec(u, c.t2.turnTheFaithless.burst); for (const o of adjUnits(F, u, 'E')) dealDamage(F, u, o, rollDice(b.n, b.x, r.crit) + b.flat, 'radiant', { ability: true, area: true }); }
+        const AN = u.t2 === 0 ? c.t2.anchor : null, GD = u.t2 === 1 ? c.t2.guardian : null; // 27 Nov proposal: solo frontline / off-tank paths
+        heal(F, u, t, amt); if (t !== u) heal(F, u, u, Math.floor(amt * (AN ? AN.selfHealShare : c.ability.selfHealShare)));
+        if (AN) for (const o of foesOf(F, u).filter(o => dist(o, u) <= (AN.reach || 1))) applyControl(F, u, o, 'taunt', AN.tauntSeconds);
+        if (GD && t !== u) { addWard(F, u, t, Math.floor(amt * GD.wardShare), false); for (const o of adjUnits(F, t, 'E')) applyControl(F, u, o, 'taunt', GD.tauntSeconds); }
+        if (u.t2 === 1 && !c.t2.guardian && c.t2.turnTheFaithless) { const b = spec(u, c.t2.turnTheFaithless.burst); for (const o of adjUnits(F, u, 'E')) dealDamage(F, u, o, rollDice(b.n, b.x, r.crit) + b.flat, 'radiant', { ability: true, area: true }); }
       } },
-    tick(F, u) { const P = c.t2.preserveLife; if (u.t2 === 0 && !u.counters.pl) { const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * P.triggerBelowHp); if (lo) { u.counters.pl = 1; for (const a of alliesOf(F, u)) if (a.hp < a.maxHp * P.healsAlliesBelowHp) { const s = spec(u, P.heal); heal(F, u, a, rollDice(s.n, s.x) + s.flat); } } } },
+    // Channel Divinity (base kit, 27 Nov proposal): every fight starts with one charge, hold at most one; Disciple of Life holds the trigger.
+    onStart(F, u) { if (c.channelDivinity) u.cd = 1; },
+    tick(F, u) { const CD = c.channelDivinity;
+      if (CD && u.cd > 0) { const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * CD.triggerBelowHp); if (lo) { u.cd = 0; u.cdUses = (u.cdUses || 0) + 1; for (const a of alliesOf(F, u)) if (a.hp < a.maxHp * CD.healsAlliesBelowHp) { const s = spec(u, CD.heal); heal(F, u, a, rollDice(s.n, s.x) + s.flat); } } }
+      if (CD) return;
+      const P = c.t2.preserveLife; if (u.t2 === 0 && !u.counters.pl) { const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * P.triggerBelowHp); if (lo) { u.counters.pl = 1; for (const a of alliesOf(F, u)) if (a.hp < a.maxHp * P.healsAlliesBelowHp) { const s = spec(u, P.heal); heal(F, u, a, rollDice(s.n, s.x) + s.flat); } } } },
   }),
   faelan: c => ({
     ab: { cast(F, u, r) { const t = lowestPctFront(F, u); const s = spec(u, c.ability.ward, r); addWard(F, u, t, rollDice(s.n + r.xd, s.x, r.crit, u.empower) + s.flat, wardReplaces()); u.weaveLeft = c.t2.absorbsCounted; } },
