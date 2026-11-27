@@ -95,8 +95,8 @@ function makeHeroUnit(rec) {
 function makeEnemyUnit(id, x, y) {
   const def = ENEMIES[id];
   const u = Object.assign(baseUnit(), { side: 'E', def, id, name: def.name, x, y, tier: 1, boss: def.rank === 'Boss', elite: def.rank === 'Elite' });
-  u.maxHp = def.hp; u.hp = def.hp; u.ac = def.ac; u.sr = def.sr; u.eva = def.evasion || 0; u.pierce = def.pierce || 0; u.range = def.range || 1;
-  u.atk = Object.assign({}, def.atk); u.ab = def.ab || null; u.as = 0; u.cr = 0; u.rollB = 0; u.dieUp = 0; u.flat = def.atk.flat || 0; u.pen = 0; u.spen = 0; u.regen = 0;
+  const ES = RULES.enemyScale || {}; u.maxHp = Math.round(def.hp * (ES.hp || 1)); u.hp = u.maxHp; u.ac = def.ac; u.sr = def.sr; u.eva = def.evasion || 0; u.pierce = def.pierce || 0; u.range = def.range || 1;
+  u.atk = Object.assign({}, def.atk); u.ab = def.ab || null; u.as = ES.attackSpeed || 0; u.cr = 0; u.rollB = 0; u.dieUp = 0; u.flat = def.atk.flat || 0; u.pen = 0; u.spen = 0; u.regen = 0;
   u.atkIvBase = def.atk.iv; u.ratio = 1; u.job = def.ab ? (def.ab.job || 'time') : 'none'; u.cAtk = def.ab && def.ab.perAtk || 0; u.cHit = 0; u.cTime = def.ab ? def.ab.iv : 99; u.stats = { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 }; u.m = () => 0; u.maxCharge = 100; u.keyMod = def.keyMod || 0;
   return u;
 }
@@ -203,6 +203,7 @@ function dealDamage(F, src, t, raw, type, o = {}) {
   let R = 0;
   if (type === 'phys') R = t.ac - (src ? src.pen || 0 : 0);
   else if (type === 'magic') R = t.sr - (src ? src.spen || 0 : 0);
+  if (src && src.side === 'E' && src !== t && RULES.enemyScale && RULES.enemyScale.damage !== 1) raw = roundAmt(raw * RULES.enemyScale.damage); // enemy buff knob (27 Nov)
   let amt = (type === 'radiant' || type === 'true') ? raw : Math.max(RULES.resistance.minimumDamage, Math.round(raw * (1 - resist(R))));
   if (o.self) amt = raw;
   if (t.formHp > 0) { const a = Math.min(t.formHp, amt); t.formHp -= a; amt -= a; if (t.formHp <= 0) endForm(F, t); }

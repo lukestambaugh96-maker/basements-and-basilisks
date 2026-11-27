@@ -21,6 +21,7 @@
     }
   },
   "resistance": { "formula": "R / (R + K)", "K": 20, "minimumDamage": 1, "controlReadsSr": true },
+  "enemyScale": { "_about": "Act-wide enemy buff knobs (27 Nov): damage multiplier, attack speed bonus (0.1 = 10% faster), HP multiplier.", "damage": 1, "attackSpeed": 0.05, "hp": 1, "_set": "Luke, 27 Nov: a small buff after batch 1; +5% attack speed brought the never-buy wall back to fight 3." },
   "evasion": { "note": "chance an attack misses; attacks only, never abilities; pierce lowers it", "cap": 0.5 },
   "attackGrowth": { "note": "extra weapon dice per tier above 1 for heroes (Luke 26 Nov: 1; 0 = old rule, only tierDice attacks grow)", "extraDicePerTier": 0 },
   "charge": {
