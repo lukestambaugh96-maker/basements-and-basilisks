@@ -16,7 +16,11 @@ const DICE_MODE = (RULES.dice && RULES.dice.mode) || 'random';
 const d = x => DICE_MODE === 'random' || (x === 20 && DICE_MODE === 'average') ? 1 + Math.floor(RNG() * x) : (x + 1) / 2;
 // "2d8+3" -> { n: 2, x: 8, flat: 3 }
 function parseDice(s) { const m = /^(\d+)d(\d+)([+-]\d+)?$/.exec(String(s).replace(/\s/g, '')); if (!m) throw new Error('Bad dice: ' + s); return { n: +m[1], x: +m[2], flat: m[3] ? +m[3] : 0 }; }
-const mod = s => Math.floor((s - 10) / 2);
+// Ability modifier (rules.config.json abilityScores.modifier): "floor" = D&D's (score - 10) / 2 rounded down; "half" = every point is worth half a modifier point (Luke, 26 Nov), so 15 gives +2.5.
+const MOD_HALF = !!(RULES.abilityScores && RULES.abilityScores.modifier === 'half');
+const mod = s => MOD_HALF ? (s - 10) / 2 : Math.floor((s - 10) / 2);
+// Rounding a damage, heal or Ward amount to a whole number. With half modifiers a .5 rounds up or down at random, so half a point is worth half on average.
+const roundAmt = x => (!MOD_HALF || Number.isInteger(x)) ? Math.round(x) : Math.floor(x) + (RNG() < x - Math.floor(x) ? 1 : 0);
 function rollDice(n, x, crit, emp) { n = Math.max(0, n | 0); const c = crit ? n * 2 : n; if (DICE_MODE !== 'random') return c * (emp ? (x + 1 + x * (x + 1) / 2 - 3) / x : (x + 1) / 2); let t = 0; for (let i = 0; i < c; i++) { let r = d(x); if (emp && r <= 2) r = d(x); t += r; } return t; }
 const RESIST_K = RULES.resistance.K;
 const resist = R => { R = Math.max(0, R); return R / (R + RESIST_K); };
@@ -167,13 +171,13 @@ const controlled = t => t.st.root > 0 || t.st.stun > 0 || t.st.taunt > 0 || t.st
 function addPoison(F, src, t, v) { if (!t.alive || v <= 0) return; t.st.poison += v; t.st.poisonSrc = src; }
 function addBurn(F, src, t, v) { if (!t.alive || v <= 0) return; t.st.burn = v; t.st.burnT = RULES.statuses.burnSeconds; t.st.burnSrc = src; }
 function addWard(F, src, t, amt, replaceIfBigger = true) {
-  amt = Math.max(0, Math.round(amt)); if (!t.alive) return;
+  amt = Math.max(0, roundAmt(amt)); if (!t.alive) return;
   if (replaceIfBigger) { if (amt > t.ward) { const gain = amt - t.ward; t.ward = amt; t.wardAbs = 0; t.wardSrc = src; if (src) src.stat.ward += gain; } }
   else { t.ward += amt; t.wardSrc = src; if (src) src.stat.ward += amt; }
   ev(F, { k: 'ward', t, v: amt });
 }
 function heal(F, src, t, amt) {
-  if (!t.alive || amt <= 0) return 0; amt = Math.round(amt);
+  if (!t.alive || amt <= 0) return 0; amt = roundAmt(amt);
   if (src && src.side === 'H' && src.it && src.it.holy_symbol && src !== t) amt += d(8);
   if (t.rageBar > 0) { t.rageBar += amt; if (src) src.stat.heal += amt; return amt; }
   const real = Math.min(amt, t.maxHp - t.hp); t.hp += real; if (src) src.stat.heal += real;
@@ -184,7 +188,7 @@ function heal(F, src, t, amt) {
 // ---------------- damage ----------------
 function dealDamage(F, src, t, raw, type, o = {}) {
   if (!t || !t.alive || raw <= 0) return 0;
-  raw = Math.round(raw);
+  raw = roundAmt(raw);
   if (t.st.bond > 0 && t.bondBy && t.bondBy !== t && t.bondBy.alive && t.bondBy.t2 === 1 && raw >= t.bondBy.def.cfg.t2.protectiveBond.redirectHitsOf && src && src.side !== t.side) t = t.bondBy;
   if (src && src !== t) t.lastHitBy = src;
   if (o.attack) {

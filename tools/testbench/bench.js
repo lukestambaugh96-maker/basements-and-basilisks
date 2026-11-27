@@ -393,19 +393,21 @@ const COMMANDS = {
       ['Speed +10%', { kind: 'as', v: 0.1 }], ['Speed +20%', { kind: 'as', v: 0.2 }], ['Speed +30%', { kind: 'as', v: 0.3 }],
       ['Attack +1d4', { kind: 'atkDie', v: 4 }], ['Attack +1d6', { kind: 'atkDie', v: 6 }], ['Attack +1d8', { kind: 'atkDie', v: 8 }], ['Attack +1d10', { kind: 'atkDie', v: 10 }],
       ['Ability +1d4', { kind: 'castDie', v: 4 }], ['Ability +1d6', { kind: 'castDie', v: 6 }], ['Ability +1d8', { kind: 'castDie', v: 8 }], ['Ability +1d10', { kind: 'castDie', v: 10 }]];
+    const kinds = opt.only ? String(opt.only).split(',') : null; // --only stat,as,atkDie,castDie
     const H = {}; let n = 0;
     for (const s0 of snaps) {
       const s = JSON.parse(JSON.stringify(s0)); if (!opt['keep-items']) for (const r of s.recs) r.items = []; n++;
       for (const r of s.recs) { if (only.length && !only.includes(r.id)) continue; const h = H[r.id] = H[r.id] || { n: 0, base: 0, b: {} }; const base = replayAvg(G, s).win; h.n++; h.base += base;
-        for (const [name, b] of B) h.b[name] = (h.b[name] || 0) + replayAvg(G, s, { buff: Object.assign({ uid: r.uid }, b) }).win - base; }
+        for (const [name, b] of B) if (!kinds || kinds.includes(b.kind)) h.b[name] = (h.b[name] || 0) + replayAvg(G, s, { buff: Object.assign({ uid: r.uid }, b) }).win - base; }
     }
     if (opt.json) return console.log(JSON.stringify(H, null, 1));
     const ids = Object.keys(H).filter(id => H[id].n >= (+opt.min || 8)).sort((a, b) => G.HEROES[a].cfg.benchJob.localeCompare(G.HEROES[b].cfg.benchJob) || G.HEROES[a].name.localeCompare(G.HEROES[b].name));
     console.log(`Buff test (${+opt.reps} replays each): ${n} fights (fights ${opt.fight}) from ${opt.bots || 'sensible,engine'} runs, ${opt['keep-items'] ? 'items kept' : 'all items removed'}.`);
     console.log('Each hero in each fight is replayed with one buff. Numbers = win % points the buff adds for that hero\'s party. Key = the hero\'s key score (stats.key in the config).');
-    console.log('A score only changes its modifier at even numbers (16 -> 17 does nothing, 17 -> 18 is +1), so +1 often reads as 0. Ability dice add to every hit of the ability.\n');
+    console.log((cfgHalf(G) ? 'Each score point is worth half a modifier point (abilityScores.modifier "half").' : 'A score only changes its modifier at even numbers (16 -> 17 does nothing, 17 -> 18 is +1), so +1 often reads as 0.') + ' Ability dice add to every hit of the ability.\n');
     const groups = [['Ability scores', B.slice(0, 6)], ['Attack speed and attack dice', B.slice(6, 13)], ['Ability dice', B.slice(13)]];
     for (const [title, cols] of groups) {
+      if (kinds && !cols.some(([, b]) => kinds.includes(b.kind))) continue;
       const rows = ids.map(id => { const h = H[id], d = G.HEROES[id]; return [d.name, d.cfg.benchJob, d.key + ' ' + d.cfg.stats[d.key], h.n, pc(h.base, h.n), ...cols.map(([k]) => sg(100 * h.b[k] / h.n))]; });
       const jobs = [...new Set(ids.map(id => G.HEROES[id].cfg.benchJob))].map(j => { const g = ids.filter(id => G.HEROES[id].cfg.benchJob === j); const N = g.reduce((a, id) => a + H[id].n, 0);
         return ['All ' + j + 's', j, '', N, pc(g.reduce((a, id) => a + H[id].base, 0), N), ...cols.map(([k]) => sg(100 * g.reduce((a, id) => a + H[id].b[k], 0) / N))]; });
@@ -415,6 +417,7 @@ const COMMANDS = {
     }
   },
 };
+const cfgHalf = G => G.mod(15) === 2.5;
 const sg = x => isNaN(x) ? '-' : (x >= 0 ? '+' : '') + Math.round(x);
 // Tier 2 path names, in t2 order (0 = A, 1 = B), from behaviour.js.
 const PATH_NAMES = { arthur: ['Ready First', 'Second Wind'], bram: ['Preserve Life', 'Turn the Faithless'], faelan: ['Spell Weave', 'Shared Recovery'], wallaby: ['Cutthroat', 'Pickpocket'], dane: ['Duelist', 'Retribution'], lorcan: ['Colossus Slayer', 'Horde Breaker'], juniper: ['Bramble Guard', 'Bramble Stalker'], rosalind: ['Muse', 'Encore'], zark: ['Bear Totem', 'Wolf Totem'], naill: ['Stunning Strike', 'Step of the Wind'], nettle: ["Dark One's Blessing", 'Hellfire Pact'], pillar: ['Unbreakable', 'Avalanche'], laurel: ['Ensnaring Smite', 'Warding Smite'], lumen: ['Searing Focus', 'Healing Light'], jamison: ['Balm of Peace', 'Protective Bond'], zoe: ['Rune Carver', 'Just the Thing'], gilthrax: ['Gilded Hoard', "Bodyguard's Fee"], velith: ['First Blood', 'Nightshade Vials'], cinder: ['Twinned Spell', 'Empowered Spell'], gains: ['Compound Interest', 'Liquid Assets'], corvin: ["Stalker's Flurry", 'First Strike'], saint: ['Invoke Duplicity', 'Cloak of Shadows'], kaska: ['Panther', 'Dire Bear'], toot: ["Busker's Rhythm", 'Street Performer'] };
