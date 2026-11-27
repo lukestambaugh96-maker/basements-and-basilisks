@@ -136,13 +136,22 @@ const KITS = {
         applyControl(F, u, t, 'taunt', byRoll(A.tauntSeconds, r)); u.duelT = t; u.target = t;
         if (A.smite) { const s = spec(u, A.smite); abHit(F, u, t, s.n, s.x, s.flat, 'radiant', r); }
         if (A.ward) { const s = spec(u, A.ward, r); addWard(F, u, u, rollDice(s.n + r.xd, s.x, r.crit) + s.flat, false); }
+        if (c.smite && A.nextAttackSmites) u.smiteNext = true;
+        if (u.t2 === 0 && c.t2.duelist2 && c.t2.duelist2.lockOn) u.lockT = t; // Duelist: he fights his dueled foe until it falls
       } },
     onStrike(F, u, t, dmg, crit) {
       const T = c.t2;
+      if (c.smite) { // Smite (base kit, 27 Nov proposal): one definition; anything that calls for a smite uses it
+        let smite = false; if (u.smiteNext) { smite = true; u.smiteNext = false; }
+        if (u.t2 === 0 && T.duelist2 && u.duelT && u.duelT.alive && (u.duelT.st.taunt > 0 || T.duelist2.untilItFalls) && (T.duelist2.anyFoe || t === u.duelT)) { u.counters.duel = (u.counters.duel || 0) + 1; if (u.counters.duel % T.duelist2.everyNthHit === 0) smite = true; }
+        if (u.t2 === 1 && T.retribution2 && u.retri > 0) { u.retri = 0; smite = true; }
+        if (smite && t.alive) { const s = spec(u, c.smite); u.smites = (u.smites || 0) + 1; dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, c.smite.type || 'radiant', { crit }); }
+        return;
+      }
       if (u.t2 === 0 && t === u.duelT && t.st.taunt > 0) { u.counters.duel = (u.counters.duel || 0) + 1; if (u.counters.duel % T.duelist.everyNthHit === 0) { const s = spec(u, T.duelist.smite); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); } }
       if (u.t2 === 1 && u.retri > 0 && t.alive) { u.retri = 0; const s = spec(u, T.retribution.smite); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); }
     },
-    onHitTaken(F, u, src) { if (u.t2 === 1 && src && src === u.duelT && src.st.taunt > 0) u.retri = 1; },
+    onHitTaken(F, u, src) { if (u.t2 === 1 && src && src === u.duelT && (src.st.taunt > 0 || (c.t2.retribution2 && c.t2.retribution2.anyTime))) u.retri = 1; },
   }),
   lorcan: c => ({ kwMark: true,
     ab: { can: (F, u) => hasTarget(F, u), cast(F, u, r) { u.twinT = F.t + byRoll(c.ability.seconds, r); u.twinCrit = r.crit; } },
