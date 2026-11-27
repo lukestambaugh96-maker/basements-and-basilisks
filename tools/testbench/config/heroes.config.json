@@ -143,8 +143,14 @@
       "sr": 12,
       "range": 2,
       "attack": { "name": "Thrown Dagger", "dice": "1d4", "bonus": "DEX", "type": "physical", "interval": 1.2 },
+      "sneakAttack": {
+        "_trigger": "Opportunist (passive): when an ally is attacking the same foe, Wallaby triggers Sneak Attack. Sneak Attack: a bonus Thrown Dagger with +bonus dice, at most once every cooldown seconds.",
+        "cooldown": 3,
+        "bonus": { "dice": "1d4", "perTier": true }
+      },
       "ability": {
         "name": "Dagger Toss",
+        "triggersSneakAttack": true,
         "castTime": 0.2,
         "reach": 3,
         "daggers": { "low": 1, "mid": 2, "high": 3 },
@@ -152,10 +158,8 @@
       },
       "t2": {
         "feature": "Sneak Attack",
-        "sneak": { "dice": "2d6", "perTier": true },
-        "cooldown": 2,
-        "cutthroat": { "foeBelowHp": 0.5, "chargeOnKill": 60, "killCooldown": 1 },
-        "pickpocket": { "goldPerKill": 1 }
+        "cutthroat2": { "name": "Cutthroat", "foeBelowHp": 0.5, "chargeOnKill": 60, "killCooldown": 1, "cooldown": 1.5, "bonus": { "dice": "1d8", "perTier": true } },
+        "pickpocket2": { "name": "Pickpocket", "goldPerSneakKill": 3 }
       }
     },
     "dane": {
