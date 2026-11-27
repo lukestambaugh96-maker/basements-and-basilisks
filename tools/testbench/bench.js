@@ -108,7 +108,7 @@ function measureHero(G, cfg, hid, N, tier = 1) {
   fights.forEach((enc, fi) => P.forEach(([x, y], i) => {
     G.seedRng(90000 + fi * 1000 + i);
     const ids = [hid, x, y]; const ps = place(G, ids, enc);
-    const units = ids.map(id => G.makeHeroUnit({ id, tier: id === hid || !opt.partnerTier ? tier : +opt.partnerTier, t2: opt.path != null && opt.path !== '' && id === hid ? +opt.path : null, items: [], train: {}, pos: ps[id] }));
+    const units = ids.map(id => G.makeHeroUnit({ id, tier: id === hid || !opt.partnerTier ? tier : +opt.partnerTier, t2: opt.path != null && opt.path !== '' && id === hid ? +opt.path : null, items: id === hid && opt.items ? String(opt.items).split(',').map(x => ({ id: x, wins: 0 })) : id !== hid && opt.partnerItems ? String(opt.partnerItems).split(',').map(x => ({ id: x, wins: 0 })) : [], train: {}, pos: ps[id] }));
     const F = G.makeFight(enc, units, { headless: true }); while (!F.over) G.stepFight(F);
     const h = units[0]; a.n++; if (F.result === 'win') a.w++; if (!h.alive) a.dies++;
     { const tk = units.slice(1).some(o => o.def.cfg.benchJob === 'frontline') ? 'withTank' : 'solo'; const sp = a.split = a.split || {}; const q = sp[tk] = sp[tk] || { n: 0, w: 0, dies: 0, allyDies: 0 }; q.n++; if (F.result === 'win') q.w++; if (!h.alive) q.dies++; q.allyDies += units.slice(1).filter(o => !o.alive).length / 2; }

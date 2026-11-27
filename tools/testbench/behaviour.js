@@ -331,6 +331,91 @@ const KITS = {
   }),
 };
 
+
+// ---------------- batch 1 reworks (27 Nov, proposals): used when a hero's config has "kit2"; the old kit stays for the prototype2 preset ----------------
+// Action Surge (Fighter): take an extra weapon attack at the current target.
+function actionSurge(F, u) { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return; u.surges = (u.surges || 0) + 1; ev(F, { k: 'surge', u, t }); strike(F, u, t, {}); }
+const itemsHeld = u => u.itemCount || 0;
+const KITS2 = {
+  gilthrax: c => { const K = c.kit2; return {
+    ab: { cast(F, u, r) {
+      const A = c.ability; const s = spec(u, K.ward, r); let amt = rollDice(s.n + r.xd, s.x, r.crit) + s.flat;
+      amt += K.wardPerItem * itemsHeld(u) + K.wardPerRareItem * (u.rareCount || 0); // Gilded Hoard (passive)
+      addWard(F, u, u, amt, false);
+      const dur = byRoll(A.tauntAdjacentSeconds, r); if (dur > 0) for (const o of adjUnits(F, u, 'E')) applyControl(F, u, o, 'taunt', dur);
+    } },
+    onStart(F, u) { const GS = u.t2 === 1 && K.t2.gildedScales; if (GS) { u.ac += GS.acPerItem * itemsHeld(u); u.sr += GS.srPerItem * itemsHeld(u); } },
+    // Dragon's Hoard (passive): when his Ward breaks, he triggers Action Surge once for each item he holds.
+    onWardBreak(F, u) {
+      for (let i = 0; i < Math.min(K.maxSurgesPerBreak, itemsHeld(u) + (K.surgesBare || 0)); i++) actionSurge(F, u);
+      const DR = u.t2 === 0 && K.t2.dragonsRetort; if (!DR) { u.wardAbs = 0; return; }
+      const amt = Math.floor(u.wardAbs * (DR.shareOfAbsorbed + DR.sharePerItem * itemsHeld(u))); u.wardAbs = 0; if (amt <= 0) return;
+      for (const o of foesOf(F, u)) { const dx = o.x - u.x; if (dx >= 0 && dx <= 2 && Math.abs(o.y - u.y) <= Math.max(1, dx)) dealDamage(F, u, o, amt, 'magic', { area: true }); }
+    },
+  }; },
+  zoe: c => { const K = c.kit2; return {
+    ab: { cast(F, u, r) {
+      const QM = u.t2 === 1 && K.t2.quartermaster; const k = byRoll(c.ability.allies, r) + (QM ? QM.extraSupplies : 0); const used = new Set();
+      for (let i = 0; i < k; i++) rummage2(F, u, r, used, K, QM);
+      actionSurge(F, u); // Quartermaster's Drill (passive): each Rummage triggers Action Surge
+      const RK = u.t2 === 0 && K.t2.runeKnight; if (RK) { u.giantT = F.t + RK.seconds; const w = spec(u, RK.ward); addWard(F, u, u, rollDice(w.n, w.x, r.crit) + w.flat, false); }
+    } },
+    onStrike(F, u, t, dmg, crit) { const RK = u.t2 === 0 && K.t2.runeKnight; if (RK && u.giantT > F.t && t.alive) { const s = spec(u, RK.bonus); dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'phys', { crit }); } },
+  }; },
+  laurel: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => hasTarget(F, u),
+      cast(F, u, r) { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return; const s = spec(u, c.ability.damage, r); let dmg = abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); dmg += smite2(F, u, t, r.crit, K); const h = Math.floor(dmg * c.ability.healShareOfDamage); heal(F, u, u, h); for (const a of adjUnits(F, u, 'H')) heal(F, u, a, h); } },
+    onStrike(F, u, t, dmg, crit) {
+      let total = dmg; const W = u.t2 === 0 && K.t2.warden, B = u.t2 === 1 && K.t2.bruiser;
+      if (W && t.alive) { u.counters.sm = (u.counters.sm || 0) + 1; if (u.counters.sm % W.everyNthHit === 0) { total += smite2(F, u, t, crit, K); applyControl(F, u, t, 'root', W.restrainSeconds); } }
+      const h = Math.floor(total * K.hitHealShare); if (h > 0) { for (const a of adjUnits(F, u, 'H')) heal(F, u, a, h); if (B) heal(F, u, u, Math.floor(total * B.selfHealShare)); } // Ancients' Mercy (passive)
+    },
+    onStart(F, u) { const B = u.t2 === 1 && K.t2.bruiser; if (B) u.as += B.attackSpeed; },
+  }; },
+  pillar: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= K.quake.reach + (u.t2 === 1 && K.t2.avalanche ? K.t2.avalanche.extraReach : 0)),
+      cast(F, u, r) { const Q = K.quake; const reach = Q.reach + (u.t2 === 1 && K.t2.avalanche ? K.t2.avalanche.extraReach : 0); const s = spec(u, Q.damage, r); const st = byRoll(Q.stunSeconds, r); let n = 0;
+        for (const o of foesOf(F, u).filter(o => dist(o, u) <= reach)) { abHit(F, u, o, s.n, s.x, s.flat, 'phys', r, { area: true }); if (applyControl(F, u, o, 'stun', st)) n++; }
+        const UB = u.t2 === 0 && K.t2.unbreakable; if (UB && n) addWard(F, u, u, Math.floor(u.maxHp * UB.wardShareOfHpPerFoe * n), false); } },
+    // Maul: + a share of his max HP; hits every foe next to the target and Slows them. Rage: each time he's hit, +1 stack; each stack +1 Maul damage.
+    onStrike(F, u, t, dmg, crit) { const M = K.maul; const extra = Math.floor(u.maxHp * M.hpShare) + (u.rage2 || 0); if (t.alive && extra > 0) dealDamage(F, u, t, extra, 'phys', {}); if (t.alive) applyControl(F, u, t, 'slow', M.slowSeconds, M.slow);
+      for (const o of adjUnits(F, t, 'E')) { const s = rollDice(u.atk.n * u.tier, u.atk.x) + u.m('STR'); dealDamage(F, u, o, Math.floor((s + extra) * M.splashShare), 'phys', { area: true }); applyControl(F, u, o, 'slow', M.slowSeconds, M.slow); } },
+    onHitTaken(F, u) { const before = u.rage2 || 0; u.rage2 = Math.min(K.rage.maxStacks, before + 1); const UB = u.t2 === 0 && K.t2.unbreakable; if (UB && UB.acPerStack && u.rage2 > before) u.ac += UB.acPerStack; },
+  }; },
+  zark: c => { const K = c.kit2; return { dmgAb: true, lastStand: true,
+    ab: { can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= 1),
+      cast(F, u, r) { const s = spec(u, c.ability.damage, r); const WT = u.t2 === 1 && K.t2.wolfTotem; const xn = WT && WT.swingDicePerStack ? WT.swingDicePerStack * (u.rage2 || 0) : 0; for (const o of foesOf(F, u).filter(o => dist(o, u) <= 1)) abHit(F, u, o, s.n + xn, s.x, s.flat, 'phys', r, { area: true }); const sd = spec(u, c.ability.selfDamage); dealDamage(F, u, u, rollDice(sd.n, sd.x) + sd.flat, 'true', { self: true }); } },
+    // Rage: +1 stack for every rage.damagePerStack damage he takes (a share of his max HP); each stack regenerates HP each second; a stack fades every rage.fadeSeconds.
+    onHitTaken(F, u, src, raw) { const R = K.rage; u.rageDmg = (u.rageDmg || 0) + raw; const per = u.maxHp * R.hpSharePerStack; while (u.rageDmg >= per) { u.rageDmg -= per; u.rage2 = Math.min(R.maxStacks, (u.rage2 || 0) + 1); u.rageFade = F.t + R.fadeSeconds; } },
+    perSecond(F, u) { const R = K.rage; if (!(u.rage2 > 0)) return; if (F.t >= u.rageFade) { u.rage2--; u.rageFade = F.t + R.fadeSeconds; }
+      const BT = u.t2 === 0 && K.t2.bearTotem; const per = (R.regenPerStack + R.regenPerConMod * u.m('CON')) * u.tier * (BT ? BT.regenMultiplier : 1); heal(F, u, u, per * u.rage2);
+      const WT = u.t2 === 1 && K.t2.wolfTotem; if (WT) for (const a of adjUnits(F, u, 'H')) { a.st.haste = WT.allyAttackSpeedPerStack * u.rage2; a.st.hasteT = 1.1; } },
+  }; },
+  naill: c => { const K = c.kit2; return { dmgAb: true,
+    ab: { can: (F, u) => hasTarget(F, u) || (u.t2 === 1 && (u.ki2 || 0) >= K.ki.max && tfoes(F, u).length > 0),
+      cast(F, u, r) {
+        const T = K.t2; let t = acquire(F, u); const full = (u.ki2 || 0) >= K.ki.max;
+        if (u.t2 === 1 && T.stepOfTheWind && full) { const far = tfoes(F, u).sort((a, b) => b.x - a.x)[0]; const cl = far && freeCellNear(F, far.x, far.y, 'H', 1); if (cl && dist(cl, far) <= 1) { moveTo(F, u, cl.x, cl.y); t = far; u.target = far; } }
+        const k = byRoll(c.ability.strikes, r) + Math.floor((u.ki2 || 0) / K.ki.kiPerExtraStrike); const s = spec(u, c.ability.strike);
+        for (let i = 0; i < k; i++) { if (!t || !t.alive) t = acquire(F, u); if (!t || !canHit(F, u, t)) break; abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); if (i === k - 1 && u.t2 === 0 && T.stunningStrike && full) applyControl(F, u, t, 'stun', T.stunningStrike.stunSeconds); }
+      } },
+    // Ki: +1 on every hit, up to ki.max, never spent; each Ki point: attacks ki.attackSpeedPerKi faster.
+    onStrike(F, u) { const before = u.ki2 || 0; u.ki2 = Math.min(K.ki.max, before + 1); if (u.ki2 !== before) u.as += K.ki.attackSpeedPerKi; },
+  }; },
+};
+function rummage2(F, u, r, used, K, QM) {
+  const C = u.def.cfg.ability; const al = alliesOf(F, u).filter(a => !used.has(a)); if (!al.length) return;
+  let t, kind; const low = lowestPct(al);
+  if (low && pct(low) < C.potionBelowHp) { t = low; kind = 'potion'; }
+  else { const tank = al.slice().sort((a, b) => b.stat.taken - a.stat.taken)[0]; if (tank && tank.stat.taken > 0 && tank.ward < 5) { t = tank; kind = 'shield'; } else { t = al.slice().sort((a, b) => b.stat.dmg - a.stat.dmg)[0]; kind = 'whet'; } }
+  used.add(t); const extra = K.dicePerAllyItem * (t.itemCount || 0); const crit = r && r.crit; // supplies grow with the items the ally holds
+  if (kind === 'potion') { const s = spec(u, C.potion); heal(F, u, t, rollDice(s.n + extra, s.x, crit) + s.flat); }
+  else if (kind === 'shield') { const s = spec(u, C.spareShield); addWard(F, u, t, rollDice(s.n + extra, s.x, crit) + s.flat, false); }
+  else { const s = spec(u, C.whetstone); t.whet = C.whetstone.attacks; t.whetN = s.n + extra; }
+  if (QM) t.charge = Math.min(t.maxCharge, t.charge + QM.allyCharge);
+}
+function smite2(F, u, t, crit, K) { if (!t.alive) return 0; const s = spec(u, K.smite); u.smites = (u.smites || 0) + 1; return dealDamage(F, u, t, rollDice(s.n, s.x, crit) + s.flat, 'radiant', { crit }); }
+
 // ---------------- build HEROES from config + kits ----------------
 const STAT_KEYS = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 function atkFromCfg(a) {
@@ -349,7 +434,7 @@ function atkFromCfg(a) {
 const HEROES = {};
 for (const id in HC) {
   if (HC[id].enabled === false) continue; // switched off (e.g. Toot, 25 Nov)
-  const c = HC[id], k = KITS[id] ? KITS[id](c) : {};
+  const c = HC[id], k = c.kit2 && KITS2[id] ? KITS2[id](c) : KITS[id] ? KITS[id](c) : {};
   const def = Object.assign({
     id, cfg: c, name: c.name, anc: c.ancestry, cls: c.class, sub: c.subclass, role: c.role, pro: c.pronouns,
     job: c.job, stats: STAT_KEYS.map(s => c.stats[s]), key: c.key, ac: c.ac, sr: c.sr, evasion: c.evasion || 0, range: c.range,
