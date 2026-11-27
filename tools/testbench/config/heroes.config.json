@@ -179,18 +179,20 @@
       "sr": 12,
       "range": 1,
       "attack": { "name": "Longsword", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 1.6 },
+      "smite": { "name": "Divine Smite", "dice": "1d8", "perTier": true, "type": "radiant" },
       "ability": {
         "name": "Compelled Duel",
         "castTime": 0.2,
         "reach": 3,
         "tauntSeconds": { "low": 2, "mid": 3, "high": 4 },
         "ward": { "dice": "3d8", "perTier": true, "bonus": "CHA", "low": "2d8", "high": "4d8" },
-        "smite": null
+        "smite": null,
+        "nextAttackSmites": true
       },
       "t2": {
         "feature": "Smite",
-        "duelist": { "everyNthHit": 3, "smite": { "dice": "2d8", "perTier": true } },
-        "retribution": { "smite": { "dice": "1d8", "perTier": true } }
+        "duelist3": { "name": "Duelist", "_scaling": "Each foe he dueled that dies adds +1d8 to his Smite for the rest of the run (carried on the rec).", "dicePerKill": 1, "maxDice": 5 },
+        "retribution2": { "name": "Retribution", "anyTime": true }
       }
     },
     "lorcan": {
@@ -294,22 +296,23 @@
     "zark": {
       "name": "Zark",
       "ancestry": "Half-Orc",
+      "kit2": {"rage": {"hpSharePerStack": 0.15, "maxStacks": 5, "fadeSeconds": 4, "regenPerStack": 0.1, "regenPerConMod": 0.05}, "t2": {"bearTotem": {"regenMultiplier": 2}, "wolfTotem": {"allyAttackSpeedPerStack": 0, "swingDicePerStack": 1}}},
       "class": "Barbarian",
       "subclass": "Path of the Totem Warrior",
       "role": ["Damage", "Tank"],
-      "benchJob": "brawler",
+      "benchJob": "frontline",
       "size": "medium",
       "pronouns": "he/him",
       "job": "hit",
       "chargeToCast": 100,
       "lastStand": true,
       "abilityAdvantage": true,
-      "stats": { "STR": 16, "DEX": 12, "CON": 16, "INT": 8, "WIS": 10, "CHA": 10 },
+      "stats": { "STR": 12, "DEX": 12, "CON": 18, "INT": 8, "WIS": 10, "CHA": 10 },
       "key": "STR",
       "ac": 14,
       "sr": 11,
       "range": 1,
-      "attack": { "name": "Greataxe", "dice": "1d12", "bonus": "STR", "type": "physical", "interval": 2 },
+      "attack": { "name": "Greataxe", "dice": "1d10", "bonus": "STR", "type": "physical", "interval": 2 },
       "ability": {
         "name": "Reckless Swing",
         "castTime": 0.3,
@@ -327,6 +330,7 @@
     "naill": {
       "name": "Naill",
       "ancestry": "Wood Elf",
+      "kit2": {"ki": {"max": 5, "attackSpeedPerKi": 0.02, "kiPerExtraStrike": 5}, "t2": {"stunningStrike": {"stunSeconds": 1}, "stepOfTheWind": {"leap": true}}},
       "class": "Monk",
       "subclass": "Way of the Open Hand",
       "role": ["Damage"],
@@ -344,7 +348,7 @@
       "ability": {
         "name": "Flurry of Blows",
         "castTime": 0,
-        "strikes": { "low": 2, "mid": 3, "high": 4 },
+        "strikes": { "low": 1, "mid": 2, "high": 3 },
         "strike": { "dice": "1d8", "perTier": true, "bonus": "DEX" }
       },
       "t2": {
@@ -390,6 +394,7 @@
     "pillar": {
       "name": "Pillar",
       "ancestry": "Goliath",
+      "kit2": {"maul": {"hpShare": 0.01, "splashShare": 0.25, "slow": 0.25, "slowSeconds": 1.5}, "rage": {"maxStacks": 5}, "quake": {"reach": 1, "damage": {"dice": "8d6", "perTier": true}, "stunSeconds": {"low": 1, "mid": 1.5, "high": 2}}, "t2": {"unbreakable": {"wardShareOfHpPerFoe": 0.15, "acPerStack": 2}, "avalanche": {"extraReach": 2}}},
       "class": "Barbarian",
       "subclass": "Path of the Zealot",
       "role": ["Tank", "Damage"],
@@ -405,12 +410,12 @@
       "range": 1,
       "attack": {
         "name": "Maul of Faith",
-        "dice": "2d8",
+        "dice": "1d8",
         "perTier": true,
         "bonus": "STR",
         "type": "physical",
-        "interval": 2.4,
-        "speedScaling": 0.75,
+        "interval": 3,
+        "speedScaling": 0.5,
         "stunOnHit": 0.5
       },
       "ability": {
@@ -431,6 +436,7 @@
     "laurel": {
       "name": "Mother Laurel",
       "ancestry": "Wood Elf",
+      "kit2": {"smite": {"dice": "1d8", "perTier": true}, "hitHealShare": 0.33, "t2": {"warden": {"everyNthHit": 3, "restrainSeconds": 1.5}, "bruiser": {"selfHealShare": 0.5, "attackSpeed": 0.2}}},
       "class": "Paladin",
       "subclass": "Oath of the Ancients",
       "role": ["Tank"],
@@ -444,11 +450,11 @@
       "ac": 17,
       "sr": 13,
       "range": 1,
-      "attack": { "name": "Verdant Glaive", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 1.7 },
+      "attack": { "name": "Verdant Glaive", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 2.0 },
       "ability": {
         "name": "Verdant Strike",
         "castTime": 0.3,
-        "damage": { "dice": "2d8", "perTier": true, "bonus": "STR", "low": "-1", "high": "+1" },
+        "damage": { "dice": "1d8", "perTier": true, "bonus": "STR", "low": "-1", "high": "+1" },
         "healShareOfDamage": 1
       },
       "t2": {
@@ -526,6 +532,7 @@
     "zoe": {
       "name": "Zoe",
       "ancestry": "Human",
+      "kit2": {"dicePerAllyItem": 1, "t2": {"runeKnight": {"seconds": 4, "bonus": {"dice": "1d6", "perTier": true}, "ward": {"dice": "2d6", "perTier": true}}, "quartermaster": {"extraSupplies": 1, "allyCharge": 15}}},
       "class": "Fighter",
       "subclass": "Rune Knight",
       "role": ["Support"],
@@ -607,6 +614,7 @@
     "gilthrax": {
       "name": "Gilthrax",
       "ancestry": "Gold Dragonborn",
+      "kit2": {"ward": {"dice": "1d8", "perTier": true, "bonus": "CON", "low": "1d6", "high": "2d8"}, "wardPerItem": 5, "wardPerRareItem": 5, "maxSurgesPerBreak": 3, "surgesBare": 0, "t2": {"dragonsRetort": {"shareOfAbsorbed": 0.3, "sharePerItem": 0.15}, "gildedScales": {"acPerItem": 2, "srPerItem": 1}}},
       "class": "Fighter",
       "subclass": "Eldritch Knight",
       "role": ["Tank"],
