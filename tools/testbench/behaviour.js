@@ -104,8 +104,12 @@ const KITS = {
       const P = c.t2.preserveLife; if (u.t2 === 0 && !u.counters.pl) { const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * P.triggerBelowHp); if (lo) { u.counters.pl = 1; for (const a of alliesOf(F, u)) if (a.hp < a.maxHp * P.healsAlliesBelowHp) { const s = spec(u, P.heal); heal(F, u, a, rollDice(s.n, s.x) + s.flat); } } } },
   }),
   faelan: c => ({
-    ab: { cast(F, u, r) { const t = lowestPctFront(F, u); const s = spec(u, c.ability.ward, r); addWard(F, u, t, rollDice(s.n + r.xd, s.x, r.crit, u.empower) + s.flat, wardReplaces()); u.weaveLeft = c.t2.absorbsCounted; } },
-    onWardAbsorb(F, u, t) { if (u.t2 == null || !(u.weaveLeft > 0)) return; u.weaveLeft--; if (u.t2 === 0) u.charge = Math.min(u.maxCharge, u.charge + c.t2.spellWeave.chargeBackPerAbsorb); else t.charge = Math.min(t.maxCharge, t.charge + c.t2.sharedRecovery.allyChargePerAbsorb); },
+    ab: { cast(F, u, r) { const t = lowestPctFront(F, u); const s = spec(u, c.ability.ward, r); const amt = rollDice(s.n + r.xd, s.x, r.crit, u.empower) + s.flat; addWard(F, u, t, amt, wardReplaces()); u.weaveLeft = c.arcaneRecovery ? c.arcaneRecovery.maxPerShield : c.t2.absorbsCounted;
+      const PW = u.t2 === 0 && c.t2.projectedWard; if (PW) { const t2 = lowestPct(alliesOf(F, u).filter(a => a !== t)); if (t2) addWard(F, u, t2, Math.floor(amt * PW.share), false); } } },
+    // Arcane Recovery (base kit, 27 Nov proposal): gain charge; Spell Weave (passive) holds the trigger: each hit one of her Wards absorbs, up to maxPerShield per Shield.
+    onWardAbsorb(F, u, t) { const AR = c.arcaneRecovery;
+      if (AR) { if (!(u.weaveLeft > 0)) return; u.weaveLeft--; u.charge = Math.min(u.maxCharge, u.charge + AR.charge); u.arUses = (u.arUses || 0) + 1; const SR = u.t2 === 1 && c.t2.sharedRecovery2; if (SR) { let a = t; if (SR.target === 'topDamage') a = alliesOf(F, u).filter(o => o !== u && o.ab).sort((x, y) => y.stat.dmg - x.stat.dmg)[0]; else if (SR.target === 'mostCharged') a = alliesOf(F, u).filter(o => o !== u && o.ab).sort((x, y) => y.charge / y.maxCharge - x.charge / x.maxCharge)[0]; if (a && a !== u) a.charge = Math.min(a.maxCharge, a.charge + SR.allyCharge); } return; }
+      if (u.t2 == null || !(u.weaveLeft > 0)) return; u.weaveLeft--; if (u.t2 === 0) u.charge = Math.min(u.maxCharge, u.charge + c.t2.spellWeave.chargeBackPerAbsorb); else t.charge = Math.min(t.maxCharge, t.charge + c.t2.sharedRecovery.allyChargePerAbsorb); },
   }),
   wallaby: c => ({ dmgAb: true,
     ab: { can: (F, u) => tfoes(F, u).some(o => dist(o, u) <= c.ability.reach),
