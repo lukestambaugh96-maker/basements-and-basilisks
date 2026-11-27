@@ -4,8 +4,9 @@ Review card: "Arthur" on the B&B design review page. Nothing here is in `heroes.
 
 ## Proposed kit
 - **Longsword:** 1d8 + STR every 1.5s, +1d8 per tier (Luke's attack-growth rule).
-- **Alert (passive):** 25% Evasion.
-- **Action Surge, Riposte:** when an attack misses him (evaded or dodged), he makes an immediate Longsword attack at the attacker. 6s internal cooldown.
+- **Action Surge:** take an extra weapon attack (at his current target).
+- **Alert (passive):** 25% Evasion. When Arthur dodges an attack (Evasion or Alert Strike), he triggers Action Surge, at most once every 6s.
+- Card rule (Luke, 27 Nov): a class feature's line says only what it does; the trigger lives on the part of the kit that causes it.
 - **Alert Strike (Medium, 100 charge):** he dodges every attack for 0.75 / 1 / 1.25s (Low / Mid / High), then makes a crit strike of 1d8 per tier + STR, +1d8 for each attack he dodged (up to 3). A natural 20 adds +1 die.
 - **Stats:** AC 16 → 12, STR 16 → 14. Everything else unchanged.
 
@@ -37,7 +38,7 @@ node bench.js jobs arthur --n 150 --tier 2 --edits "rules.attackGrowth.extraDice
 ```
 
 ## Tier 2 paths (Luke picked these, 27 Nov; numbers proposed)
-- **Riposte Master (path A, damage):** Ripostes are critical hits; each Riposte adds +1d8 to his next Alert Strike (stores up to 3); Riposte cooldown 6s → 3s.
+- **Riposte Master (path A, damage):** his Action Surge attacks are critical hits; each adds +1d8 to his next Alert Strike (stores up to 3); Alert can trigger Action Surge every 3s (was 6s).
 - **Goading Strike (path B, tank):** when Alert Strike starts, every foe within 2 squares is taunted until 1s after the dodge ends, so they swing into it; Alert 25% → 35% Evasion.
 
 | Version | Win, regular | Win, Nezznar | Arthur dies | Allies die | Party HP lost |

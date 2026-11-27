@@ -74,8 +74,9 @@ const KITS = {
       if (u.st.dodge > 0 && u.dodgedBy) u.dodgedBy.add(src);
       const RM = c.t2.riposteMaster && u.t2 === 0 ? c.t2.riposteMaster : null; const cd = RM ? RM.riposteCooldown : R.cooldown;
       const inDodge = u.st.dodge > 0 && R.noCooldownWhileDodging;
-      if (!inDodge && F.t < (u.counters.rip || -99)) return; if (!canHit(F, u, src)) return; if (!inDodge) u.counters.rip = F.t + cd;
-      u.ripostes = (u.ripostes || 0) + 1; ev(F, { k: 'riposte', u, t: src }); strike(F, u, src, { crit: !!(RM && RM.riposteCrits) });
+      if (!inDodge && F.t < (u.counters.rip || -99)) return; let tg = acquire(F, u); if (!tg || !canHit(F, u, tg)) tg = canHit(F, u, src) ? src : null; if (!tg) return; if (!inDodge) u.counters.rip = F.t + cd;
+      // Action Surge (Luke, 27 Nov): take an extra weapon attack, at his current target. Alert holds the trigger: when he dodges an attack.
+      u.ripostes = (u.ripostes || 0) + 1; ev(F, { k: 'surge', u, t: tg }); strike(F, u, tg, { crit: !!(RM && RM.riposteCrits) });
       if (RM) u.storedDice = Math.min(RM.maxStoredDice, (u.storedDice || 0) + 1); }, // Riposte Master: each Riposte adds a die to the next Alert Strike
     onStart(F, u) {
       if (u.t2 === 0 && c.t2.readyFirst && !c.t2.riposteMaster) u.charge = Math.min(u.maxCharge, u.charge + c.t2.readyFirst.extraStartCharge);
