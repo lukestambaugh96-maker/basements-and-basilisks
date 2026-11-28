@@ -192,7 +192,7 @@
       "halfHp": { "name": "Darkness", "seconds": 6 },
       "ability": {
         "name": "Web",
-        "castSeconds": 7,
+        "castSeconds": 6,
         "castTime": 0.4,
         "heroes": 3,
         "restrainSeconds": { "low": 2, "mid": 2, "high": 3 },

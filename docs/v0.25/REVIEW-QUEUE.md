@@ -11,6 +11,7 @@ Add one entry per proposal. Luke rules: **Approved**, **Rejected**, or a note. N
 ## Ruled (27 Nov — session 2)
 | Item | Ruling |
 |---|---|
+| Act 1 shop rarity curve + Nezznar C tightening (Midpoint 1) | Locked in: Act 1 `rarityWeights` tightened (`90/10/0` → `75/25/0` → `55/40/5` → `40/50/10` → `30/50/20` → `25/50/25`), Nezznar Web `castSeconds: 7 → 6` (zero HP inflation). Nezznar A/B/C **84 / 79 / 38%** (balanced 95/86/48%), bots **0 / 53 / 60%**. Act 1 replay checks verified (`placement` 97% vs 38% Best/Worst, `castoff` all 22 heroes +10 to +42 pts, `luck` 11% coin flips / 4% upset / 4% rescue). |
 | Items rework (3-tier stat-based pool) | Locked in (`config/items.config.json`, `Uncommon 8g` ×12 / `Rare 15g` ×12 / `Epic 24g` ×7; class items on hold for Act 1; `Staff of Power` `+1d8` applies to any casted ability — damage, heal, Ward, Wild Shape). All 31 items positive; `bare` 0% / `sensible` 51% / `engine` 62%; `prototype2` 47.0% exact. |
 | Attack growth + Act 1 encounter buff | Locked in: `attackGrowth.extraDicePerTier = 1` (martials match ×1.5/×2/×2.5 EHP & DPS; Casters glass-cannon ×3.24 DPS); `enemyScale` `+12% AS / ×1.12 dmg / ×1.0 HP` + Nezznar Web `8d6+10` → bare 0% (F3), sensible 54%, engine 65%, Nezznar A/B/C 81/77/37% |
 | Batch 4 (Juniper, Kaska — Wild Shape) | Locked in (generalized no-timer bonus HP bar `enterWildShape`/`endForm`; Juniper Briar Form; Kaska Moon Beast + T2 `startInForm` Panther/Dire Bear). Completes all 22 active heroes. |
