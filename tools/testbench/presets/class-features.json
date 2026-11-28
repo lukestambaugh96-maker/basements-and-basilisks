@@ -1,0 +1,84 @@
+{
+  "_about": "Class feature consistency edits (tuned 27 Nov): unlimited Barbarian Rage + clean card math (Zark, Pillar) + Batch 2 (Favored Foe/Hunter's Mark, Pact/Hex, Sneak Attack force bypass). Use with --preset class-features.",
+  "edits": {
+    "heroes.zark.kit2.rage": {
+      "damagePerStack": 25,
+      "maxStacks": null,
+      "fadeSeconds": 3,
+      "fadeUnconditional": true,
+      "flatRegenPerStack": 1,
+      "regenInterval": 2,
+      "scaleRegenByTier": false
+    },
+    "heroes.zark.kit2.t2.wolfTotem": {
+      "allyAttackSpeedPerStack": 0,
+      "swingDicePerStack": 1,
+      "swingDie": 4
+    },
+    "heroes.pillar.attack.dice": "2d6",
+    "heroes.pillar.attack.perTier": false,
+    "heroes.pillar.attack.interval": 3,
+    "heroes.pillar.attack.speedScaling": 1,
+    "heroes.pillar.kit2.maul": {
+      "splashDice": { "dice": "1d4", "perTier": true },
+      "slow": 0.25,
+      "slowSeconds": 1.5
+    },
+    "heroes.pillar.kit2.rage": {
+      "maxStacks": null,
+      "everyNthHit": 2
+    },
+    "heroes.pillar.kit2.t2.unbreakable": {
+      "wardPerFoe": { "dice": "2d6", "perTier": true },
+      "wardPerStack": 3,
+      "flatAc": 3
+    },
+    "heroes.pillar.kit2.t2.avalanche": {
+      "extraReach": 1,
+      "bonusDiePerStack": 4
+    },
+    "heroes.lorcan.attack.dice": "1d6",
+    "heroes.lorcan.attack.interval": 1.15,
+    "heroes.lorcan.stats.DEX": 14,
+    "heroes.lorcan.kit2": {
+      "favoredFoe": { "dice": "1d4", "perTier": true },
+      "t2": {
+        "colossusSlayer": { "aboveHp": 0.5, "bonus": { "dice": "1d10", "perTier": true } },
+        "hordeBreaker": { "jumps": true, "cleaveAll": true }
+      }
+    },
+    "heroes.corvin.kit2": {
+      "favoredFoe": { "slow": 0.2, "slowSeconds": 1 },
+      "t2": {
+        "stalkersFlurry": { "everyNthAttack": 1 },
+        "firstStrike": { "allyCharge": 15, "chargeOnMarkedKill": 25 }
+      }
+    },
+    "heroes.corvin.ability.strike.dice": "1d10",
+    "heroes.velith.kit2": {
+      "sneakAttack": { "cooldown": 5, "bonus": { "dice": "1d4", "perTier": true }, "poison": 1 },
+      "t2": {
+        "assassin": { "executeBelowHp": 0.3 },
+        "poisoner": { "spreadPoison": 4 }
+      },
+      "daggerPoison": 1
+    },
+    "heroes.velith.attack.interval": 2.0,
+    "heroes.nettle.kit2": {
+      "hexBonus": { "dice": "1d4" },
+      "pactWard": { "dice": "2d8", "perTier": true, "bonus": "CHA" },
+      "t2": {
+        "hellfirePact": { "explosion": { "dice": "2d6", "perTier": true } },
+        "fiendsFavor": { "wardMultiplier": 2, "attackSpeed": 0.3, "seconds": 4 }
+      }
+    },
+    "heroes.nettle.ability.damage.dice": "3d6",
+    "heroes.lumen.kit2": {
+      "pact": { "cooldown": 3, "heal": { "dice": "2d6", "perTier": true } },
+      "t2": {
+        "searingLight": { "extraDicePerFoeHit": 2, "beamBonus": { "dice": "1d6" } },
+        "healingLight": { "cooldown": 2, "heal": { "dice": "2d8", "perTier": true }, "allies": 2 }
+      }
+    }
+  }
+}

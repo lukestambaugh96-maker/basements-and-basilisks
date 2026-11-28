@@ -156,6 +156,24 @@
     "rules.shop.ownedHeroWeight": 1,
     "rules.abilityScores.modifier": "floor",
     "bosses.venomfang.active": true,
-    "bosses.grol.active": true
+    "bosses.grol.active": true,
+    "heroes.lorcan.kit2": null,
+    "heroes.lorcan.stats.DEX": 16,
+    "heroes.lorcan.attack.dice": "1d8",
+    "heroes.lorcan.attack.interval": 1.5,
+    "heroes.lorcan.attack.speedScaling": 1.25,
+    "heroes.corvin.kit2": null,
+    "heroes.corvin.attack.speedScaling": 1.2,
+    "heroes.velith.kit2": null,
+    "heroes.velith.attack.speedScaling": 1.15,
+    "heroes.nettle.kit2": null,
+    "heroes.lumen.kit2": null,
+    "heroes.pillar.attack.perTier": true,
+    "heroes.zoe.attack.speedScaling": 0.9,
+    "heroes.toot.attack.speedScaling": 1.1,
+    "heroes.gilthrax.attack.speedScaling": 0.85,
+    "heroes.cinder.attack.speedScaling": 0.95,
+    "heroes.gains.attack.speedScaling": 1.05,
+    "heroes.saint.attack.speedScaling": 0.9
   }
 }

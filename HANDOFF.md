@@ -41,19 +41,19 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - `jobs` with `--n 250–300` takes 1–2 minutes per hero; run heroes in parallel.
 - Tier 2 parties win ~90% of single fights, so path lifts look tiny in `paths`; use `jobs --tier 2 --partnerTier 1` (or `gauntlet` for run-long scaling) to compare paths.
 
-## 3. Current state (after batch 1 + enemy buff, 27 Nov)
+## 3. Current state (after batch 2 + class-feature pass, 27 Nov)
 
-- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (dies at fight 3), sensible 64%, engine 75%.**
-- Boss check A / B / C: **82 / 81 / 42%** (target: A does well ~85, B clears fairly well ~75–80, **C struggles ~33** → C is high).
+- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (median fight 4), sensible 65%, engine 76%.**
+- Boss check A / B / C: **78 / 81 / 46%** (target: A does well ~85, B clears fairly well ~75–80, **C struggles ~33** → C is high; retune after Batches 3–4).
 - Prototype2 preset: 47.0% (reproduces).
-- PR #6 (branch `testbench-bots-and-replay-tests`) holds all of this; see section 9 for its merge status.
+- PR #6 (branch `testbench-bots-and-replay-tests`) was merged into `main` (commit `9477726`).
 
 ## 4. How Luke works (follow this)
 
 - Treat his numbers and ideas as **intent, not hard specs**; ask what experience he's after.
 - Run the math and tests yourself; propose **number edits**, test them, post one proposal per hero, Luke rules.
 - Give real design insight and disagree when the evidence says so. Don't just validate. Be concise; tables over prose.
-- **No hidden multipliers or invisible math in player-facing rules.** Players see dice and features they can read off a card. Internal measuring sticks (×1.5/×2/×2.5 tier curve) are for us only.
+- **No hidden multipliers or invisible math in player-facing rules.** Players see dice and features they can read off a card. Internal measuring sticks (×1.5/×2/×2.5 tier curve) are for us only. `speedScaling` stripped to `1.0` cast-wide; base attack speed (`interval`) should echo each hero's kit goals.
 - Luke's fun rules: real tension (a real chance to lose); winning anyway is a failure; the player is in control (predictable, explainable); build toward the payoff, don't wait for it (every buy pays a little now); shared verb + unique identity; the whole kit works together; every hit feels good; bounds are starting points, engines break them.
 - Enemies have the edge over a bare party. Threat from damage and actions, not HP pools (Luke allowed a small EHP option on 27 Nov, but damage/attack speed is preferred).
 - Ask at most one question per reply, and only if it's his decision.
@@ -71,18 +71,18 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - **Attack growth (decided, not switched on):** basic attacks +1 weapon die per tier; attacks and casts may grow at different rates. Switch: `rules.attackGrowth.extraDicePerTier` (0 now → 1 after the whole cast is reworked). Open: should damage grow on the HP curve or outgrow it?
 - **Enemy buff knobs:** `rules.enemyScale` {damage ×, attackSpeed +, hp ×}. Set to **+5% attack speed** (27 Nov).
 
-**Class features (Luke, 26–27 Nov)** — universal properties with interaction rules; not strong or weak by design; power comes from each hero's version; part of the kit and counted in the job benchmarks; effects scale with tier per character.
+**Class features (Luke, 26–27 Nov)** — universal properties with interaction rules; not strong or weak by design; power comes from each hero's version; part of the kit and counted in the job benchmarks; effects scale with tier per character (or via natural stat/HP growth).
 - **Card rule:** the feature's line says only what it does ("Action Surge: take an extra weapon attack"); the trigger is written on the kit part that causes it ("Alert: … when Arthur dodges an attack, he triggers Action Surge").
-- Fighter **Action Surge**: unique trigger; anything that "triggers Action Surge" is an extra trigger.
-- Rogue **Sneak Attack**: bonus attack on a condition, independent of attack speed, unique property, internal cooldown; "triggers Sneak Attack" skips the condition but keeps the cooldown.
+- Fighter **Action Surge**: unique trigger; anything that "triggers Action Surge" is an extra trigger (shared `actionSurge()` with loop guard).
+- Rogue **Sneak Attack**: bonus attack on a condition, independent of attack speed, unique property, internal cooldown; "triggers Sneak Attack" skips the condition but keeps the cooldown (`force` bypass).
 - Cleric **Channel Divinity**: one charge at fight start (nothing fires at start), max one; effects can trigger or restore it.
 - Paladin **Smite**: one definition per character (not a charge); anything that calls for a smite uses it.
 - Wizard **Arcane Recovery**: gain charge on a condition; Wizards are the best at recovering charge.
 - Sorcerer **Metamagic**: sorcery points fill to 4; a cast at 4 spends all for a modifier.
 - Monk **Ki**: earned per attack, has a maximum, **never spent**; monks ramp through a fight.
-- Ranger **Hunter's Mark**: attacks mark the foe; any attack on it triggers the marker's effect; marks from different sources stack (engine rule `setMark`/`applyMarks`).
-- Barbarian **Rage**: stacks from conditions (usually damage taken), unlimited, passive bonus; stacks alone must never make a hero invincible.
-- Warlock **Pact**: a character-specific "whenever X happens…" trigger; not spent or stacked; separate from casts.
+- Ranger **Favored Foe** (renamed 27 Nov): triggers off the pure-tag **`Hunter's Mark`** condition (`t.st.marked`, non-stacking, lasts until death, no hidden debuff); Rangers apply Hunter's Mark in their kit and cash in via Favored Foe.
+- Barbarian **Rage**: unlimited stacks from conditions (usually damage taken), passive bonus; stacks alone must never make a hero invincible.
+- Warlock **Pact**: triggers off the pure-tag **`Hex`** condition (`t.st.hexed`, non-stacking, lasts until death, no hidden debuff); not spent or stacked; separate from casts.
 - Bard **Bardic Inspiration**: a die given to allies; casts can use or read it.
 - Druid **Wild Shape**: a bonus health bar; when it's depleted the form ends; can transform abilities/stats.
 - Loops: outside triggers respect each feature's internal cooldown.
@@ -105,8 +105,8 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 | Faelan | Wizard | **Locked** (Arcane Recovery via Spell Weave; Projected Ward / Shared Recovery) | faelan-rework.md |
 | Wallaby | Rogue | **Locked** (Sneak Attack via Opportunist; Cutthroat / Pickpocket gold-only) | wallaby-rework.md |
 | Sir Dane | Paladin | **Locked** (Divine Smite; run-long Duelist / Retribution) | batch1-rework.md |
-| Gilthrax, Zoe, Laurel, Pillar, Zark, Naill | batch 1 | **Locked** | batch1-rework.md |
-| Lorcan, Corvin, Velith, Nettle, Lumen | batch 2 | **Proposed, waiting for Luke** (`--preset batch2`) | batch2-proposals.md |
+| Gilthrax, Zoe, Laurel, Pillar, Zark, Naill | batch 1 | **Locked** (Zark & Pillar Rage/Maul updated in class-feature pass) | batch1-rework.md, batch2-proposals.md |
+| Lorcan, Corvin, Velith, Nettle, Lumen | batch 2 | **Locked** (Favored Foe + Hunter's Mark tag, Pact + Hex tag, Sneak Attack force bypass) | batch2-proposals.md |
 | Cinder, Gains, Rosalind, Jamison, Saint | batch 3 | To do (Metamagic, Arcane Recovery, Bardic Inspiration, Channel Divinity ×2) | |
 | Juniper, Kaska | batch 4 | To do (Wild Shape: new health-bar mechanic) | |
 | Toot | Bard | Switched off until redesigned | |
@@ -117,13 +117,12 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 
 ## 7. Next steps, in order
 
-1. **Get Luke's rulings on batch 2** (see REVIEW-QUEUE.md), including the Lumen path-name question. Lock in what he approves.
-2. **Batch 3:** Cinder (Metamagic), Gains (Arcane Recovery), Rosalind (Bardic Inspiration), Jamison and Saint (Channel Divinity). Ask Luke for one-line directions first.
-3. **Batch 4:** Juniper and Kaska (Wild Shape). Needs a bonus health bar mechanic in the engine (`formHp` exists for the old tier 2 forms; generalize it).
-4. Turn on attack growth (`rules.attackGrowth.extraDicePerTier = 1`) and check the whole cast against the tier 2–4 benchmarks; settle whether damage may outgrow the HP curve.
-5. **Encounter numbers buff** to match the reworked cast (damage first): never-buy dies at fight 3; sensible survives with tension; engine pulls ahead; boss check C back to ~33%.
-6. Then the items rework (Uncommon / Rare / Epic, priced with the buff-test values in docs/v0.25/buff-test.md), then shop odds.
-7. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
+1. **Batch 3:** Cinder (Metamagic), Gains (Arcane Recovery), Rosalind (Bardic Inspiration), Jamison and Saint (Channel Divinity). Ask Luke for one-line directions first.
+2. **Batch 4:** Juniper and Kaska (Wild Shape). Needs a bonus health bar mechanic in the engine (`formHp` exists for the old tier 2 forms; generalize it).
+3. Turn on attack growth (`rules.attackGrowth.extraDicePerTier = 1`) and check the whole cast against the tier 2–4 benchmarks; settle whether damage may outgrow the HP curve.
+4. **Encounter numbers buff** to match the reworked cast (damage first): never-buy dies at fight 3; sensible survives with tension; engine pulls ahead; boss check C back to ~33%.
+5. Then the items rework (Uncommon / Rare / Epic, priced with the buff-test values in docs/v0.25/buff-test.md), then shop odds.
+6. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
 
 ## 8. Known open items
 

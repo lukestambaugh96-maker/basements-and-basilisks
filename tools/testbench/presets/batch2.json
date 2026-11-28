@@ -1,101 +1,48 @@
 {
- "_about": "Batch 2 rework proposals (27 Nov): Lorcan, Corvin, Velith, Nettle, Lumen. Use with --preset batch2.",
- "edits": {
-  "heroes.lorcan.kit2": {
-   "mark": {
-    "dice": "1d4",
-    "perTier": true
-   },
-   "t2": {
-    "colossusSlayer": {
-     "aboveHp": 0.5,
-     "bonus": {
-      "dice": "1d8",
-      "perTier": true
-     }
+  "_about": "Batch 2 rework proposals (tuned 27 Nov): Favored Foe + Hunter's Mark pure tag (Lorcan, Corvin), Sneak Attack force bypass (Velith), Pact + Hex pure tag (Nettle, Lumen). Use with --preset batch2.",
+  "edits": {
+    "heroes.lorcan.attack.dice": "1d6",
+    "heroes.lorcan.attack.interval": 1.15,
+    "heroes.lorcan.stats.DEX": 14,
+    "heroes.lorcan.kit2": {
+      "favoredFoe": { "dice": "1d4", "perTier": true },
+      "t2": {
+        "colossusSlayer": { "aboveHp": 0.5, "bonus": { "dice": "1d10", "perTier": true } },
+        "hordeBreaker": { "jumps": true, "cleaveAll": true }
+      }
     },
-    "hordeBreaker": {
-     "jumps": true
+    "heroes.corvin.kit2": {
+      "favoredFoe": { "slow": 0.2, "slowSeconds": 1 },
+      "t2": {
+        "stalkersFlurry": { "everyNthAttack": 1 },
+        "firstStrike": { "allyCharge": 15, "chargeOnMarkedKill": 25 }
+      }
+    },
+    "heroes.corvin.ability.strike.dice": "1d10",
+    "heroes.velith.kit2": {
+      "sneakAttack": { "cooldown": 5, "bonus": { "dice": "1d4", "perTier": true }, "poison": 1 },
+      "t2": {
+        "assassin": { "executeBelowHp": 0.3 },
+        "poisoner": { "spreadPoison": 4 }
+      },
+      "daggerPoison": 1
+    },
+    "heroes.velith.attack.interval": 2.0,
+    "heroes.nettle.kit2": {
+      "hexBonus": { "dice": "1d4" },
+      "pactWard": { "dice": "2d8", "perTier": true, "bonus": "CHA" },
+      "t2": {
+        "hellfirePact": { "explosion": { "dice": "2d6", "perTier": true } },
+        "fiendsFavor": { "wardMultiplier": 2, "attackSpeed": 0.3, "seconds": 4 }
+      }
+    },
+    "heroes.nettle.ability.damage.dice": "3d6",
+    "heroes.lumen.kit2": {
+      "pact": { "cooldown": 3, "heal": { "dice": "2d6", "perTier": true } },
+      "t2": {
+        "searingLight": { "extraDicePerFoeHit": 2, "beamBonus": { "dice": "1d6" } },
+        "healingLight": { "cooldown": 2, "heal": { "dice": "2d8", "perTier": true }, "allies": 2 }
+      }
     }
-   }
-  },
-  "heroes.corvin.kit2": {
-   "mark": {
-    "slow": 0.2,
-    "slowSeconds": 1
-   },
-   "t2": {
-    "stalkersFlurry": {
-     "everyNthAttack": 2
-    },
-    "firstStrike": {
-     "allyCharge": 15,
-     "chargeOnMarkedKill": 50
-    }
-   }
-  },
-  "heroes.corvin.ability.strike.dice": "1d10",
-  "heroes.velith.kit2": {
-   "sneakAttack": {
-    "cooldown": 4,
-    "bonus": {
-     "dice": "1d4",
-     "perTier": true
-    },
-    "poison": 1
-   },
-   "t2": {
-    "assassin": {
-     "executeBelowHp": 0.3
-    },
-    "poisoner": {
-     "spreadPoison": 4
-    }
-   },
-   "daggerPoison": 1
-  },
-  "heroes.nettle.kit2": {
-   "curseBonus": {
-    "dice": "1d6"
-   },
-   "pactWard": {
-    "dice": "2d8",
-    "perTier": true,
-    "bonus": "CHA"
-   },
-   "t2": {
-    "hellfirePact": {
-     "explosion": {
-      "dice": "2d6",
-      "perTier": true
-     }
-    },
-    "fiendsFavor": {
-     "wardMultiplier": 2,
-     "attackSpeed": 0.3,
-     "seconds": 4
-    }
-   }
-  },
-  "heroes.nettle.ability.damage.dice": "3d6",
-  "heroes.lumen.kit2": {
-   "pactHeal": {
-    "dice": "2d6",
-    "perTier": true
-   },
-   "t2": {
-    "radiantSoul": {
-     "extraDicePerFoeHit": 2,
-     "beamBonus": {
-      "dice": "1d6"
-     }
-    },
-    "healingLight": {
-     "multiplier": 3,
-     "beamHealShare": 0.5
-    }
-   }
-  },
-  "heroes.velith.attack.interval": 1.8
- }
+  }
 }

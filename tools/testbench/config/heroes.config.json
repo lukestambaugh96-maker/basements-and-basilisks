@@ -198,6 +198,7 @@
     "lorcan": {
       "name": "Lorcan",
       "ancestry": "Half-Elf",
+      "kit2": {"favoredFoe": {"dice": "1d4", "perTier": true}, "t2": {"colossusSlayer": {"aboveHp": 0.5, "bonus": {"dice": "1d10", "perTier": true}}, "hordeBreaker": {"jumps": true, "cleaveAll": true}}},
       "class": "Ranger",
       "subclass": "Hunter",
       "role": ["Damage"],
@@ -206,22 +207,21 @@
       "pronouns": "he/him",
       "job": "attack",
       "chargeToCast": 100,
-      "stats": { "STR": 10, "DEX": 16, "CON": 12, "INT": 10, "WIS": 14, "CHA": 10 },
+      "stats": { "STR": 10, "DEX": 14, "CON": 12, "INT": 10, "WIS": 14, "CHA": 10 },
       "key": "DEX",
       "ac": 14,
       "sr": 12,
       "range": 4,
       "attack": {
         "name": "Longbow",
-        "dice": "1d8",
+        "dice": "1d6",
         "bonus": "DEX",
         "type": "physical",
-        "interval": 1.5,
-        "speedScaling": 1.25
+        "interval": 1.15
       },
       "ability": { "name": "Twin Shot", "castTime": 0, "seconds": { "low": 2.5, "mid": 3, "high": 3.5 } },
       "t2": {
-        "feature": "Hunter's Mark",
+        "feature": "Favored Foe",
         "colossusSlayer": { "mark": { "dice": "1d8", "bonus": "WIS" } },
         "hordeBreaker": { "mark": { "dice": "1d6", "bonus": "WIS" } }
       }
@@ -296,7 +296,7 @@
     "zark": {
       "name": "Zark",
       "ancestry": "Half-Orc",
-      "kit2": {"rage": {"hpSharePerStack": 0.15, "maxStacks": 5, "fadeSeconds": 4, "regenPerStack": 0.1, "regenPerConMod": 0.05}, "t2": {"bearTotem": {"regenMultiplier": 2}, "wolfTotem": {"allyAttackSpeedPerStack": 0, "swingDicePerStack": 1}}},
+      "kit2": {"rage": {"damagePerStack": 25, "maxStacks": null, "fadeSeconds": 3, "fadeUnconditional": true, "flatRegenPerStack": 1, "regenInterval": 2, "scaleRegenByTier": false}, "t2": {"bearTotem": {"regenMultiplier": 2}, "wolfTotem": {"allyAttackSpeedPerStack": 0, "swingDicePerStack": 1, "swingDie": 4}}},
       "class": "Barbarian",
       "subclass": "Path of the Totem Warrior",
       "role": ["Damage", "Tank"],
@@ -362,6 +362,7 @@
     "nettle": {
       "name": "Nettle",
       "ancestry": "Halfling",
+      "kit2": {"hexBonus": {"dice": "1d4"}, "pactWard": {"dice": "2d8", "perTier": true, "bonus": "CHA"}, "t2": {"hellfirePact": {"explosion": {"dice": "2d6", "perTier": true}}, "fiendsFavor": {"wardMultiplier": 2, "attackSpeed": 0.3, "seconds": 4}}},
       "class": "Warlock",
       "subclass": "The Fiend",
       "role": ["Damage"],
@@ -379,13 +380,13 @@
       "ability": {
         "name": "Hellfire Curse",
         "castTime": 0.4,
-        "damage": { "dice": "2d6", "perTier": true, "bonus": "CHA" },
+        "damage": { "dice": "3d6", "perTier": true, "bonus": "CHA" },
         "type": "magic",
         "burnPerTier": { "low": 0, "mid": 2, "high": 2 },
         "burnHighBonus": 2
       },
       "t2": {
-        "feature": "Hex",
+        "feature": "Pact",
         "hexDie": "1d6",
         "darkOnesBlessing": { "ward": { "dice": "2d8", "perTier": true, "bonus": "CHA" } },
         "hellfirePact": { "explosion": { "dice": "2d6", "perTier": true } }
@@ -394,7 +395,7 @@
     "pillar": {
       "name": "Pillar",
       "ancestry": "Goliath",
-      "kit2": {"maul": {"hpShare": 0.01, "splashShare": 0.25, "slow": 0.25, "slowSeconds": 1.5}, "rage": {"maxStacks": 5}, "quake": {"reach": 1, "damage": {"dice": "8d6", "perTier": true}, "stunSeconds": {"low": 1, "mid": 1.5, "high": 2}}, "t2": {"unbreakable": {"wardShareOfHpPerFoe": 0.15, "acPerStack": 2}, "avalanche": {"extraReach": 2}}},
+      "kit2": {"maul": {"splashDice": {"dice": "1d4", "perTier": true}, "slow": 0.25, "slowSeconds": 1.5}, "rage": {"maxStacks": null, "everyNthHit": 2}, "quake": {"reach": 1, "damage": {"dice": "8d6", "perTier": true}, "stunSeconds": {"low": 1, "mid": 1.5, "high": 2}}, "t2": {"unbreakable": {"wardPerFoe": {"dice": "2d6", "perTier": true}, "wardPerStack": 3, "flatAc": 3}, "avalanche": {"extraReach": 1, "bonusDiePerStack": 4}}},
       "class": "Barbarian",
       "subclass": "Path of the Zealot",
       "role": ["Tank", "Damage"],
@@ -410,12 +411,10 @@
       "range": 1,
       "attack": {
         "name": "Maul of Faith",
-        "dice": "1d8",
-        "perTier": true,
+        "dice": "2d6",
         "bonus": "STR",
         "type": "physical",
         "interval": 3,
-        "speedScaling": 0.5,
         "stunOnHit": 0.5
       },
       "ability": {
@@ -468,6 +467,7 @@
     "lumen": {
       "name": "Lumen",
       "ancestry": "Aasimar",
+      "kit2": {"pact": {"cooldown": 3, "heal": {"dice": "2d6", "perTier": true}}, "t2": {"searingLight": {"extraDicePerFoeHit": 2, "beamBonus": {"dice": "1d6"}}, "healingLight": {"cooldown": 2, "heal": {"dice": "2d8", "perTier": true}, "allies": 2}}},
       "class": "Warlock",
       "subclass": "The Celestial",
       "role": ["Damage"],
@@ -489,7 +489,7 @@
         "type": "radiant"
       },
       "t2": {
-        "feature": "Hex",
+        "feature": "Pact",
         "hexDie": "1d6",
         "searingFocus": { "attackSpeedPerHexedKill": 0.1 },
         "healingLight": { "healShareOfDamage": 0.5 }
@@ -551,8 +551,7 @@
         "dice": "1d8",
         "bonus": "STR",
         "type": "physical",
-        "interval": 1.35,
-        "speedScaling": 0.9
+        "interval": 1.35
       },
       "ability": {
         "name": "Rummage",
@@ -594,7 +593,6 @@
         "perTier": true,
         "type": "magic",
         "interval": 1.6,
-        "speedScaling": 1.1,
         "pulse": true
       },
       "ability": {
@@ -633,8 +631,7 @@
         "dice": "1d10",
         "bonus": "STR",
         "type": "physical",
-        "interval": 1.75,
-        "speedScaling": 0.85
+        "interval": 1.75
       },
       "ability": {
         "name": "Arcane Shield",
@@ -652,6 +649,7 @@
     "velith": {
       "name": "Velith",
       "ancestry": "Drow",
+      "kit2": {"sneakAttack": {"cooldown": 5, "bonus": {"dice": "1d4", "perTier": true}, "poison": 1}, "t2": {"assassin": {"executeBelowHp": 0.3}, "poisoner": {"spreadPoison": 4}}, "daggerPoison": 1},
       "class": "Rogue",
       "subclass": "Assassin",
       "role": ["Damage"],
@@ -671,8 +669,7 @@
         "dice": "1d6",
         "bonus": "DEX",
         "type": "physical",
-        "interval": 1.5,
-        "speedScaling": 1.15
+        "interval": 2
       },
       "ability": {
         "name": "Cloak of Darkness",
@@ -707,7 +704,7 @@
       "ac": 12,
       "sr": 14,
       "range": 4,
-      "attack": { "name": "Fire Bolt", "dice": "1d6+1", "type": "magic", "interval": 1.8, "speedScaling": 0.95 },
+      "attack": { "name": "Fire Bolt", "dice": "1d6+1", "type": "magic", "interval": 1.8 },
       "ability": {
         "name": "Scorching Ray",
         "castTime": 0.5,
@@ -734,7 +731,7 @@
       "ac": 12,
       "sr": 14,
       "range": 4,
-      "attack": { "name": "Alchemical Bolt", "dice": "1d6+1", "type": "magic", "interval": 1.7, "speedScaling": 1.05 },
+      "attack": { "name": "Alchemical Bolt", "dice": "1d6+1", "type": "magic", "interval": 1.7 },
       "ability": {
         "name": "Gilded Beam",
         "castTime": 1,
@@ -751,6 +748,7 @@
     "corvin": {
       "name": "Corvin",
       "ancestry": "Human",
+      "kit2": {"favoredFoe": {"slow": 0.2, "slowSeconds": 1}, "t2": {"stalkersFlurry": {"everyNthAttack": 1}, "firstStrike": {"allyCharge": 15, "chargeOnMarkedKill": 25}}},
       "class": "Ranger",
       "subclass": "Gloom Stalker",
       "role": ["Damage"],
@@ -770,7 +768,6 @@
         "dice": "1d4",
         "type": "physical",
         "interval": 0.9,
-        "speedScaling": 1.2,
         "strikes": 1,
         "strikesVsMarked": 2
       },
@@ -778,12 +775,12 @@
         "name": "Dread Ambush",
         "castTime": 0,
         "strikes": { "low": 1, "mid": 2, "high": 3 },
-        "strike": { "dice": "2d8", "perTier": true, "bonus": "DEX" },
+        "strike": { "dice": "1d10", "perTier": true, "bonus": "DEX" },
         "marksTarget": true,
         "_note": "Corvin (25 Nov): Dread Ambush Marks its target; his twin swords strike twice only against that Marked target. He starts every fight fully charged."
       },
       "t2": {
-        "feature": "Hunter's Mark",
+        "feature": "Favored Foe",
         "mark": { "dice": "1d4" },
         "stalkersFlurry": { "everyNthAttack": 3 },
         "firstStrike": { "withinSeconds": 5, "allyCharge": 15 }
@@ -810,8 +807,7 @@
         "dice": "1d8",
         "woundedDice": "1d12",
         "type": "magic",
-        "interval": 1.85,
-        "speedScaling": 0.9
+        "interval": 1.85
       },
       "ability": {
         "name": "Mirror Blessing",

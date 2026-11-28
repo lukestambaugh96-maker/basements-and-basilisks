@@ -48,7 +48,7 @@ function addUnit(F, u) { u.F = F; u.fid = F.uidc++; F.units.push(u); return u; }
 function baseUnit() {
   return {
     alive: true, charge: 0, atkT: 0, moveT: 0, castT: 0, casting: false, lastCast: -9, target: null, pend: [], dotT: 0,
-    ward: 0, wardAbs: 0, st: { root: 0, stun: 0, stunImm: 0, taunt: 0, tauntSrc: null, stealth: 0, slow: 0, slowT: 0, burn: 0, burnT: 0, burnSrc: null, poison: 0, poisonSrc: null, invuln: 0, dodge: 0, dark: 0, inspired: 0, bond: 0, haste: 0, hasteT: 0 },
+    ward: 0, wardAbs: 0, st: { root: 0, stun: 0, stunImm: 0, taunt: 0, tauntSrc: null, stealth: 0, slow: 0, slowT: 0, burn: 0, burnT: 0, burnSrc: null, poison: 0, poisonSrc: null, invuln: 0, dodge: 0, dark: 0, inspired: 0, bond: 0, haste: 0, hasteT: 0, marked: false, hexed: false },
     stat: { dmg: 0, heal: 0, ward: 0, taken: 0, abDmg: 0 }, gk: new Set(), counters: {}, it: {}, onHitItems: [], lastHitBy: null,
   };
 }
@@ -224,7 +224,10 @@ function dealDamage(F, src, t, raw, type, o = {}) {
       } else if (t.side === 'H' && !t.summon && t.hp < t.maxHp / 2 && !t.counters.halfFired) fireHalf(F, t);
     }
   }
-  if (amt + absorbed > 0) ev(F, { k: 'hit', s: src, t, v: amt + absorbed });
+  if (amt + absorbed > 0) {
+    ev(F, { k: 'hit', s: src, t, v: amt + absorbed });
+    if (src && src.side === 'H' && t.side === 'E' && t.st.hexed && src.def.onHexedDamage) src.def.onHexedDamage(F, src, t, amt + absorbed, type, o);
+  }
   if (src && src !== t && t.alive === false && src.alive) onKill(F, src, t, type);
   return amt + absorbed;
 }
@@ -245,6 +248,8 @@ function die(F, t, src, type) {
     if (t.gilded) { F.gold++; fx(F, t, '+1g', '#ffd75e'); onGoldDrop(F); }
     for (const h of F.units) if (h.alive && h.hexT === t) { h.hexT = null; if (h.def.onHexDeath) h.def.onHexDeath(F, h, t); }
     for (const h of F.units) if (h.alive && h.markT === t) { h.markT = null; h.counters.markJump = true; }
+    if (t.st.hexed) for (const h of F.units) if (h.alive && h.side === 'H' && h.def.onHexedDeath) h.def.onHexedDeath(F, h, t);
+    if (t.st.marked) for (const h of F.units) if (h.alive && h.side === 'H' && h.def.onMarkedDeath) h.def.onMarkedDeath(F, h, t);
   }
   if (t.onGone) t.onGone(F, t, true);
 }
@@ -354,8 +359,8 @@ function hitRiders(F, u, t, crit, melee) {
   if (u.side !== 'H') return 0;
   if (u.hexT === t) extra += rollDice(1, 6, crit);
   if (u.markT === t) extra += rollDice(1, u.markDie || 6, crit) + (u.markFlat || 0);
-  if (u.gk.has('Hex') && !u.def.kwHex) { if (!u.hexT || !u.hexT.alive) { u.hexT = t; t.hexedBy = u; } }
-  if (u.gk.has("Hunter's Mark") && !u.def.kwMark) { if (!u.markT || !u.markT.alive) { u.markT = t; u.markDie = 6; } }
+  if ((u.gk.has('Hex') || u.gk.has('Pact')) && !u.def.kwHex) { if (!u.hexT || !u.hexT.alive) { u.hexT = t; t.hexedBy = u; } }
+  if ((u.gk.has("Hunter's Mark") || u.gk.has('Favored Foe')) && !u.def.kwMark) { if (!u.markT || !u.markT.alive) { u.markT = t; u.markDie = 6; } }
   if (u.it && u.it.hunters_quiver && u.target === t) extra += rollDice(1, 4, crit);
   if (melee && (u.gk.has('Smite') || (u.it && u.it.devotion_brand))) { u.counters.gsm = (u.counters.gsm || 0) + 1; if (u.counters.gsm % 3 === 0) { dealDamage(F, u, t, rollDice(2, 8, crit), 'radiant', { crit }); } }
   if ((u.gk.has('Sneak Attack') || (u.it && u.it.cutpurse_cloak)) && controlled(t) && !(u.counters.gsa > F.t)) { u.counters.gsa = F.t + 3; dealDamage(F, u, t, rollDice(2, 6, crit), 'phys', { crit }); }
@@ -490,6 +495,9 @@ function summonDouble(F, src, ally, life, hpShare = 0.2) {
 }
 // Copy each hero's run-long state (def.carryKeys) back to their rec after a fight.
 function carryBack(F) { for (const u of F.units) if (u.side === 'H' && !u.summon && u.rec && u.def.carryKeys) { u.rec.carry = u.rec.carry || {}; for (const k of u.def.carryKeys) u.rec.carry[k] = u[k] || 0; } }
-// Hunter's Mark (Ranger rule, 27 Nov): a mark is { src, bonus: {n,x,flat}, slow, slowSeconds }. Marks from different sources stack; one per source.
+// Pure tag conditions (Luke, 27 Nov): Hunter's Mark and Hex do not stack, last until death, and carry no hidden debuff.
+function applyHuntersMark(F, src, t) { if (!t || !t.alive) return; t.st.marked = true; }
+function applyHex(F, src, t) { if (!t || !t.alive) return; t.st.hexed = true; }
+// Legacy multi-source mark helpers (kept unused if needed for older references)
 function setMark(F, src, t, m) { if (!t || !t.alive) return; for (const o of F.units) if (o.marks) o.marks = o.marks.filter(k => k.src !== src); t.marks = (t.marks || []).concat([Object.assign({ src }, m)]); src.markOn = t; }
 function applyMarks(F, u, t, crit) { for (const m of t.marks.slice()) { if (!m.src.alive || !t.alive) continue; if (m.bonus) dealDamage(F, m.src, t, rollDice(m.bonus.n, m.bonus.x, crit) + (m.bonus.flat || 0), m.type || 'phys', { mark: true }); if (m.slow) applyControl(F, m.src, t, 'slow', m.slowSeconds || 1, m.slow); if (m.onHit) m.onHit(F, m, u, t); } }

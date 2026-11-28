@@ -61,8 +61,8 @@ const ITEM_LIST = [
 const ITEMS = {}; for (const it of ITEM_LIST) { it.price = RARITY_PRICE[it.rar]; ITEMS[it.id] = it; }
 ITEMS.cudgel.onHit = null;
 
-const KW_LIST = ['Action Surge', 'Channel Divinity', 'Arcane Recovery', 'Sneak Attack', 'Smite', "Hunter's Mark", 'Bardic Inspiration', 'Rage', 'Ki', 'Hex', 'Metamagic'];
-const CLASS_KW = { Fighter: 'Action Surge', Cleric: 'Channel Divinity', Wizard: 'Arcane Recovery', Rogue: 'Sneak Attack', Paladin: 'Smite', Ranger: "Hunter's Mark", Druid: 'Wild Shape', Bard: 'Bardic Inspiration', Barbarian: 'Rage', Monk: 'Ki', Warlock: 'Hex', Sorcerer: 'Metamagic' };
+const KW_LIST = ['Action Surge', 'Channel Divinity', 'Arcane Recovery', 'Sneak Attack', 'Smite', 'Favored Foe', 'Bardic Inspiration', 'Rage', 'Ki', 'Pact', 'Metamagic'];
+const CLASS_KW = { Fighter: 'Action Surge', Cleric: 'Channel Divinity', Wizard: 'Arcane Recovery', Rogue: 'Sneak Attack', Paladin: 'Smite', Ranger: 'Favored Foe', Druid: 'Wild Shape', Bard: 'Bardic Inspiration', Barbarian: 'Rage', Monk: 'Ki', Warlock: 'Pact', Sorcerer: 'Metamagic' };
 
 // ===================== Economy and run =====================
 const ECON = { start: 10, heroCost: [15, 25, 35, 45], win: 20, boss: 75, interestPer: 5, interestCap: 20, sellBack: 0.66, saleOff: 0.25, saleChance: 0.15, piggyPerWin: 5, purse: 15, boardMax: 3, benchMax: 2, slot4: 55, slots: 2 };
