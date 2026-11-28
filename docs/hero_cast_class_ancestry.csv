@@ -1,0 +1,25 @@
+name,status,class,subclass,ancestry,ancestry_group,role,range,key_stat,charge_job,ac,sr,STR,DEX,CON,INT,WIS,CHA
+Pillar,Active,Barbarian,Path of the Zealot,Goliath,Goliath,brawler,1,STR,attack,15,11,18,8,16,8,10,10
+Zark,Active,Barbarian,Path of the Totem Warrior,Half-Orc,Half-Orc,frontline,1,STR,hit,14,11,12,12,18,8,10,10
+Rosalind,Active,Bard,College of Lore,Human,Human,support,3,CHA,time,13,14,8,12,12,12,10,16
+Toot,Disabled,Bard,College of Creation,Plasmoid,Plasmoid,support,1,CHA,time,13,14,10,10,14,10,10,16
+Bram,Active,Cleric,Life Domain,Dwarf,Dwarf,frontline,1,WIS,hit,17,13,14,10,16,10,15,10
+Saint,Active,Cleric,Trickery Domain,Half-Elf,Half-Elf,support,4,WIS,time,13,14,8,12,12,10,16,12
+Brother Jamison,Active,Cleric,Peace Domain,Human,Human,support,1,CHA,time,15,14,12,10,14,10,14,15
+Juniper,Active,Druid,Circle of the Land,Forest Gnome,Forest Gnome,frontline,1,WIS,hit,13,14,12,12,15,12,15,10
+Kaska,Active,Druid,Circle of the Moon,Half-Orc,Half-Orc,brawler,1,STR,attack,14,12,15,12,14,10,13,10
+Gilthrax,Active,Fighter,Eldritch Knight,Gold Dragonborn,Dragonborn,frontline,1,CON,hit,17,13,16,10,16,12,10,10
+Arthur,Active,Fighter,Battle Master,Human,Human,brawler,1,STR,attack,12,11,14,12,14,10,10,10
+Zoe,Active,Fighter,Rune Knight,Human,Human,support,1,INT,time,16,12,15,10,14,13,10,10
+Naill,Active,Monk,Way of the Open Hand,Wood Elf,Elf,attacker,1,DEX,attack,15,13,10,16,12,10,14,10
+Sir Dane,Active,Paladin,Oath of Devotion,Human,Human,frontline,1,CHA,hit,18,12,16,10,15,10,10,14
+Mother Laurel,Active,Paladin,Oath of the Ancients,Wood Elf,Elf,frontline,1,STR,hit,17,13,15,10,15,10,12,13
+Lorcan,Active,Ranger,Hunter,Half-Elf,Half-Elf,attacker,4,DEX,attack,14,12,10,14,12,10,14,10
+Corvin,Active,Ranger,Gloom Stalker,Human,Human,attacker,1,DEX,attack,14,12,12,16,12,10,12,10
+Velith,Active,Rogue,Assassin,Drow,Elf,attacker,1,DEX,attack,14,13,10,16,12,10,12,12
+Wallaby,Active,Rogue,Thief,Halfling,Halfling,attacker,2,DEX,attack,14,12,10,16,12,12,10,12
+Cinder,Active,Sorcerer,Draconic Bloodline,Tiefling,Tiefling,caster,4,CHA,time,12,14,8,12,12,10,10,16
+Lumen,Active,Warlock,The Celestial,Aasimar,Aasimar,attacker,3,CHA,attack,13,14,8,12,12,10,12,16
+Nettle,Active,Warlock,The Fiend,Halfling,Halfling,attacker,3,CHA,attack,13,13,8,14,12,10,10,16
+Faelan,Active,Wizard,Abjuration,Elf,Elf,support,3,INT,time,12,15,8,14,12,16,12,10
+Gains,Active,Wizard,Transmutation,Tiefling,Tiefling,caster,4,INT,time,12,14,8,12,12,16,10,10
