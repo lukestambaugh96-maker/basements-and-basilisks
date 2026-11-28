@@ -15,6 +15,68 @@
   const fmtMod = m => (m >= 0 ? '+' : '') + (Number.isInteger(m) ? m : m.toFixed(1));
   const portraitSrc = id => (window.PORTRAITS && (window.PORTRAITS[id] || window.PORTRAITS[id === 'laurel' ? 'mother_laurel' : ''])) || '';
 
+  // Keyword auto-annotation for inline hover tooltips
+  const KW_KEYS = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
+  const KW_REGEX = new RegExp(`\\b(${KW_KEYS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'g');
+  function annotateKw(text) {
+    return esc(text).replace(KW_REGEX, m => `<span class="kw" data-tip-kw="${esc(m)}">${m}</span>`);
+  }
+  function tipAttr(title, body) {
+    return `data-tip-title="${esc(title)}" data-tip-body="${esc(body)}"`;
+  }
+  const STAT_ROLE = {
+    STR: 'Adds to Strength weapon damage and physical armor penetration.',
+    DEX: 'Adds to Dexterity weapon damage and Rogue/Ranger abilities.',
+    CON: 'Adds +8 HP per tier for every +1 modifier (applied retroactively).',
+    INT: 'Boosts caster time-charge speed by +10% per +1 modifier and powers Wizard abilities.',
+    WIS: 'Powers Cleric, Druid, and Monk abilities and healing.',
+    CHA: 'Grants +10 starting charge per +1 modifier (max +50) and powers Sorcerer, Bard, Warlock, and Paladin abilities.',
+  };
+
+  // Global floating custom tooltip
+  let tipEl = null;
+  function ensureTip() {
+    if (!tipEl) {
+      tipEl = el('div', 'custom-tip');
+      tipEl.id = 'customTip';
+      tipEl.hidden = true;
+      document.body.appendChild(tipEl);
+    }
+    return tipEl;
+  }
+  function positionTip(x, y) {
+    const t = ensureTip();
+    const pad = 14;
+    const rect = t.getBoundingClientRect();
+    let left = x + pad;
+    let top = y + pad;
+    if (left + rect.width > window.innerWidth - 10) left = Math.max(10, x - rect.width - pad);
+    if (top + rect.height > window.innerHeight - 10) top = Math.max(10, y - rect.height - pad);
+    t.style.left = left + 'px';
+    t.style.top = top + 'px';
+  }
+  document.addEventListener('pointerover', e => {
+    const hit = e.target && e.target.closest ? e.target.closest('[data-tip-kw],[data-tip-title]') : null;
+    if (!hit) return;
+    const kw = hit.getAttribute('data-tip-kw');
+    const title = kw || hit.getAttribute('data-tip-title');
+    const body = kw ? GLOSSARY[kw] : hit.getAttribute('data-tip-body');
+    if (!title || !body) return;
+    const t = ensureTip();
+    t.innerHTML = `<div class="custom-tip-title">${esc(title)}</div><div class="custom-tip-body">${esc(body)}</div>`;
+    t.hidden = false;
+    positionTip(e.clientX, e.clientY);
+  });
+  document.addEventListener('pointermove', e => {
+    if (tipEl && !tipEl.hidden) positionTip(e.clientX, e.clientY);
+  });
+  document.addEventListener('pointerout', e => {
+    const hit = e.target && e.target.closest ? e.target.closest('[data-tip-kw],[data-tip-title]') : null;
+    if (!hit) return;
+    const rel = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('[data-tip-kw],[data-tip-title]') : null;
+    if (rel !== hit && tipEl) tipEl.hidden = true;
+  });
+
   // Preload Image objects for crisp Canvas portrait tokens
   const IMG_CACHE = {};
   if (window.PORTRAITS) {
@@ -245,15 +307,29 @@
     const rec = opts.rec || { uid: 0, id, tier: 1, items: [], t2: null, mc: null, train: {} };
     const st = previewStats(rec);
     const clsColor = CLASS_COLORS[def.cls] || '#555';
+    const hd = HIT_DIE[def.cls] || 8;
     const scoresHtml = STATS.map(k => {
       const val = st.stats[k];
       const m = mod(val);
-      return `<span class="${k === def.key ? 'key' : ''}">${k}<b>${val}</b>(${fmtMod(m)})</span>`;
+      const isKey = k === def.key;
+      const body = `${STAT_NAME[k]} ${val} (Modifier ${fmtMod(m)}). ${isKey ? 'Key stat for this hero’s d20 ability rolls. ' : ''}${STAT_ROLE[k]} Half-point modifiers round up or down at random.`;
+      return `<span class="${isKey ? 'key' : ''}" ${tipAttr(`${STAT_NAME[k]} (${k})`, body)}>${k}<b>${val}</b>(${fmtMod(m)})</span>`;
     }).join('');
-    const pathInfo = rec.tier >= 2 && rec.t2 != null && card.paths && card.paths[rec.t2]
-      ? `<div class="hc-path-tag">Path: ${esc(card.paths[rec.t2].name)}</div>` : '';
-    const mcTag = rec.mc ? `<span class="hc-path-tag" style="background:rgba(44,98,156,0.14);color:#1d4e85;">✦ ${esc(rec.mc)}</span>` : '';
-    const evaStr = st.eva > 0 ? ` · ${Math.round(st.eva * 100)}% Eva` : '';
+    const pathObj = rec.tier >= 2 && rec.t2 != null && card.paths && card.paths[rec.t2] ? card.paths[rec.t2] : null;
+    const pathInfo = pathObj
+      ? `<div class="hc-path-tag" ${tipAttr(`Path: ${pathObj.name}`, pathObj.text)}>Path: ${esc(pathObj.name)}</div>` : '';
+    const mcDesc = rec.mc ? (MULTICLASS_INFO[rec.mc] || '') : '';
+    const mcBox = rec.mc
+      ? `<div class="mc-box"><b>✦ Multiclass — ${esc(rec.mc)}:</b> ${annotateKw(mcDesc)}</div>` : '';
+    const evaChip = st.eva > 0
+      ? ` · <span class="kw" data-tip-kw="Evasion">${Math.round(st.eva * 100)}% Eva</span>` : '';
+    const hpTip = tipAttr(`Health: ${st.hp} HP`, `Base ${BASE_HP} + ${RULES.hp.hitDiceAtTier * rec.tier}d${hd} class Hit Dice + CON modifier (${fmtMod(mod(st.stats.CON))}) × ${RULES.hp.hitDiceAtTier * rec.tier}${rec.items.length ? ' + item HP' : ''}.`);
+    const acTip = tipAttr(`Armor Class: ${st.ac} (${resistPct(st.ac)}%)`, `Reduces incoming physical damage by ${resistPct(st.ac)}% using AC / (AC + ${RESIST_K}). Radiant damage ignores AC.`);
+    const srTip = tipAttr(`Spell Resistance: ${st.sr} (${resistPct(st.sr)}%)`, `Reduces incoming magic damage and enemy control durations by ${resistPct(st.sr)}% using SR / (SR + ${RESIST_K}). Radiant damage ignores SR.`);
+    const atkName = (def.atk && def.atk.name) || 'Basic Attack';
+    const atkTip = tipAttr(`${atkName} (${st.type})`, `Deals ${st.atkDice}${st.flat ? fmtMod(st.flat) : ''} ${st.type} damage every ${st.iv.toFixed(2)}s. Gains +1 weapon die per tier.`);
+    const chgTip = tipAttr(`Ability Charge: ${st.maxCharge}`, `Starts fight with ${st.sc} charge (${def.job === 'hit' ? 'gains charge when hit' : def.job === 'attack' ? 'gains charge on basic attacks' : 'gains charge over time, faster with INT'}). Casts roll d20 + ${def.key} mod.`);
+    const rngTip = tipAttr(`Attack Range: ${st.range}`, `Can target enemies up to ${st.range} square${st.range > 1 ? 's' : ''} away${st.range > 1 ? ' (requires line of sight)' : ' (melee)'}.`);
 
     return `
       <div class="hc-top">
@@ -266,26 +342,27 @@
           <div class="hc-meta">
             <span class="cls-tag" style="background:${clsColor}">${esc(def.cls)}</span>
             <span class="job-tag">${esc(def.cfg.benchJob || '')}</span>
-            <span>Range ${st.range}${evaStr}</span>
+            <span ${rngTip}>Range ${st.range}</span>${evaChip}
           </div>
         </div>
       </div>
       <div class="hc-stats">
-        <div class="stat-cell"><b>${st.hp}</b><span>HP</span></div>
-        <div class="stat-cell" title="${resistPct(st.ac)}% physical reduction"><b>${st.ac}</b><span>AC (${resistPct(st.ac)}%)</span></div>
-        <div class="stat-cell" title="${resistPct(st.sr)}% magic reduction"><b>${st.sr}</b><span>SR (${resistPct(st.sr)}%)</span></div>
-        <div class="stat-cell"><b>${st.atkDice}${st.flat ? fmtMod(st.flat) : ''}</b><span>${st.iv.toFixed(2)}s</span></div>
+        <div class="stat-cell" ${hpTip}><b>${st.hp}</b><span>HP</span></div>
+        <div class="stat-cell" ${acTip}><b>${st.ac}</b><span>AC (${resistPct(st.ac)}%)</span></div>
+        <div class="stat-cell" ${srTip}><b>${st.sr}</b><span>SR (${resistPct(st.sr)}%)</span></div>
+        <div class="stat-cell" ${atkTip}><b>${st.atkDice}${st.flat ? fmtMod(st.flat) : ''}</b><span>${st.iv.toFixed(2)}s</span></div>
       </div>
       <div class="hc-scores">${scoresHtml}</div>
-      <div class="hc-box"><b>${esc(card.abilityName || 'Ability')}</b> (${st.maxCharge} chg): ${esc(card.ability || '')}</div>
-      <div class="hc-feat">${esc(card.feature || '')}</div>
-      ${pathInfo || mcTag ? `<div class="row">${pathInfo}${mcTag}</div>` : ''}
-      ${opts.compact ? '' : `<div class="small muted">${esc(card.passive || '')}</div>`}
+      <div class="hc-box"><b ${chgTip}>${esc(card.abilityName || 'Ability')} (${st.maxCharge} chg):</b> ${annotateKw(card.ability || '')}</div>
+      <div class="hc-feat">${annotateKw(card.feature || '')}</div>
+      ${pathInfo ? `<div class="row">${pathInfo}</div>` : ''}
+      ${mcBox}
     `;
   }
 
   // ---------------- Render Screens ----------------
   function render() {
+    if (tipEl) tipEl.hidden = true;
     const app = $('#app');
     app.innerHTML = '';
 
@@ -334,6 +411,8 @@
     const interest = Math.floor(Math.min(run.gold, ECON.interestCap) / ECON.interestPer);
     const piggyCls = run.piggy.broken ? 'pill broken' : 'pill piggy';
     const piggyTxt = run.piggy.broken ? 'Piggy Broken' : `Piggy: ${run.piggy.amt}g (Free Loss)`;
+    const goldTip = tipAttr(`Gold & Interest (+${interest}g)`, `After winning a fight, earn +1g interest for every ${ECON.interestPer}g you hold (counts up to ${ECON.interestCap}g for max +${ECON.interestCap / ECON.interestPer}g).`);
+    const piggyTip = tipAttr('Piggy Bank (Safety Net)', run.piggy.broken ? 'Already broken! Your next defeat ends the run (can be mended at the Campfire).' : `Grows by +${ECON.piggyPerWin}g each win. On your first defeat, it breaks, pays out ${run.piggy.amt}g, and lets you shop and retry the fight.`);
 
     bar.innerHTML = `
       <div class="top-brand">
@@ -342,8 +421,8 @@
       </div>
       <div class="top-pills">
         <span class="pill">Fight ${fightNum}/6: ${esc(enc ? enc.name : 'Complete')}</span>
-        <span class="pill gold">Gold: ${run.gold}g (+${interest}g int)</span>
-        <span class="${piggyCls}">${piggyTxt}</span>
+        <span class="pill gold" ${goldTip}>Gold: ${run.gold}g (+${interest}g int)</span>
+        <span class="${piggyCls}" ${piggyTip}>${piggyTxt}</span>
         ${run.bargainElite ? '<span class="pill elite">Bargain: +1 Elite (2x Gold)</span>' : ''}
         <button class="btn sm" id="btnTopRules">Rules</button>
         <button class="btn sm" id="btnTopRestart">New Run</button>
@@ -464,7 +543,7 @@
             ${o.sale && !o.sold ? '<span class="sale-badge">SALE -25%</span>' : ''}
           </div>
           <div class="serif mt-8" style="font-size:15px;font-weight:700;">${esc(it.name)}</div>
-          <div class="small muted mt-8">${esc(it.text)}</div>
+          <div class="small muted mt-8">${annotateKw(it.text)}</div>
         </div>
         <button class="btn primary sm mt-8" data-buy ${canBuy ? '' : 'disabled'}>${o.sold ? 'Sold' : `Buy ${price}g`}</button>
       `;
@@ -499,8 +578,9 @@
       run.stash.forEach((ir, idx) => {
         const it = ITEMS[ir.id];
         const chip = el('div', `stash-chip${S.selectedStashIdx === idx ? ' selected' : ''}`);
-        chip.title = it.text;
-        chip.innerHTML = `<span class="rar-pill rar-${esc(it.rar)}">${esc(it.rar[0])}</span> <span>${esc(it.name)}</span> <button class="btn sm vellum-btn" style="padding:1px 5px;" data-sell title="Sell for ${Math.max(1, Math.floor((ir.paid || it.price) * ECON.sellBack))}g">&times;</button>`;
+        chip.setAttribute('data-tip-title', `${it.name} (${it.rar})`);
+        chip.setAttribute('data-tip-body', `${it.text} Click to select, then click a hero to equip.`);
+        chip.innerHTML = `<span class="rar-pill rar-${esc(it.rar)}">${esc(it.rar[0])}</span> <span>${esc(it.name)}</span> <button class="btn sm vellum-btn" style="padding:1px 5px;" data-sell ${tipAttr('Sell Item', `Sell for +${Math.max(1, Math.floor((ir.paid || it.price) * ECON.sellBack))}g (66% refund).`)}>&times;</button>`;
         chip.onclick = e => {
           if (e.target.closest('[data-sell]')) return;
           S.selectedStashIdx = S.selectedStashIdx === idx ? -1 : idx;
@@ -519,7 +599,7 @@
       const card = HERO_CARDS[rec.id] || {};
       const canEquipHere = S.selectedStashIdx >= 0 && rec.items.length < ECON.slots;
       const rc = el('div', `roster-card${rec.pos ? '' : ' bench'}${canEquipHere ? ' equip-target' : ''}`);
-      const pathTxt = rec.tier >= 2 && rec.t2 != null && card.paths ? card.paths[rec.t2].name : '';
+      const pathObj = rec.tier >= 2 && rec.t2 != null && card.paths ? card.paths[rec.t2] : null;
 
       rc.innerHTML = `
         <div class="hc-top">
@@ -530,8 +610,8 @@
           <div class="hc-title">
             <div class="hc-name" style="font-size:14.5px;">${esc(def.name)}</div>
             <div class="small muted">${rec.pos ? `Board (${rec.pos.x + 1},${rec.pos.y + 1})` : 'Bench'} · ${st.hp} HP · AC ${st.ac} · SR ${st.sr}</div>
-            ${pathTxt ? `<div class="hc-path-tag">${esc(pathTxt)}</div>` : ''}
-            ${rec.mc ? `<div class="hc-path-tag" style="background:rgba(44,98,156,0.14);color:#1d4e85;">✦ ${esc(rec.mc)}</div>` : ''}
+            ${pathObj ? `<div class="hc-path-tag" ${tipAttr(`Path: ${pathObj.name}`, pathObj.text)}>${esc(pathObj.name)}</div>` : ''}
+            ${rec.mc ? `<div class="hc-path-tag" style="background:rgba(44,98,156,0.14);color:#1d4e85;" ${tipAttr(`Multiclass: ${rec.mc}`, MULTICLASS_INFO[rec.mc] || '')}>✦ ${esc(rec.mc)}</div>` : ''}
           </div>
         </div>
         <div class="item-slots" id="slots_${rec.uid}"></div>
@@ -539,7 +619,7 @@
           <button class="btn vellum-btn sm" data-insp>Card</button>
           <div class="row" style="gap:4px;">
             <button class="btn vellum-btn sm" data-move>${rec.pos ? 'Bench' : 'Board'}</button>
-            <button class="btn vellum-btn sm" data-sell title="Sell hero">Sell</button>
+            <button class="btn vellum-btn sm" data-sell ${tipAttr('Sell Hero', `Sell ${def.name} for +${Math.max(1, Math.floor((rec.spent || heroCost(rec.tier)) * ECON.sellBack))}g (equipped items return to stash).`)}>Sell</button>
           </div>
         </div>
       `;
@@ -550,7 +630,8 @@
         if (ir) {
           const it = ITEMS[ir.id];
           const sc = el('button', 'slot-chip', `${esc(it.name)} &times;`);
-          sc.title = `${it.text} (Click to unequip)`;
+          sc.setAttribute('data-tip-title', `${it.name} (${it.rar})`);
+          sc.setAttribute('data-tip-body', `${it.text} Click to unequip back to stash.`);
           sc.onclick = e => { e.stopPropagation(); unequipItem(rec, i); };
           slotsEl.appendChild(sc);
         } else {
@@ -677,11 +758,11 @@
           <div class="hc-meta"><span class="cls-tag" style="background:${e.rank === 'Boss' ? '#9c6818' : '#8c2d24'}">${esc(e.rank)}</span><span>Range ${e.range || 1}</span></div>
           <div class="hc-stats">
             <div class="stat-cell"><b>${hp}</b><span>HP</span></div>
-            <div class="stat-cell"><b>${e.ac}</b><span>AC (${resistPct(e.ac)}%)</span></div>
-            <div class="stat-cell"><b>${e.sr}</b><span>SR (${resistPct(e.sr)}%)</span></div>
+            <div class="stat-cell" ${tipAttr(`Armor Class: ${e.ac} (${resistPct(e.ac)}%)`, `Reduces incoming physical damage by ${resistPct(e.ac)}%. Radiant ignores AC.`)}><b>${e.ac}</b><span>AC (${resistPct(e.ac)}%)</span></div>
+            <div class="stat-cell" ${tipAttr(`Spell Resistance: ${e.sr} (${resistPct(e.sr)}%)`, `Reduces incoming magic damage and control duration by ${resistPct(e.sr)}%. Radiant ignores SR.`)}><b>${e.sr}</b><span>SR (${resistPct(e.sr)}%)</span></div>
             <div class="stat-cell"><b>${e.atk.n}d${e.atk.x}${e.atk.flat ? '+' + e.atk.flat : ''}</b><span>${iv}s</span></div>
           </div>
-          <div class="hc-box">${esc(ENEMY_NOTES[it.data.id] || '')}</div>
+          <div class="hc-box">${annotateKw(ENEMY_NOTES[it.data.id] || '')}</div>
           ${e.ab ? `<div class="hc-feat"><b>Ability:</b> ${esc(e.ab.name || 'Special')} (every ${e.ab.iv || '?'}s)</div>` : ''}
         </div>
       `;
@@ -691,7 +772,7 @@
       const isHero = u.side === 'H';
       const stList = [];
       if (u.st.marked) stList.push("Hunter's Mark");
-      if (u.st.hexed) stList.push('Hexed');
+      if (u.st.hexed) stList.push('Hex');
       if (u.st.burnT > 0) stList.push(`Burn ${u.st.burn}`);
       if (u.st.poison > 0) stList.push(`Poison ${u.st.poison}`);
       if (u.st.stun > 0) stList.push(`Stun ${u.st.stun.toFixed(1)}s`);
@@ -701,7 +782,7 @@
       if (u.rage2 > 0) stList.push(`Rage ${u.rage2}`);
       if (u.ki > 0) stList.push(`Ki ${u.ki}`);
       if (u.sp > 0) stList.push(`SP ${u.sp}`);
-      if (u.formHp > 0) stList.push(`Form HP ${Math.ceil(u.formHp)}`);
+      if (u.formHp > 0) stList.push(`Wild Shape ${Math.ceil(u.formHp)}`);
 
       return `
         <div class="sec-label" style="margin-bottom:8px;">Live Combatant</div>
@@ -715,8 +796,8 @@
           </div>
           <div class="hc-stats">
             <div class="stat-cell"><b>${Math.max(0, Math.ceil(u.hp))}/${u.maxHp}</b><span>HP</span></div>
-            <div class="stat-cell"><b>${u.ac}</b><span>AC (${resistPct(u.ac)}%)</span></div>
-            <div class="stat-cell"><b>${u.sr}</b><span>SR (${resistPct(u.sr)}%)</span></div>
+            <div class="stat-cell" ${tipAttr(`Armor Class: ${u.ac} (${resistPct(u.ac)}%)`, `Reduces incoming physical damage by ${resistPct(u.ac)}%.`)}><b>${u.ac}</b><span>AC (${resistPct(u.ac)}%)</span></div>
+            <div class="stat-cell" ${tipAttr(`Spell Resistance: ${u.sr} (${resistPct(u.sr)}%)`, `Reduces incoming magic damage and control duration by ${resistPct(u.sr)}%.`)}><b>${u.sr}</b><span>SR (${resistPct(u.sr)}%)</span></div>
             <div class="stat-cell"><b>${Math.floor(u.charge)}/${u.maxCharge}</b><span>Charge</span></div>
           </div>
           <div class="hc-box">
@@ -724,8 +805,8 @@
             <b>Healing:</b> ${Math.round(u.stat.heal)} · <b>Ward:</b> ${Math.round(u.stat.ward)}<br/>
             <b>Taken:</b> ${Math.round(u.stat.taken)}
           </div>
-          ${stList.length ? `<div class="hc-feat">${stList.map(esc).join(' · ')}</div>` : ''}
-          ${isHero && HERO_CARDS[u.id] ? `<div class="small muted">${esc(HERO_CARDS[u.id].ability)}</div>` : ''}
+          ${stList.length ? `<div class="hc-feat">${stList.map(s => annotateKw(s)).join(' · ')}</div>` : ''}
+          ${isHero && HERO_CARDS[u.id] ? `<div class="small muted">${annotateKw(HERO_CARDS[u.id].ability)}</div>` : ''}
         </div>
       `;
     }
@@ -1358,11 +1439,12 @@
       } else {
         const rec = sub.hero;
         const opts = mcOptions(rec);
-        panel.innerHTML = `<h2 class="serif">Multiclass for ${esc(HEROES[rec.id].name)} — Pick Feature</h2><div class="choice-grid" id="subGrid"></div>`;
+        panel.innerHTML = `<h2 class="serif">Multiclass for ${esc(HEROES[rec.id].name)} — Pick Feature</h2><p class="small muted mt-8">Each Multiclass grants a permanent secondary feature with its own combat trigger:</p><div class="choice-grid" id="subGrid"></div>`;
         const g = $('#subGrid', panel);
         for (const kw of opts) {
           const b = el('button', 'choice-card');
-          b.innerHTML = `<div class="choice-title">✦ ${esc(kw)}</div><span class="btn primary sm">Learn ${esc(kw)}</span>`;
+          const desc = MULTICLASS_INFO[kw] || '';
+          b.innerHTML = `<div><div class="choice-title">✦ ${esc(kw)}</div><p class="small muted mt-8">${annotateKw(desc)}</p></div><span class="btn primary sm">Learn ${esc(kw)}</span>`;
           b.onclick = () => {
             rec.mc = kw;
             if (kw === 'Metamagic') rec.mcMeta = 'Quickened';
@@ -1529,7 +1611,7 @@
           <div>
             <div class="rar-pill rar-${idx === 0 ? 'Rare' : 'Epic'}">Path ${idx === 0 ? 'A' : 'B'}</div>
             <div class="choice-title mt-8">${esc(p.name)}</div>
-            <p class="small mt-8" style="color:var(--ink);">${esc(p.text)}</p>
+            <p class="small mt-8" style="color:var(--ink);">${annotateKw(p.text)}</p>
           </div>
           <span class="btn emerald sm">Choose ${esc(p.name)}</span>
         `;
@@ -1563,11 +1645,11 @@
             <div class="autopsy-row">
               <div><b>${esc(h.name)}</b><div class="small muted">${h.alive ? `${Math.ceil(h.hp)}/${h.maxHp} HP` : `Fell to ${esc(h.killedBy || '?')}`}</div></div>
               <div>
-                <div class="bar-track" title="Damage dealt (red = attacks, orange = ability)">
+                <div class="bar-track" ${tipAttr('Damage Breakdown', `Total ${Math.round(h.dmg)} damage (${Math.round(Math.max(0, h.dmg - h.abDmg))} basic attacks in red, ${Math.round(h.abDmg)} abilities in orange).`)}>
                   <div class="bar-dmg" style="width:${Math.round(100 * Math.max(0, h.dmg - h.abDmg) / maxVal)}%"></div>
                   <div class="bar-ab" style="width:${Math.round(100 * h.abDmg / maxVal)}%"></div>
                 </div>
-                <div class="bar-track" style="margin-top:3px;" title="Healing (green) + Ward (blue)">
+                <div class="bar-track" style="margin-top:3px;" ${tipAttr('Support Breakdown', `Healing: ${Math.round(h.heal)} (green) · Ward: ${Math.round(h.ward)} (blue).`)}>
                   <div class="bar-heal" style="width:${Math.round(100 * h.heal / maxVal)}%"></div>
                   <div class="bar-ward" style="width:${Math.round(100 * h.ward / maxVal)}%"></div>
                 </div>
@@ -1593,7 +1675,7 @@
             <div class="item-card">
               <div class="rar-pill rar-${i === 0 ? 'Rare' : 'Epic'}">Path ${i === 0 ? 'A' : 'B'}</div>
               <div class="serif mt-8" style="font-weight:700;">${esc(p.name)}</div>
-              <div class="small muted mt-8">${esc(p.text)}</div>
+              <div class="small muted mt-8">${annotateKw(p.text)}</div>
             </div>
           `).join('')}
         </div>
@@ -1609,9 +1691,8 @@
           <li><b>Tiers &amp; Growth:</b> Buying a 2nd copy of a hero ranks them up to <b>Tier 2</b> (+1 weapon die, higher HP, stronger ability, and a permanent Path A/B choice).</li>
           <li><b>Resistance &amp; Evasion:</b> AC reduces physical damage and SR reduces magic damage by <code>R / (R + 20)</code>. <b>Radiant</b> ignores both. <b>Evasion</b> (cap 50%) dodges attacks only; <b>Pierce</b> reduces enemy Evasion.</li>
           <li><b>Ability Rolls:</b> Every cast rolls <code>d20 + key modifier</code> (half-point modifiers round randomly on .5). Nat 1 = Fizzle (half charge back); Nat 20 = Crit (dice doubled).</li>
-          <li><b>Statuses:</b> <i>Restrained</i> stops movement, slows attacks 50%, and casts with Disadvantage. <i>Hunter's Mark</i> and <i>Hex</i> are pure tags lasting until death. <i>Wild Shape</i> grants a bonus HP bar with no timer.</li>
-          <li><b>3-Tier Items:</b> Uncommon (8g) small stats · Rare (15g) solid offense/defense · Epic (24g) build-arounds. 2 slots per hero; sell back for 66%.</li>
-          <li><b>Economy &amp; Piggy Bank:</b> +20g per win, +1g interest per 5g saved (up to 20g). Your first loss breaks the Piggy Bank for a free retry; the second loss ends the run.</li>
+          <li><b>Conditions:</b> Hover any underlined keyword on a card to see its rules. <i>Restrained</i> stops movement, slows attacks 50%, and casts with Disadvantage. <i>Hunter's Mark</i> and <i>Hex</i> stay on the target until it dies. <i>Wild Shape</i> grants a bonus HP bar until depleted.</li>
+          <li><b>Items &amp; Economy:</b> Uncommon (8g) · Rare (15g) · Epic (24g), 2 slots per hero, 66% sell-back. Win +20g, interest +1g per 5g saved (up to 20g). First loss breaks the Piggy Bank for a free retry; second loss ends the run.</li>
         </ul>
         <div class="row mt-12" style="justify-content:flex-end;"><button class="btn primary" id="btnCloseR">Got It</button></div>
       `;

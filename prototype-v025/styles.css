@@ -689,3 +689,60 @@ button {
 .small { font-size: 12.5px; }
 .mt-8 { margin-top: 8px; }
 .mt-12 { margin-top: 12px; }
+
+/* ---------- Hover Keywords & Custom Tooltip ---------- */
+.kw {
+  border-bottom: 1.5px dotted var(--brass-dark);
+  color: #5c3a0a;
+  font-weight: 700;
+  cursor: help;
+  transition: background 0.12s ease, color 0.12s ease;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.kw:hover {
+  background: rgba(194, 142, 54, 0.24);
+  color: #2c1802;
+}
+[data-tip-title], [data-tip-kw] {
+  cursor: help;
+}
+.stat-cell[data-tip-title]:hover,
+.hc-scores span[data-tip-title]:hover {
+  background: rgba(194, 142, 54, 0.18);
+  border-radius: 4px;
+}
+.custom-tip {
+  position: fixed;
+  z-index: 400;
+  max-width: 300px;
+  pointer-events: none;
+  background: linear-gradient(180deg, #251e16, #18130e);
+  color: var(--ink-light);
+  border: 1.5px solid var(--brass);
+  border-radius: 8px;
+  padding: 9px 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.custom-tip-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brass-hi);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.custom-tip-body {
+  color: #e9dec8;
+}
+.mc-box {
+  font-size: 12px;
+  background: rgba(44, 98, 156, 0.12);
+  border-left: 3px solid var(--cobalt);
+  padding: 5px 8px;
+  border-radius: 0 5px 5px 0;
+  color: #193e69;
+}
+
