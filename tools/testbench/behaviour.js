@@ -919,6 +919,1448 @@ Object.assign(KITS2, {
   }; },
 });
 
+// ---------------- Phase 2 Batch A (Summons & Companions): Toot, Father Gorr, Morel, Tova, Bellin ----------------
+Object.assign(KITS2, {
+  toot: c => { const K = c.kit2;
+    const myCoins = (F, u) => F.units.filter(o => o.alive && o.summon && o.owner === u && o.minionTag === 'coin');
+    const spawnCoin = (F, u) => {
+      const MC = u.t2 === 0 && K.t2.mintCondition, GW = u.t2 === 1 && K.t2.goldenWall;
+      const maxC = MC ? MC.maxAlive : K.coin.maxAlive;
+      if (myCoins(F, u).length >= maxC) return null;
+      const atkS = spec(u, K.coin.atk);
+      const hp = Math.max(10, Math.round(u.maxHp * K.coin.hpShare));
+      const coin = summonMinion(F, u, {
+        name: 'Coin Soldier', tag: 'coin', hp,
+        ac: u.ac + (K.coin.acBonus || 0) + (GW ? GW.acBonus : 0), sr: u.sr, range: 1,
+        as: MC && MC.coinAs ? MC.coinAs : 0,
+        atk: { name: 'Coin Spear', n: atkS.n, x: atkS.x, flat: atkS.flat, type: 'phys', iv: K.coin.atk.interval },
+        creditOwner: true, creditAsAb: true,
+        onGone(F2, m, killed) {
+          if (killed && GW && GW.explode) {
+            const ex = spec(u, GW.explode);
+            for (const o of adjUnits(F2, m, 'E')) dealDamage(F2, u, o, rollDice(ex.n, ex.x) + ex.flat, 'magic', { ability: true, area: true });
+          }
+        },
+      });
+      if (coin && GW && GW.tauntSeconds) for (const o of adjUnits(F, coin, 'E')) applyControl(F, coin, o, 'taunt', GW.tauntSeconds);
+      return coin;
+    };
+    return {
+      onStart(F, u) {
+        const MC = u.t2 === 0 && K.t2.mintCondition;
+        if (MC && MC.startCoins) for (let i = 0; i < MC.startCoins; i++) spawnCoin(F, u);
+      },
+      ab: { cast(F, u, r) {
+        const count = byRoll(K.coin.count, r);
+        for (let i = 0; i < count; i++) spawnCoin(F, u);
+        // Bardic Inspiration: closest ally gets Ward + 1d6/tier die; spending it heals & hastes all active Coin Soldiers
+        const ally = nearest(alliesOf(F, u).filter(o => o !== u && o.ab), u) || u;
+        if (K.inspiration.allyWard) {
+          const ws = spec(u, K.inspiration.allyWard);
+          addWard(F, u, ally, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+        }
+        const dieS = spec(u, K.inspiration.die);
+        const chS = spec(u, K.inspiration.coinHeal);
+        ally.bardDie = {
+          n: dieS.n, x: dieS.x, flat: dieS.flat, src: u,
+          onSpend(F2, src) {
+            if (!src || !src.alive) return;
+            for (const cn of myCoins(F2, src)) {
+              heal(F2, src, cn, rollDice(chS.n, chS.x) + chS.flat);
+              cn.st.haste = Math.max(cn.st.haste || 0, K.inspiration.coinAs);
+              cn.st.hasteT = Math.max(cn.st.hasteT || 0, K.inspiration.coinAsSeconds);
+            }
+          },
+        };
+      } },
+      onFightEnd(F, u, res) {
+        if (res !== 'win') return;
+        const aliveCoins = myCoins(F, u).length;
+        if (aliveCoins > 0) {
+          const g = aliveCoins * (K.coin.goldPerSurvivor || 1);
+          F.gold += g;
+          for (let i = 0; i < g; i++) onGoldDrop(F);
+        }
+      },
+    };
+  },
+
+  father_gorr: c => { const K = c.kit2;
+    const farthestFoe = (F, u) => {
+      const list = tfoes(F, u);
+      return list.length ? list.sort((a, b) => dist(b, u) - dist(a, u))[0] : null;
+    };
+    const triggerGuided = (F, u) => {
+      if (!(u.cd > 0)) return false;
+      u.cd = 0; u.cdUses = (u.cdUses || 0) + 1;
+      u.nextStrikeCrit = true; u.nextStrikeTrue = true; u.swGuided = true;
+      const WB = u.t2 === 1 && K.t2.warGodsBlessing;
+      if (WB) {
+        for (const ally of alliesOf(F, u)) if (ally !== u) { ally.nextStrikeCrit = true; ally.advNext = true; if (WB.partyCharge) addCharge(ally, WB.partyCharge); }
+      }
+      return true;
+    };
+    const swHit = (F, u, crit, diceCfg, isAb) => {
+      const bt = farthestFoe(F, u); if (!bt) return;
+      const p = parseDice(diceCfg.dice);
+      const n = diceCfg.perTier ? p.n * u.tier : p.n + (RULES.attackGrowth ? RULES.attackGrowth.extraDicePerTier * (u.tier - 1) : 0);
+      const dmg = dealDamage(F, u, bt, rollDice(n, p.x, crit), 'radiant', { attack: !isAb, ability: !!isAb, crit, ignoreEvasion: crit });
+      const CM = u.t2 === 0 && K.t2.crusadersMantle;
+      if (CM && dmg > 0) {
+        const sp = spec(u, CM.splash);
+        for (const o of adjUnits(F, bt, 'E')) dealDamage(F, u, o, rollDice(sp.n, sp.x) + sp.flat, 'radiant', { area: true, ability: !!isAb });
+      }
+      const WB = u.t2 === 1 && K.t2.warGodsBlessing;
+      if (WB && WB.restoreOnce && !bt.alive && !u.cdRestored) { u.cdRestored = true; u.cd = 1; }
+    };
+    return {
+      dmgAb: true,
+      onStart(F, u) { u.cd = 1; u.cdRestored = false; },
+      onAttack(F, u) {
+        const crit = !!u.swGuided; u.swGuided = false;
+        swHit(F, u, crit, K.spiritualWeapon, false);
+      },
+      onKill(F, u) {
+        const WB = u.t2 === 1 && K.t2.warGodsBlessing;
+        if (WB && WB.restoreOnce && !u.cdRestored && u.cd === 0) { u.cdRestored = true; u.cd = 1; }
+      },
+      tick(F, u) {
+        if (u.cd > 0 && foesOf(F, u).some(o => o.hp < o.maxHp * K.channelDivinity.triggerBelowHp)) triggerGuided(F, u);
+      },
+      ab: {
+        can: (F, u) => hasTarget(F, u),
+        cast(F, u, r) {
+          triggerGuided(F, u);
+          const t = acquire(F, u);
+          if (t && canHit(F, u, t)) {
+            const ms = spec(u, K.command.melee);
+            abHit(F, u, t, ms.n, ms.x, ms.flat, 'phys', r);
+          }
+          swHit(F, u, r.crit, K.command.backline, true);
+          if (K.command.selfWard) { const ws = spec(u, K.command.selfWard); addWard(F, u, u, rollDice(ws.n, ws.x, r.crit) + ws.flat, false); }
+          u.st.haste = Math.max(u.st.haste || 0, K.command.asBonus);
+          u.st.hasteT = Math.max(u.st.hasteT || 0, byRoll(K.command.asSeconds, r));
+        },
+      },
+    };
+  },
+
+  morel: c => { const K = c.kit2;
+    const detonatePod = (F, u, p) => {
+      const SD = u.t2 === 0 && K.t2.sporeDetonation;
+      if (!SD) return;
+      const ds = spec(u, SD.damage);
+      for (const o of foesOf(F, u).filter(e => dist(e, p) <= SD.radius)) {
+        dealDamage(F, u, o, rollDice(ds.n, ds.x) + ds.flat, 'magic', { ability: true, area: true });
+        if (o.alive) addPoison(F, u, o, SD.poison);
+      }
+    };
+    const pulsePod = (F, u, p) => {
+      const sym = u.form === 'symbiotic' && u.formHp > 0;
+      const pois = sym ? K.pod.symbioticPoison : K.pod.poison;
+      for (const o of foesOf(F, u).filter(e => dist(e, p) <= K.pod.radius)) {
+        if (K.pod.damage) { const ps = spec(u, K.pod.damage); dealDamage(F, u, o, rollDice(ps.n, ps.x) + ps.flat, 'magic', { ability: true, area: true }); }
+        if (o.alive) addPoison(F, u, o, pois);
+      }
+      const MN = u.t2 === 1 && K.t2.mycelialNetwork;
+      if (MN && sym) {
+        const nearAllies = alliesOf(F, u).filter(a => dist(a, p) <= MN.radius && a.hp < a.maxHp);
+        const lo = lowestPct(nearAllies);
+        if (lo) { const hs = spec(u, MN.heal); heal(F, u, lo, rollDice(hs.n, hs.x) + hs.flat); }
+      }
+    };
+    const spawnPodAt = (F, u, x, y) => addPod(F, u, x, y, {
+      tag: 'mushroom', maxPods: K.pod.maxPods, interval: K.pod.interval,
+      getRate: (F2, p) => (u.form === 'symbiotic' && u.formHp > 0 ? K.pod.symbioticRate : 1),
+      onPulse: (F2, p) => pulsePod(F2, u, p),
+      onDetonate: (F2, p) => detonatePod(F2, u, p),
+    });
+    return {
+      dmgAb: true,
+      onAttack(F, u, t) { if (t) spawnPodAt(F, u, t.x, t.y); },
+      tick(F, u) {
+        const isSym = u.form === 'symbiotic' && u.formHp > 0;
+        if (u._wasSym && !isSym && u.t2 === 0 && F.pods) {
+          for (const p of F.pods.filter(p => p.owner === u && p.tag === 'mushroom')) detonatePod(F, u, p);
+        }
+        u._wasSym = isSym;
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).length > 0,
+        cast(F, u, r) {
+          const hpS = spec(u, K.wildShape.hp);
+          enterWildShape(F, u, rollDice(hpS.n, hpS.x, r.crit) + hpS.flat, { kind: 'symbiotic' });
+          u._wasSym = true;
+          const nPods = byRoll(K.bloom.pods, r);
+          const foes = tfoes(F, u);
+          for (let i = 0; i < nPods && foes.length; i++) {
+            const tg = foes[i % foes.length];
+            spawnPodAt(F, u, tg.x, tg.y);
+            if (K.bloom.damage) { const bs = spec(u, K.bloom.damage); abHit(F, u, tg, bs.n, bs.x, bs.flat, 'magic', r, { area: true }); }
+          }
+          if (F.pods) for (const p of F.pods.filter(p => p.owner === u && p.tag === 'mushroom')) pulsePod(F, u, p);
+        },
+      },
+    };
+  },
+
+  tova: c => { const K = c.kit2;
+    const findFalcon = (F, u) => F.units.find(o => o.alive && o.summon && o.owner === u && o.minionTag === 'falcon');
+    const spawnFalcon = (F, u, hpPct = 1) => {
+      const TH = u.t2 === 0 && K.t2.twinHunt, GT = u.t2 === 1 && K.t2.goldenTalons;
+      const baseHp = u.maxHp * K.falcon.hpShare * (TH ? TH.hpMult : 1);
+      const p = parseDice(K.falcon.atk.dice);
+      const n = p.n + (RULES.attackGrowth ? RULES.attackGrowth.extraDicePerTier * (u.tier - 1) : 0);
+      const f = summonMinion(F, u, {
+        name: 'Falcon', tag: 'falcon', hp: Math.max(10, Math.round(baseHp)),
+        ac: K.falcon.ac, sr: u.sr, evasion: K.falcon.evasion + (TH ? TH.extraEvasion : 0),
+        as: GT ? (GT.falconAs || 0) : 0,
+        range: 1, move: 0.3, preferMarked: true, creditOwner: true,
+        atk: { name: 'Talons', n, x: p.x, type: 'phys', iv: K.falcon.atk.interval },
+        def: {
+          onStrike(F2, fm, t, dmg) {
+            if (!GT || !t || !t.st.marked || dmg <= 0) return;
+            u.falconMarkHits = (u.falconMarkHits || 0) + 1;
+            if (u.falconMarkHits % GT.everyStrikes === 0 && (u.falconGold || 0) < GT.maxGold) {
+              u.falconGold = (u.falconGold || 0) + 1; F2.gold++; onGoldDrop(F2);
+              u.st.haste = Math.max(u.st.haste || 0, GT.asBonus); u.st.hasteT = Math.max(u.st.hasteT || 0, GT.asSeconds);
+            }
+          },
+          onKill(F2, fm, t) {
+            if (!GT || !t || !t.st.marked || (u.falconGold || 0) >= GT.maxGold) return;
+            u.falconGold = (u.falconGold || 0) + 1; F2.gold++; onGoldDrop(F2);
+            u.st.haste = Math.max(u.st.haste || 0, GT.asBonus); u.st.hasteT = Math.max(u.st.hasteT || 0, GT.asSeconds);
+          },
+        },
+      });
+      if (f && hpPct < 1) f.hp = Math.max(1, Math.round(f.maxHp * hpPct));
+      return f;
+    };
+    const sicEm = (F, u, t, crit) => {
+      const f = findFalcon(F, u);
+      if (!f || !t || !t.alive) return;
+      const cl = freeCellNear(F, t.x, t.y, 'H', 1);
+      if (cl && dist(cl, t) <= 1) moveTo(F, f, cl.x, cl.y);
+      f.target = t;
+      const ds = spec(u, K.favoredFoe.dive);
+      const TH = u.t2 === 0 && K.t2.twinHunt;
+      let amt = rollDice(ds.n, ds.x, crit) + ds.flat;
+      if (TH && TH.diveBonus) { const db = spec(u, TH.diveBonus); amt += rollDice(db.n, db.x, crit) + db.flat; }
+      dealDamage(F, f, t, amt, 'phys', { ability: true, crit });
+    };
+    return {
+      kwMark: true, dmgAb: true,
+      onStart(F, u) { spawnFalcon(F, u, 1); },
+      onAttack(F, u) {
+        const mk = tfoes(F, u).find(o => o.st.marked);
+        if (!mk) return;
+        const TH = u.t2 === 0 && K.t2.twinHunt;
+        const every = TH ? TH.everyNth : K.favoredFoe.everyNth;
+        u.tovaMarkAtks = (u.tovaMarkAtks || 0) + 1;
+        if (u.tovaMarkAtks % every === 0) sicEm(F, u, mk, false);
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).length > 0,
+        cast(F, u, r) {
+          const list = tfoes(F, u);
+          const unmarked = list.filter(o => !o.st.marked);
+          const pool = unmarked.length ? unmarked : list;
+          const tg = pool.sort((a, b) => dist(b, u) - dist(a, u))[0];
+          if (tg) applyHuntersMark(F, u, tg);
+          const share = byRoll(K.call.healShare, r);
+          let f = findFalcon(F, u);
+          if (f) heal(F, u, f, Math.round(f.maxHp * share));
+          else f = spawnFalcon(F, u, share);
+          if (tg && f) sicEm(F, u, tg, r.crit);
+        },
+      },
+    };
+  },
+
+  bellin: c => { const K = c.kit2;
+    const findHom = (F, u) => F.units.find(o => o.alive && o.summon && o.owner === u && o.minionTag === 'homunculus');
+    const spawnHom = (F, u, hpShare = 1) => {
+      const H = K.homunculus;
+      const p = parseDice(H.atk.dice);
+      const hp = Math.max(12, Math.round(u.maxHp * H.hpShare));
+      const m = summonMinion(F, u, {
+        name: 'Flesh Homunculus', tag: 'homunculus', hp, ac: H.ac, sr: u.sr, range: 1,
+        creditOwner: true, creditAsAb: true,
+        atk: { name: 'Grafted Slam', n: p.n, x: p.x, stat: H.atk.bonus, half: !!H.atk.halfBonus, type: 'phys', iv: H.atk.interval },
+        def: {
+          onStrike(F2, hm, t, dmg) {
+            if (!t || !t.alive || !(hm.grafts > 0)) return;
+            const gd = spec(u, H.graftDmg);
+            dealDamage(F2, hm, t, rollDice(gd.n * hm.grafts, gd.x), 'phys', { ability: true });
+            const OA = u.t2 === 0 && K.t2.ossuaryAbomination;
+            if (OA && hm.grafts >= OA.cleaveAtGrafts) {
+              for (const o of adjUnits(F2, hm, 'E')) if (o !== t) dealDamage(F2, hm, o, rollDice(gd.n * hm.grafts, gd.x), 'phys', { ability: true, area: true });
+            }
+          },
+        },
+      });
+      if (m) {
+        m.grafts = 0;
+        if (hpShare < 1) m.hp = Math.max(1, Math.round(m.maxHp * hpShare));
+      }
+      return m;
+    };
+    const graftHom = (F, u) => {
+      const H = K.homunculus;
+      let hm = findHom(F, u);
+      if (!hm) { hm = spawnHom(F, u, 0.5); if (!hm) return; }
+      hm.grafts = (hm.grafts || 0) + 1;
+      const hpAdd = Math.max(5, Math.round(u.maxHp * H.hpShare * H.graftHpPct));
+      hm.maxHp += hpAdd;
+      hm.hp = Math.min(hm.maxHp, hm.hp + hpAdd + Math.round(hm.maxHp * H.graftHealPct));
+    };
+    return {
+      dmgAb: true,
+      onStart(F, u) {
+        spawnHom(F, u, 1);
+        const OA = u.t2 === 0 && K.t2.ossuaryAbomination;
+        if (OA && OA.startGrafts) for (let i = 0; i < OA.startGrafts; i++) graftHom(F, u);
+      },
+      onAnyEnemyDeath(F, u, t) {
+        if (!(t.st.reverb > 0)) return;
+        u.charge = Math.min(u.maxCharge, u.charge + K.arcaneRecovery.charge);
+        graftHom(F, u);
+        const SE = u.t2 === 1 && K.t2.soulEcho;
+        if (SE) {
+          const ex = spec(u, SE.explode);
+          for (const o of foesOf(F, u).filter(e => dist(e, t) <= 1)) dealDamage(F, u, o, rollDice(ex.n, ex.x) + ex.flat, 'magic', { ability: true, area: true });
+        }
+      },
+      onReverbDamaged(F, u, t, amt) {
+        const OA = u.t2 === 0 && K.t2.ossuaryAbomination;
+        if (!OA) return;
+        t._revDmg = (t._revDmg || 0) + amt;
+        const step = t.maxHp * OA.chunkPct;
+        while (t._revDmg >= step) { t._revDmg -= step; graftHom(F, u); }
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).length > 0,
+        cast(F, u, r) {
+          const DK = K.deathKnell, SE = u.t2 === 1 && K.t2.soulEcho;
+          const bs = spec(u, DK.base, r), ds = spec(u, DK.damaged, r);
+          const extra = SE && SE.bonusDmg ? spec(u, SE.bonusDmg) : null;
+          for (const o of foesOf(F, u)) {
+            const wounded = o.hp < o.maxHp;
+            const s = wounded ? ds : bs;
+            abHit(F, u, o, s.n + (extra ? extra.n : 0), s.x, s.flat, 'magic', r, { area: true });
+            if (o.alive && (wounded || (SE && SE.reverbAll))) {
+              o.st.reverb = Math.max(o.st.reverb || 0, DK.reverbSeconds);
+              o.st.reverbSrc = u;
+              if (SE) applyControl(F, u, o, 'necrosis', SE.necrosisSeconds);
+            }
+          }
+          if (!findHom(F, u)) spawnHom(F, u, DK.reviveShare);
+        },
+      },
+    };
+  },
+});
+
+// ---------------- Phase 2 Batch B (Casters & Spellcraft): Thia, Orlo, Leagues, Ylowyn, Chuk ----------------
+Object.assign(KITS2, {
+  thia: c => { const K = c.kit2;
+    const shiftSquirrel = (F, u, crit) => {
+      const ws = K.wildShape;
+      if (u.form === 'squirrel' && u.formHp > 0) {
+        const rf = spec(u, ws.refreshHp);
+        const add = rollDice(rf.n, rf.x, crit) + rf.flat;
+        u.formHp += add; u.selfSus = (u.selfSus || 0) + add; if (u._inCast) u.abVal = (u.abVal || 0) + add; u.stat.ward += add;
+      } else {
+        const hpS = spec(u, ws.hp);
+        enterWildShape(F, u, rollDice(hpS.n, hpS.x, crit) + hpS.flat, { kind: 'squirrel', asBonus: ws.asBonus });
+      }
+    };
+    return {
+      dmgAb: true,
+      onStart(F, u) {
+        const NB = u.t2 === 0 && K.t2.nuttyBarrage;
+        if (NB && NB.startShifted) shiftSquirrel(F, u, false);
+      },
+      onStrike(F, u, t, dmg, crit) {
+        if (!t) return;
+        const sp = spec(u, K.acorn.splash);
+        for (const o of adjUnits(F, t, 'E')) {
+          dealDamage(F, u, o, rollDice(sp.n, sp.x) + sp.flat, 'magic', { area: true });
+          if (o.alive) addBurn(F, u, o, K.acorn.burn);
+        }
+        if (t.alive) addBurn(F, u, t, K.acorn.burn);
+        const NB = u.t2 === 0 && K.t2.nuttyBarrage;
+        if (NB && u.form === 'squirrel' && u.formHp > 0) {
+          u._sqAtks = (u._sqAtks || 0) + 1;
+          if (u._sqAtks % NB.everyNth === 0) {
+            const gd = spec(u, NB.damage);
+            for (const o of foesOf(F, u).filter(e => dist(e, t) <= 1)) {
+              dealDamage(F, u, o, rollDice(gd.n, gd.x) + gd.flat, 'magic', { ability: true, area: true });
+              if (o.alive) addBurn(F, u, o, NB.burn);
+            }
+          }
+        }
+      },
+      onAnyEnemyDeath(F, u, t) {
+        const CF = u.t2 === 1 && K.t2.cauterizingFlame;
+        if (!CF || !(t.st.burnT > 0 && t.st.burn > 0)) return;
+        const lo = lowestPct(alliesOf(F, u));
+        if (lo) { const hs = spec(u, CF.heal); heal(F, u, lo, rollDice(hs.n, hs.x) + hs.flat); }
+        shiftSquirrel(F, u, false);
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+        cast(F, u, r) {
+          const NB = u.t2 === 0 && K.t2.nuttyBarrage;
+          const cones = byRoll(K.barrage.cones, r) + (NB && NB.extraCone ? NB.extraCone : 0);
+          const ds = spec(u, K.barrage.damage);
+          const sp = spec(u, K.acorn.splash);
+          for (let i = 0; i < cones; i++) {
+            const list = tfoes(F, u).filter(o => canHit(F, u, o));
+            const tg = densest(F, u, list.length ? list : tfoes(F, u));
+            if (!tg) break;
+            const tx = tg.x, ty = tg.y;
+            abHit(F, u, tg, ds.n, ds.x, ds.flat, 'magic', r, { area: cones > 1 });
+            if (tg.alive) addBurn(F, u, tg, K.barrage.burn);
+            for (const o of foesOf(F, u).filter(e => e !== tg && dist(e, { x: tx, y: ty }) <= 1)) {
+              dealDamage(F, u, o, rollDice(sp.n, sp.x) + sp.flat, 'magic', { ability: true, area: true });
+              if (o.alive) addBurn(F, u, o, K.barrage.burn);
+            }
+          }
+          shiftSquirrel(F, u, r.crit);
+        },
+      },
+    };
+  },
+
+  orlo: c => { const K = c.kit2;
+    return {
+      dmgAb: true,
+      onStart(F, u) {
+        const SB = u.t2 === 0 && K.t2.seekingBarrage;
+        u.extraMissiles = SB && SB.startMissiles ? SB.startMissiles : 0;
+        u.warheadCharges = 0;
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+        cast(F, u, r) {
+          const M = K.missile, SB = u.t2 === 0 && K.t2.seekingBarrage, AW = u.t2 === 1 && K.t2.arcaneWarhead;
+          const baseN = byRoll(M.base, r);
+          const total = AW ? (baseN + (r.band === 'High' ? 1 : 0)) : (baseN + (u.extraMissiles || 0));
+          const ds = spec(u, M.damage);
+          let hitEva = false;
+          for (let i = 0; i < total; i++) {
+            const list = tfoes(F, u).filter(o => canHit(F, u, o));
+            const pool = list.length ? list : tfoes(F, u);
+            if (!pool.length) break;
+            const tg = lowestHp(pool);
+            if (SB && ((tg.eva || 0) > 0 || (tg.st.evaT > 0 && tg.st.evaBuff > 0))) hitEva = true;
+            abHit(F, u, tg, ds.n, ds.x, ds.flat, 'magic', r);
+            if (SB && tg.alive) {
+              tg.st.srMod = Math.max(-SB.srMax, (tg.st.srModT > 0 ? tg.st.srMod : 0) - SB.srShred);
+              tg.st.srModT = Math.max(tg.st.srModT || 0, SB.srSeconds);
+            }
+          }
+          const arGain = Math.min(M.arCap, total * M.arPerMissile) + (SB && hitEva ? SB.evaBonusAr : 0);
+          addCharge(u, arGain);
+          if (AW) {
+            u.warheadCharges = (u.warheadCharges || 0) + 1;
+            if (u.warheadCharges >= AW.chargesNeeded) {
+              u.warheadCharges = 0;
+              const list = tfoes(F, u);
+              const ctr = densest(F, u, list);
+              if (ctr) {
+                const ns = spec(u, AW.nuke);
+                for (const o of foesOf(F, u).filter(e => dist(e, ctr) <= AW.radius)) {
+                  abHit(F, u, o, ns.n, ns.x, ns.flat, 'magic', r, { area: true });
+                }
+              }
+            }
+          } else {
+            u.extraMissiles = (u.extraMissiles || 0) + byRoll(M.add, r);
+          }
+        },
+      },
+    };
+  },
+
+  leagues: c => { const K = c.kit2;
+    return {
+      kwHex: true, dmgAb: true,
+      onStart(F, u) {
+        const GT = u.t2 === 1 && K.t2.graspingTentacles;
+        if (GT && GT.startHex) {
+          const tg = nearest(tfoes(F, u), u);
+          if (tg) applyHex(F, u, tg);
+        }
+      },
+      onStrike(F, u, t) {
+        const RT = u.t2 === 0 && K.t2.riptideTorrent;
+        if (!RT || !t) return;
+        const ps = spec(u, RT.pierceDamage);
+        const splashTarget = adjUnits(F, t, 'E')[0];
+        if (splashTarget) {
+          dealDamage(F, u, splashTarget, rollDice(ps.n, ps.x) + ps.flat, 'magic', { attack: true, area: true });
+        }
+        if (t.alive && t.st.hexed && RT.pushHexed) pushUnit(F, u, t, RT.pushHexed);
+      },
+      onHexedAttack(F, u, attacker) {
+        const P = K.pact, GT = u.t2 === 1 && K.t2.graspingTentacles;
+        const cd = GT ? GT.cooldown : P.cooldown;
+        if (u.counters.pactCd > F.t) return;
+        u.counters.pactCd = F.t + cd;
+        const ds = spec(u, P.damage);
+        dealDamage(F, u, attacker, rollDice(ds.n, ds.x) + ds.flat, 'magic', { ability: true });
+        if (attacker.alive) {
+          applyControl(F, u, attacker, 'slow', P.slowSeconds, P.slow);
+          if (GT) {
+            u._tentacleHits = (u._tentacleHits || 0) + 1;
+            if (u._tentacleHits % GT.rootEveryNth === 0) applyControl(F, u, attacker, 'root', GT.rootSeconds);
+          }
+        }
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+        cast(F, u, r) {
+          const list = tfoes(F, u).filter(o => canHit(F, u, o));
+          const pool = list.length ? list : tfoes(F, u);
+          const unhexed = pool.filter(o => !o.st.hexed);
+          const tg = deadliest(unhexed.length ? unhexed : pool);
+          if (!tg) return;
+          const s = spec(u, K.surge.damage);
+          abHit(F, u, tg, s.n, s.x, s.flat, 'magic', r);
+          if (tg.alive) {
+            applyHex(F, u, tg);
+            pushUnit(F, u, tg, K.surge.push);
+          }
+          if (r.band === 'High') {
+            const extra = pool.find(o => o !== tg && o.alive && !o.st.hexed) || pool.find(o => o !== tg && o.alive);
+            if (extra) applyHex(F, u, extra);
+          }
+        },
+      },
+    };
+  },
+
+  ylowyn: c => { const K = c.kit2; const maxSp = K.metamagic.maxSp || 4;
+    const gainSp = (F, u) => {
+      if (u.counters.spCd > F.t) return;
+      u.counters.spCd = F.t + (K.metamagic.spCd || 1.0);
+      u.sp = Math.min(maxSp, (u.sp || 0) + 1);
+    };
+    return {
+      onStart(F, u) {
+        const TB = u.t2 === 0 && K.t2.telepathicBond;
+        u.sp = TB ? TB.startSp : (K.metamagic.startSp || 0);
+      },
+      onAllyAvoid(F, u, ally) {
+        gainSp(F, u);
+        const PS = u.t2 === 1 && K.t2.protectiveSpores;
+        if (PS && ally && ally.alive) {
+          const ck = 'mh_' + ally.fid;
+          if (!(u.counters[ck] > F.t)) {
+            u.counters[ck] = F.t + PS.missHealCd;
+            const hs = spec(u, PS.missHeal);
+            heal(F, u, ally, rollDice(hs.n, hs.x) + hs.flat);
+          }
+        }
+      },
+      onEnemyRoll(F, u, enemy, r) {
+        if (r.fizzle || r.band === 'Low') gainSp(F, u);
+      },
+      ab: {
+        can: (F, u) => alliesOf(F, u).length > 0,
+        cast(F, u, r) {
+          const TB = u.t2 === 0 && K.t2.telepathicBond, PS = u.t2 === 1 && K.t2.protectiveSpores;
+          const others = alliesOf(F, u).filter(a => a !== u);
+          const front = others.length ? lowestPctFront(F, u) : u;
+          const tgt = others.includes(front) ? front : (others[0] || u);
+          const evaSec = byRoll(K.spores.evaSeconds, r);
+          tgt.st.evaBuff = Math.max(tgt.st.evaBuff || 0, K.spores.evasion);
+          tgt.st.evaT = Math.max(tgt.st.evaT || 0, evaSec);
+          if (PS && PS.partyEva) {
+            for (const a of alliesOf(F, u)) { a.st.evaBuff = Math.max(a.st.evaBuff || 0, PS.partyEva); a.st.evaT = Math.max(a.st.evaT || 0, PS.partyEvaSeconds); }
+          }
+          const ws = spec(u, K.spores.ward);
+          addWard(F, u, tgt, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+          if (K.spores.heal) {
+            const lo = lowestPct(others.length ? others : [u]);
+            if (lo) { const hs = spec(u, K.spores.heal); heal(F, u, lo, rollDice(hs.n, hs.x, r.crit) + hs.flat); }
+          }
+          const foes = tfoes(F, u).slice().sort((a, b) => ((tgt.lastHitBy === b) - (tgt.lastHitBy === a)) || (deadliest([a, b]) === a ? -1 : 1));
+          const nDis = PS ? PS.disadvTargets : 1;
+          for (const f of foes.slice(0, nDis)) applyControl(F, u, f, 'disadv', K.spores.disadvSeconds);
+          if ((u.sp || 0) >= maxSp) {
+            u.sp = TB && TB.refundSp ? TB.refundSp : 0;
+            const caster = others.filter(a => a.ab).sort((a, b) => (b.stat.dmg - a.stat.dmg) || dist(a, u) - dist(b, u))[0] || tgt;
+            caster.st.twincast = 1;
+            caster._onTwincast = (F2, ally) => {
+              if (!u.alive) return;
+              if (TB) {
+                addCharge(u, TB.chargeOnTwin);
+                addCharge(ally, TB.chargeOnTwin);
+                if (TB.twinWard) {
+                  const tw = spec(u, TB.twinWard);
+                  addWard(F2, u, ally, rollDice(tw.n, tw.x) + tw.flat, false);
+                  addWard(F2, u, u, rollDice(tw.n, tw.x) + tw.flat, false);
+                }
+              }
+            };
+          } else {
+            u.sp = Math.min(maxSp, (u.sp || 0) + 1);
+          }
+        },
+      },
+    };
+  },
+
+  chuk: c => { const K = c.kit2; const maxSp = K.metamagic.maxSp || 4;
+    return {
+      dmgAb: true,
+      onStart(F, u) {
+        const CC = u.t2 === 0 && K.t2.controlledChaos;
+        u.sp = CC ? CC.startSp : (K.metamagic.startSp || 0);
+      },
+      modifyRoll(F, u, nat) {
+        if ((u.sp || 0) >= maxSp) { u.sp = 0; u._bentLuck = true; return 20; }
+        return nat;
+      },
+      onSelfRoll(F, u, r) {
+        if (u._bentLuck) return;
+        if (r.fizzle || r.band === 'Low') u.sp = Math.min(maxSp, (u.sp || 0) + 2);
+        else u.sp = Math.min(maxSp, (u.sp || 0) + 1);
+      },
+      onAllyCast(F, u, ally, r) {
+        if (ally !== u && (r.band === 'High' || r.crit)) u.sp = Math.min(maxSp, (u.sp || 0) + 1);
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+        cast(F, u, r) {
+          const bent = !!u._bentLuck; u._bentLuck = false;
+          const CC = u.t2 === 0 && K.t2.controlledChaos, SB = u.t2 === 1 && K.t2.spellBombardment;
+          const list = tfoes(F, u).filter(o => canHit(F, u, o));
+          const pool = list.length ? list : tfoes(F, u);
+          const tg = densest(F, u, pool);
+          if (!tg) return;
+          const tx = tg.x, ty = tg.y;
+          const ds = spec(u, K.surge.damage);
+          abHit(F, u, tg, ds.n, ds.x, ds.flat, 'magic', r);
+          if (r.band === 'Low') {
+            if (tg.alive) { tg.st.weaken = Math.max(tg.st.weaken || 0, K.surge.lowWeaken); tg.st.weakenT = Math.max(tg.st.weakenT || 0, K.surge.lowSeconds); }
+            if (K.surge.lowSplash) {
+              const ls = spec(u, K.surge.lowSplash);
+              for (const o of foesOf(F, u).filter(e => e !== tg && dist(e, { x: tx, y: ty }) <= 1)) {
+                dealDamage(F, u, o, rollDice(ls.n, ls.x, r.crit) + ls.flat, 'magic', { ability: true, area: true });
+              }
+            }
+          } else if (r.band === 'Mid') {
+            const ms = spec(u, K.surge.midSplash);
+            for (const o of foesOf(F, u).filter(e => e !== tg && dist(e, { x: tx, y: ty }) <= 1)) {
+              dealDamage(F, u, o, rollDice(ms.n, ms.x, r.crit) + ms.flat, 'magic', { ability: true, area: true });
+            }
+          } else {
+            const hs = spec(u, K.surge.highExtra);
+            const extras = foesOf(F, u).filter(e => e !== tg).slice(0, K.surge.highTargets);
+            for (const o of extras) dealDamage(F, u, o, rollDice(hs.n, hs.x, r.crit) + hs.flat, 'magic', { ability: true, area: true });
+            for (const a of alliesOf(F, u)) if (a !== u) addCharge(a, K.surge.highCharge);
+          }
+          if (bent && CC && CC.partyAdv) for (const a of alliesOf(F, u)) if (a !== u) a.advNext = true;
+          if (SB && (r.crit || (SB.onHigh && r.band === 'High'))) {
+            const b2 = foesOf(F, u).filter(e => e !== tg)[0] || (tg.alive ? tg : null);
+            if (b2) { const bs = spec(u, SB.bounce); dealDamage(F, u, b2, rollDice(bs.n, bs.x, r.crit) + bs.flat, 'magic', { ability: true, crit: r.crit }); }
+            u.sp = Math.min(maxSp, (u.sp || 0) + SB.refundSp);
+          }
+        },
+      },
+    };
+  },
+});
+
+// ---------------- Phase 2 Batch C (Frontliners & Brawlers): Durn, Corporal Tobbin, Vela, Lady Malice, Malthrax ----------------
+Object.assign(KITS2, {
+  durn: c => { const K = c.kit2;
+    return {
+      onStart(F, u) { u.rage = 0; u._bleedTick = 0; },
+      onHitTaken(F, u, src) {
+        if (!src || src === u || src.side === u.side) return;
+        const IS = u.t2 === 0 && K.t2.ironhideSpikes, BC = u.t2 === 1 && K.t2.bloodiedChicken;
+        const effAc = u.ac + (u.st.acModT > 0 ? u.st.acMod : 0);
+        const thorns = Math.floor(effAc / (IS ? IS.acDiv : K.thorns.acDiv));
+        if (thorns > 0 && dist(u, src) <= 1 && src.alive && !(u.counters.thCd > F.t)) {
+          u.counters.thCd = F.t + (K.thorns.cd || 0.75);
+          dealDamage(F, u, src, thorns, 'phys', {});
+        }
+        if (!(u.counters.rageCd > F.t)) {
+          u.counters.rageCd = F.t + K.rage.cd;
+          u.rage = (u.rage || 0) + 1;
+        }
+        if (BC && src.st.bleed > 0) {
+          const hs = spec(u, BC.bleedHitHeal);
+          heal(F, u, u, rollDice(hs.n, hs.x) + hs.flat);
+        }
+      },
+      onHalf(F, u) {
+        const BC = u.t2 === 1 && K.t2.bloodiedChicken;
+        if (BC) u.rage = (u.rage || 0) + BC.halfRage;
+      },
+      perSecond(F, u) {
+        if (!(u.rage > 0)) return;
+        u._bleedTick = (u._bleedTick || 0) + 1;
+        if (u._bleedTick % K.rage.bleedInterval !== 0) return;
+        const amt = Math.max(1, Math.ceil(u.rage / 2));
+        dealDamage(F, u, u, amt, 'phys', { dot: 'bleed', floor1: true });
+        for (const o of adjUnits(F, u, 'E')) {
+          dealDamage(F, u, o, amt, 'phys', { dot: 'bleed' });
+          if (o.alive && o.st.bleed < 2) addBleed(F, u, o, 1, false);
+        }
+      },
+      ab: {
+        can: (F, u) => hasTarget(F, u),
+        cast(F, u, r) {
+          const t = acquire(F, u); if (!t || !canHit(F, u, t)) return;
+          const ds = spec(u, K.hug.damage);
+          const effAc = u.ac + (u.st.acModT > 0 ? u.st.acMod : 0);
+          abHit(F, u, t, ds.n, ds.x, ds.flat + Math.floor(effAc * K.hug.acShare), 'phys', r);
+          if (t.alive) {
+            applyControl(F, u, t, 'root', byRoll(K.hug.rootSeconds, r));
+            addBleed(F, u, t, byRoll(K.hug.bleed, r), false);
+          }
+          if (K.hug.ward) { const bw = spec(u, K.hug.ward); addWard(F, u, u, rollDice(bw.n, bw.x, r.crit) + bw.flat, false); }
+          const IS = u.t2 === 0 && K.t2.ironhideSpikes;
+          if (IS && IS.ward) { const ws = spec(u, IS.ward); addWard(F, u, u, rollDice(ws.n, ws.x, r.crit) + ws.flat, false); }
+        },
+      },
+    };
+  },
+
+  corporal_tobbin: c => { const K = c.kit2;
+    return {
+      ab: {
+        can: (F, u) => alliesOf(F, u).length > 0,
+        cast(F, u, r) {
+          const HL = u.t2 === 0 && K.t2.holdTheLine, OT = u.t2 === 1 && K.t2.overTheTop;
+          const wall = alliesOf(F, u).filter(a => a === u || dist(a, u) <= 1 || a.y === u.y);
+          const acB = byRoll(K.horn.acBonus, r);
+          const ws = spec(u, K.horn.ward);
+          for (const a of wall) {
+            if (a.st.acModT <= 0 || acB >= a.st.acMod) { a.st.acMod = acB; a.st.acModT = K.horn.seconds; }
+            else a.st.acModT = Math.max(a.st.acModT, K.horn.seconds);
+            if (HL) { a.st.srMod = Math.max(a.st.srModT > 0 ? a.st.srMod : 0, HL.srBonus); a.st.srModT = Math.max(a.st.srModT || 0, K.horn.seconds); }
+            addWard(F, u, a, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+            if (OT) {
+              a.st.haste = Math.max(a.st.haste || 0, OT.asBonus); a.st.hasteT = Math.max(a.st.hasteT || 0, OT.asSeconds);
+              if (a !== u && OT.allyCharge) addCharge(a, OT.allyCharge);
+            }
+          }
+          if (K.horn.bash) {
+            const bt = acquire(F, u);
+            if (bt && canHit(F, u, bt)) { const bs = spec(u, K.horn.bash); abHit(F, u, bt, bs.n, bs.x, bs.flat, 'phys', r); }
+          }
+          const k = byRoll(K.horn.inspireCount, r);
+          const pool = alliesOf(F, u).filter(a => a !== u).sort((a, b) => (!!a.bardDie - !!b.bardDie) || dist(a, u) - dist(b, u));
+          const targets = pool.length ? pool.slice(0, k) : [u];
+          const bd = spec(u, K.inspiration.die);
+          for (const a of targets) {
+            a.bardDie = {
+              n: bd.n, x: bd.x, flat: bd.flat, src: u,
+              onDefend(F2, src, defender) {
+                const w = rollDice(bd.n, bd.x) + bd.flat;
+                addWard(F2, src || defender, defender, w, false);
+                if (HL && src && src.alive) { const hs = spec(src, HL.spendHeal); heal(F2, src, src, rollDice(hs.n, hs.x) + hs.flat); }
+              },
+            };
+          }
+        },
+      },
+    };
+  },
+
+  vela: c => { const K = c.kit2;
+    return {
+      dmgAb: true,
+      onStart(F, u) { u.ki = 0; },
+      onAttack(F, u, t) {
+        u.ki = Math.min(K.ki.max, (u.ki || 0) + 1);
+        const PM = u.t2 === 0 && K.t2.plagueMask;
+        if (PM && t && t.alive) {
+          addPoison(F, u, t, PM.attackPoison);
+          if (t.st.necrosis > 0) t.st.necrosis = Math.max(t.st.necrosis, K.harm.necrosisSeconds);
+        }
+      },
+      ab: {
+        can: (F, u) => hasTarget(F, u),
+        cast(F, u, r) {
+          const t = acquire(F, u); if (!t || !canHit(F, u, t)) return;
+          const PM = u.t2 === 0 && K.t2.plagueMask, HM = u.t2 === 1 && K.t2.handOfMercy;
+          const ds = spec(u, K.harm.damage);
+          const kiDmg = (u.ki || 0) > 0 ? rollDice(u.ki, parseDice(K.ki.die).x, r.crit) : 0;
+          const dmg = abHit(F, u, t, ds.n, ds.x, ds.flat + kiDmg, 'magic', r);
+          if (t.alive) applyControl(F, u, t, 'necrosis', K.harm.necrosisSeconds);
+          if (PM && (u.ki || 0) >= PM.splashAtKi) {
+            for (const o of adjUnits(F, t, 'E')) {
+              dealDamage(F, u, o, rollDice(ds.n, ds.x, r.crit) + ds.flat + kiDmg, 'magic', { ability: true, area: true });
+              if (o.alive) applyControl(F, u, o, 'necrosis', K.harm.necrosisSeconds);
+            }
+          }
+          const bh = K.harm.baseHeal ? spec(u, K.harm.baseHeal) : null;
+          const hAmt = Math.max(1, Math.round(dmg * K.harm.healShare)) + (bh ? rollDice(bh.n, bh.x, r.crit) + bh.flat : 0);
+          heal(F, u, u, hAmt);
+          const ally = lowestPct(alliesOf(F, u).filter(a => a !== u)) || u;
+          if (r.band === 'High' || HM) {
+            if (ally !== u) heal(F, u, ally, Math.round(hAmt * 0.6));
+            if (HM) {
+              cleanse1(ally);
+              const ws = spec(u, HM.ward);
+              addWard(F, u, ally, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+            }
+          }
+        },
+      },
+    };
+  },
+
+  lady_malice: c => { const K = c.kit2;
+    return {
+      carryKeys: ['conquestHp'], dmgAb: true,
+      onStart(F, u) {
+        const bonus = u.conquestHp || 0;
+        if (bonus > 0) { u.maxHp += bonus; u.hp += bonus; }
+      },
+      onAnyEnemyDeath(F, u, t) {
+        if (dist(t, u) > K.aura.radius) return;
+        const AD = u.t2 === 0 && K.t2.auraOfDominion, BT = u.t2 === 1 && K.t2.bloodTithe;
+        const cap = AD ? AD.cap : K.aura.capPerTier * u.tier;
+        const cur = u.conquestHp || 0;
+        const gain = Math.min(K.aura.hpPerKill, Math.max(0, cap - cur));
+        if (gain > 0) { u.conquestHp = cur + gain; u.maxHp += gain; u.hp += gain; }
+        if (BT) {
+          heal(F, u, u, Math.round(u.maxHp * BT.healPct));
+          addCharge(u, BT.charge);
+        }
+      },
+      perSecond(F, u) {
+        const AD = u.t2 === 0 && K.t2.auraOfDominion;
+        if (!AD) return;
+        for (const o of foesOf(F, u).filter(e => dist(e, u) <= K.aura.radius)) {
+          applyControl(F, u, o, 'slow', 1.2, AD.slow);
+          o.st.weaken = Math.max(o.st.weaken || 0, AD.weaken);
+          o.st.weakenT = Math.max(o.st.weakenT || 0, 1.2);
+        }
+      },
+      ab: {
+        can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= K.aura.radius),
+        cast(F, u, r) {
+          const t = acquire(F, u);
+          if (t && canHit(F, u, t)) {
+            const sm = spec(u, K.smite.damage);
+            const bonus = Math.floor((u.conquestHp || 0) / K.smite.hpDiv);
+            abHit(F, u, t, sm.n, sm.x, sm.flat + bonus, 'magic', r);
+          }
+          const tSec = byRoll(K.presence.tauntSeconds, r);
+          const ps = spec(u, K.presence.pulse);
+          for (const o of foesOf(F, u).filter(e => dist(e, u) <= K.aura.radius)) {
+            applyControl(F, u, o, 'taunt', tSec);
+            dealDamage(F, u, o, rollDice(ps.n, ps.x, r.crit) + ps.flat, 'magic', { ability: true, area: true });
+          }
+          if (K.presence.ward) { const ws = spec(u, K.presence.ward); addWard(F, u, u, rollDice(ws.n, ws.x, r.crit) + ws.flat, false); }
+        },
+      },
+    };
+  },
+
+  malthrax: c => { const K = c.kit2;
+    return {
+      kwHex: true, dmgAb: true,
+      onStrike(F, u, t, dmg, crit) {
+        if (!t || !t.st.hexed || dmg <= 0) return;
+        const CH = u.t2 === 0 && K.t2.crimsonHunger;
+        const cd = CH && pct(u) < CH.lowHpPct ? CH.lowCd : K.pact.cooldown;
+        if (u.counters.pactCd > F.t) return;
+        u.counters.pactCd = F.t + cd;
+        const bs = spec(u, K.pact.bonus);
+        const extra = t.alive ? dealDamage(F, u, t, rollDice(bs.n, bs.x, crit) + bs.flat, 'magic', { ability: true }) : 0;
+        heal(F, u, u, Math.round((dmg + extra) * K.pact.healShare));
+      },
+      onHexedDeath(F, u, t) {
+        const CH = u.t2 === 0 && K.t2.crimsonHunger;
+        if (!CH) return;
+        const nxt = nearest(tfoes(F, u).filter(o => !o.st.hexed), t || u);
+        if (nxt) applyHex(F, u, nxt);
+      },
+      ab: {
+        can: (F, u) => adjUnits(F, u, 'E').length > 0 || hasTarget(F, u),
+        cast(F, u, r) {
+          const FB = u.t2 === 1 && K.t2.frostAndBlood;
+          const t = acquire(F, u);
+          const targets = adjUnits(F, u, 'E');
+          if (t && !targets.includes(t) && canHit(F, u, t)) targets.unshift(t);
+          if (!targets.length) return;
+          const ds = spec(u, K.curse.damage);
+          for (const o of targets) abHit(F, u, o, ds.n, ds.x, ds.flat, 'phys', r, { area: targets.length > 1 });
+          const main = (t && t.alive) ? t : targets.find(o => o.alive);
+          if (main) applyHex(F, u, main);
+          if (FB) {
+            for (const o of targets) if (o.alive) applyControl(F, u, o, 'slow', FB.slowSeconds, FB.slow);
+            const cnt = foesOf(F, u).filter(e => dist(e, u) <= 2 && (e.st.hexed || e.st.slowT > 0)).length;
+            if (cnt > 0) {
+              const fs = spec(u, FB.bonusPerFoe);
+              for (const o of targets) if (o.alive) dealDamage(F, u, o, rollDice(fs.n * cnt, fs.x) + fs.flat, 'magic', { ability: true, area: true });
+            }
+          }
+          const ws = spec(u, K.curse.ward);
+          addWard(F, u, u, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+          if (r.band === 'High') {
+            u.st.evaBuff = Math.max(u.st.evaBuff || 0, K.curse.highEvasion);
+            u.st.evaT = Math.max(u.st.evaT || 0, K.curse.highEvaSeconds);
+          }
+        },
+      },
+    };
+  },
+});
+
+// ---------------- Phase 2 Batch D (Strikers & Skirmishers): Falcorn, Moxie, Maxim, Suna, Petra ----------------
+Object.assign(KITS2, {
+  falcorn: c => { const K = c.kit2;
+    const doDive = (F, u, r) => {
+      u.st.airborne = K.dive.airSeconds;
+      u.pend.push({ t: K.dive.airSeconds, fn(F2, u2) {
+        if (!u2.alive) return true;
+        const list = tfoes(F2, u2);
+        if (!list.length) return true;
+        const tg = list.sort((a, b) => dist(b, u2) - dist(a, u2))[0];
+        const cl = freeCellNear(F2, tg.x, tg.y, 'H', 1);
+        if (cl && dist(cl, tg) <= 1) moveTo(F2, u2, cl.x, cl.y);
+        u2.target = tg;
+        u2.rage = (u2.rage || 0) + 1;
+        const ds = spec(u2, K.dive.damage);
+        const dmg = abHit(F2, u2, tg, ds.n, ds.x, ds.flat + u2.rage * K.rage.divePerStack, 'phys', r);
+        if (r.band === 'High') {
+          for (const o of adjUnits(F2, tg, 'E')) {
+            dealDamage(F2, u2, o, Math.round(dmg * 0.5), 'phys', { ability: true, area: true });
+            if (o.alive) applyControl(F2, u2, o, 'stun', K.dive.highStunSeconds);
+          }
+        }
+        const GW = u2.t2 === 1 && K.t2.galeWings;
+        if (GW) {
+          for (const o of adjUnits(F2, u2, 'E')) applyControl(F2, u2, o, 'stun', GW.stunSeconds);
+          if (GW.ward) { const gw = spec(u2, GW.ward); addWard(F2, u2, u2, rollDice(gw.n, gw.x) + gw.flat, false); }
+          u2.st.evaBuff = Math.max(u2.st.evaBuff || 0, GW.evasion);
+          u2.st.evaT = Math.max(u2.st.evaT || 0, GW.evaSeconds);
+        }
+        return true;
+      } });
+    };
+    return {
+      dmgAb: true,
+      onStart(F, u) { u.rage = 0; u._atkCnt = 0; },
+      onStrike(F, u, t) {
+        if (t && t.alive && (u.rage || 0) > 0) dealDamage(F, u, t, u.rage * K.rage.atkPerStack, 'phys', { onhit: true });
+      },
+      onAttack(F, u) {
+        u._atkCnt = (u._atkCnt || 0) + 1;
+        if (u._atkCnt % 2 === 0) u.rage = (u.rage || 0) + 1;
+      },
+      onKill(F, u) {
+        u.rage = (u.rage || 0) + K.rage.killStacks;
+        const AP = u.t2 === 0 && K.t2.apexPredator;
+        if (AP) {
+          addCharge(u, AP.killCharge);
+          if (!(u.counters.apDiveCd > F.t) && tfoes(F, u).length > 0) {
+            u.counters.apDiveCd = F.t + AP.diveCd;
+            doDive(F, u, { band: 'Mid', crit: false, xd: 0 });
+          }
+        }
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).length > 0,
+        cast(F, u, r) { doDive(F, u, r); },
+      },
+    };
+  },
+
+  moxie: c => { const K = c.kit2;
+    const maxJuggle = u => (u.t2 === 0 && K.t2.grandFinale ? K.t2.grandFinale.max : K.juggle.max);
+    return {
+      dmgAb: true,
+      onStart(F, u) {
+        const GF = u.t2 === 0 && K.t2.grandFinale;
+        u.juggle = GF && GF.startJuggle ? GF.startJuggle : 0;
+      },
+      onAttack(F, u, t) {
+        const extra = u.juggle || 0;
+        if (extra <= 0 || !t) return;
+        const bp = parseDice(K.juggle.blade.dice);
+        for (let i = 0; i < extra; i++) {
+          const tg = t.alive ? t : nearest(tfoes(F, u).filter(o => canHit(F, u, o)), u);
+          if (!tg) break;
+          dealDamage(F, u, tg, rollDice(bp.n, bp.x), 'phys', { attack: true });
+        }
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+        cast(F, u, r) {
+          const GF = u.t2 === 0 && K.t2.grandFinale, RE = u.t2 === 1 && K.t2.razorEncore;
+          u.juggle = Math.min(maxJuggle(u), (u.juggle || 0) + 1);
+          const list = tfoes(F, u).filter(o => canHit(F, u, o));
+          const tg = densest(F, u, list.length ? list : tfoes(F, u));
+          if (tg) {
+            const dur = byRoll(K.cloud.seconds, r);
+            const td = spec(u, K.cloud.tickDamage);
+            for (const o of foesOf(F, u).filter(e => dist(e, tg) <= K.cloud.radius)) {
+              abHit(F, u, o, td.n, td.x, td.flat, 'phys', r, { area: true });
+            }
+            addPod(F, u, tg.x, tg.y, {
+              tag: 'daggers', interval: 1.0, life: dur, maxPods: 2,
+              onPulse(F2, p) {
+                for (const o of foesOf(F2, u).filter(e => dist(e, p) <= K.cloud.radius)) {
+                  dealDamage(F2, u, o, rollDice(td.n, td.x) + td.flat, 'phys', { ability: true, area: true });
+                }
+              },
+            });
+            if (GF && r.band === 'High' && (u.juggle || 0) > 0) {
+              const bp = parseDice(K.juggle.blade.dice);
+              for (const o of tfoes(F, u).slice(0, GF.highFanTargets)) {
+                dealDamage(F, u, o, rollDice(bp.n * u.juggle, bp.x, r.crit), 'phys', { ability: true, area: true });
+              }
+            }
+          }
+          const ally = nearest(alliesOf(F, u).filter(a => a !== u && a.ab), u) || u;
+          const bd = spec(u, K.inspiration.die);
+          ally.bardDie = {
+            n: bd.n, x: bd.x, flat: bd.flat, src: u,
+            onSpend(F2, src) {
+              if (!src || !src.alive) return;
+              src.juggle = Math.min(maxJuggle(src), (src.juggle || 0) + 1);
+              if (RE) {
+                if (RE.moxieCharge) addCharge(src, RE.moxieCharge);
+                const ep = spec(src, RE.pulse);
+                const ctr = densest(F2, src, tfoes(F2, src));
+                if (ctr) {
+                  for (const o of foesOf(F2, src).filter(e => dist(e, ctr) <= K.cloud.radius)) {
+                    dealDamage(F2, src, o, rollDice(ep.n, ep.x) + ep.flat, 'phys', { ability: true, area: true });
+                  }
+                }
+              }
+            },
+          };
+        },
+      },
+    };
+  },
+
+  maxim: c => { const K = c.kit2;
+    return {
+      dmgAb: true,
+      onStart(F, u) { u._xbowAtks = 0; },
+      onAttack(F, u, t) {
+        const CM = u.t2 === 0 && K.t2.crossbowMaster;
+        const every = CM ? CM.everyNth : K.surge.everyNth;
+        u._xbowAtks = (u._xbowAtks || 0) + 1;
+        if (u._xbowAtks % every === 0) {
+          const bolts = CM && CM.extraBolts ? CM.extraBolts : 1;
+          for (let i = 0; i < bolts; i++) {
+            if (CM && CM.ignoreEvasion) u.nextStrikeTrue = true;
+            actionSurge(F, u, { fallbackTarget: t });
+          }
+        }
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+        cast(F, u, r) {
+          const BA = u.t2 === 1 && K.t2.burstingArrow;
+          const list = tfoes(F, u).filter(o => canHit(F, u, o));
+          const tg = deadliest(list.length ? list : tfoes(F, u));
+          if (!tg) return;
+          const ds = spec(u, K.shot.damage, r);
+          abHit(F, u, tg, ds.n, ds.x, ds.flat, 'phys', r);
+          if (r.band === 'High' && tg.alive) {
+            tg.st.acMod = Math.min(tg.st.acModT > 0 ? tg.st.acMod : 0, K.shot.highAcShred);
+            tg.st.acModT = Math.max(tg.st.acModT || 0, K.shot.highAcSeconds);
+          }
+          if (BA) {
+            const sp = spec(u, BA.splash);
+            for (const o of adjUnits(F, tg, 'E')) {
+              dealDamage(F, u, o, rollDice(sp.n, sp.x, r.crit) + sp.flat, 'magic', { ability: true, area: true });
+              if (o.alive && BA.acShred) { o.st.acMod = Math.min(o.st.acModT > 0 ? o.st.acMod : 0, BA.acShred); o.st.acModT = Math.max(o.st.acModT || 0, BA.acSeconds); }
+            }
+            if (!u._baPierce) {
+              u._baPierce = BA.pierceBonus; u.pierce += BA.pierceBonus;
+              u.pend.push({ t: BA.pierceSeconds, fn(F2, u2) { u2.pierce = Math.max(0, u2.pierce - (u2._baPierce || 0)); u2._baPierce = 0; return true; } });
+            }
+          }
+        },
+      },
+    };
+  },
+
+  suna: c => { const K = c.kit2;
+    return {
+      dmgAb: true,
+      onStart(F, u) {
+        const OW = u.t2 === 0 && K.t2.oneWithTheBow, PA = u.t2 === 1 && K.t2.patientAim;
+        u.ki = PA ? PA.startKi : (OW && OW.startKi ? OW.startKi : 0);
+        if (u.ki >= K.ki.max) u.nextStrikeTrue = true;
+      },
+      onStrike(F, u, t, dmg, crit) {
+        if (!t) return;
+        const kp = parseDice(K.ki.bonusPerKi);
+        if ((u.ki || 0) > 0 && t.alive) dealDamage(F, u, t, rollDice(u.ki * kp.n, kp.x, crit), 'phys', { attack: true, crit });
+        const OW = u.t2 === 0 && K.t2.oneWithTheBow;
+        if (OW && (u.ki || 0) >= OW.pierceAtKi) {
+          const second = foesOf(F, u).filter(e => e !== t && dist(e, t) <= (OW.pierceRadius || 2)).sort((a, b) => dist(a, t) - dist(b, t))[0];
+          if (second) {
+            const pd = spec(u, OW.pierceDamage);
+            dealDamage(F, u, second, rollDice(pd.n, pd.x, crit) + pd.flat, 'phys', { attack: true, area: true, ignoreEvasion: true });
+          }
+        }
+      },
+      onAttack(F, u) {
+        u.ki = Math.min(K.ki.max, (u.ki || 0) + 1);
+        if (u.ki >= K.ki.max) u.nextStrikeTrue = true;
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+        cast(F, u, r) {
+          const PA = u.t2 === 1 && K.t2.patientAim;
+          u.ki = Math.min(K.ki.max, (u.ki || 0) + 1);
+          if (u.ki >= K.ki.max) u.nextStrikeTrue = true;
+          const list = tfoes(F, u).filter(o => canHit(F, u, o));
+          const tg = deadliest(list.length ? list : tfoes(F, u));
+          if (!tg) return;
+          const ds = spec(u, K.shot.damage, r);
+          abHit(F, u, tg, ds.n, ds.x, ds.flat, 'phys', r, { crit: r.band === 'High' || r.crit });
+          if (PA && tg.alive) {
+            tg.st.acMod = Math.min(tg.st.acModT > 0 ? tg.st.acMod : 0, PA.acShred);
+            tg.st.acModT = Math.max(tg.st.acModT || 0, PA.acSeconds);
+            applyControl(F, u, tg, 'slow', PA.slowSeconds, PA.slow);
+          }
+        },
+      },
+    };
+  },
+
+  petra: c => { const K = c.kit2;
+    return {
+      dmgAb: true,
+      onStart(F, u) { u._chasing = false; },
+      tick(F, u) {
+        const others = alliesOf(F, u).filter(a => a !== u);
+        if (!others.length) return;
+        const topOther = Math.max(...others.map(a => a.stat.dmg));
+        const behind = topOther > u.stat.dmg;
+        if (behind) {
+          u.st.haste = Math.max(u.st.haste || 0, K.chaser.asBonus);
+          u.st.hasteT = Math.max(u.st.hasteT || 0, 0.2);
+          if (!u._chasing) { u._chasing = true; u.cr += K.chaser.crBonus; }
+        } else {
+          if (u._chasing) { u._chasing = false; u.cr = Math.max(0, u.cr - K.chaser.crBonus); }
+          if (u.stat.dmg > 0) {
+            const BB = u.t2 === 1 && K.t2.bahamutsBanner;
+            for (const a of others) {
+              a.st.petraAura = Math.max(a.st.petraAura || 0, 0.25);
+              if (BB) {
+                a.st.acMod = Math.max(a.st.acModT > 0 ? a.st.acMod : 0, BB.acBonus); a.st.acModT = Math.max(a.st.acModT || 0, 0.25);
+                a.st.srMod = Math.max(a.st.srModT > 0 ? a.st.srMod : 0, BB.srBonus); a.st.srModT = Math.max(a.st.srModT || 0, 0.25);
+              }
+            }
+          }
+        }
+      },
+      ab: {
+        can: (F, u) => hasTarget(F, u),
+        cast(F, u, r) {
+          const PR = u.t2 === 0 && K.t2.platinumRival, BB = u.t2 === 1 && K.t2.bahamutsBanner;
+          const t = acquire(F, u); if (!t || !canHit(F, u, t)) return;
+          const ls = spec(u, K.charge.lance), sm = spec(u, K.charge.smite);
+          abHit(F, u, t, ls.n, ls.x, ls.flat, 'phys', r, { crit: true });
+          if (t.alive) dealDamage(F, u, t, rollDice(sm.n, sm.x, true), 'radiant', { ability: true, crit: true });
+          if (t.alive) pushUnit(F, u, t, K.charge.push);
+          if (K.charge.selfWard) { const sw = spec(u, K.charge.selfWard); addWard(F, u, u, rollDice(sw.n, sw.x, r.crit) + sw.flat, false); }
+          if (PR) {
+            if (t.alive && canHit(F, u, t)) strike(F, u, t, {});
+            if (!t.alive) addCharge(u, PR.killRefund);
+          }
+          if (BB) {
+            const ws = spec(u, BB.ward);
+            for (const a of alliesOf(F, u)) addWard(F, u, a, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+          }
+        },
+      },
+    };
+  },
+});
+
+// ---------------- Phase 2 Batch E (Control, Disruption & Utility): Burbrax, Colony, Nix, Rico, Hewitt ----------------
+Object.assign(KITS2, {
+  burbrax: c => { const K = c.kit2;
+    const syncEva = u => { u.eva = (u.def.evasion || 0) + (u.ki || 0) * K.ki.evaPerKi; };
+    return {
+      dmgAb: true,
+      onStart(F, u) {
+        const DS = u.t2 === 1 && K.t2.drunkenSway;
+        u.ki = DS ? DS.startKi : 0;
+        syncEva(u);
+      },
+      onAttack(F, u) {
+        if ((u.ki || 0) < K.ki.max) { u.ki = (u.ki || 0) + 1; syncEva(u); }
+      },
+      onAvoid(F, u, src) {
+        const TP = u.t2 === 0 && K.t2.topShelfProof, DS = u.t2 === 1 && K.t2.drunkenSway;
+        if (TP && src && src.alive && !(u.counters.tpCd > F.t)) {
+          u.counters.tpCd = F.t + TP.cd;
+          const ds = spec(u, TP.damage);
+          dealDamage(F, u, src, rollDice(ds.n, ds.x) + ds.flat, 'magic', { ability: true });
+          if (src.alive) addBurn(F, u, src, TP.burn);
+        }
+        if (DS) {
+          if ((u.ki || 0) < K.ki.max) { u.ki = (u.ki || 0) + 1; syncEva(u); }
+          addCharge(u, DS.avoidCharge);
+        }
+      },
+      ab: {
+        can: (F, u) => hasTarget(F, u),
+        cast(F, u, r) {
+          const t = acquire(F, u); if (!t) return;
+          const cone = foesOf(F, u).filter(e => dist(e, t) <= 1 && dist(e, u) <= 2);
+          if (!cone.includes(t)) cone.unshift(t);
+          const ds = spec(u, K.breath.damage);
+          const burnAmt = byRoll(K.breath.burn, r);
+          for (const o of cone) {
+            abHit(F, u, o, ds.n, ds.x, ds.flat, 'magic', r, { area: cone.length > 1 });
+            if (o.alive) {
+              addBurn(F, u, o, burnAmt);
+              applyControl(F, u, o, 'disadv', K.breath.disadvSeconds);
+            }
+          }
+          if (K.breath.selfWard) { const sw = spec(u, K.breath.selfWard); addWard(F, u, u, rollDice(sw.n, sw.x, r.crit) + sw.flat, false); }
+          for (const a of [u, ...adjUnits(F, u, 'H')]) {
+            a.st.evaBuff = Math.max(a.st.evaBuff || 0, K.breath.allyEva);
+            a.st.evaT = Math.max(a.st.evaT || 0, K.breath.allyEvaSeconds);
+          }
+        },
+      },
+    };
+  },
+
+  colony: c => { const K = c.kit2;
+    return {
+      kwMark: true, dmgAb: true,
+      onStart(F, u) { u._swarmT = 0; u._firstHit = false; },
+      onStrike(F, u, t) {
+        if (!u._firstHit && t && t.alive) { u._firstHit = true; applyHuntersMark(F, u, t); }
+      },
+      onMarkedDeath(F, u, t) {
+        const KB = u.t2 === 0 && K.t2.killerBees;
+        if (!KB || !KB.jumpMark) return;
+        const nxt = nearest(tfoes(F, u).filter(o => !o.st.marked), t || u);
+        if (nxt) applyHuntersMark(F, u, nxt);
+      },
+      perSecond(F, u) {
+        u._swarmT = (u._swarmT || 0) + 1;
+        if (u._swarmT % K.swarm.interval !== 0) return;
+        const KB = u.t2 === 0 && K.t2.killerBees, BS = u.t2 === 1 && K.t2.blindingSwarm;
+        const ds = spec(u, K.swarm.damage);
+        const hitSet = new Set(adjUnits(F, u, 'E'));
+        const marked = foesOf(F, u).filter(e => e.st.marked);
+        for (const m of marked) hitSet.add(m);
+        for (const o of hitSet) {
+          dealDamage(F, u, o, rollDice(ds.n, ds.x) + ds.flat, 'magic', { ability: true, area: true });
+          if (o.alive && o.st.marked) {
+            applyControl(F, u, o, 'slow', K.swarm.markSeconds, K.swarm.markSlow);
+            applyControl(F, u, o, 'disadv', K.swarm.markSeconds);
+          }
+          if (KB && o.alive) addPoison(F, u, o, KB.poison);
+        }
+        if (BS) {
+          for (const a of alliesOf(F, u)) {
+            if (dist(a, u) <= BS.radius || marked.some(m => dist(a, m) <= BS.radius)) {
+              a.st.evaBuff = Math.max(a.st.evaBuff || 0, BS.evasion);
+              a.st.evaT = Math.max(a.st.evaT || 0, BS.evaSeconds);
+            }
+          }
+        }
+      },
+      ab: {
+        can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= K.surge.radius),
+        cast(F, u, r) {
+          const targets = foesOf(F, u).filter(o => dist(o, u) <= K.surge.radius);
+          if (!targets.length) return;
+          const ds = spec(u, K.surge.damage);
+          const sSec = byRoll(K.surge.slowSeconds, r);
+          for (const o of targets) {
+            abHit(F, u, o, ds.n, ds.x, ds.flat, 'magic', r, { area: targets.length > 1 });
+            if (o.alive) applyControl(F, u, o, 'slow', sSec, K.surge.slow);
+          }
+          if (K.surge.selfWard) { const sw = spec(u, K.surge.selfWard); addWard(F, u, u, rollDice(sw.n, sw.x, r.crit) + sw.flat, false); }
+          const mk = deadliest(targets.filter(o => o.alive));
+          if (mk) applyHuntersMark(F, u, mk);
+        },
+      },
+    };
+  },
+
+  nix: c => { const K = c.kit2;
+    const ambush = (F, u, t, force) => {
+      if (!t || !t.alive || (!force && u.counters.sa > F.t)) return;
+      if (!force && !controlled(t)) return;
+      u.counters.sa = F.t + K.sneak.cooldown;
+      const ST = u.t2 === 1 && K.t2.spellThief;
+      const ds = spec(u, ST ? ST.damage : K.sneak.damage);
+      dealDamage(F, u, t, rollDice(ds.n, ds.x) + ds.flat, 'magic', { ability: true });
+      const others = alliesOf(F, u).filter(a => a !== u && a.ab).sort((a, b) => (a.charge / a.maxCharge) - (b.charge / b.maxCharge));
+      const ally = others[0] || u;
+      const stealAmt = ST ? ST.steal : K.sneak.steal;
+      const minChg = ST && ST.minAllyCharge ? ST.minAllyCharge : K.sneak.minAllyCharge;
+      const stolen = stealCharge(F, u, t, stealAmt, ally);
+      if (stolen < minChg) addCharge(ally, minChg - stolen);
+    };
+    return {
+      dmgAb: true,
+      onAttack(F, u, t) { ambush(F, u, t, false); },
+      onEnemyRoll(F, u, enemy, r) {
+        const ST = u.t2 === 1 && K.t2.spellThief;
+        if (!ST || !(r.fizzle || r.dis)) return;
+        const others = alliesOf(F, u).filter(a => a !== u && a.ab).sort((a, b) => b.stat.dmg - a.stat.dmg);
+        const top = others[0] || u;
+        const stolen = stealCharge(F, u, enemy, ST.steal, top);
+        if (stolen < ST.steal) addCharge(top, Math.round((ST.steal - stolen) * 0.5));
+        const ds = spec(u, ST.damage);
+        dealDamage(F, u, enemy, rollDice(ds.n, ds.x) + ds.flat, 'magic', { ability: true });
+      },
+      ab: {
+        can: (F, u) => tfoes(F, u).length > 0,
+        cast(F, u, r) {
+          const VT = u.t2 === 0 && K.t2.versatileTrickster;
+          const list = tfoes(F, u).slice().sort((a, b) => ((!!b.ab) - (!!a.ab)) || ((b.charge || 0) - (a.charge || 0)));
+          const tg = list[0];
+          if (!tg) return;
+          const ds = spec(u, K.sabotage.damage);
+          abHit(F, u, tg, ds.n, ds.x, ds.flat, 'magic', r);
+          if (tg.alive) {
+            applyControl(F, u, tg, 'disadv', byRoll(K.sabotage.disadvSeconds, r));
+            if (VT) {
+              const sw = spec(u, VT.stripWard);
+              const strip = rollDice(sw.n, sw.x);
+              if (tg.ward > 0) tg.ward = Math.max(0, tg.ward - strip);
+              else dealDamage(F, u, tg, Math.round(strip * 0.5), 'magic', { ability: true });
+            }
+            ambush(F, u, tg, true);
+          }
+          const lo = lowestPctFront(F, u);
+          if (lo) {
+            const ws = spec(u, K.sabotage.allyWard);
+            addWard(F, u, lo, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+            if (VT) { lo.st.evaBuff = Math.max(lo.st.evaBuff || 0, VT.evasion); lo.st.evaT = Math.max(lo.st.evaT || 0, VT.evaSeconds); }
+          }
+        },
+      },
+    };
+  },
+
+  rico: c => { const K = c.kit2;
+    const rakish = (F, u, t, force) => {
+      if (!t || !t.alive || (!force && u.counters.sa > F.t)) return;
+      const isolated = adjUnits(F, t, 'H').filter(o => o !== u).length === 0;
+      if (!force && !isolated) return;
+      u.counters.sa = F.t + K.sneak.cooldown;
+      const MD = u.t2 === 0 && K.t2.masterDuelist;
+      const crit = !!(MD && MD.isoCrit && isolated);
+      const ds = spec(u, K.sneak.damage);
+      dealDamage(F, u, t, rollDice(ds.n, ds.x, crit) + ds.flat, 'phys', { attack: !force, ability: !!force, crit });
+      if (MD && MD.resetOnKill && !t.alive) u.counters.sa = 0;
+    };
+    return {
+      dmgAb: true,
+      onAttack(F, u, t) { rakish(F, u, t, false); },
+      onAvoid(F, u) {
+        const PA = u.t2 === 1 && K.t2.panache;
+        if (PA) addCharge(u, PA.avoidCharge);
+      },
+      ab: {
+        can: (F, u) => hasTarget(F, u),
+        cast(F, u, r) {
+          const PA = u.t2 === 1 && K.t2.panache;
+          const t = acquire(F, u); if (!t || !canHit(F, u, t)) return;
+          rakish(F, u, t, true);
+          const ws = spec(u, K.footwork.ward);
+          addWard(F, u, u, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+          if (t.alive) {
+            applyControl(F, u, t, 'taunt', byRoll(K.footwork.tauntSeconds, r));
+            if (PA) {
+              t.st.acMod = Math.min(t.st.acModT > 0 ? t.st.acMod : 0, -PA.stealAc); t.st.acModT = Math.max(t.st.acModT || 0, PA.stealSeconds);
+              u.st.acMod = Math.max(u.st.acModT > 0 ? u.st.acMod : 0, PA.stealAc); u.st.acModT = Math.max(u.st.acModT || 0, PA.stealSeconds);
+            }
+          }
+          if (r.band !== 'Low' && K.footwork.eva) {
+            u.st.evaBuff = Math.max(u.st.evaBuff || 0, K.footwork.eva);
+            u.st.evaT = Math.max(u.st.evaT || 0, K.footwork.evaSeconds);
+          }
+        },
+      },
+    };
+  },
+
+  hewitt: c => { const K = c.kit2; const maxSp = K.metamagic.maxSp || 4;
+    const gainSp = (F, u) => {
+      if (u.counters.spCd > F.t) return;
+      u.counters.spCd = F.t + (K.metamagic.spCd || 1.5);
+      u.sp = Math.min(maxSp, (u.sp || 0) + 1);
+    };
+    return {
+      onStart(F, u) {
+        const CC = u.t2 === 1 && K.t2.clockworkCavalcade;
+        u.sp = CC && CC.startSp ? CC.startSp : (K.metamagic.startSp || 0);
+        u._ocTargets = [];
+      },
+      onAllyCast(F, u, ally) {
+        if (ally !== u && ally.st.statBuffT > 0) gainSp(F, u);
+      },
+      tick(F, u) {
+        for (const a of (u._ocTargets || [])) {
+          if (!a.alive || a.st.statBuffT <= 0) continue;
+          const cnt = a.atkCount || 0;
+          const prev = a._hewittAtks || 0;
+          if (cnt - prev >= K.metamagic.atksForSp) { a._hewittAtks = cnt; gainSp(F, u); }
+        }
+      },
+      ab: {
+        can: (F, u) => alliesOf(F, u).length > 0,
+        cast(F, u, r) {
+          const TO = u.t2 === 0 && K.t2.tranceOfOrder, CC = u.t2 === 1 && K.t2.clockworkCavalcade;
+          const supercharge = (u.sp || 0) >= maxSp;
+          if (supercharge) u.sp = 0; else u.sp = Math.min(maxSp, (u.sp || 0) + 1);
+          const others = alliesOf(F, u).filter(a => a !== u).sort((a, b) => (b.stat.dmg - a.stat.dmg) || dist(a, u) - dist(b, u));
+          const pool = others.length ? others : [u];
+          const targets = pool.slice(0, supercharge ? 2 : 1);
+          const amt = byRoll(K.overclock.statAmt, r) + (u.tier - 1) * 2;
+          const ws = spec(u, K.overclock.ward);
+          u._ocTargets = targets;
+          for (const a of targets) {
+            a.st.statBuff = { key: a.key, amt };
+            a.st.statBuffT = Math.max(a.st.statBuffT || 0, K.overclock.seconds);
+            a.st.haste = Math.max(a.st.haste || 0, K.overclock.asBonus);
+            a.st.hasteT = Math.max(a.st.hasteT || 0, K.overclock.seconds);
+            a._hewittAtks = a.atkCount || 0;
+            addWard(F, u, a, rollDice(ws.n, ws.x, r.crit) + ws.flat, false);
+            if (K.overclock.allyCharge) addCharge(a, K.overclock.allyCharge);
+            if (supercharge || TO) a.st.noFizzle = Math.max(a.st.noFizzle || 0, TO ? TO.noFizzleSeconds : 6);
+            if (TO) addCharge(a, TO.allyCharge);
+          }
+          if (supercharge && CC) {
+            const pw = spec(u, CC.partyWard);
+            for (const a of alliesOf(F, u)) {
+              addWard(F, u, a, rollDice(pw.n, pw.x, r.crit) + pw.flat, false);
+              if (CC.partyEva) { a.st.evaBuff = Math.max(a.st.evaBuff || 0, CC.partyEva); a.st.evaT = Math.max(a.st.evaT || 0, CC.partyEvaSeconds); }
+              cleanse1(a);
+            }
+          }
+        },
+      },
+    };
+  },
+});
+
 // ---------------- build HEROES from config + kits ----------------
 const STAT_KEYS = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 function atkFromCfg(a) {
@@ -931,6 +2373,7 @@ function atkFromCfg(a) {
   if (a.strikes) out.strikes = a.strikes;
   if (a.perTier) out.tierDice = true;
   if (a.pulse) out.pulse = true;
+  if (a.ignoreEvasion) out.ignoreEvasion = true;
   if (a.woundedDice) out.woundedX = parseDice(a.woundedDice).x;
   return out;
 }

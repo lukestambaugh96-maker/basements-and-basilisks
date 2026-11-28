@@ -572,10 +572,17 @@
       }
     },
     "toot": {
-      "enabled": false,
-      "_note": "Switched off 25 Nov (Luke): out of the shop, bot and tests until his kit is redesigned.",
+      "enabled": true,
       "name": "Toot",
       "ancestry": "Plasmoid",
+      "kit2": {
+        "inspiration": { "die": { "dice": "1d6", "perTier": true }, "allyWard": { "dice": "3d6", "perTier": true, "bonus": "CHA" }, "coinHeal": { "dice": "1d8", "perTier": true }, "coinAs": 0.25, "coinAsSeconds": 3 },
+        "coin": { "hpShare": 0.3, "acBonus": 2, "atk": { "dice": "1d4", "perTier": true, "interval": 1.6 }, "maxAlive": 3, "count": { "low": 1, "mid": 1, "high": 2 }, "goldPerSurvivor": 1 },
+        "t2": {
+          "mintCondition": { "maxAlive": 5, "startCoins": 1, "coinAs": 0.35 },
+          "goldenWall": { "acBonus": 4, "tauntSeconds": 1.5, "explode": { "dice": "2d6", "perTier": true } }
+        }
+      },
       "class": "Bard",
       "subclass": "College of Creation",
       "role": ["Support"],
@@ -584,22 +591,22 @@
       "pronouns": "he/him",
       "job": "time",
       "chargeToCast": 100,
-      "neverMoves": true,
+      "neverMoves": false,
       "stats": { "STR": 10, "DEX": 10, "CON": 14, "INT": 10, "WIS": 10, "CHA": 16 },
       "key": "CHA",
       "ac": 13,
       "sr": 14,
-      "range": 1,
+      "range": 2,
       "attack": {
-        "name": "Brass Solo",
+        "name": "Brass Honk",
         "dice": "1d4",
-        "perTier": true,
+        "bonus": "CHA",
+        "halfBonus": true,
         "type": "magic",
-        "interval": 1.6,
-        "pulse": true
+        "interval": 1.6
       },
       "ability": {
-        "name": "Fanfare",
+        "name": "Animate Gold",
         "castTime": 0.25,
         "allies": { "low": 1, "mid": 1, "high": 2 },
         "natural20": "whole party",
@@ -861,6 +868,669 @@
         "panther": { "formHpShare": 0.3, "attackSpeed": 0.3, "healShareOfHit": 0.5 },
         "direBear": { "formHpShare": 0.6, "tauntSeconds": 2 }
       }
+    },
+    "father_gorr": {
+      "name": "Father Gorr",
+      "ancestry": "Half-Orc",
+      "kit2": {
+        "spiritualWeapon": { "dice": "1d4", "type": "radiant" },
+        "command": {
+          "melee": { "dice": "2d8", "perTier": true, "bonus": "STR" },
+          "backline": { "dice": "2d6", "perTier": true },
+          "selfWard": { "dice": "2d6", "perTier": true, "bonus": "WIS" },
+          "asBonus": 0.25,
+          "asSeconds": { "low": 3, "mid": 4, "high": 5 }
+        },
+        "channelDivinity": { "triggerBelowHp": 0.5 },
+        "t2": {
+          "crusadersMantle": { "splash": { "dice": "1d6", "perTier": true } },
+          "warGodsBlessing": { "restoreOnce": true, "partyCharge": 15 }
+        }
+      },
+      "class": "Cleric",
+      "subclass": "War Domain",
+      "role": ["Damage", "Tank"],
+      "benchJob": "brawler",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "attack",
+      "chargeToCast": 100,
+      "lastStand": true,
+      "stats": { "STR": 16, "DEX": 10, "CON": 15, "INT": 8, "WIS": 14, "CHA": 10 },
+      "key": "STR",
+      "ac": 16,
+      "sr": 12,
+      "range": 1,
+      "attack": { "name": "Warhammer", "dice": "1d6", "bonus": "STR", "halfBonus": true, "type": "physical", "interval": 1.6 },
+      "ability": { "name": "War Priest's Command", "castTime": 0.25 }
+    },
+    "morel": {
+      "name": "Morel",
+      "ancestry": "Human",
+      "kit2": {
+        "pod": { "maxPods": 3, "interval": 3.2, "radius": 1, "poison": 1, "symbioticPoison": 2, "symbioticRate": 1.25 },
+        "wildShape": { "hp": { "dice": "2d6", "perTier": true, "bonus": "CON" } },
+        "bloom": { "pods": { "low": 1, "mid": 1, "high": 2 }, "damage": { "dice": "1d6", "perTier": true } },
+        "t2": {
+          "sporeDetonation": { "damage": { "dice": "1d6", "perTier": true }, "poison": 1, "radius": 1 },
+          "mycelialNetwork": { "heal": { "dice": "2d6", "perTier": true }, "radius": 2 }
+        }
+      },
+      "class": "Druid",
+      "subclass": "Circle of Spores",
+      "role": ["Damage"],
+      "benchJob": "caster",
+      "size": "medium",
+      "pronouns": "they/them",
+      "job": "time",
+      "chargeToCast": 100,
+      "stats": { "STR": 10, "DEX": 10, "CON": 13, "INT": 10, "WIS": 16, "CHA": 10 },
+      "key": "WIS",
+      "ac": 12,
+      "sr": 14,
+      "range": 2,
+      "attack": { "name": "Spore Bolt", "dice": "1d4", "bonus": "WIS", "halfBonus": true, "type": "magic", "interval": 1.7 },
+      "ability": { "name": "Symbiotic Bloom", "castTime": 0.3 }
+    },
+    "tova": {
+      "name": "Tova",
+      "ancestry": "Goliath",
+      "kit2": {
+        "falcon": { "hpShare": 0.45, "ac": 15, "evasion": 0.2, "atk": { "dice": "1d6", "interval": 1.4 } },
+        "favoredFoe": { "everyNth": 3, "dive": { "dice": "3d6", "perTier": true, "bonus": "WIS" } },
+        "call": { "healShare": { "low": 0.6, "mid": 0.8, "high": 1.0 } },
+        "t2": {
+          "twinHunt": { "hpMult": 1.4, "extraEvasion": 0.25, "everyNth": 2, "diveBonus": { "dice": "1d6", "perTier": true } },
+          "goldenTalons": { "everyStrikes": 3, "maxGold": 3, "asBonus": 0.3, "asSeconds": 4, "falconAs": 0.3 }
+        }
+      },
+      "class": "Ranger",
+      "subclass": "Beast Master",
+      "role": ["Damage"],
+      "benchJob": "attacker",
+      "size": "medium",
+      "pronouns": "she/her",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 15, "DEX": 10, "CON": 12, "INT": 10, "WIS": 14, "CHA": 10 },
+      "key": "STR",
+      "ac": 14,
+      "sr": 12,
+      "range": 2,
+      "attack": { "name": "Climbing Spear", "dice": "1d6", "bonus": "STR", "type": "physical", "interval": 1.7 },
+      "ability": { "name": "Falconer's Call", "castTime": 0.25 }
+    },
+    "bellin": {
+      "name": "Bellin",
+      "ancestry": "Elf",
+      "kit2": {
+        "homunculus": { "hpShare": 0.45, "ac": 14, "atk": { "dice": "1d8", "bonus": "INT", "halfBonus": true, "interval": 1.6 }, "graftHpPct": 0.25, "graftHealPct": 0.35, "graftDmg": { "dice": "1d6", "perTier": true } },
+        "arcaneRecovery": { "charge": 35 },
+        "deathKnell": { "base": { "dice": "3d6", "perTier": true }, "damaged": { "dice": "4d6", "perTier": true, "high": "+1" }, "reverbSeconds": 8, "reviveShare": 0.5 },
+        "t2": {
+          "ossuaryAbomination": { "startGrafts": 1, "chunkPct": 0.2, "cleaveAtGrafts": 2 },
+          "soulEcho": { "necrosisSeconds": 6, "explode": { "dice": "3d6", "perTier": true }, "bonusDmg": { "dice": "2d6", "perTier": true }, "reverbAll": true }
+        }
+      },
+      "class": "Wizard",
+      "subclass": "Necromancy",
+      "role": ["Damage"],
+      "benchJob": "caster",
+      "size": "big",
+      "pronouns": "he/him",
+      "job": "time",
+      "chargeToCast": 180,
+      "stats": { "STR": 8, "DEX": 10, "CON": 14, "INT": 16, "WIS": 12, "CHA": 10 },
+      "key": "INT",
+      "ac": 12,
+      "sr": 14,
+      "range": 3,
+      "attack": { "name": "Necrotic Bolt", "dice": "1d4", "bonus": "INT", "halfBonus": true, "type": "magic", "interval": 1.7 },
+      "ability": { "name": "Death Knell", "castTime": 0.4 }
+    },
+    "thia": {
+      "name": "Thia",
+      "ancestry": "Wood Elf",
+      "kit2": {
+        "acorn": { "splash": { "dice": "1d4" }, "burn": 1 },
+        "wildShape": { "hp": { "dice": "2d8", "perTier": true, "bonus": "WIS" }, "asBonus": 0.35, "refreshHp": { "dice": "1d8", "perTier": true } },
+        "barrage": { "cones": { "low": 1, "mid": 2, "high": 2 }, "damage": { "dice": "2d4", "perTier": true }, "burn": 2 },
+        "t2": {
+          "nuttyBarrage": { "startShifted": true, "everyNth": 3, "damage": { "dice": "2d6", "perTier": true }, "burn": 3 },
+          "cauterizingFlame": { "heal": { "dice": "2d6", "perTier": true }, "formHeal": { "dice": "1d8", "perTier": true } }
+        }
+      },
+      "class": "Druid",
+      "subclass": "Circle of Wildfire",
+      "role": ["Damage"],
+      "benchJob": "attacker",
+      "size": "medium",
+      "pronouns": "she/her",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 8, "DEX": 14, "CON": 12, "INT": 10, "WIS": 16, "CHA": 10 },
+      "key": "WIS",
+      "ac": 13,
+      "sr": 14,
+      "range": 3,
+      "attack": { "name": "Flaming Acorn", "dice": "1d4", "bonus": "WIS", "type": "magic", "interval": 1.8 },
+      "ability": { "name": "Pinecone Barrage", "castTime": 0.25 }
+    },
+    "orlo": {
+      "name": "Orlo",
+      "ancestry": "High Elf",
+      "kit2": {
+        "missile": { "base": { "low": 2, "mid": 2, "high": 3 }, "add": { "low": 1, "mid": 1, "high": 1 }, "damage": { "dice": "1d4", "perTier": true }, "arPerMissile": 3, "arCap": 15 },
+        "t2": {
+          "seekingBarrage": { "startMissiles": 1, "srShred": 2, "srMax": 8, "srSeconds": 4, "evaBonusAr": 10 },
+          "arcaneWarhead": { "chargesNeeded": 3, "nuke": { "dice": "10d8", "perTier": true }, "radius": 1 }
+        }
+      },
+      "class": "Wizard",
+      "subclass": "Evocation",
+      "role": ["Damage"],
+      "benchJob": "caster",
+      "size": "small",
+      "pronouns": "he/him",
+      "job": "time",
+      "chargeToCast": 60,
+      "stats": { "STR": 8, "DEX": 12, "CON": 12, "INT": 16, "WIS": 12, "CHA": 10 },
+      "key": "INT",
+      "ac": 12,
+      "sr": 14,
+      "range": 4,
+      "attack": { "name": "Arcane Spark", "dice": "1d4", "bonus": "INT", "halfBonus": true, "type": "magic", "interval": 1.6, "ignoreEvasion": true },
+      "ability": { "name": "Magic Missile", "castTime": 0.25 }
+    },
+    "leagues": {
+      "name": "Leagues",
+      "ancestry": "Sea Elf",
+      "kit2": {
+        "pact": { "cooldown": 2.5, "damage": { "dice": "1d8", "perTier": true, "bonus": "CHA" }, "slow": 0.3, "slowSeconds": 2 },
+        "surge": { "damage": { "dice": "3d6", "perTier": true, "bonus": "CHA" }, "push": 1 },
+        "t2": {
+          "riptideTorrent": { "pierceDamage": { "dice": "1d8", "perTier": true, "bonus": "CHA" }, "pushHexed": 1 },
+          "graspingTentacles": { "startHex": true, "cooldown": 1.25, "rootEveryNth": 2, "rootSeconds": 1.5 }
+        }
+      },
+      "class": "Warlock",
+      "subclass": "The Fathomless",
+      "role": ["Damage"],
+      "benchJob": "attacker",
+      "size": "medium",
+      "pronouns": "they/them",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 8, "DEX": 12, "CON": 12, "INT": 12, "WIS": 10, "CHA": 16 },
+      "key": "CHA",
+      "ac": 12,
+      "sr": 14,
+      "range": 4,
+      "attack": { "name": "Eldritch Torrent", "dice": "1d8", "bonus": "CHA", "type": "magic", "interval": 1.65 },
+      "ability": { "name": "Abyssal Surge", "castTime": 0.25 }
+    },
+    "ylowyn": {
+      "name": "Ylowyn",
+      "ancestry": "Gnome",
+      "kit2": {
+        "metamagic": { "maxSp": 4, "spCd": 1.0, "startSp": 2 },
+        "spores": { "evasion": 0.2, "evaSeconds": { "low": 3, "mid": 4, "high": 5 }, "ward": { "dice": "3d6", "perTier": true, "bonus": "CHA" }, "heal": { "dice": "1d8", "perTier": true, "bonus": "CHA" }, "disadvSeconds": 2.5 },
+        "t2": {
+          "telepathicBond": { "startSp": 4, "refundSp": 1, "chargeOnTwin": 40, "twinWard": { "dice": "2d6", "perTier": true } },
+          "protectiveSpores": { "partyEva": 0.15, "partyEvaSeconds": 3, "disadvTargets": 2, "missHeal": { "dice": "2d6", "perTier": true }, "missHealCd": 0.8 }
+        }
+      },
+      "class": "Sorcerer",
+      "subclass": "Empathic",
+      "role": ["Support"],
+      "benchJob": "support",
+      "size": "medium",
+      "pronouns": "she/her",
+      "job": "time",
+      "chargeToCast": 100,
+      "stats": { "STR": 8, "DEX": 12, "CON": 14, "INT": 12, "WIS": 12, "CHA": 16 },
+      "key": "CHA",
+      "ac": 13,
+      "sr": 14,
+      "range": 3,
+      "attack": { "name": "Telepathic Spark", "dice": "1d6", "bonus": "CHA", "halfBonus": true, "type": "magic", "interval": 1.6 },
+      "ability": { "name": "Flumphry's Spores", "castTime": 0.25 }
+    },
+    "chuk": {
+      "name": "Chuk",
+      "ancestry": "Half-Orc",
+      "kit2": {
+        "metamagic": { "maxSp": 4, "startSp": 1 },
+        "surge": { "damage": { "dice": "5d8", "perTier": true, "bonus": "CHA" }, "lowWeaken": 0.3, "lowSeconds": 3, "lowSplash": { "dice": "2d6", "perTier": true }, "midSplash": { "dice": "3d6", "perTier": true }, "highExtra": { "dice": "3d6", "perTier": true }, "highTargets": 2, "highCharge": 25 },
+        "t2": {
+          "controlledChaos": { "startSp": 3, "partyAdv": true },
+          "spellBombardment": { "bounce": { "dice": "3d8", "perTier": true }, "onHigh": true, "refundSp": 2 }
+        }
+      },
+      "class": "Sorcerer",
+      "subclass": "Wild Magic",
+      "role": ["Damage"],
+      "benchJob": "caster",
+      "size": "big",
+      "pronouns": "he/him",
+      "job": "time",
+      "chargeToCast": 180,
+      "lastStand": true,
+      "stats": { "STR": 12, "DEX": 10, "CON": 14, "INT": 12, "WIS": 10, "CHA": 16 },
+      "key": "CHA",
+      "ac": 12,
+      "sr": 14,
+      "range": 3,
+      "attack": { "name": "Chaos Bolt", "dice": "1d6+1", "type": "magic", "interval": 1.8 },
+      "ability": { "name": "Wild Surge", "castTime": 0.35 }
+    },
+    "durn": {
+      "name": "Durn",
+      "ancestry": "Dwarf",
+      "kit2": {
+        "thorns": { "acDiv": 8, "cd": 0.75 },
+        "rage": { "cd": 1.0, "bleedInterval": 3 },
+        "hug": { "damage": { "dice": "1d8", "perTier": true }, "acShare": 0.5, "ward": { "dice": "2d6", "perTier": true, "bonus": "CON" }, "rootSeconds": { "low": 1, "mid": 1.5, "high": 2 }, "bleed": { "low": 2, "mid": 3, "high": 4 } },
+        "t2": {
+          "ironhideSpikes": { "acDiv": 4, "ward": { "dice": "2d6", "perTier": true, "bonus": "CON" } },
+          "bloodiedChicken": { "halfRage": 3, "bleedHitHeal": { "dice": "2d6", "perTier": true } }
+        }
+      },
+      "class": "Barbarian",
+      "subclass": "Path of the Battlerager",
+      "role": ["Tank"],
+      "benchJob": "frontline",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "hit",
+      "chargeToCast": 100,
+      "stats": { "STR": 14, "DEX": 10, "CON": 16, "INT": 8, "WIS": 10, "CHA": 10 },
+      "key": "CON",
+      "ac": 16,
+      "sr": 11,
+      "range": 1,
+      "attack": { "name": "Spiked Gauntlets", "dice": "1d6", "bonus": "STR", "type": "physical", "interval": 1.6 },
+      "ability": { "name": "Spiked Hug", "castTime": 0.25 }
+    },
+    "corporal_tobbin": {
+      "name": "Corporal Tobbin",
+      "ancestry": "Halfling",
+      "kit2": {
+        "horn": { "acBonus": { "low": 3, "mid": 4, "high": 5 }, "seconds": 4, "ward": { "dice": "2d8", "perTier": true, "bonus": "CHA" }, "bash": { "dice": "1d6", "perTier": true, "bonus": "STR" }, "inspireCount": { "low": 1, "mid": 1, "high": 2 } },
+        "inspiration": { "die": { "dice": "1d8", "perTier": true } },
+        "t2": {
+          "holdTheLine": { "srBonus": 3, "spendHeal": { "dice": "1d6", "perTier": true } },
+          "overTheTop": { "asBonus": 0.35, "asSeconds": 4, "allyCharge": 15 }
+        }
+      },
+      "class": "Bard",
+      "subclass": "College of Valor",
+      "role": ["Tank", "Support"],
+      "benchJob": "frontline",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "hit",
+      "chargeToCast": 100,
+      "stats": { "STR": 14, "DEX": 12, "CON": 16, "INT": 10, "WIS": 10, "CHA": 14 },
+      "key": "CON",
+      "ac": 17,
+      "sr": 13,
+      "range": 1,
+      "attack": { "name": "Shortsword & Buckler", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 1.5 },
+      "ability": { "name": "Rallying Horn", "castTime": 0.25 }
+    },
+    "vela": {
+      "name": "Vela",
+      "ancestry": "Half-Elf",
+      "kit2": {
+        "ki": { "max": 5, "die": "1d4" },
+        "harm": { "damage": { "dice": "1d8", "perTier": true, "bonus": "WIS" }, "baseHeal": { "dice": "1d6", "perTier": true, "bonus": "CON" }, "necrosisSeconds": 4, "healShare": 1.0 },
+        "t2": {
+          "plagueMask": { "attackPoison": 1, "splashAtKi": 5 },
+          "handOfMercy": { "ward": { "dice": "2d6", "perTier": true } }
+        }
+      },
+      "class": "Monk",
+      "subclass": "Way of Mercy",
+      "role": ["Tank", "Support"],
+      "benchJob": "frontline",
+      "size": "medium",
+      "pronouns": "they/them",
+      "job": "hit",
+      "chargeToCast": 100,
+      "stats": { "STR": 10, "DEX": 12, "CON": 16, "INT": 10, "WIS": 14, "CHA": 10 },
+      "key": "CON",
+      "ac": 16,
+      "sr": 13,
+      "range": 1,
+      "attack": { "name": "Draining Palm", "dice": "1d6", "bonus": "WIS", "halfBonus": true, "type": "physical", "interval": 1.5 },
+      "ability": { "name": "Hand of Harm", "castTime": 0.25 }
+    },
+    "lady_malice": {
+      "name": "Lady Malice",
+      "ancestry": "Tiefling",
+      "kit2": {
+        "aura": { "radius": 2, "hpPerKill": 6, "capPerTier": 60 },
+        "smite": { "damage": { "dice": "1d6", "perTier": true }, "hpDiv": 15 },
+        "presence": { "tauntSeconds": { "low": 1.5, "mid": 2, "high": 3 }, "pulse": { "dice": "1d4", "perTier": true }, "ward": { "dice": "2d6", "perTier": true, "bonus": "CON" } },
+        "t2": {
+          "auraOfDominion": { "slow": 0.25, "weaken": 0.15, "cap": 120 },
+          "bloodTithe": { "healPct": 0.15, "charge": 25 }
+        }
+      },
+      "class": "Paladin",
+      "subclass": "Oath of Conquest",
+      "role": ["Tank"],
+      "benchJob": "frontline",
+      "size": "medium",
+      "pronouns": "she/her",
+      "job": "hit",
+      "chargeToCast": 100,
+      "stats": { "STR": 14, "DEX": 10, "CON": 16, "INT": 10, "WIS": 10, "CHA": 14 },
+      "key": "CON",
+      "ac": 17,
+      "sr": 13,
+      "range": 1,
+      "attack": { "name": "Iron Flail", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 1.65 },
+      "ability": { "name": "Conquering Presence", "castTime": 0.25 }
+    },
+    "malthrax": {
+      "name": "Malthrax",
+      "ancestry": "White Dragonborn",
+      "kit2": {
+        "pact": { "cooldown": 2.0, "bonus": { "dice": "1d6", "perTier": true }, "healShare": 0.35 },
+        "curse": { "damage": { "dice": "2d8", "perTier": true, "bonus": "CHA" }, "ward": { "dice": "2d6", "perTier": true, "bonus": "CON" }, "highEvasion": 0.2, "highEvaSeconds": 3 },
+        "t2": {
+          "crimsonHunger": { "lowHpPct": 0.6, "lowCd": 1.0 },
+          "frostAndBlood": { "slow": 0.3, "slowSeconds": 2.5, "bonusPerFoe": { "dice": "1d6", "perTier": true } }
+        }
+      },
+      "class": "Warlock",
+      "subclass": "The Hexblade",
+      "role": ["Damage", "Tank"],
+      "benchJob": "brawler",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 12, "DEX": 10, "CON": 14, "INT": 10, "WIS": 10, "CHA": 16 },
+      "key": "CHA",
+      "ac": 15,
+      "sr": 13,
+      "range": 1,
+      "attack": { "name": "Blood Greatsword", "dice": "1d10", "bonus": "CHA", "type": "physical", "interval": 1.75 },
+      "ability": { "name": "Hexblade's Curse", "castTime": 0.25 }
+    },
+    "falcorn": {
+      "name": "Falcorn",
+      "ancestry": "Aarakocra",
+      "kit2": {
+        "rage": { "atkPerStack": 1, "divePerStack": 2, "killStacks": 2 },
+        "dive": { "airSeconds": 0.8, "damage": { "dice": "3d8", "perTier": true, "bonus": "STR" }, "highStunSeconds": 1.0 },
+        "t2": {
+          "apexPredator": { "killCharge": 60, "diveCd": 3.0 },
+          "galeWings": { "stunSeconds": 1.2, "ward": { "dice": "2d6", "perTier": true, "bonus": "STR" }, "evasion": 0.3, "evaSeconds": 3.0 }
+        }
+      },
+      "class": "Barbarian",
+      "subclass": "Path of the Wildheart",
+      "role": ["Damage"],
+      "benchJob": "attacker",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 16, "DEX": 14, "CON": 11, "INT": 8, "WIS": 12, "CHA": 10 },
+      "key": "STR",
+      "ac": 13,
+      "sr": 11,
+      "range": 1,
+      "attack": { "name": "Talon Greataxe", "dice": "1d8", "bonus": "STR", "type": "physical", "interval": 1.5 },
+      "ability": { "name": "Falcon Dive", "castTime": 0.1 }
+    },
+    "moxie": {
+      "name": "Moxie",
+      "ancestry": "Tiefling",
+      "kit2": {
+        "juggle": { "max": 3, "blade": { "dice": "1d4" } },
+        "inspiration": { "die": { "dice": "1d6", "perTier": true } },
+        "cloud": { "seconds": { "low": 3, "mid": 4, "high": 5 }, "tickDamage": { "dice": "1d8", "perTier": true }, "radius": 1 },
+        "t2": {
+          "grandFinale": { "startJuggle": 2, "max": 5, "highFanTargets": 3 },
+          "razorEncore": { "pulse": { "dice": "3d6", "perTier": true }, "moxieCharge": 25 }
+        }
+      },
+      "class": "Bard",
+      "subclass": "College of Swords",
+      "role": ["Damage"],
+      "benchJob": "attacker",
+      "size": "medium",
+      "pronouns": "they/them",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 8, "DEX": 16, "CON": 12, "INT": 10, "WIS": 10, "CHA": 14 },
+      "key": "DEX",
+      "ac": 14,
+      "sr": 13,
+      "range": 3,
+      "attack": { "name": "Juggled Dagger", "dice": "1d4", "bonus": "DEX", "type": "physical", "interval": 1.3 },
+      "ability": { "name": "Cloud of Daggers", "castTime": 0.25 }
+    },
+    "maxim": {
+      "name": "Maxim",
+      "ancestry": "Human",
+      "kit2": {
+        "surge": { "everyNth": 5 },
+        "shot": { "damage": { "dice": "4d6", "perTier": true, "bonus": "DEX", "low": "3d6", "high": "5d6" }, "highAcShred": -4, "highAcSeconds": 4 },
+        "t2": {
+          "crossbowMaster": { "everyNth": 4, "extraBolts": 2, "ignoreEvasion": true },
+          "burstingArrow": { "splash": { "dice": "3d6", "perTier": true }, "acShred": -3, "acSeconds": 3, "pierceBonus": 0.2, "pierceSeconds": 4 }
+        }
+      },
+      "class": "Fighter",
+      "subclass": "Arcane Archer",
+      "role": ["Damage"],
+      "benchJob": "attacker",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 10, "DEX": 16, "CON": 12, "INT": 14, "WIS": 10, "CHA": 10 },
+      "key": "DEX",
+      "ac": 14,
+      "sr": 12,
+      "range": 3,
+      "attack": { "name": "Dual Hand Crossbows", "dice": "1d4", "bonus": "DEX", "type": "physical", "interval": 1.12 },
+      "ability": { "name": "Sharpshooter Shot", "castTime": 0.2 }
+    },
+    "suna": {
+      "name": "Suna",
+      "ancestry": "Human",
+      "kit2": {
+        "ki": { "max": 3, "bonusPerKi": "1d4" },
+        "shot": { "damage": { "dice": "3d8", "perTier": true, "bonus": "DEX" } },
+        "t2": {
+          "oneWithTheBow": { "startKi": 1, "pierceAtKi": 2, "pierceRadius": 2, "pierceDamage": { "dice": "3d6", "perTier": true } },
+          "patientAim": { "startKi": 2, "acShred": -4, "acSeconds": 4, "slow": 0.3, "slowSeconds": 2 }
+        }
+      },
+      "class": "Monk",
+      "subclass": "Way of the Kensei",
+      "role": ["Damage"],
+      "benchJob": "attacker",
+      "size": "medium",
+      "pronouns": "she/her",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 10, "DEX": 16, "CON": 12, "INT": 10, "WIS": 14, "CHA": 10 },
+      "key": "DEX",
+      "ac": 14,
+      "sr": 13,
+      "range": 4,
+      "attack": { "name": "Yumi Longbow", "dice": "2d8", "bonus": "DEX", "type": "physical", "interval": 2.7 },
+      "ability": { "name": "Deft Shot", "castTime": 0.3 }
+    },
+    "petra": {
+      "name": "Petra",
+      "ancestry": "Silverbrow Human",
+      "kit2": {
+        "chaser": { "asBonus": 0.25, "crBonus": 0.25 },
+        "charge": { "lance": { "dice": "2d10", "perTier": true, "bonus": "STR" }, "smite": { "dice": "2d8", "perTier": true }, "selfWard": { "dice": "2d6", "perTier": true, "bonus": "CHA" }, "push": 1 },
+        "t2": {
+          "platinumRival": { "followUp": true, "killRefund": 90 },
+          "bahamutsBanner": { "acBonus": 3, "srBonus": 3, "ward": { "dice": "1d6", "perTier": true } }
+        }
+      },
+      "class": "Paladin",
+      "subclass": "Oath of Bahamut",
+      "role": ["Damage", "Tank"],
+      "benchJob": "brawler",
+      "size": "big",
+      "pronouns": "she/her",
+      "job": "attack",
+      "chargeToCast": 180,
+      "stats": { "STR": 16, "DEX": 10, "CON": 14, "INT": 10, "WIS": 10, "CHA": 14 },
+      "key": "STR",
+      "ac": 16,
+      "sr": 12,
+      "range": 1,
+      "attack": { "name": "Dragonnel Lance", "dice": "1d10", "bonus": "STR", "type": "physical", "interval": 1.6 },
+      "ability": { "name": "Dragonnel Charge", "castTime": 0.3 }
+    },
+    "burbrax": {
+      "name": "Burbrax",
+      "ancestry": "Brass Dragonborn",
+      "kit2": {
+        "ki": { "max": 5, "evaPerKi": 0.05 },
+        "breath": { "damage": { "dice": "2d6", "perTier": true, "bonus": "CON" }, "selfWard": { "dice": "1d8", "perTier": true, "bonus": "CON" }, "burn": { "low": 3, "mid": 4, "high": 5 }, "disadvSeconds": 3, "allyEva": 0.15, "allyEvaSeconds": 3 },
+        "t2": {
+          "topShelfProof": { "cd": 2.0, "burn": 2, "damage": { "dice": "1d6", "perTier": true } },
+          "drunkenSway": { "startKi": 2, "avoidCharge": 15 }
+        }
+      },
+      "class": "Monk",
+      "subclass": "Way of the Drunken Master",
+      "role": ["Damage", "Tank"],
+      "benchJob": "brawler",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 12, "DEX": 16, "CON": 15, "INT": 8, "WIS": 12, "CHA": 10 },
+      "key": "DEX",
+      "ac": 14,
+      "sr": 12,
+      "range": 1,
+      "attack": { "name": "Staggering Fist", "dice": "1d6", "bonus": "DEX", "type": "physical", "interval": 1.5 },
+      "ability": { "name": "Firewater Breath", "castTime": 0.25 }
+    },
+    "colony": {
+      "name": "Colony",
+      "ancestry": "Tiefling",
+      "kit2": {
+        "swarm": { "interval": 2, "damage": { "dice": "1d4", "perTier": true }, "markSlow": 0.3, "markSeconds": 2 },
+        "surge": { "radius": 2, "damage": { "dice": "1d8", "perTier": true, "bonus": "WIS" }, "selfWard": { "dice": "2d6", "perTier": true, "bonus": "CON" }, "slow": 0.35, "slowSeconds": { "low": 2, "mid": 3, "high": 4 } },
+        "t2": {
+          "killerBees": { "poison": 1, "jumpMark": true },
+          "blindingSwarm": { "radius": 2, "evasion": 0.15, "evaSeconds": 2.2 }
+        }
+      },
+      "class": "Ranger",
+      "subclass": "Swarmkeeper",
+      "role": ["Damage", "Tank"],
+      "benchJob": "brawler",
+      "size": "medium",
+      "pronouns": "she/her",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 10, "DEX": 14, "CON": 14, "INT": 10, "WIS": 16, "CHA": 10 },
+      "key": "WIS",
+      "ac": 14,
+      "sr": 13,
+      "range": 1,
+      "attack": { "name": "Smoker Flail", "dice": "1d8", "bonus": "DEX", "type": "physical", "interval": 1.5 },
+      "ability": { "name": "Hive Surge", "castTime": 0.25 }
+    },
+    "nix": {
+      "name": "Nix",
+      "ancestry": "Gnome",
+      "kit2": {
+        "sneak": { "cooldown": 4.0, "damage": { "dice": "1d4", "perTier": true }, "steal": 20, "minAllyCharge": 12 },
+        "sabotage": { "damage": { "dice": "1d4", "perTier": true }, "disadvSeconds": { "low": 3, "mid": 4, "high": 5 }, "allyWard": { "dice": "2d6", "perTier": true, "bonus": "INT" } },
+        "t2": {
+          "versatileTrickster": { "evasion": 0.15, "evaSeconds": 3, "stripWard": { "dice": "2d6", "perTier": true } },
+          "spellThief": { "steal": 35, "minAllyCharge": 25, "damage": { "dice": "2d6", "perTier": true } }
+        }
+      },
+      "class": "Rogue",
+      "subclass": "Arcane Trickster",
+      "role": ["Support"],
+      "benchJob": "support",
+      "size": "small",
+      "pronouns": "they/them",
+      "job": "time",
+      "chargeToCast": 60,
+      "stats": { "STR": 8, "DEX": 14, "CON": 12, "INT": 16, "WIS": 10, "CHA": 12 },
+      "key": "INT",
+      "ac": 13,
+      "sr": 14,
+      "range": 3,
+      "attack": { "name": "Arcane Sling", "dice": "1d4", "bonus": "INT", "halfBonus": true, "type": "magic", "interval": 1.6 },
+      "ability": { "name": "Mage Hand Sabotage", "castTime": 0.2 }
+    },
+    "rico": {
+      "name": "Rico",
+      "ancestry": "Half-Elf",
+      "kit2": {
+        "sneak": { "cooldown": 2.5, "damage": { "dice": "2d6", "perTier": true, "bonus": "DEX" } },
+        "footwork": { "ward": { "dice": "3d6", "perTier": true, "bonus": "CHA" }, "tauntSeconds": { "low": 1.5, "mid": 2.5, "high": 3.5 }, "eva": 0.2, "evaSeconds": 2.5 },
+        "t2": {
+          "masterDuelist": { "isoCrit": true, "resetOnKill": true },
+          "panache": { "stealAc": 3, "stealSeconds": 4, "avoidCharge": 15 }
+        }
+      },
+      "class": "Rogue",
+      "subclass": "Swashbuckler",
+      "role": ["Damage", "Tank"],
+      "benchJob": "brawler",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "attack",
+      "chargeToCast": 100,
+      "stats": { "STR": 10, "DEX": 16, "CON": 14, "INT": 10, "WIS": 10, "CHA": 14 },
+      "key": "DEX",
+      "ac": 15,
+      "sr": 12,
+      "range": 1,
+      "attack": { "name": "Cutlass", "dice": "1d8", "bonus": "DEX", "type": "physical", "interval": 1.45 },
+      "ability": { "name": "Fancy Footwork", "castTime": 0.2 }
+    },
+    "hewitt": {
+      "name": "Hewitt",
+      "ancestry": "Dwarf",
+      "kit2": {
+        "metamagic": { "maxSp": 4, "spCd": 1.5, "atksForSp": 2, "startSp": 1 },
+        "overclock": { "statAmt": { "low": 4, "mid": 6, "high": 8 }, "asBonus": 0.35, "seconds": 5, "allyCharge": 20, "ward": { "dice": "3d6", "perTier": true, "bonus": "CHA" } },
+        "t2": {
+          "tranceOfOrder": { "allyCharge": 15, "noFizzleSeconds": 5 },
+          "clockworkCavalcade": { "startSp": 2, "partyWard": { "dice": "3d8", "perTier": true }, "partyEva": 0.1, "partyEvaSeconds": 3 }
+        }
+      },
+      "class": "Sorcerer",
+      "subclass": "Clockwork Soul",
+      "role": ["Support"],
+      "benchJob": "support",
+      "size": "medium",
+      "pronouns": "he/him",
+      "job": "time",
+      "chargeToCast": 100,
+      "stats": { "STR": 10, "DEX": 10, "CON": 14, "INT": 12, "WIS": 12, "CHA": 16 },
+      "key": "CHA",
+      "ac": 13,
+      "sr": 14,
+      "range": 3,
+      "attack": { "name": "Orderly Bolt", "dice": "1d4", "bonus": "CHA", "halfBonus": true, "type": "magic", "interval": 1.7 },
+      "ability": { "name": "Overclock", "castTime": 0.25 }
     }
   }
 }
