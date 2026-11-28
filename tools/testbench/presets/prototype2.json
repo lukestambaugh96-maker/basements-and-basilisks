@@ -172,6 +172,7 @@
     "heroes.zoe.attack.speedScaling": 0.9,
     "heroes.toot.attack.speedScaling": 1.1,
     "heroes.gilthrax.attack.speedScaling": 0.85,
+    "heroes.cinder.kit2": null,
     "heroes.cinder.attack.speedScaling": 0.95,
     "heroes.gains.attack.speedScaling": 1.05,
     "heroes.saint.attack.speedScaling": 0.9

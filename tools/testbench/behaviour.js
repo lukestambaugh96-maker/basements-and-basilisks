@@ -611,6 +611,70 @@ Object.assign(KITS2, {
   }; },
 });
 
+// ---------------- batch 3 reworks (27 Nov, proposals) ----------------
+Object.assign(KITS2, {
+  cinder: c => { const K = c.kit2; const maxSp = (K.metamagic && K.metamagic.maxSp) || 4;
+    return { dmgAb: true,
+    onStart(F, u) {
+      const BV = u.t2 === 1 && K.t2.livingFlame;
+      if (BV && BV.attackStat) {
+        u.atk = Object.assign({}, u.atk, { stat: BV.attackStat, flat: BV.attackFlat != null ? BV.attackFlat : 0 });
+        if (BV.attackDice) { const p = parseDice(BV.attackDice); u.atk.n = p.n; u.atk.x = p.x; u.atk.tierDice = !!BV.attackPerTier; }
+      }
+    },
+    strikesVs: (F, u) => {
+      const BV = u.t2 === 1 && K.t2.livingFlame;
+      if (!BV || !BV.stacksPerExtraBolt) return 1;
+      const st = u.flameStacks || 0;
+      const extra = BV.firstBoltAt1 ? Math.ceil(st / BV.stacksPerExtraBolt) : Math.floor(st / BV.stacksPerExtraBolt);
+      return 1 + (BV.maxExtraBolts != null ? Math.min(BV.maxExtraBolts, extra) : extra);
+    },
+    // Passive (Draconic Spark): each Fire Bolt attack grants +1 Sorcery Point (max 4).
+    onAttack(F, u) { u.sp = Math.min(maxSp, (u.sp || 0) + 1); },
+    ab: {
+      can: (F, u) => u.t2 === 1 && K.t2.livingFlame ? tfoes(F, u).length > 0 : tfoes(F, u).some(o => canHit(F, u, o)),
+      cast(F, u, r) {
+        // Metamagic (Twin Spell): at 4 Sorcery Points, spend all 4 to cast twice.
+        let casts = 1;
+        if ((u.sp || 0) >= maxSp) { u.sp = 0; casts = 2; u.twins = (u.twins || 0) + 1; }
+        const BV = u.t2 === 1 && K.t2.livingFlame;
+        if (BV) {
+          const perCast = BV.stacksByRoll ? byRoll(BV.stacksByRoll, r) : 1;
+          const add = perCast * casts;
+          u.flameStacks = (u.flameStacks || 0) + add;
+          u.as += BV.asPerStack * add;
+          return;
+        }
+        const A = c.ability, SE = u.t2 === 0 && K.t2.scorchedEarth;
+        const raySpec = K.ray || A.ray;
+        const s = spec(u, raySpec, r);
+        const raysPerCast = K.rays ? (typeof K.rays === 'number' ? K.rays : byRoll(K.rays, r)) : byRoll(A.rays, r);
+        for (let k = 0; k < casts; k++) {
+          const list = tfoes(F, u).filter(o => canHit(F, u, o)).sort((a, b) => dist(a, u) - dist(b, u));
+          if (!list.length) break;
+          for (let i = 0; i < raysPerCast; i++) {
+            const aliveFoes = list.filter(o => o.alive); if (!aliveFoes.length) break;
+            const t = aliveFoes[i % Math.min(A.targets || 3, aliveFoes.length)];
+            const tx = t.x, ty = t.y;
+            abHit(F, u, t, s.n, s.x, s.flat, A.type, r);
+            if (SE) {
+              if (SE.splash) {
+                const sp = spec(u, SE.splash);
+                for (const o of adjUnits(F, { x: tx, y: ty }, 'E')) if (o !== t) dealDamage(F, u, o, rollDice(sp.n, sp.x, r.crit) + sp.flat, A.type, { ability: true, area: true });
+              }
+              if (SE.fireDot) {
+                const fd = spec(u, SE.fireDot);
+                const rad = SE.fireRadius || 0;
+                for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) igniteTile(F, u, tx + dx, ty + dy, SE.fireSeconds || 3, fd);
+              }
+            }
+          }
+        }
+      },
+    },
+  }; },
+});
+
 // ---------------- build HEROES from config + kits ----------------
 const STAT_KEYS = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 function atkFromCfg(a) {

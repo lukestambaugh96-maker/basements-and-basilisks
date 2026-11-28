@@ -691,6 +691,7 @@
     "cinder": {
       "name": "Cinder",
       "ancestry": "Tiefling",
+      "kit2": {"metamagic": {"maxSp": 4}, "rays": {"low": 2, "mid": 3, "high": 4}, "ray": {"dice": "2d6", "perTier": true}, "t2": {"scorchedEarth": {"splash": {"dice": "1d4", "perTier": true}, "fireDot": {"dice": "1d4"}, "fireSeconds": 2, "fireRadius": 1}, "livingFlame": {"attackDice": "1d6", "attackPerTier": true, "attackStat": "CHA", "attackFlat": 0, "asPerStack": 0.2, "stacksPerExtraBolt": 2, "firstBoltAt1": true, "stacksByRoll": {"low": 1, "mid": 1, "high": 2}}}},
       "class": "Sorcerer",
       "subclass": "Draconic Bloodline",
       "role": ["Damage"],

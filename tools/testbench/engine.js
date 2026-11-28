@@ -34,7 +34,7 @@ const upDie = (x, k) => { for (let i = 0; i < k; i++) x = DIE_UP[x] || x; return
 
 // ---------------- fight setup ----------------
 function makeFight(enc, heroUnits, opts = {}) {
-  const F = { t: 0, ev: [], units: [], enc, campWard: !!opts.campWard, runGold: opts.runGold || 0, terr: [], fx: [], log: [], headless: !!opts.headless, over: false, result: null, gold: 0, uidc: 1, flood: enc.flood ? { t: enc.flood.t, row: enc.flood.row, done: false } : null };
+  const F = { t: 0, ev: [], units: [], enc, campWard: !!opts.campWard, runGold: opts.runGold || 0, terr: [], fx: [], log: [], headless: !!opts.headless, over: false, result: null, gold: 0, uidc: 1, flood: enc.flood ? { t: enc.flood.t, row: enc.flood.row, done: false } : null, fireTiles: null, fireT: 0 };
   for (let y = 0; y < ROWS; y++) { F.terr.push(new Array(COLS).fill(null)); }
   for (const [kind, x, y] of (enc.terrain || [])) F.terr[y][x] = kind;
   for (const u of heroUnits) addUnit(F, u);
@@ -415,6 +415,18 @@ function stepFight(F) {
     for (const u of alive(F)) if (u.y === F.flood.row) { for (let i = 0; i < 2; i++) if (free(F, u.x - 1, u.y)) moveTo(F, u, u.x - 1, u.y); }
   }
   if (F.floodFx > 0) F.floodFx -= DT;
+  if (F.fireTiles) {
+    for (const k of Object.keys(F.fireTiles)) { F.fireTiles[k].t -= DT; if (F.fireTiles[k].t <= 0) delete F.fireTiles[k]; }
+    F.fireT += DT;
+    if (F.fireT >= 1) {
+      F.fireT -= 1;
+      for (const u of F.units.slice()) {
+        if (!u.alive || u.side !== 'E') continue;
+        const ft = F.fireTiles[u.y * COLS + u.x];
+        if (ft) dealDamage(F, ft.src, u, rollDice(ft.n, ft.x) + ft.flat, 'magic', { ability: true, area: true, dot: 'fire' });
+      }
+    }
+  }
   for (const u of F.units.slice()) if (u.alive) tickUnit(F, u);
   for (const e of F.fx) e.t += DT; F.fx = F.fx.filter(e => e.t < 1.1);
   const h = F.units.some(u => u.alive && u.side === 'H' && !u.summon), e = F.units.some(u => u.alive && u.side === 'E');
@@ -498,6 +510,15 @@ function carryBack(F) { for (const u of F.units) if (u.side === 'H' && !u.summon
 // Pure tag conditions (Luke, 27 Nov): Hunter's Mark and Hex do not stack, last until death, and carry no hidden debuff.
 function applyHuntersMark(F, src, t) { if (!t || !t.alive) return; t.st.marked = true; }
 function applyHex(F, src, t) { if (!t || !t.alive) return; t.st.hexed = true; }
+// Burning ground tile (Cinder Path A, 27 Nov): non-stacking; refreshes duration and keeps stronger damage.
+function igniteTile(F, src, x, y, dur, s) {
+  if (!inb(x, y)) return;
+  if (!F.fireTiles) F.fireTiles = {};
+  const k = y * COLS + x, cur = F.fireTiles[k];
+  const avg = s.n * (s.x + 1) / 2 + (s.flat || 0);
+  if (!cur) F.fireTiles[k] = { tx: x, ty: y, t: dur, src, n: s.n, x: s.x, flat: s.flat || 0, avg };
+  else { cur.t = Math.max(cur.t, dur); if (avg > cur.avg) { cur.n = s.n; cur.x = s.x; cur.flat = s.flat || 0; cur.avg = avg; cur.src = src; } }
+}
 // Legacy multi-source mark helpers (kept unused if needed for older references)
 function setMark(F, src, t, m) { if (!t || !t.alive) return; for (const o of F.units) if (o.marks) o.marks = o.marks.filter(k => k.src !== src); t.marks = (t.marks || []).concat([Object.assign({ src }, m)]); src.markOn = t; }
 function applyMarks(F, u, t, crit) { for (const m of t.marks.slice()) { if (!m.src.alive || !t.alive) continue; if (m.bonus) dealDamage(F, m.src, t, rollDice(m.bonus.n, m.bonus.x, crit) + (m.bonus.flat || 0), m.type || 'phys', { mark: true }); if (m.slow) applyControl(F, m.src, t, 'slow', m.slowSeconds || 1, m.slow); if (m.onHit) m.onHit(F, m, u, t); } }

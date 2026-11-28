@@ -107,7 +107,8 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 | Sir Dane | Paladin | **Locked** (Divine Smite; run-long Duelist / Retribution) | batch1-rework.md |
 | Gilthrax, Zoe, Laurel, Pillar, Zark, Naill | batch 1 | **Locked** (Zark & Pillar Rage/Maul updated in class-feature pass) | batch1-rework.md, batch2-proposals.md |
 | Lorcan, Corvin, Velith, Nettle, Lumen | batch 2 | **Locked** (Favored Foe + Hunter's Mark tag, Pact + Hex tag, Sneak Attack force bypass) | batch2-proposals.md |
-| Cinder, Gains, Rosalind, Jamison, Saint | batch 3 | To do (Metamagic, Arcane Recovery, Bardic Inspiration, Channel Divinity ×2) | |
+| Cinder | Sorcerer | **Locked** (Metamagic Twin Spell at 4 SP via Fire Bolt; Scorched Earth / Living Flame) | |
+| Gains, Rosalind, Jamison, Saint | batch 3 | To do (Arcane Recovery, Bardic Inspiration, Channel Divinity ×2) | |
 | Juniper, Kaska | batch 4 | To do (Wild Shape: new health-bar mechanic) | |
 | Toot | Bard | Switched off until redesigned | |
 

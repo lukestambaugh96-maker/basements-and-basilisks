@@ -11,6 +11,7 @@ Add one entry per proposal. Luke rules: **Approved**, **Rejected**, or a note. N
 ## Ruled (27 Nov — session 2)
 | Item | Ruling |
 |---|---|
+| Cinder (batch 3) | Locked in (Metamagic Twin Spell at 4 SP via Fire Bolt; **Scorched Earth** / **Living Flame**; non-stacking burning ground tiles) |
 | Batch 2 (Lorcan, Corvin, Velith, Nettle, Lumen) | Locked in (Lumen Path A named **Searing Light**; Lorcan fast-bow `1d6` @ `1.15s`, DEX 14) |
 | Ranger `Favored Foe` + `Hunter's Mark` pure tag; Warlock `Pact` + `Hex` pure tag | Decided & locked in (`CLASS_KW` updated) |
 | Barbarian Rage unlimited + clean card math (Zark `1 HP/2s` no tier scale; Pillar pure-dice `2d6` Maul + `1d4`/tier splash + Rage-tied T2 paths) | Locked in |
