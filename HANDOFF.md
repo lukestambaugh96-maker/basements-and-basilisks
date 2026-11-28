@@ -41,10 +41,10 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - `jobs` with `--n 250–300` takes 1–2 minutes per hero; run heroes in parallel.
 - Tier 2 parties win ~90% of single fights, so path lifts look tiny in `paths`; use `jobs --tier 2 --partnerTier 1` (or `gauntlet` for run-long scaling) to compare paths.
 
-## 3. Current state (after batch 2 + class-feature pass, 27 Nov)
+## 3. Current state (after batch 3, 27 Nov)
 
-- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (median fight 4), sensible 65%, engine 76%.**
-- Boss check A / B / C: **78 / 81 / 46%** (target: A does well ~85, B clears fairly well ~75–80, **C struggles ~33** → C is high; retune after Batches 3–4).
+- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (median fight 4), sensible 69%, engine 76%.**
+- Boss check A / B / C: **82 / 82 / 50%** (target: A does well ~85, B clears fairly well ~75–80, **C struggles ~33** → C is high; retune right after Batch 4).
 - Prototype2 preset: 47.0% (reproduces).
 - PR #6 (branch `testbench-bots-and-replay-tests`) was merged into `main` (commit `9477726`).
 
@@ -107,8 +107,7 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 | Sir Dane | Paladin | **Locked** (Divine Smite; run-long Duelist / Retribution) | batch1-rework.md |
 | Gilthrax, Zoe, Laurel, Pillar, Zark, Naill | batch 1 | **Locked** (Zark & Pillar Rage/Maul updated in class-feature pass) | batch1-rework.md, batch2-proposals.md |
 | Lorcan, Corvin, Velith, Nettle, Lumen | batch 2 | **Locked** (Favored Foe + Hunter's Mark tag, Pact + Hex tag, Sneak Attack force bypass) | batch2-proposals.md |
-| Cinder | Sorcerer | **Locked** (Metamagic Twin Spell at 4 SP via Fire Bolt; Scorched Earth / Living Flame) | |
-| Gains, Rosalind, Jamison, Saint | batch 3 | To do (Arcane Recovery, Bardic Inspiration, Channel Divinity ×2) | |
+| Cinder, Gains, Rosalind, Jamison, Saint | batch 3 | **Locked** (Metamagic, Arcane Recovery, Bardic Inspiration, Channel Divinity ×2) | batch3-rework.md |
 | Juniper, Kaska | batch 4 | To do (Wild Shape: new health-bar mechanic) | |
 | Toot | Bard | Switched off until redesigned | |
 
@@ -118,12 +117,11 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 
 ## 7. Next steps, in order
 
-1. **Batch 3:** Cinder (Metamagic), Gains (Arcane Recovery), Rosalind (Bardic Inspiration), Jamison and Saint (Channel Divinity). Ask Luke for one-line directions first.
-2. **Batch 4:** Juniper and Kaska (Wild Shape). Needs a bonus health bar mechanic in the engine (`formHp` exists for the old tier 2 forms; generalize it).
-3. Turn on attack growth (`rules.attackGrowth.extraDicePerTier = 1`) and check the whole cast against the tier 2–4 benchmarks; settle whether damage may outgrow the HP curve.
-4. **Encounter numbers buff** to match the reworked cast (damage first): never-buy dies at fight 3; sensible survives with tension; engine pulls ahead; boss check C back to ~33%.
-5. Then the items rework (Uncommon / Rare / Epic, priced with the buff-test values in docs/v0.25/buff-test.md), then shop odds.
-6. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
+1. **Batch 4:** Juniper and Kaska (Wild Shape). Needs a bonus health bar mechanic in the engine (`formHp` exists for the old tier 2 forms; generalize it).
+2. Turn on attack growth (`rules.attackGrowth.extraDicePerTier = 1`) and check the whole cast against the tier 2–4 benchmarks; settle whether damage may outgrow the HP curve.
+3. **Encounter numbers buff** to match the reworked cast (damage first): never-buy dies at fight 3; sensible survives with tension; engine pulls ahead; boss check C back to ~33%.
+4. Then the items rework (Uncommon / Rare / Epic, priced with the buff-test values in docs/v0.25/buff-test.md), then shop odds.
+5. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
 
 ## 8. Known open items
 

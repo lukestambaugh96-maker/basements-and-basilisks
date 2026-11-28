@@ -263,14 +263,15 @@
     "rosalind": {
       "name": "Rosalind",
       "ancestry": "Human",
+      "kit2": {"whispers": {"damage": {"dice": "1d6", "perTier": true, "bonus": "CHA"}, "slow": 0.3, "slowSeconds": 2, "highStunSeconds": 1}, "inspiration": {"allies": {"low": 1, "mid": 1, "high": 2}, "die": {"dice": "1d8", "perTier": true}}, "t2": {"cuttingWords": {"targets": 2, "damage": {"dice": "1d8", "perTier": true}, "slow": 0.35, "slowSeconds": 2}, "heroism": {"ward": {"dice": "1d8", "perTier": true, "bonus": "CHA"}, "attackSpeed": 0.2, "seconds": 3}}},
       "class": "Bard",
       "subclass": "College of Lore",
       "role": ["Support"],
       "benchJob": "support",
-      "size": "small",
+      "size": "medium",
       "pronouns": "she/her",
       "job": "time",
-      "chargeToCast": 60,
+      "chargeToCast": 100,
       "stats": { "STR": 8, "DEX": 12, "CON": 12, "INT": 12, "WIS": 10, "CHA": 16 },
       "key": "CHA",
       "ac": 13,
@@ -498,6 +499,7 @@
     "jamison": {
       "name": "Brother Jamison",
       "ancestry": "Human",
+      "kit2": {"bond": {"seconds": 6, "share": 0.5, "allies": {"low": 1, "mid": 2, "high": 2}, "heal": {"dice": "2d6", "perTier": true, "bonus": "CHA"}, "ward": null}, "channelDivinity": {"triggerBelowHp": 0.35, "ward": {"dice": "1d6", "perTier": true}}, "t2": {"balmOfPeace": {"bondShare": 1, "selfHeal": {"dice": "1d8", "perTier": true}}, "protectiveBond": {"minHit": 10, "cooldown": 3, "hitWard": {"dice": "1d6", "perTier": true}, "restoreOnCast": 3}}},
       "class": "Cleric",
       "subclass": "Peace Domain",
       "role": ["Support"],
@@ -511,7 +513,7 @@
       "ac": 15,
       "sr": 14,
       "range": 1,
-      "attack": { "name": "Quarterstaff", "dice": "1d6", "type": "physical", "interval": 1.6 },
+      "attack": { "name": "Mace", "dice": "1d6", "type": "physical", "interval": 1.6 },
       "ability": {
         "name": "Emboldening Bond",
         "castTime": 0.3,
@@ -719,6 +721,7 @@
     "gains": {
       "name": "Gains",
       "ancestry": "Tiefling",
+      "kit2": {"arcaneRecovery": {"charge": 30}, "goldOnBeamHit": 1, "beam": {"dice": "10d8", "perTier": true, "bonus": "INT"}, "t2": {"compoundInterest": {"baseBonusDice": 3, "dicePerStep": 2, "goldPerStep": 10, "maxDice": 8}, "liquidAssets": {"gildedGold": 2, "goldOnBeamHit": 2, "allyCharge": 20}}},
       "class": "Wizard",
       "subclass": "Transmutation",
       "role": ["Damage"],
@@ -735,7 +738,7 @@
       "attack": { "name": "Alchemical Bolt", "dice": "1d6+1", "type": "magic", "interval": 1.7 },
       "ability": {
         "name": "Gilded Beam",
-        "castTime": 1,
+        "castTime": 0.8,
         "damage": { "dice": "11d8", "perTier": true, "bonus": "INT" },
         "type": "magic"
       },
@@ -790,6 +793,7 @@
     "saint": {
       "name": "Saint",
       "ancestry": "Half-Elf",
+      "kit2": {"heal": null, "evasion": {"bonus": 0.15, "seconds": 3}, "doubleHpShare": 0.2, "doubleSeconds": {"low": 2, "mid": 2.5, "high": 3}, "tauntSeconds": {"low": 0, "mid": 1, "high": 1.5}, "channelDivinity": {"triggerBelowHp": 0.35, "stealthSeconds": 2, "evasionBonus": 0.25, "evasionSeconds": 3}, "t2": {"invokeDuplicity": {"copiesAbility": true, "doubleHpShare": 0.4, "extraSeconds": 1.5, "cdDoubleSeconds": 3}, "cloakOfShadows": {"evasionBonus": 0.25, "evasionSeconds": 4, "stealthOnExpire": 1.5, "chargeOnAvoid": 15}}},
       "class": "Cleric",
       "subclass": "Trickery Domain",
       "role": ["Support"],

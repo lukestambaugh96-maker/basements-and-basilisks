@@ -673,6 +673,167 @@ Object.assign(KITS2, {
       },
     },
   }; },
+  gains: c => { const K = c.kit2; return { dmgAb: true,
+    // Arcane Recovery (base kit): whenever gold drops in combat, gain charge.
+    onGoldDrop(F, u) {
+      const ar = K.arcaneRecovery; if (!ar) return;
+      u.charge = Math.min(u.maxCharge, u.charge + ar.charge);
+      u.arUses = (u.arUses || 0) + 1;
+      const LA = u.t2 === 1 && K.t2.liquidAssets;
+      if (LA && LA.allyCharge) for (const a of alliesOf(F, u)) if (a !== u) a.charge = Math.min(a.maxCharge, a.charge + LA.allyCharge);
+    },
+    ab: { can: (F, u) => tfoes(F, u).some(o => canHit(F, u, o)),
+      cast(F, u, r) {
+        const A = c.ability; const list = tfoes(F, u).filter(o => canHit(F, u, o));
+        const t = highestHp(list.length ? list : tfoes(F, u)); if (!t) return;
+        const LA = u.t2 === 1 && K.t2.liquidAssets;
+        const goldAmt = LA && LA.gildedGold ? LA.gildedGold : 1;
+        // Gild BEFORE damage resolves so one-shot kills still drop gold and trigger Arcane Recovery!
+        t.gilded = true; t.gildedGold = Math.max(t.gildedGold || 0, goldAmt);
+        if (r.band === 'High') { const adj = adjUnits(F, t, 'E')[0]; if (adj) { adj.gilded = true; adj.gildedGold = Math.max(adj.gildedGold || 0, goldAmt); } }
+        const s = spec(u, K.beam || A.damage, r);
+        const CI = u.t2 === 0 && K.t2.compoundInterest;
+        let extraDice = 0;
+        if (CI) extraDice = (CI.baseBonusDice || 0) + Math.min(CI.maxDice || 8, (CI.dicePerStep || 1) * Math.floor((F.runGold || 0) / (CI.goldPerStep || 10)));
+        const dmg = abHit(F, u, t, s.n + extraDice, s.x, s.flat, A.type, r);
+        if (dmg > 0 && K.goldOnBeamHit) {
+          const hitG = LA && LA.goldOnBeamHit ? LA.goldOnBeamHit : K.goldOnBeamHit;
+          F.gold += hitG; fx(F, t, `+${hitG}g`, '#ffd75e');
+          for (let i = 0; i < hitG; i++) onGoldDrop(F);
+        }
+      } },
+  }; },
+  rosalind: c => { const K = c.kit2; return {
+    // Dissonant Whispers (Bard spell) + Bardic Inspiration (die spent on ally's next cast).
+    ab: { can: (F, u) => tfoes(F, u).length > 0,
+      cast(F, u, r) {
+        const CW = u.t2 === 0 && K.t2.cuttingWords, HE = u.t2 === 1 && K.t2.heroism;
+        const foes = tfoes(F, u).slice().sort((a, b) => (deadliest([a, b]) === a ? -1 : 1));
+        const targets = foes.slice(0, CW && CW.targets ? CW.targets : 1);
+        const ws = spec(u, K.whispers.damage, r);
+        for (const f of targets) {
+          abHit(F, u, f, ws.n, ws.x, ws.flat, 'magic', r, { area: targets.length > 1 });
+          if (f.alive) {
+            if (r.band === 'High' && K.whispers.highStunSeconds) applyControl(F, u, f, 'stun', K.whispers.highStunSeconds);
+            else if (K.whispers.slow) applyControl(F, u, f, 'slow', K.whispers.slowSeconds || 2, K.whispers.slow);
+          }
+        }
+        // Grant Bardic Inspiration die to top damage dealer(s).
+        const al = alliesOf(F, u).filter(a => a !== u && a.ab);
+        const pool = al.length ? al : [u];
+        const k = r.crit ? 99 : byRoll(K.inspiration.allies, r);
+        pool.sort((a, b) => (!!a.bardDie - !!b.bardDie) || (b.stat.dmg - a.stat.dmg) || dist(a, u) - dist(b, u));
+        const bdSpec = spec(u, K.inspiration.die);
+        for (const a of pool.slice(0, k)) {
+          a.bardDie = {
+            n: bdSpec.n, x: bdSpec.x, flat: bdSpec.flat, src: u,
+            onSpend: CW ? (F2, src, ally) => {
+              const att = ally.lastHitBy && ally.lastHitBy.alive && ally.lastHitBy.side === 'E' ? ally.lastHitBy : nearest(tfoes(F2, ally), ally);
+              if (att) {
+                const cs = spec(src, CW.damage);
+                dealDamage(F2, src, att, rollDice(cs.n, cs.x) + cs.flat, 'magic', { ability: true });
+                if (att.alive && CW.slow) applyControl(F2, src, att, 'slow', CW.slowSeconds || 2, CW.slow);
+              }
+            } : null,
+          };
+          if (HE) {
+            if (HE.ward) { const w = spec(u, HE.ward); addWard(F, u, a, rollDice(w.n, w.x, r.crit) + w.flat, false); }
+            if (HE.attackSpeed) { a.st.haste = Math.max(a.st.haste || 0, HE.attackSpeed); a.st.hasteT = Math.max(a.st.hasteT || 0, HE.seconds || 4); }
+          }
+        }
+      } },
+  }; },
+  jamison: c => { const K = c.kit2; return {
+    onStart(F, u) { u.cd = 1; }, // Channel Divinity: 1 charge at fight start, max 1
+    // Emboldening Bond: binds Jamison + allies; any heal, Ward, or attack-speed buff is passed to all Bonded allies.
+    ab: { cast(F, u, r) {
+      const BP = u.t2 === 0 && K.t2.balmOfPeace, PB = u.t2 === 1 && K.t2.protectiveBond;
+      const share = BP && BP.bondShare != null ? BP.bondShare : K.bond.share;
+      const dur = K.bond.seconds;
+      const al = alliesOf(F, u).filter(a => a !== u);
+      const k = r.crit ? 99 : byRoll(K.bond.allies, r);
+      al.sort((a, b) => ((a.st.bond > 1) - (b.st.bond > 1)) || pct(a) - pct(b));
+      const bonded = [u, ...al.slice(0, k)];
+      for (const a of bonded) { a.st.bond = dur; a.bondBy = u; a.bondShare = share; }
+      const tgt = lowestPct(bonded) || u;
+      if (K.bond.heal) { const h = spec(u, K.bond.heal, r); heal(F, u, tgt, rollDice(h.n + r.xd, h.x, r.crit) + h.flat); }
+      if (K.bond.ward) { const w = spec(u, K.bond.ward, r); addWard(F, u, tgt, rollDice(w.n, w.x, r.crit) + w.flat, false); }
+      if (BP && BP.selfHeal) { const sh = spec(u, BP.selfHeal); heal(F, u, u, rollDice(sh.n, sh.x, r.crit) + sh.flat); }
+      // Protective Bond: restores Channel Divinity once on his Nth cast.
+      if (PB && PB.restoreOnCast && !u.counters.cdRestored && (u.casts || 0) >= PB.restoreOnCast && u.cd === 0) {
+        u.counters.cdRestored = 1; u.cd = 1;
+      }
+    } },
+    // Protective Bond: when a Bonded ally takes a heavy hit, grant them a Ward (cooldown per ally).
+    onAllyDamaged(F, u, ally, src, dmg) {
+      const PB = u.t2 === 1 && K.t2.protectiveBond;
+      if (!PB || !PB.hitWard || ally.st.bond <= 0 || dmg < (PB.minHit || 10)) return;
+      const ck = 'pb_' + ally.fid;
+      if (u.counters[ck] > F.t) return;
+      u.counters[ck] = F.t + (PB.cooldown || 2);
+      const ws = spec(u, PB.hitWard);
+      addWard(F, u, ally, rollDice(ws.n, ws.x) + ws.flat, false);
+    },
+    // Channel Divinity (Unity of Peace): first time an ally drops below threshold, equalize HP % across all allies + Ward everyone.
+    tick(F, u) {
+      const CD = K.channelDivinity; if (!CD || !(u.cd > 0)) return;
+      const al = alliesOf(F, u);
+      if (!al.some(a => a.hp < a.maxHp * CD.triggerBelowHp)) return;
+      u.cd = 0; u.cdUses = (u.cdUses || 0) + 1;
+      const avgPct = al.reduce((s, a) => s + a.hp / a.maxHp, 0) / al.length;
+      const prevShare = F._bondSharing; F._bondSharing = true;
+      for (const a of al) {
+        const targetHp = Math.max(1, Math.round(a.maxHp * avgPct));
+        if (targetHp > a.hp) { const gain = targetHp - a.hp; a.hp = targetHp; u.stat.heal += gain; }
+        else a.hp = targetHp;
+      }
+      if (CD.ward) { const ws = spec(u, CD.ward); for (const a of al) addWard(F, u, a, rollDice(ws.n, ws.x) + ws.flat, false); }
+      F._bondSharing = prevShare;
+    },
+  }; },
+  saint: c => { const K = c.kit2;
+    const makeDouble = (F, u, t, dur, hpShare, tauntSec) => {
+      const ID = u.t2 === 0 && K.t2.invokeDuplicity, CS = u.t2 === 1 && K.t2.cloakOfShadows;
+      const finalDur = dur + (ID && ID.extraSeconds ? ID.extraSeconds : 0);
+      const finalHp = ID && ID.doubleHpShare ? ID.doubleHpShare : hpShare;
+      const dbl = summonDouble(F, u, t, finalDur, finalHp);
+      if (!dbl) return null;
+      if (tauntSec > 0) for (const o of foesOf(F, u)) if (o.target === t) applyControl(F, dbl, o, 'taunt', tauntSec);
+      if (CS && CS.stealthOnExpire) dbl.onGone = () => { if (t.alive) t.st.stealth = Math.max(t.st.stealth, CS.stealthOnExpire); };
+      if (ID && ID.copiesAbility && t.ab && t.ab.cast) { try { dbl.ab = t.ab; t.ab.cast(F, dbl, { band: 'Low', crit: false, xd: 0, nat: 5 }); } catch (e) { } dbl.ab = null; }
+      return dbl;
+    };
+    return {
+    onStart(F, u) { u.cd = 1; }, // Channel Divinity: 1 charge at fight start, max 1
+    ab: { cast(F, u, r) {
+      const A = c.ability, CS = u.t2 === 1 && K.t2.cloakOfShadows;
+      const t = lowestPctFront(F, u);
+      if (K.heal) { const h = spec(u, K.heal, r); heal(F, u, t, rollDice(h.n + r.xd, h.x, r.crit) + h.flat); }
+      const eva = CS && CS.evasionBonus ? CS.evasionBonus : K.evasion.bonus;
+      const evaSec = CS && CS.evasionSeconds ? CS.evasionSeconds : K.evasion.seconds;
+      t.st.evaBuff = Math.max(t.st.evaBuff || 0, eva); t.st.evaT = Math.max(t.st.evaT || 0, evaSec);
+      const tSec = K.tauntSeconds ? byRoll(K.tauntSeconds, r) : byRoll(A.tauntSeconds, r);
+      makeDouble(F, u, t, byRoll(K.doubleSeconds || A.doubleSeconds, r), K.doubleHpShare || A.doubleHpShare, tSec);
+    } },
+    // Cloak of Shadows: whenever any ally evades or dodges an attack, Saint gains charge.
+    onAllyAvoid(F, u) {
+      const CS = u.t2 === 1 && K.t2.cloakOfShadows;
+      if (CS && CS.chargeOnAvoid) u.charge = Math.min(u.maxCharge, u.charge + CS.chargeOnAvoid);
+    },
+    // Channel Divinity (Trickster's Escape): first time an ally drops below threshold, give them Stealth + Evasion (Invoke Duplicity also spawns a Double).
+    tick(F, u) {
+      const CD = K.channelDivinity; if (!CD || !(u.cd > 0)) return;
+      const lo = alliesOf(F, u).find(a => a.hp < a.maxHp * CD.triggerBelowHp);
+      if (!lo) return;
+      u.cd = 0; u.cdUses = (u.cdUses || 0) + 1;
+      lo.st.stealth = Math.max(lo.st.stealth, CD.stealthSeconds);
+      if (CD.evasionBonus) { lo.st.evaBuff = Math.max(lo.st.evaBuff || 0, CD.evasionBonus); lo.st.evaT = Math.max(lo.st.evaT || 0, CD.evasionSeconds || 3); }
+      const ID = u.t2 === 0 && K.t2.invokeDuplicity;
+      if (CD.doubleSeconds || (ID && ID.cdDoubleSeconds)) {
+        makeDouble(F, u, lo, CD.doubleSeconds || ID.cdDoubleSeconds, CD.doubleHpShare || 0.3, CD.tauntSeconds || 1.5);
+      }
+    },
+  }; },
 });
 
 // ---------------- build HEROES from config + kits ----------------

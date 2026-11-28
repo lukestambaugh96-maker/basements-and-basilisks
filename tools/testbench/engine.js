@@ -48,7 +48,7 @@ function addUnit(F, u) { u.F = F; u.fid = F.uidc++; F.units.push(u); return u; }
 function baseUnit() {
   return {
     alive: true, charge: 0, atkT: 0, moveT: 0, castT: 0, casting: false, lastCast: -9, target: null, pend: [], dotT: 0,
-    ward: 0, wardAbs: 0, st: { root: 0, stun: 0, stunImm: 0, taunt: 0, tauntSrc: null, stealth: 0, slow: 0, slowT: 0, burn: 0, burnT: 0, burnSrc: null, poison: 0, poisonSrc: null, invuln: 0, dodge: 0, dark: 0, inspired: 0, bond: 0, haste: 0, hasteT: 0, marked: false, hexed: false },
+    ward: 0, wardAbs: 0, st: { root: 0, stun: 0, stunImm: 0, taunt: 0, tauntSrc: null, stealth: 0, slow: 0, slowT: 0, burn: 0, burnT: 0, burnSrc: null, poison: 0, poisonSrc: null, invuln: 0, dodge: 0, dark: 0, inspired: 0, bond: 0, haste: 0, hasteT: 0, marked: false, hexed: false, evaBuff: 0, evaT: 0 },
     stat: { dmg: 0, heal: 0, ward: 0, taken: 0, abDmg: 0 }, gk: new Set(), counters: {}, it: {}, onHitItems: [], lastHitBy: null,
   };
 }
@@ -176,6 +176,12 @@ function addWard(F, src, t, amt, replaceIfBigger = true) {
   if (replaceIfBigger) { if (amt > t.ward) { const gain = amt - t.ward; t.ward = amt; t.wardAbs = 0; t.wardSrc = src; if (src) src.stat.ward += gain; } }
   else { t.ward += amt; t.wardSrc = src; if (src) src.stat.ward += amt; }
   ev(F, { k: 'ward', t, v: amt });
+  if (t.st.bond > 0 && t.bondShare > 0 && !F._bondSharing && amt > 0) {
+    F._bondSharing = true;
+    const shared = Math.floor(amt * t.bondShare);
+    if (shared > 0) for (const o of alliesOf(F, t)) if (o !== t && o.st.bond > 0) addWard(F, t.bondBy || src, o, shared, false);
+    F._bondSharing = false;
+  }
 }
 function heal(F, src, t, amt) {
   if (!t.alive || amt <= 0) return 0; amt = roundAmt(amt);
@@ -183,6 +189,12 @@ function heal(F, src, t, amt) {
   if (t.rageBar > 0) { t.rageBar += amt; if (src) src.stat.heal += amt; return amt; }
   const real = Math.min(amt, t.maxHp - t.hp); t.hp += real; if (src) src.stat.heal += real;
   if (real > 0) ev(F, { k: 'heal', s: src, t, v: real });
+  if (t.st.bond > 0 && t.bondShare > 0 && !F._bondSharing && amt > 0) {
+    F._bondSharing = true;
+    const shared = Math.floor(amt * t.bondShare);
+    if (shared > 0) for (const o of alliesOf(F, t)) if (o !== t && o.st.bond > 0) heal(F, t.bondBy || src, o, shared);
+    F._bondSharing = false;
+  }
   return real;
 }
 
@@ -190,13 +202,13 @@ function heal(F, src, t, amt) {
 function dealDamage(F, src, t, raw, type, o = {}) {
   if (!t || !t.alive || raw <= 0) return 0;
   raw = roundAmt(raw);
-  if (t.st.bond > 0 && t.bondBy && t.bondBy !== t && t.bondBy.alive && t.bondBy.t2 === 1 && raw >= t.bondBy.def.cfg.t2.protectiveBond.redirectHitsOf && src && src.side !== t.side) t = t.bondBy;
+  if (t.st.bond > 0 && t.bondBy && t.bondBy !== t && t.bondBy.alive && !t.bondBy.def.cfg.kit2 && t.bondBy.t2 === 1 && raw >= t.bondBy.def.cfg.t2.protectiveBond.redirectHitsOf && src && src.side !== t.side) t = t.bondBy;
   if (src && src !== t) t.lastHitBy = src;
   if (o.attack) {
-    if (t.st.dodge > 0) { t.dodged = (t.dodged || 0) + 1; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); return 0; }
-    if (t.counters.displace > 0) { t.counters.displace--; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); return 0; }
-    const eva = Math.min(RULES.evasion ? RULES.evasion.cap : 0.5, (t.eva || 0) - (src ? src.pierce || 0 : 0)); // Evasion (26 Nov): attacks only
-    if (eva > 0 && RNG() < eva) { t.evaded = (t.evaded || 0) + 1; hitCharge(t); ev(F, { k: 'evade', t }); fx(F, t, 'Evaded', '#9ad'); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'evade'); return 0; }
+    if (t.st.dodge > 0) { t.dodged = (t.dodged || 0) + 1; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); if (t.side === 'H') for (const a of alliesOf(F, t)) if (a.def.onAllyAvoid) a.def.onAllyAvoid(F, a, t, src, 'dodge'); return 0; }
+    if (t.counters.displace > 0) { t.counters.displace--; hitCharge(t); ev(F, { k: 'dodge', t }); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'dodge'); if (t.side === 'H') for (const a of alliesOf(F, t)) if (a.def.onAllyAvoid) a.def.onAllyAvoid(F, a, t, src, 'dodge'); return 0; }
+    const eva = Math.min(RULES.evasion ? RULES.evasion.cap : 0.5, (t.eva || 0) + (t.st.evaT > 0 ? (t.st.evaBuff || 0) : 0) - (src ? src.pierce || 0 : 0)); // Evasion (26 Nov): attacks only
+    if (eva > 0 && RNG() < eva) { t.evaded = (t.evaded || 0) + 1; hitCharge(t); ev(F, { k: 'evade', t }); fx(F, t, 'Evaded', '#9ad'); if (t.def.onAvoid) t.def.onAvoid(F, t, src, 'evade'); if (t.side === 'H') for (const a of alliesOf(F, t)) if (a.def.onAllyAvoid) a.def.onAllyAvoid(F, a, t, src, 'evade'); return 0; }
   }
   if (o.ability && src && src.side !== t.side && t.counters.evasion > 0) { t.counters.evasion--; raw = Math.floor(raw / 2); }
   if (t.st.invuln > 0) return 0;
@@ -227,6 +239,7 @@ function dealDamage(F, src, t, raw, type, o = {}) {
   if (amt + absorbed > 0) {
     ev(F, { k: 'hit', s: src, t, v: amt + absorbed });
     if (src && src.side === 'H' && t.side === 'E' && t.st.hexed && src.def.onHexedDamage) src.def.onHexedDamage(F, src, t, amt + absorbed, type, o);
+    if (t.side === 'H' && !t.summon && src && src.side === 'E') for (const a of alliesOf(F, t)) if (a.def.onAllyDamaged) a.def.onAllyDamaged(F, a, t, src, amt + absorbed);
   }
   if (src && src !== t && t.alive === false && src.alive) onKill(F, src, t, type);
   return amt + absorbed;
@@ -245,7 +258,7 @@ function die(F, t, src, type) {
   logF(F, `${t.name} falls${src ? ' to ' + src.name : ''}.`);
   if (t.def.onDeath) t.def.onDeath(F, t, src, type);
   if (t.side === 'E') {
-    if (t.gilded) { F.gold++; fx(F, t, '+1g', '#ffd75e'); onGoldDrop(F); }
+    if (t.gilded) { const g = t.gildedGold || 1; F.gold += g; fx(F, t, `+${g}g`, '#ffd75e'); for (let i = 0; i < g; i++) onGoldDrop(F); }
     for (const h of F.units) if (h.alive && h.hexT === t) { h.hexT = null; if (h.def.onHexDeath) h.def.onHexDeath(F, h, t); }
     for (const h of F.units) if (h.alive && h.markT === t) { h.markT = null; h.counters.markJump = true; }
     if (t.st.hexed) for (const h of F.units) if (h.alive && h.side === 'H' && h.def.onHexedDeath) h.def.onHexedDeath(F, h, t);
@@ -253,7 +266,12 @@ function die(F, t, src, type) {
   }
   if (t.onGone) t.onGone(F, t, true);
 }
-function onGoldDrop(F) { for (const h of F.units) if (h.alive && h.id === 'gains' && h.t2 != null) { const g = h.def.cfg.t2; h.charge = Math.min(h.maxCharge, h.charge + g.chargePerGoldDrop); if (h.t2 === 1) for (const a of alliesOf(F, h)) if (a !== h) a.charge = Math.min(a.maxCharge, a.charge + g.liquidAssets.allyCharge); } }
+function onGoldDrop(F) {
+  for (const h of F.units) if (h.alive && h.side === 'H') {
+    if (h.def.onGoldDrop) { h.def.onGoldDrop(F, h); continue; }
+    if (h.id === 'gains' && h.t2 != null) { const g = h.def.cfg.t2; h.charge = Math.min(h.maxCharge, h.charge + g.chargePerGoldDrop); if (h.t2 === 1) for (const a of alliesOf(F, h)) if (a !== h) a.charge = Math.min(a.maxCharge, a.charge + g.liquidAssets.allyCharge); }
+  }
+}
 function onKill(F, u, t, type) {
   if (u.def.onKill) u.def.onKill(F, u, t, type);
   if (t.side === 'E' && t.pickpocket) { F.gold++; fx(F, t, '+1g', '#ffd75e'); onGoldDrop(F); }
@@ -291,7 +309,7 @@ function abilityRoll(F, u) {
   if (u.inspireDie) { bonus += d(u.inspireDie); u.inspireDie = 0; }
   if (u.st.bond > 0) bonus += d(4);
   if (u.mote && u.mote.d20) bonus += d(6);
-  if (u.id === 'gains' && u.t2 === 0) { const ci = u.def.cfg.t2.compoundInterest; bonus += Math.min(ci.max, ci.rollBonusPer10Gold * Math.floor((F.runGold || 0) / 10)); }
+  if (u.id === 'gains' && u.t2 === 0 && !u.def.cfg.kit2) { const ci = u.def.cfg.t2.compoundInterest; bonus += Math.min(ci.max, ci.rollBonusPer10Gold * Math.floor((F.runGold || 0) / 10)); }
   r.total = nat + bonus;
   r.band = nat === 20 ? 'High' : r.total <= RULES.abilityRoll.lowAtOrBelow ? 'Low' : r.total >= RULES.abilityRoll.highAtOrAbove ? 'High' : 'Mid';
   r.crit = nat === 20;
@@ -317,7 +335,14 @@ function motePop(F, u, r) { const toot = u.mote && u.mote.src; if (toot && toot.
 
 // ---------------- basic attacks ----------------
 function atkIv(u) {
-  let as = u.as + (u.st.inspired > 0 ? (u.inspAs || 0) : 0) + (u.st.hasteT > 0 ? u.st.haste : 0) + (u.formAs || 0);
+  let buffAs = (u.st.inspired > 0 ? (u.inspAs || 0) : 0) + (u.st.hasteT > 0 ? u.st.haste : 0);
+  if (u.st.bond > 0 && u.bondShare > 0 && u.F) {
+    for (const o of alliesOf(u.F, u)) if (o !== u && o.st.bond > 0) {
+      const oAs = (o.st.inspired > 0 ? (o.inspAs || 0) : 0) + (o.st.hasteT > 0 ? o.st.haste : 0);
+      if (oAs > buffAs) buffAs = oAs;
+    }
+  }
+  let as = u.as + buffAs + (u.formAs || 0);
   let iv = u.atkIvBase / (1 + u.ratio * as);
   const sl = Math.max(u.st.slowT > 0 ? u.st.slow : 0, u.st.root > 0 ? (SETTINGS.restrain || 0) : 0); // Restrained: also slows attacks
   if (sl > 0) iv /= Math.max(0.2, 1 - sl);
@@ -436,7 +461,7 @@ function end(F, res) { F.over = true; F.result = res; }
 
 function tickUnit(F, u) {
   const S = u.st;
-  for (const k of ['root', 'stun', 'stunImm', 'taunt', 'stealth', 'invuln', 'dodge', 'dark', 'inspired', 'bond', 'hasteT']) if (S[k] > 0) S[k] -= DT;
+  for (const k of ['root', 'stun', 'stunImm', 'taunt', 'stealth', 'invuln', 'dodge', 'dark', 'inspired', 'bond', 'hasteT', 'evaT']) if (S[k] > 0) S[k] -= DT;
   if (S.slowT > 0) S.slowT -= DT;
   if (S.burnT > 0) S.burnT -= DT;
   if (u.life !== undefined) { u.life -= DT; if (u.life <= 0) { u.alive = false; if (u.onGone) u.onGone(F, u, false); return; } }
@@ -489,6 +514,13 @@ function resolveCast(F, u) {
   u.casts = (u.casts || 0) + 1;
   if (u.mote && !u.def.dmgAb) { const t = acquire(F, u) || nearest(tfoes(F, u), u); if (t) { dealDamage(F, u, t, rollDice(u.mote.n, u.mote.x || 8, r.crit) + u.mote.flat, 'magic', { ability: true, crit: r.crit }); motePop(F, u, r); } u.mote = null; }
   u.ab.cast(F, u, r);
+  if (u.bardDie) {
+    const bd = u.bardDie; u.bardDie = null;
+    const val = rollDice(bd.n, bd.x, r.crit) + (bd.flat || 0);
+    if (u.def.dmgAb) { const tg = acquire(F, u) || nearest(tfoes(F, u), u); if (tg) dealDamage(F, bd.src || u, tg, val, 'magic', { ability: true }); }
+    else addWard(F, bd.src || u, u, val, false);
+    if (bd.onSpend) bd.onSpend(F, bd.src, u, val);
+  }
   if (u.mote && r) u.mote = null;
   if (u.gk.has('Arcane Recovery') || (u.it && u.it.grimoire)) u.charge = Math.min(u.maxCharge, u.charge + 15);
   if (u.gk.has('Bardic Inspiration') || (u.it && u.it.bard_instrument)) { const a = nearest(alliesOf(F, u).filter(o => o !== u && o.ab), u); if (a) a.inspireDie = 6; }

@@ -174,7 +174,14 @@
     "heroes.gilthrax.attack.speedScaling": 0.85,
     "heroes.cinder.kit2": null,
     "heroes.cinder.attack.speedScaling": 0.95,
+    "heroes.gains.kit2": null,
+    "heroes.gains.ability.castTime": 1,
     "heroes.gains.attack.speedScaling": 1.05,
+    "heroes.rosalind.kit2": null,
+    "heroes.rosalind.size": "small",
+    "heroes.jamison.kit2": null,
+    "heroes.jamison.attack.name": "Quarterstaff",
+    "heroes.saint.kit2": null,
     "heroes.saint.attack.speedScaling": 0.9
   }
 }
