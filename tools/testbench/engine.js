@@ -359,7 +359,10 @@ function abilityRoll(F, u) {
   r.band = nat === 20 ? 'High' : r.total <= RULES.abilityRoll.lowAtOrBelow ? 'Low' : r.total >= RULES.abilityRoll.highAtOrAbove ? 'High' : 'Mid';
   r.crit = nat === 20;
   if (u.side === 'H' && F.terr && nearTerr(F, u, 'forge')) r.xd += 1;
-  if (u.gk.has('Ki') && u.ki > 0) { r.xd += u.ki; u.ki = 0; }
+  if (u.gk.has('Ki') && u.ki > 0) {
+    if (RULES.items && RULES.items.useConfig) { if (u.ki >= 4) r.xd += 1; }
+    else { r.xd += u.ki; u.ki = 0; }
+  }
   if (u.def.kwKi && u.t2 != null && u.ki > 0) { r.kiSpent = u.ki; r.xd += u.ki; u.ki = 0; }
   return r;
 }
@@ -439,7 +442,7 @@ function hitRiders(F, u, t, crit, melee) {
   if (u.it && u.it.hunters_quiver && u.target === t) extra += rollDice(1, 4, crit);
   if (melee && (u.gk.has('Smite') || (u.it && u.it.devotion_brand))) { u.counters.gsm = (u.counters.gsm || 0) + 1; if (u.counters.gsm % 3 === 0) { dealDamage(F, u, t, rollDice(2, 8, crit), 'radiant', { crit }); } }
   if ((u.gk.has('Sneak Attack') || (u.it && u.it.cutpurse_cloak)) && controlled(t) && !(u.counters.gsa > F.t)) { u.counters.gsa = F.t + 3; dealDamage(F, u, t, rollDice(2, 6, crit), 'phys', { crit }); }
-  if (u.gk.has('Ki') && !u.def.kwKi) u.ki = Math.min(4, (u.ki || 0) + 1);
+  if (u.gk.has('Ki') && !u.def.kwKi) { const prev = u.ki || 0; u.ki = Math.min(4, prev + 1); if (RULES.items && RULES.items.useConfig && u.ki > prev) u.as += 0.05; }
   return extra;
 }
 function itemOnHit(F, u, t, crit) {
@@ -574,7 +577,13 @@ function resolveCast(F, u) {
   }
   if (u.mote && r) u.mote = null;
   if (u.gk.has('Arcane Recovery') || (u.it && u.it.grimoire)) u.charge = Math.min(u.maxCharge, u.charge + 15);
-  if (u.gk.has('Bardic Inspiration') || (u.it && u.it.bard_instrument)) { const a = nearest(alliesOf(F, u).filter(o => o !== u && o.ab), u); if (a) a.inspireDie = 6; }
+  if (u.gk.has('Bardic Inspiration') || (u.it && u.it.bard_instrument)) {
+    const a = nearest(alliesOf(F, u).filter(o => o !== u && o.ab), u);
+    if (a) {
+      if (RULES.items && RULES.items.useConfig) { if (!a.bardDie || a.bardDie.x < 6) a.bardDie = { n: 1, x: 6, flat: 0, src: u }; }
+      else a.inspireDie = 6;
+    }
+  }
   if (u.side === 'H') for (const a of alliesOf(F, u)) if (a.def.onAllyCast) a.def.onAllyCast(F, a, u, r);
 }
 

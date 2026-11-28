@@ -220,9 +220,9 @@ const MULTICLASS_INFO = {
   'Sneak Attack': 'Basic attacks against Stunned, Restrained, Slowed, or Taunted foes deal +2d6 physical damage (3s cooldown).',
   'Smite': 'Every 3rd melee basic attack smites for +2d8 Radiant damage.',
   'Favored Foe': 'Marks your first target until it dies; attacks against it deal +1d6 bonus damage.',
-  'Bardic Inspiration': 'After casting your ability, the nearest ally adds 1d6 to their next ability roll.',
+  'Bardic Inspiration': 'After casting your ability, grant the nearest ally a 1d6 Inspiration die spent automatically on their next cast for bonus magic damage or Ward.',
   'Rage': 'Gain +1 Rage when hit (up to 2 + tier stacks); each stack heals at least 1 HP/s (scales with CON).',
-  'Ki': 'Gain +1 Ki per basic attack (max 4); your next ability spends all Ki for +1 extra die per Ki.',
+  'Ki': 'Gain +1 Ki per basic attack (max 4). Each Ki grants +5% attack speed; at 4 Ki, your abilities gain +1 extra die.',
   'Pact': 'Hexes your first target until it dies; attacks against it deal +1d6 bonus damage.',
   'Metamagic': 'Quickened Spell: your ability casts instantly with 0s cast time.',
 };
