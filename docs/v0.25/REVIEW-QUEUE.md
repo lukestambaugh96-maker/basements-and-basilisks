@@ -8,6 +8,11 @@ Add one entry per proposal. Luke rules: **Approved**, **Rejected**, or a note. N
 | Act 1 encounters | Encounter pass 1 (called good to go 26 Nov; card never ruled) | encounter-pass1.md | |
 | Act 1 boss | Nezznar as the single boss / Act 2 check (called good to go; card never ruled) | nezznar-boss.md | |
 
+## Ruled (28 Nov)
+| Item | Ruling |
+|---|---|
+| 48-hero roster expansion (25 planned heroes — kits, names, pronouns & art briefs) | Locked in (`docs/v0.25/roster-expansion-48.md` + `docs/hero_cast_class_ancestry.csv`): all 25 heroes named, pronouns & low-poly art briefs finalized (incl. Colony melee Smoker Flail, Burbrax Brass Dragonborn, Leagues Sea Elf, Petra black/platinum no cape, Orlo missile-head hat, Vela embalmed arm); 7 extra summon/form assets tracked. Phase 2 testbench implementation awaits go-ahead. |
+
 ## Ruled (27 Nov — session 2)
 | Item | Ruling |
 |---|---|
