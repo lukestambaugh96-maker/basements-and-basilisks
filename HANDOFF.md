@@ -41,11 +41,10 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - `jobs` with `--n 250–300` takes 1–2 minutes per hero; run heroes in parallel.
 - Tier 2 parties win ~90% of single fights, so path lifts look tiny in `paths`; use `jobs --tier 2 --partnerTier 1` (or `gauntlet` for run-long scaling) to compare paths.
 
-## 3. Current state (full 22-hero cast reworked, 27 Nov)
+## 3. Current state (post-cast rework + attackGrowth=1 + Act 1 encounter buff, 27 Nov)
 
-- Whole runs (`attackGrowth = 0`, 300 per bot, seeds 20000+): **never-buy 0% (median fight 4), sensible 70%, engine 80%.**
-- Boss check (`attackGrowth = 0`): A / B / C = **86 / 86 / 53%**.
-- Preview with `rules.attackGrowth.extraDicePerTier = 1`: **bare 0% (med F4), sensible 79%, engine 87%**; Boss check A / B / C = **95 / 94 / 64%**.
+- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (median fight 3), sensible 54%, engine 65%.**
+- Boss check (Nezznar, `n=150`, 211 parties): **A / B / C = 81 / 77 / 37%** (balanced team: 93 / 86 / 55%; no-support: 74 / 75 / 29%).
 - Prototype2 preset: **47.0%** (reproduces).
 - PR #6 (branch `testbench-bots-and-replay-tests`) was merged into `main` (commit `9477726`).
 
@@ -69,8 +68,8 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - All Wards add up. Root is **Restrained** (can't move, attacks 50% slower, casts with Disadvantage).
 - Charge by job: attackers 100 per 5s of attacking; frontliners 15 per hit taken; casters 100 per 5s (+10% per INT mod). Ability sizes by charge to cast: Small 60 / Medium 100 / Big 180 / Huge Nuke 300; value per cast targets 9 / 20 / 35 / 70.
 - Job targets (tier 1, no items): Frontline 280–340 EHP, 2–3 dps; Brawler 210–260, 4–5; Attacker 160–210, 4–5 (ability ≤35%); Caster 140–190, 4.5–5.5 (ability ≥50%); Support 160–210, 1–2 + 60–90 help. Proposed tier 2–4 growth ×1.5/×2/×2.5 (balance sheet "Benchmarks by tier" tab).
-- **Attack growth (decided, ready to switch on):** basic attacks +1 weapon die per tier; attacks and casts may grow at different rates. Switch: `rules.attackGrowth.extraDicePerTier` (0 now → 1 alongside the encounter buff pass). Open: should damage grow on the HP curve or outgrow it?
-- **Enemy buff knobs:** `rules.enemyScale` {damage ×, attackSpeed +, hp ×}. Set to **+5% attack speed** (27 Nov).
+- **Attack growth (ON, 27 Nov):** `rules.attackGrowth.extraDicePerTier = 1` (+1 weapon die per tier). Martials match ×1.5/×2/×2.5 on both EHP & DPS; Casters scale as glass cannons (×3.24 DPS vs ×2.12 EHP at T4).
+- **Enemy buff knobs:** `rules.enemyScale` {damage `1.12`, attackSpeed `+0.12`, hp `1.0`} + Nezznar Web `8d6+10` (27 Nov).
 
 **Class features (Luke, 26–27 Nov)** — universal properties with interaction rules; not strong or weak by design; power comes from each hero's version; part of the kit and counted in the job benchmarks; effects scale with tier per character (or via natural stat/HP growth).
 - **Card rule:** the feature's line says only what it does ("Action Surge: take an extra weapon attack"); the trigger is written on the kit part that causes it ("Alert: … when Arthur dodges an attack, he triggers Action Surge").
@@ -93,7 +92,7 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - Items stay **stat-based for now**; class features tie into perks and house rules first. Item tiers direction: Uncommon (small stats) / Rare (solid offense/defense) / Epic (build-around).
 - Shop: owned heroes offered at 0.75 weight; rerolls start at 1 gold, +1 per reroll per shop.
 - Nezznar is the only Act 1 boss and the Act 2 check. Placement is a skill reward. Flat boss bonuses are fine.
-- Encounters get a numbers buff (damage first) now that the whole cast is reworked.
+- Act 1 encounter numbers retuned after the 22-hero cast rework (damage + attack speed only, zero HP inflation).
 
 ## 6. Cast rework status
 
@@ -118,10 +117,9 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 
 ## 7. Next steps, in order
 
-1. Turn on attack growth (`rules.attackGrowth.extraDicePerTier = 1`) and check the whole cast against the tier 2–4 benchmarks; settle whether damage may outgrow the HP curve.
-2. **Encounter numbers buff** to match the reworked cast (damage first): never-buy dies at fight 3; sensible survives with tension; engine pulls ahead; boss check C back to ~33%.
-3. Then the items rework (Uncommon / Rare / Epic, priced with the buff-test values in docs/v0.25/buff-test.md), then shop odds.
-4. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
+1. **Items rework** (Uncommon / Rare / Epic, priced with the buff-test values in `docs/v0.25/buff-test.md` and `docs/v0.25/items-rework.md`), then shop odds.
+2. **Replay checks on the tuned Act 1 fights:** `placement`, `itemoff`, `castoff`, `luck` (and teaching bots to pick intentional T2 paths).
+3. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
 
 ## 8. Known open items
 

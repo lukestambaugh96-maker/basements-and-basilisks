@@ -11,6 +11,7 @@ Add one entry per proposal. Luke rules: **Approved**, **Rejected**, or a note. N
 ## Ruled (27 Nov — session 2)
 | Item | Ruling |
 |---|---|
+| Attack growth + Act 1 encounter buff | Locked in: `attackGrowth.extraDicePerTier = 1` (martials match ×1.5/×2/×2.5 EHP & DPS; Casters glass-cannon ×3.24 DPS); `enemyScale` `+12% AS / ×1.12 dmg / ×1.0 HP` + Nezznar Web `8d6+10` → bare 0% (F3), sensible 54%, engine 65%, Nezznar A/B/C 81/77/37% |
 | Batch 4 (Juniper, Kaska — Wild Shape) | Locked in (generalized no-timer bonus HP bar `enterWildShape`/`endForm`; Juniper Briar Form; Kaska Moon Beast + T2 `startInForm` Panther/Dire Bear). Completes all 22 active heroes. |
 | Batch 3 (Gains, Rosalind, Jamison, Saint) | Locked in (Gains Arcane Recovery + gold-on-beam-hit; Rosalind Dissonant Whispers + Bardic Inspiration die; Jamison `range: 1` Mace + Emboldening Bond sharing + Unity of Peace CD; Saint Mirror Doubles + Evasion + Trickster's Escape CD) |
 | Cinder (batch 3) | Locked in (Metamagic Twin Spell at 4 SP via Fire Bolt; **Scorched Earth** / **Living Flame**; non-stacking burning ground tiles) |

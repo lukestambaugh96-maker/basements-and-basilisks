@@ -21,9 +21,9 @@
     }
   },
   "resistance": { "formula": "R / (R + K)", "K": 20, "minimumDamage": 1, "controlReadsSr": true },
-  "enemyScale": { "_about": "Act-wide enemy buff knobs (27 Nov): damage multiplier, attack speed bonus (0.1 = 10% faster), HP multiplier.", "damage": 1, "attackSpeed": 0.05, "hp": 1, "_set": "Luke, 27 Nov: a small buff after batch 1; +5% attack speed brought the never-buy wall back to fight 3." },
+  "enemyScale": { "_about": "Act-wide enemy buff knobs (27 Nov): damage multiplier, attack speed bonus (0.1 = 10% faster), HP multiplier.", "damage": 1.12, "attackSpeed": 0.12, "hp": 1, "_set": "Luke, 27 Nov (post-cast rework + attackGrowth=1): +12% attack speed, 1.12x damage, 1.0x HP — bare dies at F3, sensible 54%, engine 65%." },
   "evasion": { "note": "chance an attack misses; attacks only, never abilities; pierce lowers it", "cap": 0.5 },
-  "attackGrowth": { "note": "extra weapon dice per tier above 1 for heroes (Luke 26 Nov: 1; 0 = old rule, only tierDice attacks grow)", "extraDicePerTier": 0 },
+  "attackGrowth": { "note": "extra weapon dice per tier above 1 for heroes (Luke 26 Nov: 1; switched on 27 Nov after full 22-hero cast rework)", "extraDicePerTier": 1 },
   "charge": {
     "attackerSecondsPerCast": 5,
     "_attacker": "charge per basic attack = 100 x attack interval / attackerSecondsPerCast",

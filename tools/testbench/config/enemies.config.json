@@ -196,7 +196,7 @@
         "castTime": 0.4,
         "heroes": 3,
         "restrainSeconds": { "low": 2, "mid": 2, "high": 3 },
-        "damage": { "low": "7d6+8", "mid": "7d6+8", "high": "7d6+8" }
+        "damage": { "low": "8d6+10", "mid": "8d6+10", "high": "8d6+10" }
       }
     },
     "giant_spider": {
