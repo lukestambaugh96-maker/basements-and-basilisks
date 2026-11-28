@@ -1,0 +1,48 @@
+{
+  "_about": "Basements & Basilisks v0.25: 3-tier stat-based items (Uncommon / Rare / Epic). Class items are on hold for Act 1 (tied into perks & house rules later). Read by tools/testbench/run.js when rules.items.useConfig is true.",
+  "prices": { "Uncommon": 8, "Rare": 15, "Epic": 24 },
+  "classItemsEnabled": false,
+  "rarityWeights": [
+    { "Uncommon": 85, "Rare": 15 },
+    { "Uncommon": 65, "Rare": 30, "Epic": 5 },
+    { "Uncommon": 45, "Rare": 45, "Epic": 10 },
+    { "Uncommon": 30, "Rare": 50, "Epic": 20 },
+    { "Uncommon": 20, "Rare": 50, "Epic": 30 },
+    { "Uncommon": 15, "Rare": 45, "Epic": 40 }
+  ],
+  "items": [
+    { "id": "stone_str", "name": "Stone of Might", "rar": "Uncommon", "stats": { "STR": 2 }, "flat": 1, "text": "+2 STR, +1 attack damage" },
+    { "id": "stone_dex", "name": "Stone of Agility", "rar": "Uncommon", "stats": { "DEX": 2 }, "text": "+2 DEX" },
+    { "id": "stone_con", "name": "Stone of Fortitude", "rar": "Uncommon", "stats": { "CON": 3 }, "text": "+3 CON" },
+    { "id": "stone_int", "name": "Stone of Intellect", "rar": "Uncommon", "stats": { "INT": 2 }, "cr": 0.1, "text": "+2 INT, +10% cast rate" },
+    { "id": "stone_wis", "name": "Stone of Insight", "rar": "Uncommon", "stats": { "WIS": 2 }, "text": "+2 WIS" },
+    { "id": "stone_cha", "name": "Stone of Presence", "rar": "Uncommon", "stats": { "CHA": 2 }, "cr": 0.1, "text": "+2 CHA, +10% cast rate" },
+    { "id": "shield", "name": "Iron Shield", "rar": "Uncommon", "ac": 3, "hp": 8, "text": "+3 AC, +8 HP" },
+    { "id": "warding_charm", "name": "Warding Charm", "rar": "Uncommon", "sr": 3, "text": "+3 SR" },
+    { "id": "gloves_swift", "name": "Gloves of Swiftness", "rar": "Uncommon", "as": 0.2, "text": "Attack 20% faster." },
+    { "id": "elven_cloak", "name": "Elven Cloak", "rar": "Uncommon", "eva": 0.1, "stats": { "DEX": 1 }, "text": "+10% Evasion, +1 DEX" },
+    { "id": "bodkin_quiver", "name": "Bodkin Quiver", "rar": "Uncommon", "pierce": 0.2, "stats": { "DEX": 2 }, "text": "+20% Pierce, +2 DEX" },
+    { "id": "pearl_power", "name": "Pearl of Power", "rar": "Uncommon", "sc": 35, "cr": 0.1, "text": "Start fights with +35 charge, +10% cast rate." },
+
+    { "id": "weapon1", "name": "+1 Weapon", "rar": "Rare", "dieUp": 1, "flat": 2, "text": "Weapon die one size bigger, +2 attack damage." },
+    { "id": "cloak_protection", "name": "Cloak of Protection", "rar": "Rare", "ac": 2, "sr": 2, "stats": { "CON": 2 }, "text": "+2 AC, +2 SR, +2 CON" },
+    { "id": "belt_hill", "name": "Belt of Hill Giant Strength", "rar": "Rare", "stats": { "STR": 3, "CON": 2 }, "text": "+3 STR, +2 CON" },
+    { "id": "amulet_health", "name": "Amulet of Health", "rar": "Rare", "stats": { "CON": 3 }, "hp": 12, "text": "+3 CON, +12 HP" },
+    { "id": "frost_brand", "name": "Frost Brand", "rar": "Rare", "onHit": { "n": 1, "x": 4, "type": "magic", "slow": 0.15 }, "text": "On hit: +1d4 cold and Slow 15% for 1s." },
+    { "id": "vicious", "name": "Vicious Weapon", "rar": "Rare", "onHit": { "n": 1, "x": 6, "type": "phys" }, "as": 0.1, "text": "On hit: +1d6 physical, attack 10% faster." },
+    { "id": "bracers_haste", "name": "Bracers of Haste", "rar": "Rare", "as": 0.3, "text": "Attack 30% faster." },
+    { "id": "cloak_evasion", "name": "Cloak of Evasion", "rar": "Rare", "eva": 0.2, "ac": 1, "text": "+20% Evasion, +1 AC" },
+    { "id": "periapt", "name": "Periapt of Wound Closure", "rar": "Rare", "regen": 1, "hp": 14, "text": "Regenerate 1 HP/s, +14 HP. Last Stand lasts 0.5s longer." },
+    { "id": "potion_greater", "name": "Greater Potion of Healing", "rar": "Rare", "potion": [6, 4, 6], "text": "Once per fight, at half HP: heal 6d4+6." },
+    { "id": "spell_storing", "name": "Ring of Spell Storing", "rar": "Rare", "sc": 45, "cr": 0.15, "text": "Start fights with +45 charge, +15% cast rate." },
+    { "id": "whetstone", "name": "Sharpening Stone", "rar": "Rare", "flat": 2, "scale": { "f": "flat", "per": 2, "cap": 6 }, "text": "+2 attack damage, +2 per win held (max +8 total)." },
+
+    { "id": "flame_tongue", "name": "Flame Tongue", "rar": "Epic", "onHit": { "n": 1, "x": 6, "type": "magic", "burn": 3 }, "text": "On hit: +1d6 fire and 3 Burn (3s)." },
+    { "id": "holy_weapon", "name": "Sun Blade", "rar": "Epic", "dieUp": 1, "onHit": { "n": 1, "x": 8, "type": "radiant" }, "text": "Weapon die one size bigger. On hit: +1d8 Radiant." },
+    { "id": "arachnida", "name": "Cloak of Arachnida", "rar": "Epic", "sr": 2, "eva": 0.15, "arachnida": 2, "text": "Basic attacks inflict 2 Poison. +2 SR, +15% Evasion." },
+    { "id": "staff_power", "name": "Staff of Power", "rar": "Epic", "sc": 50, "cr": 0.3, "sr": 2, "castDie": 8, "text": "+50 starting charge, +30% cast rate, +2 SR, +1d8 to casted abilities." },
+    { "id": "displacement", "name": "Cloak of Displacement", "rar": "Epic", "eva": 0.2, "ac": 2, "text": "First 2 attacks against you miss. +20% Evasion, +2 AC." },
+    { "id": "scarab", "name": "Scarab of Protection", "rar": "Epic", "ac": 3, "sr": 4, "hp": 35, "regen": 1, "text": "+3 AC, +4 SR, +35 HP, regenerate 1 HP/s." },
+    { "id": "quicksilver", "name": "Quicksilver Vial", "rar": "Epic", "as": 0.3, "pierce": 0.2, "scale": { "f": "as", "per": 0.05, "cap": 0.2 }, "text": "+30% attack speed (+5% per win, max +50%), +20% Pierce." }
+  ]
+}

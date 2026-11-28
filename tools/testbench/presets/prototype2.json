@@ -79,6 +79,7 @@
     "heroes.dane.t2": { "feature": "Smite", "duelist": { "everyNthHit": 3, "smite": { "dice": "2d8", "perTier": true } }, "retribution": { "smite": { "dice": "1d8", "perTier": true } } },
     "rules.enemyScale": { "damage": 1, "attackSpeed": 0, "hp": 1 },
     "rules.attackGrowth.extraDicePerTier": 0,
+    "rules.items.useConfig": false,
     "heroes.arthur.chargeToCast": 100,
     "heroes.arthur.ability.strike.dice": "1d8",
     "heroes.arthur.size": "big",

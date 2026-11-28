@@ -63,10 +63,12 @@ function makeHeroUnit(rec) {
   let rareCount = 0;
   for (const ir of (rec.items || [])) {
     const it = ITEMS[ir.id]; if (!it) continue; u.it[it.id] = ir;
-    if (['Rare', 'Very Rare', 'Legendary'].includes(it.rar)) rareCount++;
+    if (['Rare', 'Epic', 'Very Rare', 'Legendary'].includes(it.rar)) rareCount++;
     for (const k in (it.stats || {})) u.stats[k] += it.stats[k];
     u.ac += it.ac || 0; u.sr += it.sr || 0; u.eva += it.eva || 0; u.pierce += it.pierce || 0; u.as += it.as || 0; u.cr += it.cr || 0; u.sc += it.sc || 0; u.rollB += it.rollB || 0;
     u.dieUp += it.dieUp || 0; u.flat += it.flat || 0; u.hpB += it.hp || 0; u.regen += it.regen || 0; u.spen += it.spen || 0;
+    if (it.arachnida) u.arachnida = (u.arachnida || 0) + it.arachnida;
+    if (it.castDie) u.castDie = Math.max(u.castDie || 0, it.castDie);
     if (it.scale) { const v = Math.min(it.scale.cap, it.scale.per * (ir.wins || 0)); if (it.scale.f === 'flat') u.flat += v; if (it.scale.f === 'as') u.as += v; }
     if (it.onHit) u.onHitItems.push(it.onHit);
     if (it.kw) u.gk.add(it.kw);
@@ -172,6 +174,7 @@ const controlled = t => t.st.root > 0 || t.st.stun > 0 || t.st.taunt > 0 || t.st
 function addPoison(F, src, t, v) { if (!t.alive || v <= 0) return; t.st.poison += v; t.st.poisonSrc = src; }
 function addBurn(F, src, t, v) { if (!t.alive || v <= 0) return; t.st.burn = v; t.st.burnT = RULES.statuses.burnSeconds; t.st.burnSrc = src; }
 function addWard(F, src, t, amt, replaceIfBigger = true) {
+  if (src && src._castingAb && src.castDie && !F._bondSharing && amt > 0) amt += rollDice(1, src.castDie, src._castCrit);
   amt = Math.max(0, roundAmt(amt)); if (!t.alive) return;
   if (replaceIfBigger) { if (amt > t.ward) { const gain = amt - t.ward; t.ward = amt; t.wardAbs = 0; t.wardSrc = src; if (src) src.stat.ward += gain; } }
   else { t.ward += amt; t.wardSrc = src; if (src) src.stat.ward += amt; }
@@ -184,7 +187,9 @@ function addWard(F, src, t, amt, replaceIfBigger = true) {
   }
 }
 function heal(F, src, t, amt) {
-  if (!t.alive || amt <= 0) return 0; amt = roundAmt(amt);
+  if (!t.alive || amt <= 0) return 0;
+  if (src && src._castingAb && src.castDie && !F._bondSharing) amt += rollDice(1, src.castDie, src._castCrit);
+  amt = roundAmt(amt);
   if (src && src.side === 'H' && src.it && src.it.holy_symbol && src !== t) amt += d(8);
   if (t.rageBar > 0) { t.rageBar += amt; if (src) src.stat.heal += amt; return amt; }
   const real = Math.min(amt, t.maxHp - t.hp); t.hp += real; if (src) src.stat.heal += real;
@@ -293,6 +298,7 @@ function startRageBar(F, t) {
 }
 // Generalized Wild Shape (Druid rule, 27 Nov): bonus health bar; form ends when depleted (no timer); transforms stats/attack and reverts on endForm.
 function enterWildShape(F, u, hp, opts = {}) {
+  if (u && u._castingAb && u.castDie && hp > 0) hp += rollDice(1, u.castDie, u._castCrit);
   hp = Math.max(1, roundAmt(hp));
   const prevHp = u.formHp || 0;
   if (!u.form) {
@@ -396,7 +402,7 @@ function basicAttack(F, u, t) {
   if (u.def.onAttack) u.def.onAttack(F, u, t);
   if (u.job === 'attack') addCharge(u, u.cAtk);
   if (u.gk.has('Action Surge') || (u.it && u.it.bm_gauntlet)) { u.counters.gas = (u.counters.gas || 0) + 1; const every = u.it.bm_gauntlet && !u.gk.has('Action Surge') ? 4 : (u.it.bm_gauntlet ? 4 : 5); if (u.counters.gas % every === 0 && t.alive) { strike(F, u, t, {}); } }
-  if (u.it && u.it.arachnida && t.alive) addPoison(F, u, t, 1);
+  if (u.arachnida && t.alive) addPoison(F, u, t, u.arachnida);
 }
 function strike(F, u, t, o) {
   const a = u.atk; const melee = u.range <= 1;
@@ -437,7 +443,7 @@ function hitRiders(F, u, t, crit, melee) {
   return extra;
 }
 function itemOnHit(F, u, t, crit) {
-  for (const oh of u.onHitItems) { if (!t.alive) break; dealDamage(F, u, t, rollDice(oh.n, oh.x, crit) + (oh.flat || 0), oh.type, { onhit: true }); if (oh.slow) applyControl(F, u, t, 'slow', 1, oh.slow); if (oh.heal) heal(F, u, u, oh.heal); }
+  for (const oh of u.onHitItems) { if (!t.alive) break; dealDamage(F, u, t, rollDice(oh.n, oh.x, crit) + (oh.flat || 0), oh.type, { onhit: true }); if (oh.slow) applyControl(F, u, t, 'slow', 1, oh.slow); if (oh.burn && t.alive && !(t.st.burnT > 0 && t.st.burn > oh.burn)) addBurn(F, u, t, oh.burn); if (oh.heal) heal(F, u, u, oh.heal); }
 }
 
 // ---------------- movement (BFS) ----------------
@@ -557,7 +563,8 @@ function resolveCast(F, u) {
   if (r.fizzle) { u.charge = u.maxCharge * RULES.charge.refundShare; u.fizzles = (u.fizzles || 0) + 1; return; }
   u.casts = (u.casts || 0) + 1;
   if (u.mote && !u.def.dmgAb) { const t = acquire(F, u) || nearest(tfoes(F, u), u); if (t) { dealDamage(F, u, t, rollDice(u.mote.n, u.mote.x || 8, r.crit) + u.mote.flat, 'magic', { ability: true, crit: r.crit }); motePop(F, u, r); } u.mote = null; }
-  u.ab.cast(F, u, r);
+  u._castingAb = true; u._castCrit = r.crit;
+  try { u.ab.cast(F, u, r); } finally { u._castingAb = false; u._castCrit = false; }
   if (u.bardDie) {
     const bd = u.bardDie; u.bardDie = null;
     const val = rollDice(bd.n, bd.x, r.crit) + (bd.flat || 0);

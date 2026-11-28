@@ -41,10 +41,11 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - `jobs` with `--n 250–300` takes 1–2 minutes per hero; run heroes in parallel.
 - Tier 2 parties win ~90% of single fights, so path lifts look tiny in `paths`; use `jobs --tier 2 --partnerTier 1` (or `gauntlet` for run-long scaling) to compare paths.
 
-## 3. Current state (post-cast rework + attackGrowth=1 + Act 1 encounter buff, 27 Nov)
+## 3. Current state (post-cast rework + attackGrowth=1 + 3-tier items rework, 27 Nov)
 
-- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (median fight 3), sensible 54%, engine 65%.**
-- Boss check (Nezznar, `n=150`, 211 parties): **A / B / C = 81 / 77 / 37%** (balanced team: 93 / 86 / 55%; no-support: 74 / 75 / 29%).
+- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (median fight 3), sensible 51%, engine 62%.**
+- Boss check (Nezznar, `n=150`, 190 parties): **A / B / C = 89 / 87 / 53%** (balanced team: 93 / 91 / 59%; no-support: 87 / 86 / 49%).
+- Items (`config/items.config.json`): 31 stat-based items (`Uncommon 8g` ×12, `Rare 15g` ×12, `Epic 24g` ×7; class items on hold for Act 1). All 31 items positive in `itemoff` (+26/+25/+40/+40 pts full-build lift F3–Boss).
 - Prototype2 preset: **47.0%** (reproduces).
 - PR #6 (branch `testbench-bots-and-replay-tests`) was merged into `main` (commit `9477726`).
 
@@ -89,7 +90,7 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - **Scaling means it carries across the run** (Luke, 27 Nov): run-long state uses a kit's `carryKeys`, saved on the hero's rec after each fight (`carryBack`).
 
 **Items, shop, encounters**
-- Items stay **stat-based for now**; class features tie into perks and house rules first. Item tiers direction: Uncommon (small stats) / Rare (solid offense/defense) / Epic (build-around).
+- **3-tier stat-based items** (`config/items.config.json`, locked 27 Nov): Uncommon (8g, small stats) / Rare (15g, solid offense/defense) / Epic (24g, build-around). Class items on hold for Act 1 (`classItemsEnabled: false`), tied into perks/house rules later.
 - Shop: owned heroes offered at 0.75 weight; rerolls start at 1 gold, +1 per reroll per shop.
 - Nezznar is the only Act 1 boss and the Act 2 check. Placement is a skill reward. Flat boss bonuses are fine.
 - Act 1 encounter numbers retuned after the 22-hero cast rework (damage + attack speed only, zero HP inflation).
@@ -117,13 +118,12 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 
 ## 7. Next steps, in order
 
-1. **Items rework** (Uncommon / Rare / Epic, priced with the buff-test values in `docs/v0.25/buff-test.md` and `docs/v0.25/items-rework.md`), then shop odds.
-2. **Replay checks on the tuned Act 1 fights:** `placement`, `itemoff`, `castoff`, `luck` (and teaching bots to pick intentional T2 paths).
-3. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
+1. **Replay checks on the tuned Act 1 fights:** `placement`, `castoff`, `luck` (plus Nezznar C / shop rarity review, and teaching bots to pick intentional T2 paths).
+2. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
 
 ## 8. Known open items
 
-- Boss check party C (one tier 2) at 42% — above "struggles".
+- Boss check party C (one tier 2, ~6 items) at 53% post-items rework — above "struggles"; address in boss/shop pass.
 - Zark (frontline) damage 4.1/s vs 2–3; Lorcan 5.8 and Velith 6.0 vs 4–5 (batch 2).
 - Pickpocket (Wallaby) is gold-only; its value needs whole-run tests where bots pick paths on purpose (they pick at random today).
 - The bench barely separates "solo frontline" from "with another tank" (Bram's paths).

@@ -33,3 +33,21 @@
 - Class items are valued with a rough keyword estimate; check them once the T2 keywords are modeled in the sheet.
 - The encounter sheet still uses a placeholder (+12% damage, +10% HP per item); swap in real item values once a shop economy is set.
 - Item slots per hero: the falling value per gold assumes slots are limited.
+
+---
+
+## v0.25 Implementation — 3-Tier Stat-Based Pool (Locked 27 Nov 2026)
+
+Implemented in `tools/testbench/config/items.config.json` (`rules.items.useConfig = true`; legacy items preserved under `presets/prototype2.json`, which still reproduces **47.0%** exact).
+
+### Decisions
+- **3 tiers:** **Uncommon (8g, 12 items)** small stats / **Rare (15g, 12 items)** solid offense & defense / **Epic (24g, 7 items)** build-arounds.
+- **Class items on hold for Act 1** (`classItemsEnabled: false`; `classitem` removed from `CHOICE_DECK`). Will return tied to perks/house rules later.
+- **New hooks:** Evasion (`eva`), Pierce (`pierce`), on-hit Burn (`onHit.burn`), and `castDie` (`Staff of Power` adds `+1d8` to any casted ability effect — damage, heal, Ward, and Wild Shape bonus HP).
+- **Shop rarity weights** by fight (1 → 6): `85/15/0` → `65/30/5` → `45/45/10` → `30/50/20` → `20/50/30` → `15/45/40` (`Uncommon / Rare / Epic`).
+
+### Final Benchmarks (`n = 300` runs, `n = 150` itemoff / bosscheck)
+- **Whole runs:** `Never buys` **0%** (med Fight 3), `Buys sensibly` **51%**, `Builds an engine` **62%** (+11 pt spread without class items).
+- **Full-build `itemoff` lift (1,451 fights):** Fight 3 **+26 pts**, Fight 4 **+25 pts**, Fight 5 **+40 pts**, Boss Nezznar **+40 pts** (91% → 51%).
+- **Per-item health:** All **31/31** items positive (**+1 to +19 pts**; zero dead/negative items). Top Epics: `Scarab of Protection` (+18), `Cloak of Arachnida` (+17), `Sun Blade` (+15), `Staff of Power` (+14).
+- **Nezznar `bosscheck`:** A / B / C = **89% / 87% / 53%** (C crept up because zero dead items exist in the shop; revisit in boss/replay pass).

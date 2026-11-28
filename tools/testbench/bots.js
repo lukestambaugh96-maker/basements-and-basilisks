@@ -19,19 +19,20 @@ function itemValue(it, rec) {
   const melee = def.range <= 1; let v = 0;
   for (const k in (it.stats || {})) { const p = it.stats[k]; if (k === def.key || k === (def.atk.stat || '')) v += 2.5 * p; else if (k === 'CON') v += (front ? 1.5 : 0.8) * p; else v += 0.2 * p; }
   v += (it.ac || 0) * (front ? 3 : 1.2) + (it.sr || 0) * (front ? 2.5 : 1.2) + (it.hp || 0) * (front ? 0.2 : 0.1);
+  v += (it.eva || 0) * (front || melee ? 35 : 15);
   const atkW = dmg ? 1 : 0.35;
-  v += (it.as || 0) * 40 * atkW + (it.dieUp || 0) * 5 * atkW + (it.flat || 0) * 2 * atkW;
-  if (it.onHit) v += 6 * atkW;
+  v += (it.as || 0) * 40 * atkW + (it.dieUp || 0) * 5 * atkW + (it.flat || 0) * 2 * atkW + (it.pierce || 0) * 28 * atkW;
+  if (it.onHit) v += (6 + (it.onHit.burn ? 2 : 0)) * atkW;
   if (it.scale) v += 5 * atkW;
   if (it.rangedAs && !melee) v += it.rangedAs * 40 * atkW;
   if (it.meleeFlat && melee) v += 2 * atkW;
-  const castW = def.job === 'time' || (def.chargeToCast || 100) >= 180 ? 1 : 0.4;
-  v += ((it.sc || 0) / 10 + (it.cr || 0) * 30 + (it.rollB || 0) * 1.5) * castW;
-  if (it.potion) v += front ? 3 : 2;
-  if (it.id === 'displacement' || it.id === 'ring_evasion') v += front ? 4 : 2;
-  if (it.regen) v += front ? 3 : 1.5;
+  const castW = def.job === 'time' ? 1.1 : (job === 'support' ? 0.9 : 0.35);
+  v += ((it.sc || 0) / 10 + (it.cr || 0) * 30 + (it.rollB || 0) * 1.5 + (it.castDie || 0) * 1.5) * castW;
+  if (it.potion) v += front ? 8 : 5;
+  if (it.id === 'displacement' || it.id === 'ring_evasion') v += front ? 7 : 3;
+  if (it.regen) v += (front ? 3 : 1.5) * it.regen;
   if (it.id === 'ioun_mastery') v += 4 * castW;
-  if (it.id === 'arachnida') v += 3 * atkW;
+  if (it.arachnida) v += 5 * it.arachnida * atkW;
   if (it.cls && it.cls === def.cls) v += 3;
   return v;
 }
@@ -82,7 +83,7 @@ const BOTS = {
           if (d) { const res = buyOffer(run, d); if (res.rankUp) res.rankUp.t2 = Math.floor(RNG() * 2); bought = true; }
           if (!bought) {
             let best = null, bv = 0;
-            for (const io of o.items) { if (io.sold || run.gold < offerPrice(run, io)) continue; const { rec, v } = bestHolder(run, ITEMS[io.id]); if (rec && v / offerPrice(run, io) > bv && v >= 3) { bv = v / offerPrice(run, io); best = io; } }
+            for (const io of o.items) { if (io.sold || run.gold < offerPrice(run, io)) continue; const { rec, v } = bestHolder(run, ITEMS[io.id]); const sc = v / Math.pow(offerPrice(run, io), 0.7); if (rec && sc > bv && v >= 3) { bv = sc; best = io; } }
             if (best) { buyOffer(run, best); bought = true; }
           }
           if (!bought && rerolls < 2 && run.gold >= run.rerollCost + 10 && onBoard(run).some(r => freeSlots(r) > 0 || r.tier < 2)) { reroll(run); rerolls++; continue; }
@@ -128,7 +129,7 @@ const BOTS = {
           if (d) { const res = buyOffer(run, d); if (res.rankUp) res.rankUp.t2 = Math.floor(RNG() * 2); bought = true; }
           if (!bought) {
             let best = null, bv = 0;
-            for (const io of o.items) { if (io.sold || run.gold < offerPrice(run, io)) continue; const { rec, v } = bestHolder(run, ITEMS[io.id], P.weight(run)); if (rec && v >= 4 && v / offerPrice(run, io) > bv) { bv = v / offerPrice(run, io); best = io; } }
+            for (const io of o.items) { if (io.sold || run.gold < offerPrice(run, io)) continue; const { rec, v } = bestHolder(run, ITEMS[io.id], P.weight(run)); const sc = v / Math.pow(offerPrice(run, io), 0.7); if (rec && v >= 4 && sc > bv) { bv = sc; best = io; } }
             if (best) { buyOffer(run, best); bought = true; }
           }
           // keep looking for the carry's copy while there's gold to spare
@@ -140,11 +141,11 @@ const BOTS = {
       }
       equipStash(run, P.weight(run));
     },
-    // Brawl engine: Rage on the front line (regen that stacks with every hit), on-hit damage and Action Surge on a melee carry.
+    // Brawl engine: sustain/evasion on the front line, on-hit & attack-speed scaling on the carry.
     weight(run) { const carry = BOTS.engine.carry(run); return (r, it) => {
       const melee = HEROES[r.id].range <= 1; let w = r === carry ? 1.6 : isFront(r.id) ? 1.2 : 0.8;
-      if (it.onHit && r === carry) w *= 1.8; if (it.kw === 'Rage' && melee) w *= 2; if (it.id === 'bm_gauntlet' && r === carry) w *= 1.6;
-      if (melee && it.stats && it.stats.STR) w *= 1.3; if (it.as && !it.onHit) w *= 0.6; return w; }; },
+      if ((it.onHit || it.arachnida) && r === carry) w *= 1.6; if (it.kw === 'Rage' && melee) w *= 2; if (it.id === 'bm_gauntlet' && r === carry) w *= 1.6;
+      if (melee && it.stats && it.stats.STR) w *= 1.3; if ((it.eva || it.regen || it.hp >= 20) && isFront(r.id)) w *= 1.3; return w; }; },
     choice(run, cards) {
       const carry = BOTS.engine.carry(run);
       const order = ['multiclass', 'classitem', 'training', 'freeitem', 'purse', 'bargain_more', 'recruit', 'bargain_elite'];

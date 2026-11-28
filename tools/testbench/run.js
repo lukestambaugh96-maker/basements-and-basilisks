@@ -1,7 +1,7 @@
 'use strict';
-// ===================== Items (stand-in set built from the v0.25 items rework rules) =====================
-const RARITY_PRICE = { Common: 5, Uncommon: 10, Rare: 15, 'Very Rare': 25, Legendary: 35, Class: 15 };
-const ITEM_LIST = [
+// ===================== Items =====================
+const LEGACY_RARITY_PRICE = { Common: 5, Uncommon: 10, Rare: 15, 'Very Rare': 25, Legendary: 35, Class: 15 };
+const LEGACY_ITEM_LIST = [
   // Common: stats only
   { id: 'stone_str', name: 'Stone of Might', rar: 'Common', stats: { STR: 2 }, text: '+2 STR' },
   { id: 'stone_dex', name: 'Stone of Agility', rar: 'Common', stats: { DEX: 2 }, text: '+2 DEX' },
@@ -58,22 +58,29 @@ const ITEM_LIST = [
   { id: 'pact_rod', name: 'Rod of the Pact Keeper', rar: 'Class', cls: 'Warlock', stats: { CHA: 2 }, rollB: 2, text: '+2 CHA, +2 to ability rolls.' },
   { id: 'bloodwell', name: 'Bloodwell Vial', rar: 'Class', cls: 'Sorcerer', stats: { CHA: 2 }, sc: 20, text: '+2 CHA. Start fights with +20 charge.' },
 ];
+const USE_ITEM_CFG = !!(CFG.rules.items && CFG.rules.items.useConfig && CFG.items);
+const RARITY_PRICE = USE_ITEM_CFG ? CFG.items.prices : LEGACY_RARITY_PRICE;
+const ITEM_LIST = USE_ITEM_CFG ? CFG.items.items.map(it => Object.assign({}, it)) : LEGACY_ITEM_LIST;
 const ITEMS = {}; for (const it of ITEM_LIST) { it.price = RARITY_PRICE[it.rar]; ITEMS[it.id] = it; }
-ITEMS.cudgel.onHit = null;
+if (ITEMS.cudgel) ITEMS.cudgel.onHit = null;
 
 const KW_LIST = ['Action Surge', 'Channel Divinity', 'Arcane Recovery', 'Sneak Attack', 'Smite', 'Favored Foe', 'Bardic Inspiration', 'Rage', 'Ki', 'Pact', 'Metamagic'];
 const CLASS_KW = { Fighter: 'Action Surge', Cleric: 'Channel Divinity', Wizard: 'Arcane Recovery', Rogue: 'Sneak Attack', Paladin: 'Smite', Ranger: 'Favored Foe', Druid: 'Wild Shape', Bard: 'Bardic Inspiration', Barbarian: 'Rage', Monk: 'Ki', Warlock: 'Pact', Sorcerer: 'Metamagic' };
 
 // ===================== Economy and run =====================
 const ECON = { start: 10, heroCost: [15, 25, 35, 45], win: 20, boss: 75, interestPer: 5, interestCap: 20, sellBack: 0.66, saleOff: 0.25, saleChance: 0.15, piggyPerWin: 5, purse: 15, boardMax: 3, benchMax: 2, slot4: 55, slots: 2 };
-const RARITY_WEIGHTS = [
+const LEGACY_RARITY_WEIGHTS = [
   { Common: 70, Uncommon: 30 }, { Common: 55, Uncommon: 40, Rare: 5 }, { Common: 40, Uncommon: 45, Rare: 15 },
   { Common: 30, Uncommon: 45, Rare: 20, 'Very Rare': 5 }, { Common: 20, Uncommon: 45, Rare: 25, 'Very Rare': 10 }, { Common: 15, Uncommon: 40, Rare: 30, 'Very Rare': 15 },
 ];
-const CHOICE_DECK = [
+const RARITY_WEIGHTS = USE_ITEM_CFG ? CFG.items.rarityWeights : LEGACY_RARITY_WEIGHTS;
+const LEGACY_CHOICE_DECK = [
   { id: 'multiclass', name: 'Multiclass Trainer' }, { id: 'classitem', name: 'Class Item' }, { id: 'freeitem', name: 'Free Item' }, { id: 'purse', name: 'Purse' },
   { id: 'training', name: 'Training' }, { id: 'recruit', name: 'Recruit' }, { id: 'bargain_elite', name: 'Bargain: Elite' }, { id: 'bargain_more', name: 'Bargain: Patience' },
 ];
+const CHOICE_DECK = (USE_ITEM_CFG && !CFG.items.classItemsEnabled)
+  ? LEGACY_CHOICE_DECK.filter(c => c.id !== 'classitem')
+  : LEGACY_CHOICE_DECK;
 
 function newRun(seed) {
   if (seed !== undefined) seedRng(seed);
@@ -96,7 +103,7 @@ function autoPlace(run, rec, forceBench) {
   rec.pos = null;
 }
 function cellOpenForHero(run, x, y) { const enc = encOf(run); return !(enc.terrain || []).some(([k, tx, ty]) => tx === x && ty === y && ['wall', 'chasm', 'forge', 'gate', 'rock'].includes(k)); }
-function rollItemRarity(run) { const w = RARITY_WEIGHTS[Math.min(5, run.fight)]; let tot = 0; for (const k in w) tot += w[k]; let r = RNG() * tot; for (const k in w) { r -= w[k]; if (r <= 0) return k; } return 'Common'; }
+function rollItemRarity(run) { const w = RARITY_WEIGHTS[Math.min(5, run.fight)]; let tot = 0; for (const k in w) tot += w[k]; let r = RNG() * tot; for (const k in w) { r -= w[k]; if (r <= 0) return k; } return Object.keys(w)[0]; }
 function rollShop(run) {
   // Heroes you already own show up less often (rules.config.json shop.ownedHeroWeight; 1 = every hero equally likely). Luke, 26 Nov: until the hero pool grows.
   const w = (CFG.rules.shop && CFG.rules.shop.ownedHeroWeight != null) ? CFG.rules.shop.ownedHeroWeight : 1;
@@ -161,5 +168,5 @@ function finishFight(run, F) {
   return res;
 }
 function drawChoices(run) { const n = run.extraCard ? 3 : 2; run.extraCard = false; return shuffle(CHOICE_DECK).slice(0, n); }
-function classItemOffers(run) { const classes = [...new Set(run.roster.map(r => HEROES[r.id].cls))]; const pool = ITEM_LIST.filter(it => it.rar === 'Class' && classes.includes(it.cls)); return shuffle(pool.length >= 2 ? pool : ITEM_LIST.filter(it => it.rar === 'Class')).slice(0, 2); }
+function classItemOffers(run) { const allClass = ITEM_LIST.filter(it => it.rar === 'Class'); if (!allClass.length) return shuffle(ITEM_LIST.filter(it => it.rar === 'Rare')).slice(0, 2); const classes = [...new Set(run.roster.map(r => HEROES[r.id].cls))]; const pool = allClass.filter(it => classes.includes(it.cls)); return shuffle(pool.length >= 2 ? pool : allClass).slice(0, 2); }
 function mcOptions(rec) { const cls = HEROES[rec.id].cls; return KW_LIST.filter(k => k !== CLASS_KW[cls]); }

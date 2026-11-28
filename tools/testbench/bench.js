@@ -11,7 +11,7 @@ for (let i = 1; i < argv.length; i++) { const a = argv[i]; if (a.startsWith('--'
 
 // ---------------- config + edits ----------------
 const readJson = f => JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8'));
-function loadConfig() { return { heroes: readJson('config/heroes.config.json'), enemies: readJson('config/enemies.config.json'), rules: readJson('config/rules.config.json') }; }
+function loadConfig() { return { heroes: readJson('config/heroes.config.json'), enemies: readJson('config/enemies.config.json'), rules: readJson('config/rules.config.json'), items: readJson('config/items.config.json') }; }
 function parseValue(v) { if (v === undefined) return true; try { return JSON.parse(v); } catch (e) { return v; } }
 // "dane.ability.ward.dice=4d8, klarg.hp=110" -> { "heroes.heroes.dane.ability.ward.dice": "4d8", ... }
 function parseEdits(str, cfg) {
@@ -27,10 +27,11 @@ function resolvePath(p, cfg) {
   if (s[0] === 'heroes' && cfg.heroes.heroes[s[1]]) return ['heroes', 'heroes', ...s.slice(1)];
   if (s[0] === 'enemies' && cfg.enemies.enemies[s[1]]) return ['enemies', 'enemies', ...s.slice(1)];
   if (s[0] === 'rules') return s;
+  if (s[0] === 'items') return s;
   if (s[0] === 'bosses') { const i = cfg.enemies.bosses.findIndex(b => b.id === s[1]); if (i < 0) throw new Error('Unknown boss: ' + s[1]); return ['enemies', 'bosses', i, ...s.slice(2)]; }
   if (cfg.heroes.heroes[s[0]]) return ['heroes', 'heroes', ...s];
   if (cfg.enemies.enemies[s[0]]) return ['enemies', 'enemies', ...s];
-  throw new Error('Unknown path: ' + p + ' (start with a hero id, an enemy id, or rules.)');
+  throw new Error('Unknown path: ' + p + ' (start with a hero id, an enemy id, rules, or items.)');
 }
 function applyEdits(cfg, edits) {
   for (const [p, v] of Object.entries(edits)) {
