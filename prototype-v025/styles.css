@@ -565,8 +565,10 @@ button {
 }
 #battleCanvas {
   width: 100%;
+  max-width: 720px;
   height: auto;
   display: block;
+  margin: 0 auto;
   border-radius: 7px;
   background: #211b14;
   cursor: pointer;

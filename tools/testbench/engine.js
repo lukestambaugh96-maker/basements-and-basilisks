@@ -127,13 +127,18 @@ function lowestPct(list) { let b = null; for (const o of list) if (!b || pct(o) 
 function lowestHp(list) { let b = null; for (const o of list) if (!b || o.hp < b.hp) b = o; return b; }
 function highestHp(list) { let b = null; for (const o of list) if (!b || o.hp > b.hp) b = o; return b; }
 function unitAt(F, x, y) { return F.units.find(u => u.alive && u.x === x && u.y === y); }
-function passable(F, x, y) { if (!inb(x, y)) return false; const t = F.terr[y][x]; return !(t === 'wall' || t === 'chasm' || t === 'forge' || t === 'gate' || t === 'rock'); }
+function passable(F, x, y) { if (!inb(x, y)) return false; const t = F.terr[y][x]; return !(t === 'wall' || t === 'chasm' || t === 'water' || t === 'crates' || t === 'forge' || t === 'gate' || t === 'rock'); }
 function free(F, x, y) { return passable(F, x, y) && !unitAt(F, x, y); }
 function freeCellNear(F, x, y, side, maxR = 3) {
+  const sn = !!(RULES.map && RULES.map.southNorth);
   for (let r = 0; r <= maxR; r++) {
     const c = [];
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r && free(F, x + dx, y + dy)) c.push({ x: x + dx, y: y + dy });
-    if (c.length) { c.sort((a, b) => (side === 'E' ? b.x - a.x : a.x - b.x) || a.y - b.y); return c[0]; }
+    if (c.length) {
+      if (sn) c.sort((a, b) => (side === 'E' ? a.y - b.y : b.y - a.y) || a.x - b.x);
+      else c.sort((a, b) => (side === 'E' ? b.x - a.x : a.x - b.x) || a.y - b.y);
+      return c[0];
+    }
   }
   return null;
 }
@@ -144,7 +149,7 @@ function los(F, a, b) {
     const fx = a.x + (b.x - a.x) * i / steps, fy = a.y + (b.y - a.y) * i / steps;
     const cx = Math.round(fx), cy = Math.round(fy);
     if ((cx === a.x && cy === a.y) || (cx === b.x && cy === b.y)) continue;
-    if (inb(cx, cy) && F.terr[cy][cx] === 'wall') return false;
+    if (inb(cx, cy) && (F.terr[cy][cx] === 'wall' || (RULES.map && RULES.map.southNorth && (F.terr[cy][cx] === 'rock' || F.terr[cy][cx] === 'forge')))) return false;
   }
   return true;
 }

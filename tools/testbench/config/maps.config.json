@@ -1,0 +1,233 @@
+{
+  "_about": "Basements & Basilisks v0.25: 8x8 South-vs-North ASCII battlemaps + budgeted procedural Act 1 encounter generator.",
+  "_legend": {
+    ".": "open floor",
+    "#": "wall (blocks movement + LOS)",
+    "O": "pillar / boulder / tree (blocks movement + LOS)",
+    "~": "water / chasm (blocks movement, ranged shoots over)",
+    "c": "crates / barricade (blocks movement, ranged shoots over)",
+    "w": "spider web (walkable; Restrains heroes 1s, 2.5s cd)",
+    "f": "spell forge (blocks movement + LOS; adjacent heroes +1 ability die)",
+    "t": "watchtower (walkable; +1 attack range)",
+    "P": "hero deployment floor (South rows 5-7)"
+  },
+  "maps": {
+    "triboar_road": {
+      "name": "Triboar Trail",
+      "biome": "forest",
+      "grid": [
+        "O......O",
+        "........",
+        "........",
+        "..O..O..",
+        "........",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPP"
+      ]
+    },
+    "cragmaw_clearing": {
+      "name": "Cragmaw Clearing",
+      "biome": "forest",
+      "grid": [
+        "........",
+        ".O....O.",
+        "........",
+        "...OO...",
+        "........",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "tPPPPPPP"
+      ]
+    },
+    "cragmaw_cave": {
+      "name": "Cragmaw Cavern",
+      "biome": "cave",
+      "grid": [
+        "........",
+        "........",
+        "....~~..",
+        "..O.~~..",
+        "....~~..",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPP"
+      ]
+    },
+    "goblin_blind": {
+      "name": "Goblin Blind",
+      "biome": "cave",
+      "grid": [
+        "........",
+        "..O.....",
+        ".....O..",
+        ".O......",
+        "....O...",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPP"
+      ]
+    },
+    "tresendar_bridge": {
+      "name": "Tresendar Chasm",
+      "biome": "dungeon",
+      "grid": [
+        "........",
+        "........",
+        "........",
+        "~~...~~~",
+        "~~...~~~",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPP"
+      ]
+    },
+    "redbrand_cellar": {
+      "name": "Redbrand Cellar",
+      "biome": "dungeon",
+      "grid": [
+        "........",
+        "........",
+        "..c..c..",
+        "#..##..#",
+        "........",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPP"
+      ]
+    },
+    "thundertree_ruins": {
+      "name": "Thundertree Ruins",
+      "biome": "ruins",
+      "grid": [
+        "........",
+        "........",
+        ".#....#.",
+        ".#....#.",
+        "........",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPt"
+      ]
+    },
+    "spell_forge": {
+      "name": "Forge of Spells",
+      "biome": "dungeon",
+      "grid": [
+        "........",
+        ".O....O.",
+        "........",
+        "...ff...",
+        "........",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPP"
+      ]
+    },
+    "spider_temple": {
+      "name": "Wave Echo Sanctum",
+      "biome": "boss",
+      "grid": [
+        "O......O",
+        "........",
+        "..w..w..",
+        ".O....O.",
+        "..w..w..",
+        "PPPPPPPP",
+        "PPPPPPPP",
+        "PPPPPPPP"
+      ]
+    }
+  },
+  "bosses": {
+    "nezznar": {
+      "name": "Nezznar, the Black Spider",
+      "map": "spider_temple",
+      "enemies": [
+        ["nezznar", 3, 1],
+        ["giant_spider", 1, 2],
+        ["giant_spider", 4, 2],
+        ["giant_spider", 6, 2]
+      ]
+    }
+  },
+  "enemyPool": {
+    "goblin":        { "cost": 1, "role": "swarmer",   "tier": 1, "biomes": ["forest", "cave"] },
+    "twig":          { "cost": 2, "role": "swarmer",   "tier": 2, "biomes": ["forest", "ruins"] },
+    "goblin_archer": { "cost": 3, "role": "ranged",    "tier": 2, "biomes": ["forest", "cave", "dungeon"] },
+    "needle":        { "cost": 3, "role": "ranged",    "tier": 3, "biomes": ["forest", "ruins"] },
+    "wolf":          { "cost": 4, "role": "swarmer",   "tier": 2, "biomes": ["forest", "cave"] },
+    "ripper":        { "cost": 4, "role": "frontline", "tier": 2, "biomes": ["forest", "cave"] },
+    "redbrand":      { "cost": 4, "role": "frontline", "tier": 3, "biomes": ["dungeon", "ruins"] },
+    "giant_spider":  { "cost": 5, "role": "frontline", "tier": 3, "biomes": ["cave", "dungeon", "ruins"] },
+    "lesser_skull":  { "cost": 5, "role": "artillery", "tier": 4, "biomes": ["dungeon", "ruins"] },
+    "klarg":         { "cost": 6, "role": "elite_melee", "tier": 2, "biomes": ["cave", "forest"] },
+    "glasstaff":     { "cost": 6, "role": "elite_ranged", "tier": 3, "biomes": ["dungeon", "ruins"] },
+    "bugbear":       { "cost": 7, "role": "elite_melee", "tier": 3, "biomes": ["cave", "forest", "dungeon"] },
+    "ghoul":         { "cost": 7, "role": "frontline", "tier": 4, "biomes": ["dungeon", "cave", "ruins"] },
+    "vine":          { "cost": 8, "role": "elite_ctrl", "tier": 3, "biomes": ["forest", "ruins"] },
+    "flameskull":    { "cost": 9, "role": "elite_artillery", "tier": 4, "biomes": ["dungeon", "ruins"] }
+  },
+  "fights": [
+    {
+      "fight": 1,
+      "title": "Roadside Ambush",
+      "budget": [2, 2],
+      "maxEnemies": 2,
+      "maps": ["triboar_road", "cragmaw_clearing", "cragmaw_cave"],
+      "templates": [
+        { "id": "goblin_scouts", "name": "Goblin Scouts", "fixed": ["goblin", "goblin"] }
+      ]
+    },
+    {
+      "fight": 2,
+      "title": "Frontier Skirmish",
+      "budget": [12, 13],
+      "maxEnemies": 4,
+      "maps": ["cragmaw_cave", "goblin_blind", "triboar_road", "cragmaw_clearing"],
+      "templates": [
+        { "id": "bruiser_ambush", "name": "Klarg's Ambush", "elites": ["klarg"], "front": ["ripper"], "back": [], "fill": ["twig"] },
+        { "id": "pack_raid", "name": "Cragmaw Pack", "elites": ["klarg"], "front": ["wolf"], "back": ["goblin_archer"], "fill": ["goblin"] },
+        { "id": "ruffian_patrol", "name": "Outrider Patrol", "elites": [], "front": ["redbrand", "ripper"], "back": ["goblin_archer"], "fill": ["goblin"] }
+      ]
+    },
+    {
+      "fight": 3,
+      "title": "Stronghold Clash",
+      "budget": [15, 16],
+      "maxEnemies": 5,
+      "maps": ["tresendar_bridge", "redbrand_cellar", "goblin_blind", "thundertree_ruins"],
+      "templates": [
+        { "id": "mage_escort", "name": "Arcane Escort", "elites": ["glasstaff"], "front": ["redbrand", "ripper"], "back": [], "fill": ["goblin"] },
+        { "id": "warband", "name": "Raider Warband", "elites": ["bugbear"], "front": ["redbrand"], "back": ["goblin_archer"], "fill": ["goblin", "twig"] },
+        { "id": "briar_snare", "name": "Blight Snare", "elites": ["vine"], "front": ["ripper"], "back": ["needle"], "fill": ["twig"] }
+      ]
+    },
+    {
+      "fight": 4,
+      "title": "Deep Phandelver",
+      "budget": [18, 20],
+      "maxEnemies": 6,
+      "maps": ["thundertree_ruins", "redbrand_cellar", "tresendar_bridge", "cragmaw_clearing"],
+      "templates": [
+        { "id": "blight_horde", "name": "Blight Horde", "elites": ["vine"], "front": ["twig", "twig", "twig"], "back": ["needle"], "fill": ["twig", "goblin"] },
+        { "id": "heavy_vanguard", "name": "Crypt Vanguard", "elites": ["glasstaff"], "front": ["redbrand", "giant_spider"], "back": ["needle"], "fill": ["goblin", "twig"] },
+        { "id": "arcane_battery", "name": "Arcane Battery", "elites": ["flameskull"], "front": ["redbrand", "giant_spider"], "back": [], "fill": ["twig", "goblin"] },
+        { "id": "bugbear_raiders", "name": "Cragmaw Vanguard", "elites": ["klarg"], "front": ["ghoul"], "back": ["needle"], "fill": ["goblin", "twig"] }
+      ]
+    },
+    {
+      "fight": 5,
+      "title": "Echo Cavern Gauntlet",
+      "budget": [24, 26],
+      "maxEnemies": 6,
+      "maps": ["spell_forge", "redbrand_cellar", "tresendar_bridge", "thundertree_ruins"],
+      "templates": [
+        { "id": "forge_artillery", "name": "Spell Forge Battery", "elites": ["flameskull"], "front": ["ghoul", "redbrand"], "back": ["lesser_skull"], "fill": ["goblin", "twig"] },
+        { "id": "lockdown_coven", "name": "Web & Fang", "elites": ["vine"], "front": ["ghoul", "giant_spider"], "back": ["lesser_skull"], "fill": ["twig", "needle"] },
+        { "id": "brute_onslaught", "name": "Dungeon Onslaught", "elites": ["bugbear"], "front": ["ghoul", "redbrand"], "back": ["lesser_skull"], "fill": ["goblin", "twig"] },
+        { "id": "arcane_sanctum", "name": "Arcane Sanctum", "elites": ["glasstaff"], "front": ["ghoul", "redbrand"], "back": ["lesser_skull", "goblin_archer"], "fill": ["goblin"] }
+      ]
+    }
+  ]
+}

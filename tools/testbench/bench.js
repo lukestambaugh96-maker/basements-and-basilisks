@@ -11,7 +11,7 @@ for (let i = 1; i < argv.length; i++) { const a = argv[i]; if (a.startsWith('--'
 
 // ---------------- config + edits ----------------
 const readJson = f => JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8'));
-function loadConfig() { return { heroes: readJson('config/heroes.config.json'), enemies: readJson('config/enemies.config.json'), rules: readJson('config/rules.config.json'), items: readJson('config/items.config.json') }; }
+function loadConfig() { return { heroes: readJson('config/heroes.config.json'), enemies: readJson('config/enemies.config.json'), rules: readJson('config/rules.config.json'), items: readJson('config/items.config.json'), maps: readJson('config/maps.config.json') }; }
 function parseValue(v) { if (v === undefined) return true; try { return JSON.parse(v); } catch (e) { return v; } }
 // "dane.ability.ward.dice=4d8, klarg.hp=110" -> { "heroes.heroes.dane.ability.ward.dice": "4d8", ... }
 function parseEdits(str, cfg) {
@@ -28,10 +28,11 @@ function resolvePath(p, cfg) {
   if (s[0] === 'enemies' && cfg.enemies.enemies[s[1]]) return ['enemies', 'enemies', ...s.slice(1)];
   if (s[0] === 'rules') return s;
   if (s[0] === 'items') return s;
+  if (s[0] === 'maps') return s;
   if (s[0] === 'bosses') { const i = cfg.enemies.bosses.findIndex(b => b.id === s[1]); if (i < 0) throw new Error('Unknown boss: ' + s[1]); return ['enemies', 'bosses', i, ...s.slice(2)]; }
   if (cfg.heroes.heroes[s[0]]) return ['heroes', 'heroes', ...s];
   if (cfg.enemies.enemies[s[0]]) return ['enemies', 'enemies', ...s];
-  throw new Error('Unknown path: ' + p + ' (start with a hero id, an enemy id, rules, or items.)');
+  throw new Error('Unknown path: ' + p + ' (start with a hero id, an enemy id, rules, items, or maps.)');
 }
 function applyEdits(cfg, edits) {
   for (const [p, v] of Object.entries(edits)) {
@@ -60,7 +61,7 @@ const _rc = resolveCast; resolveCast = function (F, u) { u._inCast = true; try {
 const _heal2 = heal; heal = function (F, src, t, amt) { const r = _heal2(F, src, t, amt) || 0; if (src && src === t) src.selfSus = (src.selfSus || 0) + r; if (src && src._inCast) src.abVal = (src.abVal || 0) + r; return r; };
 const _aw2 = addWard; addWard = function (F, src, t, amt, rep) { const before = t.ward; _aw2(F, src, t, amt, rep); const g = Math.max(0, t.ward - before); if (src && src === t) src.selfSus = (src.selfSus || 0) + g; if (src && src._inCast) src.abVal = (src.abVal || 0) + g; };
 const _ff = finishFight; finishFight = function (run, F) { const extra = F.units.filter(u => u.side === 'H' && !u.summon).map(u => ({ id: u.id, casts: u.casts || 0 })); const r = _ff(run, F); r.extra = extra; r.t = F.t; return r; };
-this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, seedRng, carryBack, botRun, parseDice, mod, policyRun, BOTS, replayFight, formation, FORMATIONS, ITEMS, setPlace };`;
+this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, seedRng, carryBack, botRun, parseDice, mod, policyRun, BOTS, replayFight, formation, FORMATIONS, ITEMS, setPlace, newRun, addHero, startRunFight, SOUTH_NORTH };`;
   const ctx = { console, Math, CFG: cfg }; vm.createContext(ctx);
   vm.runInContext(src + '\n' + hook, ctx);
   return ctx.G;
@@ -69,10 +70,11 @@ this.G = { HEROES, ENEMIES, ACT1, BOSSES, makeFight, makeHeroUnit, stepFight, se
 // ---------------- fights ----------------
 function lcg(s) { return () => (s = (s * 1103515245 + 12345) >>> 0) / 4294967296; }
 function place(G, ids, enc) {
-  const blocked = new Set((enc.terrain || []).filter(([k]) => ['wall', 'chasm', 'forge', 'gate', 'rock'].includes(k)).map(([k, x, y]) => x + ',' + y));
+  const blocked = new Set((enc.terrain || []).filter(([k]) => ['wall', 'chasm', 'water', 'crates', 'forge', 'gate', 'rock'].includes(k)).map(([k, x, y]) => x + ',' + y));
   const used = new Set(); const order = ids.slice().sort((a, b) => (G.HEROES[a].range <= 1 ? 0 : 1) - (G.HEROES[b].range <= 1 ? 0 : 1)); const out = {};
-  for (const id of order) { const def = G.HEROES[id]; const front = def.range <= 1 && !def.noMove; const cols = front ? [3, 2, 1, 0] : [1, 0, 2, 3];
-    outer: for (const x of cols) for (const y of [2, 3, 1, 4, 0, 5]) { const k = x + ',' + y; if (!used.has(k) && !blocked.has(k)) { used.add(k); out[id] = { x, y }; break outer; } } }
+  for (const id of order) { const def = G.HEROES[id]; const front = def.range <= 1 && !def.noMove;
+    if (G.SOUTH_NORTH) { const rows = front ? [5, 6, 7] : [7, 6, 5]; outer: for (const y of rows) for (const x of [3, 4, 2, 5, 1, 6, 0, 7]) { const k = x + ',' + y; if (!used.has(k) && !blocked.has(k)) { used.add(k); out[id] = { x, y }; break outer; } } }
+    else { const cols = front ? [3, 2, 1, 0] : [1, 0, 2, 3]; outer: for (const x of cols) for (const y of [2, 3, 1, 4, 0, 5]) { const k = x + ',' + y; if (!used.has(k) && !blocked.has(k)) { used.add(k); out[id] = { x, y }; break outer; } } } }
   return out;
 }
 function partners(G, hid, n) { const others = Object.keys(G.HEROES).filter(k => k !== hid); const r = lcg(77); const P = []; for (let i = 0; i < n; i++) { const a = others[Math.floor(r() * others.length)]; let b; do b = others[Math.floor(r() * others.length)]; while (b === a); P.push([a, b]); } return P; }
@@ -437,6 +439,100 @@ const COMMANDS = {
       jobs.push(['Everyone', '', '', N, pc(ids.reduce((a, id) => a + H[id].base, 0), N), ...cols.map(([k]) => sg(100 * ids.reduce((a, id) => a + H[id].b[k], 0) / N))]);
       console.log(title + '\n' + table(['Hero', 'Job', 'Key score', 'Fights', 'Win, no buff', ...cols.map(c => c[0])], rows.concat([['', '', '', '', '', ...cols.map(() => '')]], jobs)) + '\n');
     }
+  },
+  encaudit() {
+    // Deep audit of procedurally generated Act 1 encounters: by fight, by template, by map, by enemy/elite, plus Fight 1 starter pass.
+    const cfg = buildConfig(opt.edits ? parseEdits(opt.edits, loadConfig()) : null); const G = loadGame(cfg);
+    const bots = String(opt.bots || 'sensible,engine').split(','); const N = +opt.n || 200; const seed0 = +opt.seed || 30000;
+    const byFight = {}, byTmpl = {}, byMap = {}, byEnemy = {};
+    const addRec = (map, k, f, enc) => {
+      const o = map[k] = map[k] || { n: 0, w: 0, hp: 0, t: [], bud: 0, cnt: 0, fight: f.fight, name: enc.templateName || enc.name, mapName: enc.mapName || enc.name, biome: enc.biome || '', fights: {} };
+      o.n++; if (f.result === 'win') { o.w++; o.t.push(f.t); }
+      o.hp += f.hpLostPct; o.bud += enc.budget || 0; o.cnt += (enc.enemies || []).length;
+      o.fights[f.fight] = (o.fights[f.fight] || 0) + 1;
+    };
+    for (const b of bots) {
+      for (let i = 0; i < N; i++) {
+        const { fights } = G.policyRun(seed0 + i, b);
+        for (const f of fights) {
+          const enc = f.snap.enc;
+          addRec(byFight, f.fight, f, enc);
+          const tk = `${f.fight}:${enc.templateId || enc.id}`;
+          addRec(byTmpl, tk, f, enc);
+          const mk = enc.mapId || enc.id;
+          addRec(byMap, mk, f, enc);
+          if (f.fight >= 1 && f.fight <= 4) {
+            const seen = new Set((enc.enemies || []).map(e => e.id));
+            for (const eid of seen) addRec(byEnemy, `${f.fight}:${eid}`, f, enc);
+          }
+        }
+      }
+    }
+    // Fight 1 solo starter check across all heroes
+    const f1Reps = +opt.f1reps || 12;
+    const f1Hero = {};
+    for (const hid of Object.keys(G.HEROES)) {
+      let w = 0, hp = 0;
+      for (let j = 0; j < f1Reps; j++) {
+        const run = G.newRun(90000 + j * 97 + hid.charCodeAt(0));
+        G.addHero(run, hid, { spent: 0 });
+        const F = G.startRunFight(run, { headless: true }); while (!F.over) G.stepFight(F);
+        const h = F.units.find(u => u.side === 'H' && !u.summon);
+        if (F.result === 'win') w++;
+        hp += h ? 1 - Math.max(0, h.hp) / h.maxHp : 1;
+      }
+      f1Hero[hid] = { n: f1Reps, w, hp };
+    }
+    if (opt.json) return console.log(JSON.stringify({ byFight, byTmpl, byMap, byEnemy, f1Hero }, null, 1));
+    const med = a => { if (!a.length) return '-'; const s = a.slice().sort((x, y) => x - y); return f0(s[Math.floor((s.length - 1) * 0.5)]) + 's'; };
+    const fAvg = {}; for (const k in byFight) fAvg[k] = byFight[k].w / byFight[k].n;
+    console.log(`Encounter audit: ${N} runs × [${bots.join(', ')}] (seed ${seed0}..${seed0 + N - 1}).`);
+    console.log('Flag "SPIKE" = >=10 pts harder than fight avg; "SOFT" = >=10 pts easier than fight avg.\n');
+
+    const fRows = Object.keys(byFight).map(Number).sort((a, b) => a - b).map(fi => {
+      const o = byFight[fi];
+      return [fi === 5 ? 'Boss' : 'F' + (fi + 1), o.n, o.bud ? f1(o.bud / o.n) : '-', f1(o.cnt / o.n), pc(o.w, o.n), pc(o.hp, o.n), med(o.t)];
+    });
+    console.log('By Fight\n' + table(['Fight', 'Played', 'Avg Budget', 'Avg Foes', 'Win', 'HP Lost', 'Med Len'], fRows) + '\n');
+
+    const tRows = Object.keys(byTmpl).sort((a, b) => {
+      const oa = byTmpl[a], ob = byTmpl[b];
+      return oa.fight - ob.fight || (oa.w / oa.n) - (ob.w / ob.n);
+    }).filter(k => byTmpl[k].fight < 5).map(k => {
+      const o = byTmpl[k]; const d = 100 * (o.w / o.n - fAvg[o.fight]);
+      const fl = d <= -10 ? 'SPIKE' : d >= 10 ? 'SOFT' : '';
+      return ['F' + (o.fight + 1), o.name, o.n, f1(o.bud / o.n), f1(o.cnt / o.n), pc(o.w, o.n), sg(d), pc(o.hp, o.n), med(o.t), fl];
+    });
+    console.log('By Template (F1–F5)\n' + table(['Fight', 'Template', 'Played', 'Budget', 'Foes', 'Win', 'vs Fight', 'HP Lost', 'Med Len', 'Flag'], tRows) + '\n');
+
+    const mRows = Object.keys(byMap).sort((a, b) => (byMap[a].w / byMap[a].n) - (byMap[b].w / byMap[b].n)).map(mk => {
+      const o = byMap[mk];
+      let exp = 0; for (const fi in o.fights) exp += o.fights[fi] * fAvg[fi];
+      const d = 100 * (o.w - exp) / o.n;
+      const fl = Math.abs(d) >= 8 ? (d < 0 ? 'HARD MAP' : 'EASY MAP') : '';
+      return [o.mapName, o.biome || '-', o.n, pc(o.w, o.n), pc(exp, o.n), sg(d), pc(o.hp, o.n), med(o.t), fl];
+    });
+    console.log('By Map (vs fight-weighted expected win %)\n' + table(['Map', 'Biome', 'Played', 'Win', 'Expected', 'Delta', 'HP Lost', 'Med Len', 'Flag'], mRows) + '\n');
+
+    const eRows = Object.keys(byEnemy).sort((a, b) => {
+      const [fa, ea] = a.split(':'), [fb, eb] = b.split(':');
+      return (+fa - +fb) || (byEnemy[a].w / byEnemy[a].n) - (byEnemy[b].w / byEnemy[b].n);
+    }).filter(k => byEnemy[k].n >= 15).map(k => {
+      const [fi, eid] = k.split(':'); const o = byEnemy[k];
+      const d = 100 * (o.w / o.n - fAvg[fi]);
+      const cost = cfg.maps && cfg.maps.enemyPool[eid] ? cfg.maps.enemyPool[eid].cost : '-';
+      const fl = d <= -10 ? 'SPIKE' : d >= 10 ? 'SOFT' : '';
+      return ['F' + (+fi + 1), G.ENEMIES[eid] ? G.ENEMIES[eid].name : eid, cost, o.n, pc(o.w, o.n), sg(d), pc(o.hp, o.n), fl];
+    });
+    console.log('By Enemy Presence (F2–F5, n>=15)\n' + table(['Fight', 'Enemy', 'Cost', 'Present', 'Win', 'vs Fight', 'HP Lost', 'Flag'], eRows) + '\n');
+
+    const badF1 = Object.keys(f1Hero).filter(id => f1Hero[id].w < f1Hero[id].n).sort((a, b) => f1Hero[a].w - f1Hero[b].w);
+    const f1TotW = Object.values(f1Hero).reduce((a, x) => a + x.w, 0);
+    const f1TotN = Object.values(f1Hero).reduce((a, x) => a + x.n, 0);
+    console.log(`Fight 1 Solo Starter Check (${Object.keys(f1Hero).length} heroes × ${f1Reps} seeds): ${pc(f1TotW, f1TotN)} overall.`);
+    if (badF1.length) {
+      console.log(table(['Hero', 'Job', 'Win', 'HP Lost'], badF1.map(id => [G.HEROES[id].name, G.HEROES[id].cfg.benchJob, pc(f1Hero[id].w, f1Hero[id].n), pc(f1Hero[id].hp, f1Hero[id].n)])));
+    } else console.log('All 22 starter heroes cleared Fight 1 100%!');
   },
 };
 const cfgHalf = G => G.mod(15) === 2.5;

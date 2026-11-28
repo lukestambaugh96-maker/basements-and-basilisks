@@ -363,7 +363,11 @@ const KITS2 = {
       for (let i = 0; i < Math.min(K.maxSurgesPerBreak, itemsHeld(u) + (K.surgesBare || 0)); i++) actionSurge(F, u);
       const DR = u.t2 === 0 && K.t2.dragonsRetort; if (!DR) { u.wardAbs = 0; return; }
       const amt = Math.floor(u.wardAbs * (DR.shareOfAbsorbed + DR.sharePerItem * itemsHeld(u))); u.wardAbs = 0; if (amt <= 0) return;
-      for (const o of foesOf(F, u)) { const dx = o.x - u.x; if (dx >= 0 && dx <= 2 && Math.abs(o.y - u.y) <= Math.max(1, dx)) dealDamage(F, u, o, amt, 'magic', { area: true }); }
+      for (const o of foesOf(F, u)) {
+        const sn = !!(RULES.map && RULES.map.southNorth);
+        const inCone = sn ? (u.y - o.y >= 0 && u.y - o.y <= 2 && Math.abs(o.x - u.x) <= Math.max(1, u.y - o.y)) : (o.x - u.x >= 0 && o.x - u.x <= 2 && Math.abs(o.y - u.y) <= Math.max(1, o.x - u.x));
+        if (inCone) dealDamage(F, u, o, amt, 'magic', { area: true });
+      }
     },
   }; },
   zoe: c => { const K = c.kit2; return {
@@ -444,7 +448,7 @@ const KITS2 = {
     ab: { can: (F, u) => hasTarget(F, u) || (u.t2 === 1 && (u.ki2 || 0) >= K.ki.max && tfoes(F, u).length > 0),
       cast(F, u, r) {
         const T = K.t2; let t = acquire(F, u); const full = (u.ki2 || 0) >= K.ki.max;
-        if (u.t2 === 1 && T.stepOfTheWind && full) { const far = tfoes(F, u).sort((a, b) => b.x - a.x)[0]; const cl = far && freeCellNear(F, far.x, far.y, 'H', 1); if (cl && dist(cl, far) <= 1) { moveTo(F, u, cl.x, cl.y); t = far; u.target = far; } }
+        if (u.t2 === 1 && T.stepOfTheWind && full) { const sn = !!(RULES.map && RULES.map.southNorth); const far = tfoes(F, u).sort((a, b) => sn ? (a.y - b.y) : (b.x - a.x))[0]; const cl = far && freeCellNear(F, far.x, far.y, 'H', 1); if (cl && dist(cl, far) <= 1) { moveTo(F, u, cl.x, cl.y); t = far; u.target = far; } }
         const k = byRoll(c.ability.strikes, r) + Math.floor((u.ki2 || 0) / K.ki.kiPerExtraStrike); const s = spec(u, c.ability.strike);
         for (let i = 0; i < k; i++) { if (!t || !t.alive) t = acquire(F, u); if (!t || !canHit(F, u, t)) break; abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); if (i === k - 1 && u.t2 === 0 && T.stunningStrike && full) applyControl(F, u, t, 'stun', T.stunningStrike.stunSeconds); }
       } },
@@ -538,7 +542,9 @@ Object.assign(KITS2, {
         const A = c.ability; const pois = A.poisonBase + A.poisonPerTier * u.tier; const s = spec(u, A.strike);
         if (r.band === 'Low') { const t = acquire(F, u); if (!t || !canHit(F, u, t)) return; abHit(F, u, t, s.n, s.x, s.flat, 'phys', r); addPoison(F, u, t, pois); sneak(F, u, t, true); return; }
         const list = tfoes(F, u); const t = lowestHp(list.filter(o => dist(o, u) <= A.jumpReach)) || lowestHp(list); if (!t) return;
-        const cl = free(F, t.x + 1, t.y) ? { x: t.x + 1, y: t.y } : freeCellNear(F, t.x, t.y, 'E', 1); if (cl && dist(cl, t) <= 1) moveTo(F, u, cl.x, cl.y);
+        const sn = !!(RULES.map && RULES.map.southNorth);
+        const bx = sn ? t.x : t.x + 1, by = sn ? t.y - 1 : t.y;
+        const cl = free(F, bx, by) ? { x: bx, y: by } : freeCellNear(F, t.x, t.y, 'E', 1); if (cl && dist(cl, t) <= 1) moveTo(F, u, cl.x, cl.y);
         u.target = t; abHit(F, u, t, s.n, s.x, s.flat, 'phys', r, { crit: true }); addPoison(F, u, t, pois); if (r.band === 'High') addPoison(F, u, t, pois); sneak(F, u, t, true);
         if (r.crit && t.alive && !t.boss && t.hp < t.maxHp * A.executeBelowHp) dealDamage(F, u, t, t.hp + t.ward + 1, 'true', {});
       } },
@@ -949,8 +955,8 @@ for (const id in HC) {
 }
 
 // ---------------- enemies ----------------
-function rearmostHero(F, from, maxD) { const hs = F.units.filter(o => o.alive && o.side === 'H' && !o.summon && o.st.stealth <= 0 && (maxD === undefined || dist(o, from) <= maxD)); return hs.sort((a, b) => a.x - b.x || a.y - b.y)[0]; }
-function farthestHero(F, from) { const hs = F.units.filter(o => o.alive && o.side === 'H' && !o.summon); return hs.sort((a, b) => dist(b, from) - dist(a, from) || a.x - b.x)[0]; }
+function rearmostHero(F, from, maxD) { const sn = !!(RULES.map && RULES.map.southNorth); const hs = F.units.filter(o => o.alive && o.side === 'H' && !o.summon && o.st.stealth <= 0 && (maxD === undefined || dist(o, from) <= maxD)); return hs.sort((a, b) => sn ? (b.y - a.y || a.x - b.x) : (a.x - b.x || a.y - b.y))[0]; }
+function farthestHero(F, from) { const sn = !!(RULES.map && RULES.map.southNorth); const hs = F.units.filter(o => o.alive && o.side === 'H' && !o.summon); return hs.sort((a, b) => dist(b, from) - dist(a, from) || (sn ? b.y - a.y : a.x - b.x))[0]; }
 function clumpOf(F, c) { return F.units.filter(o => o.alive && o.side === 'H' && dist(o, c) <= 1); }
 function densestHero(F, u) { const hs = F.units.filter(o => o.alive && o.side === 'H' && o.st.stealth <= 0 && canHit(F, u, o)); let b = null, bc = -1; for (const h of hs) { const c = clumpOf(F, h).length; if (c > bc) { bc = c; b = h; } } return b; }
 const rollStr = (s, r, ab) => { const p = parseDice(s); return { n: p.n, x: p.x, flat: p.flat }; };
@@ -965,7 +971,7 @@ const ENEMY_KITS = {
   flameskull: c => ({ ab: { can: (F, u) => !!densestHero(F, u), cast(F, u, r) { const ce = densestHero(F, u); if (!ce) return; const s = rollStr(byRoll(c.ability.damage, r)); for (const h of clumpOf(F, ce)) abHit(F, u, h, s.n, s.x, s.flat, 'magic', r, { area: true }); } } }),
   ghoul: c => ({ onStrike(F, u, t) { const k = 'g' + t.fid; u.counters[k] = (u.counters[k] || 0) + 1; if (u.counters[k] % c.stunEveryNthHitOnSameHero === 0) applyControl(F, u, t, 'stun', c.stunSeconds); } }),
   venomfang: c => ({
-    tick(F, u) { const B = c.halfHp; if (!u.buffet && u.hp < u.maxHp / 2) { u.buffet = 1; const s = rollStr(B.damage.dice); for (const h of adjUnits(F, u, 'H')) { dealDamage(F, u, h, rollDice(s.n, s.x) + s.flat, 'phys', {}); for (let i = 0; i < B.pushSquares; i++) if (free(F, h.x - 1, h.y)) moveTo(F, h, h.x - 1, h.y); } if (B.rechargesBreath) u.charge = u.maxCharge; } },
+    tick(F, u) { const B = c.halfHp; const sn = !!(RULES.map && RULES.map.southNorth); if (!u.buffet && u.hp < u.maxHp / 2) { u.buffet = 1; const s = rollStr(B.damage.dice); for (const h of adjUnits(F, u, 'H')) { dealDamage(F, u, h, rollDice(s.n, s.x) + s.flat, 'phys', {}); for (let i = 0; i < B.pushSquares; i++) { const nx = sn ? h.x : h.x - 1, ny = sn ? h.y + 1 : h.y; if (free(F, nx, ny)) moveTo(F, h, nx, ny); } } if (B.rechargesBreath) u.charge = u.maxCharge; } },
     ab: { can: (F, u) => !!densestHero(F, u) || F.units.some(h => h.alive && h.side === 'H'), cast(F, u, r) { const A = c.ability; let ce = densestHero(F, u) || nearest(tfoes(F, u), u); if (!ce) return; const s = rollStr(byRoll(A.damage, r)); for (const h of clumpOf(F, ce)) { abHit(F, u, h, s.n, s.x, s.flat, 'magic', r, { area: true }); addPoison(F, u, h, byRoll(A.poison, r)); } } } }),
   nezznar: c => ({
     tick(F, u) { if (!u.dark && u.hp < u.maxHp / 2) { u.dark = 1; u.st.dark = c.halfHp.seconds; for (const o of adjUnits(F, u, 'E')) o.st.dark = c.halfHp.seconds; } },
@@ -989,6 +995,31 @@ for (const id in EC) {
   if (k.ab) { const A = c.ability; def.ab = Object.assign({ name: A.name, ct: A.castTime || 0, iv: A.castSeconds || 99 }, k.ab); if (A.chargePerAttack) def.ab.perAtk = A.chargePerAttack; }
   ENEMIES[id] = def;
 }
+const ASCII_TERR = { '#': 'wall', O: 'rock', '~': 'water', c: 'crates', w: 'web', f: 'forge', t: 'tower' };
+function parseAsciiMap(mapId) {
+  const m = CFG.maps && CFG.maps.maps && CFG.maps.maps[mapId];
+  if (!m) return { mapId, mapName: '', biome: 'dungeon', terrain: [], deploy: [] };
+  const terrain = [], deploy = [];
+  m.grid.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const ch = row[x];
+      if (ch === 'P') deploy.push({ x, y });
+      else if (ch === 't') { terrain.push(['tower', x, y]); if (y >= 5) deploy.push({ x, y }); }
+      else if (ASCII_TERR[ch]) terrain.push([ASCII_TERR[ch], x, y]);
+    }
+  });
+  return { mapId, mapName: m.name, biome: m.biome, terrain, deploy };
+}
 const encFromCfg = e => ({ id: e.id, name: e.name, enemies: e.enemies.map(([id, x, y]) => ({ id, x, y })), terrain: e.terrain || [] });
 const ACT1 = CFG.enemies.encounters.map(encFromCfg);
-const BOSSES = {}; for (const b of CFG.enemies.bosses) if (b.active !== false) BOSSES[b.id] = encFromCfg(b); // active: false keeps a boss in the config but out of runs and tests
+const BOSSES = {};
+for (const b of CFG.enemies.bosses) {
+  if (b.active === false) continue;
+  if (RULES.map && RULES.map.southNorth && CFG.maps && CFG.maps.bosses && CFG.maps.bosses[b.id]) {
+    const bm = CFG.maps.bosses[b.id];
+    const parsed = parseAsciiMap(bm.map);
+    BOSSES[b.id] = { id: b.id, name: bm.name, mapId: parsed.mapId, mapName: parsed.mapName, biome: parsed.biome, templateId: 'boss_' + b.id, enemies: bm.enemies.map(([id, x, y]) => ({ id, x, y })), terrain: parsed.terrain, deploy: parsed.deploy };
+  } else {
+    BOSSES[b.id] = encFromCfg(b);
+  }
+}

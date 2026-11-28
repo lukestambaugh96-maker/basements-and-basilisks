@@ -1,6 +1,7 @@
 {
   "_about": "Game-wide rules and numbers that aren't one hero's or enemy's. Approved changes through 25 Nov are in.",
-  "map": { "columns": 8, "rows": 6 },
+  "map": { "columns": 8, "rows": 8, "southNorth": true },
+  "encounters": { "procedural": true },
   "fight": { "tickSeconds": 0.05, "timeoutSeconds": 120 },
   "hp": {
     "base": 60,

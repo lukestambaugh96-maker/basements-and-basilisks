@@ -82,11 +82,94 @@ const CHOICE_DECK = (USE_ITEM_CFG && !CFG.items.classItemsEnabled)
   ? LEGACY_CHOICE_DECK.filter(c => c.id !== 'classitem')
   : LEGACY_CHOICE_DECK;
 
+const PROCEDURAL_ENC = !!(CFG.rules.encounters && CFG.rules.encounters.procedural && CFG.maps);
+const SOUTH_NORTH = !!(CFG.rules.map && CFG.rules.map.southNorth);
+
+function placeProceduralEnemies(ids, terrain) {
+  const blocked = new Set((terrain || []).filter(([k]) => ['wall', 'chasm', 'water', 'crates', 'forge', 'gate', 'rock'].includes(k)).map(([, x, y]) => x + ',' + y));
+  const used = new Set();
+  const cols = [3, 4, 2, 5, 1, 6, 0, 7];
+  const take = (rows) => {
+    for (const y of rows) for (const x of cols) {
+      const k = x + ',' + y;
+      if (!blocked.has(k) && !used.has(k)) { used.add(k); return { x, y }; }
+    }
+    return { x: 3, y: 0 };
+  };
+  // Place elites/backline first so ranged sit in row 1-0 and melee in row 3-2 (matching 8x6 engagement distance)
+  const out = [];
+  for (const id of ids) {
+    const def = ENEMIES[id];
+    const isRanged = def && (def.range || 1) >= 2;
+    const pos = take(isRanged ? [1, 0, 2] : [3, 2, 1]);
+    out.push({ id, x: pos.x, y: pos.y });
+  }
+  return out;
+}
+
+function generateProceduralEncounter(fightIdx, prevMapId) {
+  const spec = CFG.maps.fights[fightIdx];
+  const pool = CFG.maps.enemyPool;
+  const mapChoices = spec.maps.filter(m => m !== prevMapId);
+  const mapId = pick(mapChoices.length ? mapChoices : spec.maps);
+  const parsed = parseAsciiMap(mapId);
+  const tmpl = pick(spec.templates);
+  const minB = spec.budget[0], maxB = spec.budget[1], maxN = spec.maxEnemies || 6;
+
+  const chosen = [];
+  let spent = 0;
+  const addId = id => { if (!id || !pool[id]) return false; chosen.push(id); spent += pool[id].cost; return true; };
+
+  if (tmpl.fixed) {
+    for (const id of tmpl.fixed) addId(id);
+  } else {
+    if (tmpl.elites && tmpl.elites.length) addId(pick(tmpl.elites));
+    for (const id of (tmpl.front || [])) if (chosen.length < maxN && spent + pool[id].cost <= maxB) addId(id);
+    for (const id of (tmpl.back || [])) if (chosen.length < maxN && spent + pool[id].cost <= maxB) addId(id);
+    // Fill remaining threat budget from template fillers (respecting maxEnemies and maxB)
+    const fillers = (tmpl.fill && tmpl.fill.length) ? tmpl.fill : ['goblin'];
+    let guard = 0;
+    while (spent < minB && chosen.length < maxN && guard++ < 12) {
+      const fit = fillers.filter(id => pool[id] && spent + pool[id].cost <= maxB);
+      if (!fit.length) break;
+      addId(pick(fit));
+    }
+  }
+
+  const enemies = placeProceduralEnemies(chosen, parsed.terrain);
+  return {
+    id: `${tmpl.id}_${mapId}`,
+    name: `${tmpl.name} · ${parsed.mapName}`,
+    templateId: tmpl.id,
+    templateName: tmpl.name,
+    mapId: parsed.mapId,
+    mapName: parsed.mapName,
+    biome: parsed.biome,
+    budget: spent,
+    enemies,
+    terrain: parsed.terrain,
+    deploy: parsed.deploy,
+  };
+}
+
+function generateAct1Encounters() {
+  const list = [];
+  let prevMap = null;
+  for (let i = 0; i < 5; i++) {
+    const enc = generateProceduralEncounter(i, prevMap);
+    prevMap = enc.mapId;
+    list.push(enc);
+  }
+  return list;
+}
+
 function newRun(seed) {
   if (seed !== undefined) seedRng(seed);
-  return { gold: ECON.start, fight: 0, roster: [], stash: [], piggy: { amt: 0, broken: false }, over: false, won: false, rerollCost: 1, offers: null, bossId: pick(Object.keys(BOSSES)), campWard: false, bargainElite: false, extraCard: false, uid: 1, history: [], phase: 'starter' };
+  const bossId = pick(Object.keys(BOSSES));
+  const encounters = PROCEDURAL_ENC ? generateAct1Encounters() : null;
+  return { gold: ECON.start, fight: 0, roster: [], stash: [], piggy: { amt: 0, broken: false }, over: false, won: false, rerollCost: 1, offers: null, bossId, encounters, campWard: false, bargainElite: false, extraCard: false, uid: 1, history: [], phase: 'starter' };
 }
-const encOf = run => run.fight < 5 ? ACT1[run.fight] : BOSSES[run.bossId];
+const encOf = run => run.fight < 5 ? (run.encounters ? run.encounters[run.fight] : ACT1[run.fight]) : BOSSES[run.bossId];
 const onBoard = run => run.roster.filter(r => r.pos);
 const onBench = run => run.roster.filter(r => !r.pos);
 function heroCost(tier) { return ECON.heroCost[tier - 1]; }
@@ -98,11 +181,22 @@ function addHero(run, id, opt = {}) {
 function autoPlace(run, rec, forceBench) {
   if (forceBench || onBoard(run).length >= ECON.boardMax) { rec.pos = null; return; }
   const def = HEROES[rec.id]; const front = def.range <= 1 && !def.noMove;
-  const cols = front ? [3, 2, 1, 0] : [1, 0, 2, 3]; const rows = [2, 3, 1, 4, 0, 5];
-  for (const x of cols) for (const y of rows) if (!run.roster.some(r => r.pos && r.pos.x === x && r.pos.y === y) && cellOpenForHero(run, x, y)) { rec.pos = { x, y }; return; }
+  if (SOUTH_NORTH) {
+    const rows = front ? [5, 6, 7] : [7, 6, 5];
+    const cols = [3, 4, 2, 5, 1, 6, 0, 7];
+    for (const y of rows) for (const x of cols) if (!run.roster.some(r => r.pos && r.pos.x === x && r.pos.y === y) && cellOpenForHero(run, x, y)) { rec.pos = { x, y }; return; }
+  } else {
+    const cols = front ? [3, 2, 1, 0] : [1, 0, 2, 3]; const rows = [2, 3, 1, 4, 0, 5];
+    for (const x of cols) for (const y of rows) if (!run.roster.some(r => r.pos && r.pos.x === x && r.pos.y === y) && cellOpenForHero(run, x, y)) { rec.pos = { x, y }; return; }
+  }
   rec.pos = null;
 }
-function cellOpenForHero(run, x, y) { const enc = encOf(run); return !(enc.terrain || []).some(([k, tx, ty]) => tx === x && ty === y && ['wall', 'chasm', 'forge', 'gate', 'rock'].includes(k)); }
+function cellOpenForHero(run, x, y) {
+  const enc = encOf(run);
+  if (SOUTH_NORTH && y < 5) return false;
+  if (!SOUTH_NORTH && x > 3) return false;
+  return !(enc.terrain || []).some(([k, tx, ty]) => tx === x && ty === y && ['wall', 'chasm', 'water', 'crates', 'forge', 'gate', 'rock'].includes(k));
+}
 function rollItemRarity(run) { const w = RARITY_WEIGHTS[Math.min(5, run.fight)]; let tot = 0; for (const k in w) tot += w[k]; let r = RNG() * tot; for (const k in w) { r -= w[k]; if (r <= 0) return k; } return Object.keys(w)[0]; }
 function rollShop(run) {
   // Heroes you already own show up less often (rules.config.json shop.ownedHeroWeight; 1 = every hero equally likely). Luke, 26 Nov: until the hero pool grows.
@@ -134,7 +228,12 @@ function buyOffer(run, o, target) {
 }
 function reroll(run) { if (run.gold < run.rerollCost) return false; run.gold -= run.rerollCost; run.rerollCost++; run.rerolled = true; run.rerollsTotal = (run.rerollsTotal || 0) + 1; rollShop(run); return true; }
 function equip(run, ir, rec) { if (rec.items.length >= ECON.slots) return false; const i = run.stash.indexOf(ir); if (i >= 0) run.stash.splice(i, 1); rec.items.push(ir); return true; }
-function enterShop(run) { run.rerollCost = 1; run.rerolled = false; rollShop(run); run.phase = 'shop'; }
+function fixBlockedPositions(run) {
+  for (const r of onBoard(run)) {
+    if (!cellOpenForHero(run, r.pos.x, r.pos.y)) { r.pos = null; autoPlace(run, r); }
+  }
+}
+function enterShop(run) { run.rerollCost = 1; run.rerolled = false; fixBlockedPositions(run); rollShop(run); run.phase = 'shop'; }
 
 function startRunFight(run, opts = {}) {
   const enc = encOf(run);

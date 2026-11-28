@@ -197,10 +197,10 @@ function policyRun(seed, botId) {
 // A snapshot is the party exactly as it walks into a fight. Replays re-run that fight from one fixed seed,
 // so the full build and each variant meet the same dice.
 function snapFight(run, seed) {
-  return { fight: run.fight, bossId: run.bossId, seed, gold: run.gold, extraElite: run.bargainElite && run.fight < 5, campWard: run.fight === 5 && run.campWard,
+  return { fight: run.fight, bossId: run.bossId, enc: encOf(run), seed, gold: run.gold, extraElite: run.bargainElite && run.fight < 5, campWard: run.fight === 5 && run.campWard,
     recs: JSON.parse(JSON.stringify(onBoard(run).map(r => { const c = Object.assign({}, r); return c; }))) };
 }
-function snapEnc(snap) { return snap.fight < 5 ? ACT1[snap.fight] : BOSSES[snap.bossId]; }
+function snapEnc(snap) { return snap.enc || (snap.fight < 5 ? ACT1[snap.fight] : BOSSES[snap.bossId]); }
 // mod: { noItems, drop: [uid, itemIndex], noAbility: uid, pos: { uid: {x,y} } }
 function replayFight(snap, mod = {}) {
   const recs = JSON.parse(JSON.stringify(snap.recs));
@@ -224,17 +224,39 @@ function replayFight(snap, mod = {}) {
   const hp = units.reduce((a, u) => a + Math.max(0, u.hp), 0), mx = units.reduce((a, u) => a + u.maxHp, 0);
   return { win: F.result === 'win', hpLost: 1 - hp / mx, t: F.t, dead: units.filter(u => !u.alive).map(u => u.rec.uid) };
 }
-// Formations. Heroes stand in columns 0-3 (0 = back); blocked terrain is skipped.
+// Formations. Supports both West-vs-East (cols 0-3) and South-vs-North (rows 5-7).
 const FORMATIONS = ['bot', 'smart', 'swapped', 'tight', 'spread', 'wall', 'back', 'random'];
 function formation(snap, kind, rng) {
-  const enc = snapEnc(snap); const blocked = new Set((enc.terrain || []).filter(([k]) => ['wall', 'chasm', 'forge', 'gate', 'rock'].includes(k)).map(([k, x, y]) => x + ',' + y));
+  const enc = snapEnc(snap); const blocked = new Set((enc.terrain || []).filter(([k]) => ['wall', 'chasm', 'water', 'crates', 'forge', 'gate', 'rock'].includes(k)).map(([k, x, y]) => x + ',' + y));
   const towers = (enc.terrain || []).filter(([k]) => k === 'tower').map(([k, x, y]) => ({ x, y }));
   const used = new Set(); const out = {};
-  const take = (r, cells) => { for (const c of cells) { const k = c.x + ',' + c.y; if (c.x >= 0 && c.x <= 3 && c.y >= 0 && c.y < ROWS && !used.has(k) && !blocked.has(k)) { used.add(k); out[r.uid] = { x: c.x, y: c.y }; return; } } };
-  const grid = (cols, rows) => { const a = []; for (const x of cols) for (const y of rows) a.push({ x, y }); return a; };
+  const sn = !!(RULES.map && RULES.map.southNorth);
+  const take = (r, cells) => {
+    for (const c of cells) {
+      const k = c.x + ',' + c.y;
+      const inZone = sn ? (c.x >= 0 && c.x < COLS && c.y >= 5 && c.y < ROWS) : (c.x >= 0 && c.x <= 3 && c.y >= 0 && c.y < ROWS);
+      if (inZone && !used.has(k) && !blocked.has(k)) { used.add(k); out[r.uid] = { x: c.x, y: c.y }; return; }
+    }
+  };
+  const grid = (cols, rows) => { const a = []; if (sn) { for (const y of rows) for (const x of cols) a.push({ x, y }); } else { for (const x of cols) for (const y of rows) a.push({ x, y }); } return a; };
   const melee = r => HEROES[r.id].range <= 1, front = r => HEROES[r.id].cfg.benchJob === 'frontline';
   const recs = snap.recs.slice();
   if (kind === 'bot') { for (const r of recs) out[r.uid] = r.pos; return out; }
+  if (sn) {
+    const cMid = [3, 4, 2, 5, 1, 6, 0, 7];
+    if (kind === 'random') { const all = grid([0, 1, 2, 3, 4, 5, 6, 7], [5, 6, 7]); for (const r of recs) { const sh = all.slice().sort(() => rng() - 0.5); take(r, sh); } return out; }
+    if (kind === 'smart') {
+      const order = recs.slice().sort((a, b) => (front(b) - front(a)) || (melee(b) - melee(a)));
+      for (const r of order) { if (melee(r)) take(r, grid(front(r) ? [3, 4, 2, 5] : cMid, [5, 6, 7])); else take(r, towers.filter(t => t.y >= 5).concat(grid(cMid, [7, 6, 5]))); }
+      return out;
+    }
+    if (kind === 'swapped') { for (const r of recs) take(r, grid(cMid, melee(r) ? [7, 6] : [5, 6])); return out; }
+    if (kind === 'tight') { for (const r of recs) take(r, grid([3, 4, 2, 5], [5, 6, 7])); return out; }
+    if (kind === 'spread') { const cols = [[0, 1], [7, 6], [3, 4]]; recs.forEach((r, i) => take(r, grid(cols[i % 3], melee(r) ? [5, 6] : [7, 6]).concat(grid([0, 7, 1, 6, 2, 5, 3, 4], [5, 6, 7])))); return out; }
+    if (kind === 'wall') { for (const r of recs) take(r, grid(cMid, [5, 6])); return out; }
+    if (kind === 'back') { for (const r of recs) take(r, grid(cMid, [7, 6])); return out; }
+    return out;
+  }
   if (kind === 'random') { const all = grid([0, 1, 2, 3], [0, 1, 2, 3, 4, 5]); for (const r of recs) { const sh = all.slice().sort(() => rng() - 0.5); take(r, sh); } return out; }
   if (kind === 'smart') { // frontliners first and central, other melee beside them, ranged behind (on a tower if the map has one)
     const order = recs.slice().sort((a, b) => (front(b) - front(a)) || (melee(b) - melee(a)));

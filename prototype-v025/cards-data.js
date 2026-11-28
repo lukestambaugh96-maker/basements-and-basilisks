@@ -262,7 +262,9 @@ const GLOSSARY = {
 const ENEMY_NOTES = {
   goblin: 'Fast melee swarmer.',
   goblin_archer: 'Backline ranged shooter.',
-  klarg: 'Bugbear Elite. Charges Crushing Swing every 4 attacks (heavy hit + Stun).',
+  wolf: 'Fast Pack swarmer. Gains +15% attack speed when adjacent to an allied enemy.',
+  bugbear: 'Heavy Bugbear Elite. Charges Crushing Swing every 4 attacks (heavy hit + Stun).',
+  klarg: 'Bugbear Chieftain Elite. Charges Crushing Swing every 4 attacks (heavy hit + Stun).',
   ripper: 'Dire Wolf. Gains +15% attack speed when adjacent to an allied enemy.',
   redbrand: 'Melee ruffian guarding the narrow bridge.',
   glasstaff: 'Mage Elite. Fires Magic Missile volleys (High roll grants a self-Ward).',
@@ -277,10 +279,12 @@ const ENEMY_NOTES = {
 };
 
 const TERRAIN_INFO = {
-  rock: { name: 'Boulders', desc: 'Blocks movement and line of sight.' },
-  chasm: { name: 'Chasm', desc: 'Impassable pit — funnels melee across the bridge.' },
+  rock: { name: 'Boulders / Pillars', desc: 'Blocks movement and ranged line of sight.' },
+  chasm: { name: 'Chasm', desc: 'Impassable pit — funnels melee across bridges. Ranged attacks can shoot over it.' },
+  water: { name: 'Shallow Water', desc: 'Impassable stream or pool — ranged attacks and spells can shoot over it.' },
+  crates: { name: 'Supply Crates', desc: 'Blocks movement — ranged attacks and spells can shoot over them.' },
   wall: { name: 'Ruined Wall', desc: 'Blocks movement and ranged line of sight.' },
-  forge: { name: 'Spell Forge', desc: 'Impassable arcane forge in the center.' },
+  forge: { name: 'Spell Forge', desc: 'Impassable arcane forge — blocks movement and line of sight.' },
   web: { name: 'Spider Web', desc: 'Stepping on a web Restrains a hero for 1s (2.5s cooldown).' },
   tower: { name: 'Watchtower', desc: 'Standing here grants +1 attack range.' },
   gate: { name: 'Iron Gate', desc: 'Impassable barrier.' },

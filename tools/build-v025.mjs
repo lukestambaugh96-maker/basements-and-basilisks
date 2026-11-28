@@ -23,6 +23,7 @@ const CFG = {
   heroes: readJson(path.join(tb, 'config', 'heroes.config.json')),
   enemies: readJson(path.join(tb, 'config', 'enemies.config.json')),
   items: readJson(path.join(tb, 'config', 'items.config.json')),
+  maps: readJson(path.join(tb, 'config', 'maps.config.json')),
 };
 
 function buildPortraits() {
@@ -83,7 +84,7 @@ const html = `<!DOCTYPE html>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Basements &amp; Basilisks v0.25 · Act 1 Playable Prototype</title>
-  <meta name="description" content="Basements &amp; Basilisks v0.25 playable Act 1 (Lost Mine of Phandelver) prototype: 22 reworked heroes, 31 three-tier stat items, 6x8 tactical deployment, and Nezznar boss encounter." />
+  <meta name="description" content="Basements &amp; Basilisks v0.25 playable Act 1 (Lost Mine of Phandelver) prototype: 22 reworked heroes, 31 three-tier stat items, 8x8 South-vs-North Phandelver battlefields, procedural encounters, and Nezznar boss encounter." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,700;0,800;1,400&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet" />

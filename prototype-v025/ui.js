@@ -387,7 +387,7 @@
       <div class="title-sub">Version 0.25 · Act 1 Playable Prototype · Lost Mine of Phandelver</div>
       <h1 class="title-h1">Basements <span class="amp">&amp;</span> Basilisks</h1>
       <p class="title-summary">
-        Draft from 22 reworked D&amp;D heroes, build around 31 three-tier stat items, counter-position on 6&times;8 Phandelver battlefields, and clear Nezznar the Black Spider.
+        Draft from 22 reworked D&amp;D heroes, build around 31 three-tier stat items, counter-position South-vs-North on 8&times;8 procedural Phandelver battlefields, and clear Nezznar the Black Spider.
       </p>
       <div class="parade">
         ${paradeIds.map(id => `<div class="parade-chip" title="${esc(HEROES[id].name)} (${esc(HEROES[id].cls)})"><img src="${portraitSrc(id)}" alt="${esc(HEROES[id].name)}" /></div>`).join('')}
@@ -437,7 +437,7 @@
     const wrap = el('section', 'starter-wrap');
     wrap.innerHTML = `
       <h2 class="serif" style="font-size:26px;color:#f7ebd2;">Choose Your Starting Hero</h2>
-      <p class="muted" style="color:var(--ink-muted);margin:6px 0 0;">Joins for free. You start with ${ECON.start}g and visit Camp Shop #1 before Goblin Ambush.</p>
+      <p class="muted" style="color:var(--ink-muted);margin:6px 0 0;">Joins for free. You start with ${ECON.start}g and visit Camp Shop #1 before Fight 1.</p>
       <div class="starter-grid" id="starterGrid"></div>
     `;
     const grid = $('#starterGrid', wrap);
@@ -460,12 +460,12 @@
     scout.innerHTML = `
       <div>
         <div class="small" style="color:var(--brass-hi);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">
-          Upcoming Encounter — Fight ${run.fight + 1}/6${run.fight === 5 ? ' (ACT 1 BOSS)' : ''}
+          Upcoming Encounter — Fight ${run.fight + 1}/6${run.fight === 5 ? ' (ACT 1 BOSS)' : ''}${enc.biome ? ` · ${esc(enc.biome)}` : ''}
         </div>
         <div class="serif" style="font-size:19px;color:#fff2d6;">${esc(enc.name)}</div>
         <div class="scout-enemies">
-          ${Object.entries(enemyCounts).map(([eid, c]) => `<span class="enemy-pill ${ENEMIES[eid].rank === 'Boss' ? 'boss' : ''}">${c > 1 ? c + 'x ' : ''}${esc(ENEMIES[eid].name)}</span>`).join('')}
-          ${terrTypes.map(t => `<span class="pill" style="font-size:11.5px;padding:2px 7px;">Terrain: ${esc(TERRAIN_INFO[t] ? TERRAIN_INFO[t].name : t)}</span>`).join('')}
+          ${Object.entries(enemyCounts).map(([eid, c]) => `<span class="enemy-pill ${ENEMIES[eid].rank === 'Boss' ? 'boss' : ''}" ${tipAttr(`${ENEMIES[eid].name} (${ENEMIES[eid].rank})`, ENEMY_NOTES[eid] || '')}>${c > 1 ? c + 'x ' : ''}${esc(ENEMIES[eid].name)}</span>`).join('')}
+          ${terrTypes.map(t => { const ti = TERRAIN_INFO[t]; return `<span class="pill" style="font-size:11.5px;padding:2px 7px;" ${ti ? tipAttr(ti.name, ti.desc) : ''}>Terrain: ${esc(ti ? ti.name : t)}</span>`; }).join('')}
         </div>
       </div>
       <div class="row">
@@ -673,7 +673,7 @@
       bar.innerHTML = `
         <div>
           <div class="serif" style="font-size:18px;color:#f7ebd2;">Deploy Party — ${esc(enc.name)}</div>
-          <div class="small" style="color:var(--ink-muted);">Click or drag heroes across columns 1–4. Click any enemy to scout its stats.</div>
+          <div class="small" style="color:var(--ink-muted);">Click or drag heroes across ${SOUTH_NORTH ? 'your South deployment zone (rows 6–8)' : 'columns 1–4'}. Click any enemy to scout its stats.</div>
         </div>
         <div class="row">
           <button class="btn" id="btnBackShop">&larr; Back to Shop</button>
@@ -711,8 +711,8 @@
 
     const canvas = el('canvas');
     canvas.id = 'battleCanvas';
-    canvas.width = 880;
-    canvas.height = 540;
+    canvas.width = SOUTH_NORTH ? 720 : 880;
+    canvas.height = SOUTH_NORTH ? 680 : 540;
     left.appendChild(bar);
     left.appendChild(canvas);
 
@@ -857,7 +857,7 @@
           S.inspectTarget = { kind: 'enemy', data: enemyAt };
           refreshInspector();
           drawDeployCanvas();
-        } else if (S.selectedDeployUid && cell.x <= 3 && cellOpenForHero(S.run, cell.x, cell.y)) {
+        } else if (S.selectedDeployUid && cellOpenForHero(S.run, cell.x, cell.y)) {
           const rec = onBoard(S.run).find(r => r.uid === S.selectedDeployUid);
           if (rec) {
             rec.pos = { x: cell.x, y: cell.y };
@@ -875,7 +875,7 @@
       const cell = pointerToCell(canvas, e);
       const rec = onBoard(S.run).find(r => r.uid === S.draggingUid);
       S.draggingUid = null;
-      if (!cell || !rec || cell.x > 3 || !cellOpenForHero(S.run, cell.x, cell.y)) return;
+      if (!cell || !rec || !cellOpenForHero(S.run, cell.x, cell.y)) return;
       const other = onBoard(S.run).find(r => r.uid !== rec.uid && r.pos && r.pos.x === cell.x && r.pos.y === cell.y);
       if (other) {
         const old = rec.pos;
@@ -906,15 +906,15 @@
       for (let x = 0; x < COLS; x++) {
         const px = m.ox + x * m.cw;
         const py = m.oy + y * m.ch;
-        const isHeroZone = x <= 3;
+        const isHeroZone = SOUTH_NORTH ? (y >= 5) : (x <= 3);
         const alt = (x + y) % 2 === 0;
         ctx.fillStyle = isHeroZone
-          ? (alt ? '#2c251c' : '#262018')
-          : (alt ? '#291e1a' : '#231916');
+          ? (alt ? '#2d261c' : '#262018')
+          : (alt ? '#271e1a' : '#211915');
         ctx.fillRect(px, py, m.cw, m.ch);
 
         if (deployHighlight && isHeroZone) {
-          ctx.fillStyle = 'rgba(194, 142, 54, 0.06)';
+          ctx.fillStyle = 'rgba(194, 142, 54, 0.07)';
           ctx.fillRect(px + 1, py + 1, m.cw - 2, m.ch - 2);
         }
 
@@ -935,22 +935,32 @@
       }
     }
 
-    // Center dividing line between hero side and enemy side
-    ctx.strokeStyle = 'rgba(223, 168, 71, 0.35)';
+    // Dividing line between hero deployment zone and enemy territory
+    ctx.strokeStyle = 'rgba(223, 168, 71, 0.42)';
     ctx.setLineDash([6, 4]);
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(m.ox + 4 * m.cw, m.oy);
-    ctx.lineTo(m.ox + 4 * m.cw, m.oy + ROWS * m.ch);
+    if (SOUTH_NORTH) {
+      ctx.moveTo(m.ox, m.oy + 5 * m.ch);
+      ctx.lineTo(m.ox + COLS * m.cw, m.oy + 5 * m.ch);
+    } else {
+      ctx.moveTo(m.ox + 4 * m.cw, m.oy);
+      ctx.lineTo(m.ox + 4 * m.cw, m.oy + ROWS * m.ch);
+    }
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Column headers
-    ctx.fillStyle = 'rgba(239, 229, 209, 0.45)';
+    // Zone headers
+    ctx.fillStyle = 'rgba(239, 229, 209, 0.52)';
     ctx.font = '700 11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('HERO DEPLOYMENT (COLS 1-4)', m.ox + 2 * m.cw, m.oy - 8);
-    ctx.fillText('ENEMIES (COLS 5-8)', m.ox + 6 * m.cw, m.oy - 8);
+    if (SOUTH_NORTH) {
+      ctx.fillText('ENEMIES (NORTH · ROWS 1–5)', m.ox + (COLS * m.cw) / 2, m.oy - 8);
+      ctx.fillText('HERO DEPLOYMENT (SOUTH · ROWS 6–8)', m.ox + (COLS * m.cw) / 2, m.oy + ROWS * m.ch + 17);
+    } else {
+      ctx.fillText('HERO DEPLOYMENT (COLS 1-4)', m.ox + 2 * m.cw, m.oy - 8);
+      ctx.fillText('ENEMIES (COLS 5-8)', m.ox + 6 * m.cw, m.oy - 8);
+    }
   }
 
   function drawTerrainTile(ctx, kind, px, py, cw, ch) {
@@ -964,7 +974,38 @@
       ctx.fillStyle = '#c8baa4';
       ctx.font = '700 10px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(kind.toUpperCase(), px + cw / 2, py + ch / 2 + 4);
+      ctx.fillText(kind === 'rock' ? 'PILLAR' : kind.toUpperCase(), px + cw / 2, py + ch / 2 + 4);
+    } else if (kind === 'water') {
+      ctx.fillStyle = '#1d4459';
+      ctx.fillRect(px + 2, py + 2, cw - 4, ch - 4);
+      ctx.strokeStyle = 'rgba(130, 205, 238, 0.45)';
+      ctx.lineWidth = 1.4;
+      for (let i = 0; i < 3; i++) {
+        const wy = py + ch * (0.28 + i * 0.22);
+        ctx.beginPath();
+        ctx.moveTo(px + 9, wy);
+        ctx.quadraticCurveTo(px + cw * 0.35, wy - 4, px + cw * 0.5, wy);
+        ctx.quadraticCurveTo(px + cw * 0.65, wy + 4, px + cw - 9, wy);
+        ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(186, 230, 250, 0.8)';
+      ctx.font = '700 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('WATER', px + cw / 2, py + ch - 7);
+    } else if (kind === 'crates') {
+      ctx.fillStyle = '#69492a';
+      ctx.fillRect(px + 8, py + 8, cw - 16, ch - 16);
+      ctx.strokeStyle = '#a67b4b';
+      ctx.lineWidth = 1.8;
+      ctx.strokeRect(px + 8, py + 8, cw - 16, ch - 16);
+      ctx.beginPath();
+      ctx.moveTo(px + 8, py + 8); ctx.lineTo(px + cw - 8, py + ch - 8);
+      ctx.moveTo(px + cw - 8, py + 8); ctx.lineTo(px + 8, py + ch - 8);
+      ctx.stroke();
+      ctx.fillStyle = '#f2d9b1';
+      ctx.font = '700 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('CRATE', px + cw / 2, py + ch / 2 + 3);
     } else if (kind === 'chasm') {
       ctx.fillStyle = '#090705';
       ctx.fillRect(px + 2, py + 2, cw - 4, ch - 4);
@@ -1020,7 +1061,7 @@
 
     // Crisp initials / icon emblem
     const icons = {
-      goblin: 'G', goblin_archer: '➶', klarg: '⚒', ripper: '🐺',
+      goblin: 'G', goblin_archer: '➶', wolf: '🐺', bugbear: '⚒', klarg: '⚒', ripper: '🐺',
       redbrand: '⚔', glasstaff: '✦', vine: '🌿', twig: 'T', needle: '↟',
       flameskull: '🔥', lesser_skull: '💀', ghoul: '☠', giant_spider: '🕷', nezznar: '🕷',
     };
@@ -1687,7 +1728,8 @@
       box.innerHTML = `
         <h2 class="serif">Basements &amp; Basilisks v0.25 Rules</h2>
         <ul class="small" style="line-height:1.55;padding-left:18px;">
-          <li><b>Act 1 Loop:</b> Pick 1 of 3 starters &rarr; Shop &rarr; 5 Phandelver Fights (with Choice Cards after Fights 1–4) &rarr; Campfire &rarr; Boss <b>Nezznar</b>.</li>
+          <li><b>Act 1 Loop:</b> Pick 1 of 3 starters &rarr; Shop &rarr; 5 Procedural Phandelver Fights on 8&times;8 South-vs-North maps (Choice Cards after Fights 1–4) &rarr; Campfire &rarr; Boss <b>Nezznar</b>.</li>
+          <li><b>Terrain &amp; Deployment:</b> Deploy in the South (rows 6–8) facing enemies in the North. Walls, Pillars, and the Spell Forge block movement and ranged line of sight; Water, Chasms, and Crates block movement but can be shot over. Watchtowers grant +1 range; Webs Restrain heroes.</li>
           <li><b>Tiers &amp; Growth:</b> Buying a 2nd copy of a hero ranks them up to <b>Tier 2</b> (+1 weapon die, higher HP, stronger ability, and a permanent Path A/B choice).</li>
           <li><b>Resistance &amp; Evasion:</b> AC reduces physical damage and SR reduces magic damage by <code>R / (R + 20)</code>. <b>Radiant</b> ignores both. <b>Evasion</b> (cap 50%) dodges attacks only; <b>Pierce</b> reduces enemy Evasion.</li>
           <li><b>Ability Rolls:</b> Every cast rolls <code>d20 + key modifier</code> (half-point modifiers round randomly on .5). Nat 1 = Fizzle (half charge back); Nat 20 = Crit (dice doubled).</li>
