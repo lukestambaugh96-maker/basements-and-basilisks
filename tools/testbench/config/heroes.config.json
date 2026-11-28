@@ -229,6 +229,7 @@
     "juniper": {
       "name": "Juniper",
       "ancestry": "Forest Gnome",
+      "kit2": {"wildShape": {"hp": {"dice": "3d8", "perTier": true, "bonus": "CON"}, "acBonus": 2, "thorns": null}, "t2": {"brambleGuard": {"formHp": {"dice": "4d8", "perTier": true, "bonus": "CON"}, "acBonus": 3, "thorns": {"dice": "1d4"}, "tauntSeconds": 1.5}, "brambleStalker": {"asBonus": 0.4, "atkDice": "1d12", "poisonPerHit": 3, "slow": 0.3, "slowSeconds": 3}}},
       "class": "Druid",
       "subclass": "Circle of the Land",
       "role": ["Tank", "Support"],
@@ -831,6 +832,7 @@
     "kaska": {
       "name": "Kaska",
       "ancestry": "Half-Orc",
+      "kit2": {"pounce": {"damage": {"dice": "5d8", "perTier": true, "bonus": "STR"}, "heal": {"dice": "2d6", "perTier": true}}, "wildShape": {"hp": {"dice": "4d10", "perTier": true, "bonus": "CON"}, "asBonus": 0.25, "healOnHit": {"dice": "1d4", "perTier": true}}, "t2": {"panther": {"startInForm": true, "hp": {"dice": "3d10", "perTier": true, "bonus": "CON"}, "asBonus": 0.4, "atkDice": "1d10", "healOnHit": {"dice": "1d6", "perTier": true}}, "direBear": {"startInForm": true, "hp": {"dice": "5d10", "perTier": true, "bonus": "CON"}, "acBonus": 3, "atkDice": "2d6", "cleaveOnHit": {"dice": "1d4", "perTier": true}, "tauntSeconds": 2}}},
       "class": "Druid",
       "subclass": "Circle of the Moon",
       "role": ["Damage", "Support"],

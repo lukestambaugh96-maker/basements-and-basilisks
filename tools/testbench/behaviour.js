@@ -836,6 +836,83 @@ Object.assign(KITS2, {
   }; },
 });
 
+// ---------------- batch 4 reworks (27 Nov, proposals): Wild Shape bonus HP bar (no timer, ends when depleted) ----------------
+Object.assign(KITS2, {
+  juniper: c => { const K = c.kit2; return {
+    ab: { can: (F, u) => foesOf(F, u).some(o => dist(o, u) <= c.ability.reach),
+      cast(F, u, r) {
+        const A = c.ability; const dur = byRoll(A.restrainSeconds, r);
+        const BG = u.t2 === 0 && K.t2.brambleGuard, BS = u.t2 === 1 && K.t2.brambleStalker;
+        for (const o of foesOf(F, u).filter(o => dist(o, u) <= A.reach)) {
+          applyControl(F, u, o, 'root', dur);
+          const s = spec(u, A.damage);
+          abHit(F, u, o, s.n, s.x, s.flat, A.type, r, { area: true });
+          if (BS && BS.slow && o.alive) applyControl(F, u, o, 'slow', BS.slowSeconds || 3, BS.slow);
+        }
+        // Trigger Wild Shape (Briar Form): bonus HP bar (no timer), lasts until depleted.
+        const hpSpec = spec(u, BG && BG.formHp ? BG.formHp : K.wildShape.hp);
+        const hpAmt = rollDice(hpSpec.n, hpSpec.x, r.crit) + hpSpec.flat;
+        const thCfg = BG && BG.thorns ? BG.thorns : K.wildShape.thorns;
+        const thSpec = thCfg ? spec(u, thCfg) : null;
+        enterWildShape(F, u, hpAmt, {
+          kind: BG ? 'brambleGuard' : BS ? 'brambleStalker' : 'briar',
+          acBonus: BG && BG.acBonus != null ? BG.acBonus : (K.wildShape.acBonus || 0),
+          asBonus: BS && BS.asBonus ? BS.asBonus : 0,
+          atkDice: BS && BS.atkDice ? BS.atkDice : null,
+          thorns: thSpec ? { n: thSpec.n, x: thSpec.x, flat: thSpec.flat } : false,
+          poisonOnHit: BS && BS.poisonPerHit ? BS.poisonPerHit : 0,
+        });
+        if (BG && BG.tauntSeconds) for (const o of adjUnits(F, u, 'E')) applyControl(F, u, o, 'taunt', BG.tauntSeconds);
+      } },
+  }; },
+  kaska: c => { const K = c.kit2;
+    const shiftKaska = (F, u, crit) => {
+      const PA = u.t2 === 0 && K.t2.panther, DB = u.t2 === 1 && K.t2.direBear;
+      const fCfg = PA || DB || K.wildShape;
+      const hpSpec = spec(u, fCfg.hp || K.wildShape.hp);
+      const hpAmt = rollDice(hpSpec.n, hpSpec.x, crit) + hpSpec.flat;
+      const healHitSpec = fCfg.healOnHit ? spec(u, fCfg.healOnHit) : (!DB && K.wildShape.healOnHit ? spec(u, K.wildShape.healOnHit) : null);
+      const cleaveSpec = fCfg.cleaveOnHit ? spec(u, fCfg.cleaveOnHit) : null;
+      enterWildShape(F, u, hpAmt, {
+        kind: PA ? 'panther' : DB ? 'direBear' : 'moonBeast',
+        acBonus: fCfg.acBonus || 0,
+        asBonus: fCfg.asBonus != null ? fCfg.asBonus : (DB ? 0 : (K.wildShape.asBonus || 0)),
+        atkDice: fCfg.atkDice || null,
+        healOnHit: healHitSpec,
+        cleaveOnHit: cleaveSpec,
+      });
+      if (DB && DB.tauntSeconds) for (const o of adjUnits(F, u, 'E')) applyControl(F, u, o, 'taunt', DB.tauntSeconds);
+    };
+    return { dmgAb: true,
+    onStart(F, u) {
+      const fCfg = u.t2 === 0 ? K.t2.panther : u.t2 === 1 ? K.t2.direBear : null;
+      if (fCfg && fCfg.startInForm) shiftKaska(F, u, false);
+    },
+    ab: { can: (F, u) => tfoes(F, u).length > 0,
+      cast(F, u, r) {
+        const A = c.ability;
+        let t;
+        if (r.band === 'Low') { t = acquire(F, u); if (!t || !canHit(F, u, t)) return; }
+        else {
+          const list = tfoes(F, u); t = list.sort((a, b) => dist(b, u) - dist(a, u))[0];
+          const cl = t && freeCellNear(F, t.x, t.y, 'H', 1);
+          if (cl && dist(cl, t) <= 1) moveTo(F, u, cl.x, cl.y);
+          else { t = acquire(F, u); if (!t || !canHit(F, u, t)) return; }
+        }
+        u.target = t;
+        const s = spec(u, K.pounce.damage, r);
+        abHit(F, u, t, s.n, s.x, s.flat, 'phys', r);
+        if (K.pounce.heal) {
+          const hs = spec(u, K.pounce.heal, r);
+          const a = lowestPct(alliesOf(F, u));
+          if (a) heal(F, u, a, rollDice(hs.n, hs.x, r.crit) + hs.flat);
+        }
+        const rs = byRoll(A.restrainSeconds, r); if (rs > 0 && t.alive) applyControl(F, u, t, 'root', rs);
+        shiftKaska(F, u, r.crit);
+      } },
+  }; },
+});
+
 // ---------------- build HEROES from config + kits ----------------
 const STAT_KEYS = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 function atkFromCfg(a) {

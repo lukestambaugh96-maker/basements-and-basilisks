@@ -291,7 +291,46 @@ function startRageBar(F, t) {
   t.rageBar = bar; t.rageBar0 = bar; t.as += rb.attackSpeed; t.ward = 0; t.st.invuln = 0.3;
   fx(F, t, 'RAGE', '#ff6b4d', true); logF(F, `${t.name} refuses to fall: Rage bar ${bar}.`);
 }
-function endForm(F, t) { t.formHp = 0; t.form = null; t.formThorns = false; t.formAs = 0; t.formHealPounce = false; }
+// Generalized Wild Shape (Druid rule, 27 Nov): bonus health bar; form ends when depleted (no timer); transforms stats/attack and reverts on endForm.
+function enterWildShape(F, u, hp, opts = {}) {
+  hp = Math.max(1, roundAmt(hp));
+  const prevHp = u.formHp || 0;
+  if (!u.form) {
+    u._baseForm = { ac: u.ac, sr: u.sr, atk: Object.assign({}, u.atk) };
+    u.formAcB = 0; u.formSrB = 0;
+  } else {
+    // Revert old form modifiers before re-applying (safe on refresh)
+    if (u.formAcB) { u.ac -= u.formAcB; u.formAcB = 0; }
+    if (u.formSrB) { u.sr -= u.formSrB; u.formSrB = 0; }
+    if (u._baseForm) u.atk = Object.assign({}, u._baseForm.atk);
+  }
+  u.form = opts.kind || 'beast';
+  u.formHp = Math.max(prevHp, hp);
+  u.formT = opts.dur || 0; // 0 = no timer, ends only when formHp is depleted
+  const gain = Math.max(0, u.formHp - prevHp);
+  if (gain > 0) {
+    u.selfSus = (u.selfSus || 0) + gain;
+    if (u._inCast) u.abVal = (u.abVal || 0) + gain;
+    u.stat.ward += gain;
+  }
+  if (opts.acBonus) { u.ac += opts.acBonus; u.formAcB = opts.acBonus; }
+  if (opts.srBonus) { u.sr += opts.srBonus; u.formSrB = opts.srBonus; }
+  u.formAs = opts.asBonus || 0;
+  u.formThorns = opts.thorns || false;
+  u.formPoison = opts.poisonOnHit || 0;
+  u.formHealHit = opts.healOnHit || null;
+  u.formCleave = opts.cleaveOnHit || null;
+  u.formHealPounce = opts.healPounce || false;
+  if (opts.atkDice) { const p = parseDice(opts.atkDice); u.atk.n = p.n; u.atk.x = p.x; if (p.flat) u.atk.flat = p.flat; }
+  ev(F, { k: 'ward', t: u, v: gain });
+}
+function endForm(F, t) {
+  if (t.formAcB) { t.ac -= t.formAcB; t.formAcB = 0; }
+  if (t.formSrB) { t.sr -= t.formSrB; t.formSrB = 0; }
+  if (t._baseForm) { t.atk = Object.assign({}, t._baseForm.atk); t._baseForm = null; }
+  t.formHp = 0; t.formT = 0; t.form = null; t.formThorns = false; t.formAs = 0;
+  t.formPoison = 0; t.formHealHit = null; t.formCleave = null; t.formHealPounce = false;
+}
 
 // ---------------- the d20 ability roll ----------------
 function abilityRoll(F, u) {
@@ -376,6 +415,11 @@ function strike(F, u, t, o) {
   itemOnHit(F, u, t, crit);
   if (u.side === 'H' && t.marks && t.alive) applyMarks(F, u, t, crit); // Hunter's Mark (27 Nov): any hero's attack on a marked foe triggers each mark's effect
   if (u.def.onStrike) u.def.onStrike(F, u, t, dmg, crit);
+  if (u.form && u.formHp > 0) {
+    if (u.formPoison && t.alive) addPoison(F, u, t, u.formPoison);
+    if (u.formHealHit && dmg > 0) { const a2 = lowestPct(alliesOf(F, u)); if (a2) heal(F, u, a2, rollDice(u.formHealHit.n, u.formHealHit.x) + (u.formHealHit.flat || 0)); }
+    if (u.formCleave) for (const o of adjUnits(F, t, 'E')) dealDamage(F, u, o, rollDice(u.formCleave.n, u.formCleave.x) + (u.formCleave.flat || 0), 'phys', { area: true });
+  }
   if (u.formHealPounce && dmg > 0) { const a2 = lowestPct(alliesOf(F, u)); if (a2) heal(F, u, a2, Math.floor(dmg * u.formHealPounce)); }
   return dmg;
 }

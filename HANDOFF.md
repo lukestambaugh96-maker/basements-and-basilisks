@@ -41,11 +41,12 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - `jobs` with `--n 250–300` takes 1–2 minutes per hero; run heroes in parallel.
 - Tier 2 parties win ~90% of single fights, so path lifts look tiny in `paths`; use `jobs --tier 2 --partnerTier 1` (or `gauntlet` for run-long scaling) to compare paths.
 
-## 3. Current state (after batch 3, 27 Nov)
+## 3. Current state (full 22-hero cast reworked, 27 Nov)
 
-- Whole runs (300 per bot, seeds 20000+): **never-buy 0% (median fight 4), sensible 69%, engine 76%.**
-- Boss check A / B / C: **82 / 82 / 50%** (target: A does well ~85, B clears fairly well ~75–80, **C struggles ~33** → C is high; retune right after Batch 4).
-- Prototype2 preset: 47.0% (reproduces).
+- Whole runs (`attackGrowth = 0`, 300 per bot, seeds 20000+): **never-buy 0% (median fight 4), sensible 70%, engine 80%.**
+- Boss check (`attackGrowth = 0`): A / B / C = **86 / 86 / 53%**.
+- Preview with `rules.attackGrowth.extraDicePerTier = 1`: **bare 0% (med F4), sensible 79%, engine 87%**; Boss check A / B / C = **95 / 94 / 64%**.
+- Prototype2 preset: **47.0%** (reproduces).
 - PR #6 (branch `testbench-bots-and-replay-tests`) was merged into `main` (commit `9477726`).
 
 ## 4. How Luke works (follow this)
@@ -68,7 +69,7 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - All Wards add up. Root is **Restrained** (can't move, attacks 50% slower, casts with Disadvantage).
 - Charge by job: attackers 100 per 5s of attacking; frontliners 15 per hit taken; casters 100 per 5s (+10% per INT mod). Ability sizes by charge to cast: Small 60 / Medium 100 / Big 180 / Huge Nuke 300; value per cast targets 9 / 20 / 35 / 70.
 - Job targets (tier 1, no items): Frontline 280–340 EHP, 2–3 dps; Brawler 210–260, 4–5; Attacker 160–210, 4–5 (ability ≤35%); Caster 140–190, 4.5–5.5 (ability ≥50%); Support 160–210, 1–2 + 60–90 help. Proposed tier 2–4 growth ×1.5/×2/×2.5 (balance sheet "Benchmarks by tier" tab).
-- **Attack growth (decided, not switched on):** basic attacks +1 weapon die per tier; attacks and casts may grow at different rates. Switch: `rules.attackGrowth.extraDicePerTier` (0 now → 1 after the whole cast is reworked). Open: should damage grow on the HP curve or outgrow it?
+- **Attack growth (decided, ready to switch on):** basic attacks +1 weapon die per tier; attacks and casts may grow at different rates. Switch: `rules.attackGrowth.extraDicePerTier` (0 now → 1 alongside the encounter buff pass). Open: should damage grow on the HP curve or outgrow it?
 - **Enemy buff knobs:** `rules.enemyScale` {damage ×, attackSpeed +, hp ×}. Set to **+5% attack speed** (27 Nov).
 
 **Class features (Luke, 26–27 Nov)** — universal properties with interaction rules; not strong or weak by design; power comes from each hero's version; part of the kit and counted in the job benchmarks; effects scale with tier per character (or via natural stat/HP growth).
@@ -84,7 +85,7 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - Barbarian **Rage**: unlimited stacks from conditions (usually damage taken), passive bonus; stacks alone must never make a hero invincible.
 - Warlock **Pact**: triggers off the pure-tag **`Hex`** condition (`t.st.hexed`, non-stacking, lasts until death, no hidden debuff); not spent or stacked; separate from casts.
 - Bard **Bardic Inspiration**: a die given to allies; casts can use or read it.
-- Druid **Wild Shape**: a bonus health bar; when it's depleted the form ends; can transform abilities/stats.
+- Druid **Wild Shape**: a bonus health bar (`enterWildShape`/`endForm`, no timer); when depleted the form ends; transforms abilities/stats and reverts cleanly.
 - Loops: outside triggers respect each feature's internal cooldown.
 - **Scaling means it carries across the run** (Luke, 27 Nov): run-long state uses a kit's `carryKeys`, saved on the hero's rec after each fight (`carryBack`).
 
@@ -92,7 +93,7 @@ node bench.js castoff | itemoff | placement | luck | buffs   # other replay test
 - Items stay **stat-based for now**; class features tie into perks and house rules first. Item tiers direction: Uncommon (small stats) / Rare (solid offense/defense) / Epic (build-around).
 - Shop: owned heroes offered at 0.75 weight; rerolls start at 1 gold, +1 per reroll per shop.
 - Nezznar is the only Act 1 boss and the Act 2 check. Placement is a skill reward. Flat boss bonuses are fine.
-- Encounters get a numbers buff (damage first) once the whole cast is reworked.
+- Encounters get a numbers buff (damage first) now that the whole cast is reworked.
 
 ## 6. Cast rework status
 
@@ -108,7 +109,7 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 | Gilthrax, Zoe, Laurel, Pillar, Zark, Naill | batch 1 | **Locked** (Zark & Pillar Rage/Maul updated in class-feature pass) | batch1-rework.md, batch2-proposals.md |
 | Lorcan, Corvin, Velith, Nettle, Lumen | batch 2 | **Locked** (Favored Foe + Hunter's Mark tag, Pact + Hex tag, Sneak Attack force bypass) | batch2-proposals.md |
 | Cinder, Gains, Rosalind, Jamison, Saint | batch 3 | **Locked** (Metamagic, Arcane Recovery, Bardic Inspiration, Channel Divinity ×2) | batch3-rework.md |
-| Juniper, Kaska | batch 4 | To do (Wild Shape: new health-bar mechanic) | |
+| Juniper, Kaska | batch 4 | **Locked** (Wild Shape bonus HP bar; Briar Form, Moon Beast) | batch4-rework.md |
 | Toot | Bard | Switched off until redesigned | |
 
 **Code pattern for reworks:** new kits go in `behaviour.js` `KITS2` and are picked when the hero's config has a `"kit2": {...}` block (the old `KITS` entry stays for the prototype2 preset). Arthur, Bram, Faelan, Wallaby and Dane were done earlier with config hooks inside their original kits (e.g. `riposte`, `channelDivinity`, `arcaneRecovery`, `sneakAttack`, `smite`).
@@ -117,11 +118,10 @@ Workflow per batch: Luke gives a one-line direction per hero (or "your call") �
 
 ## 7. Next steps, in order
 
-1. **Batch 4:** Juniper and Kaska (Wild Shape). Needs a bonus health bar mechanic in the engine (`formHp` exists for the old tier 2 forms; generalize it).
-2. Turn on attack growth (`rules.attackGrowth.extraDicePerTier = 1`) and check the whole cast against the tier 2–4 benchmarks; settle whether damage may outgrow the HP curve.
-3. **Encounter numbers buff** to match the reworked cast (damage first): never-buy dies at fight 3; sensible survives with tension; engine pulls ahead; boss check C back to ~33%.
-4. Then the items rework (Uncommon / Rare / Epic, priced with the buff-test values in docs/v0.25/buff-test.md), then shop odds.
-5. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
+1. Turn on attack growth (`rules.attackGrowth.extraDicePerTier = 1`) and check the whole cast against the tier 2–4 benchmarks; settle whether damage may outgrow the HP curve.
+2. **Encounter numbers buff** to match the reworked cast (damage first): never-buy dies at fight 3; sensible survives with tension; engine pulls ahead; boss check C back to ~33%.
+3. Then the items rework (Uncommon / Rare / Epic, priced with the buff-test values in docs/v0.25/buff-test.md), then shop odds.
+4. Later: Toot's kit; wiring the playable prototype (`src/`) to read the bench configs.
 
 ## 8. Known open items
 

@@ -182,6 +182,8 @@
     "heroes.jamison.kit2": null,
     "heroes.jamison.attack.name": "Quarterstaff",
     "heroes.saint.kit2": null,
-    "heroes.saint.attack.speedScaling": 0.9
+    "heroes.saint.attack.speedScaling": 0.9,
+    "heroes.juniper.kit2": null,
+    "heroes.kaska.kit2": null
   }
 }
